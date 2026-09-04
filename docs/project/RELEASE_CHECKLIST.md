@@ -38,6 +38,7 @@
 - [x] Добавить admin UI contract regression check.
 - [x] Добавить OpenAPI/controller route drift check.
 - [x] Добавить API HTTP smoke tests для основных vertical routes.
+- [x] Добавить AI service unit/HTTP smoke test pipeline.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

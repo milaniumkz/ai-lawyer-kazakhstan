@@ -15,11 +15,12 @@
     "test:contract": "node scripts/contracts/check-openapi.mjs",
     "test:migrations": "node scripts/db/check-migrations.mjs",
     "test:admin-ui": "node scripts/admin/check-ui-contract.mjs",
+    "test:ai": "PYTHONPATH=services/ai/app python3 -m unittest discover -s services/ai/app -p \"*test*.py\"",
     "generate:clients": "node scripts/contracts/generate-clients.mjs",
     "test:flutter": "cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test",
     "analyze:flutter": "/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile",
     "build": "npm run build --workspaces --if-present",
-    "check": "npm run lint && npm run typecheck && npm test && npm run test:contract && npm run test:migrations && npm run test:admin-ui && npm run test:security && npm run analyze:flutter && npm run test:flutter && python3 -m py_compile services/ai/app/main.py",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:contract && npm run test:migrations && npm run test:admin-ui && npm run test:security && npm run analyze:flutter && npm run test:flutter && npm run test:ai",
     "docker:config": "docker compose -f infra/docker-compose.yml config",
     "release-check": "npm run check && npm run build && npm run docker:config"
   },
