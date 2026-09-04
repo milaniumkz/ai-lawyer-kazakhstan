@@ -25,7 +25,9 @@
     "docker:config": "docker compose -f infra/docker-compose.yml config",
     "release-check:local": "npm run check && npm run build && node scripts/release/check-rc-status.mjs",
     "release-check:production": "npm run release-check:local && npm run docker:config",
-    "release-check": "npm run release-check:local"
+    "release-check": "npm run release-check:local",
+    "deploy:package": "bash scripts/deploy/package-release.sh",
+    "deploy:server-health": "bash scripts/deploy/server-health-check.sh"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

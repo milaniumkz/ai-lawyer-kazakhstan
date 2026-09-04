@@ -53,5 +53,6 @@
 - [x] Добавить responsive web app для ПК и телефона.
 - [x] Развернуть тестовый web/admin/api/ai стенд на cloud server по публичному IP.
 - [x] Включить PostgreSQL persistence на cloud server.
+- [x] Добавить воспроизводимые server deploy scripts.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

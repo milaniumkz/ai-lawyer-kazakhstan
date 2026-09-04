@@ -47,6 +47,7 @@
 | Responsive web app P1 | Added `apps/web` Next.js user-facing adaptive RC web surface for desktop/mobile with light/dark tokens | `npm run check`, `npm run build` passed | done |
 | Cloud server test deployment P1 | Web, admin, API and AI service deployed to Ubuntu server behind Nginx with systemd services | Public web/API/AI/admin HTTP checks passed | done |
 | Cloud PostgreSQL persistence P1 | Installed PostgreSQL 16 + pgvector on server, applied migrations/seeds, switched API to `PERSISTENCE_MODE=postgres` | API registration/session smoke persisted after API restart | done |
+| Reproducible server deploy scripts P1 | Added package, server install, runtime, PostgreSQL setup and health-check scripts under `scripts/deploy` | Shell syntax validation passed | done |
 
 ## Блокеры окружения
 

@@ -41,6 +41,7 @@ curl http://89.207.250.217/api/v1/health
 curl http://89.207.250.217/ai/health
 curl -I http://89.207.250.217/
 curl -IL http://89.207.250.217/admin
+bash /opt/ai-lawyer-kz/app/scripts/deploy/server-health-check.sh
 ```
 
 PostgreSQL persistence smoke:

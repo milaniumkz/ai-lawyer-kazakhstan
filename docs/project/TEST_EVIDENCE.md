@@ -101,6 +101,9 @@
 - Server PostgreSQL setup — installed PostgreSQL 16 + `postgresql-16-pgvector`, created `ai_lawyer_kz`, applied migrations `0001`-`0004` and template seed.
 - Server API persistence mode — switched `ai-lawyer-api` to `PERSISTENCE_MODE=postgres` via `/etc/ai-lawyer-api.env`.
 - Server persistence smoke — OTP registration created 1 user, 1 session and 3 audit logs in PostgreSQL; data remained available after `systemctl restart ai-lawyer-api`.
+- Deploy script syntax check — `bash -n scripts/deploy/*.sh` passed.
+- Server deploy scripts uploaded — `/opt/ai-lawyer-kz/app/scripts/deploy/*.sh` installed on server; remote `server-health-check.sh` returned `server health ok`.
+- Server PostgreSQL setup idempotency — repeated remote `server-postgres-setup.sh` skipped existing schema, refreshed grants, returned `server health ok`.
 
 ## Заблокировано
 

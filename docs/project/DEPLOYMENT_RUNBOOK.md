@@ -16,6 +16,19 @@ Production deployment requires approved Kazakhstan data residency infrastructure
 
 `PERSISTENCE_MODE=postgres` enables persistent identity sessions/profiles, cases/chat/transcripts, document/evidence metadata, legal source fragments, generated legal documents and billing ledger/provider settings. PostgreSQL smoke tests still require Docker/Postgres availability.
 
+## Cloud Server Scripts
+
+Use these scripts for the current Ubuntu test server flow:
+
+1. `npm run deploy:package` creates a checked release archive from current `HEAD`.
+2. Upload the archive to `/opt/ai-lawyer-kz.tar.gz`.
+3. On the server, run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz` for a full install/update.
+4. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-postgres-setup.sh` to install PostgreSQL 16 + pgvector, apply migrations and switch API to `PERSISTENCE_MODE=postgres`.
+5. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-health-check.sh` after every deploy.
+
+The scripts never store SSH credentials in the repository. Database credentials are generated on the server and stored in root-owned files only.
+`server-postgres-setup.sh` is safe to rerun on the current schema: it skips table creation when the baseline exists and reapplies seed/grants.
+
 ## Rollback
 
 Use immutable artifacts and database migration rollback only when the migration declares a safe rollback path. Destructive migrations require backup and expand-migrate-contract plan.

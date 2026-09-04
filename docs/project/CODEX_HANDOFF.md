@@ -60,6 +60,7 @@
 - Реализован P1-024 responsive web app: `apps/web` Next.js surface for desktop/mobile testing with light/dark design tokens.
 - Развернут тестовый cloud server: web/admin/api/ai работают через Nginx и systemd на публичном IP.
 - На cloud server включен PostgreSQL 16 + pgvector, API переключен на `PERSISTENCE_MODE=postgres`.
+- Добавлены воспроизводимые deploy scripts: package, server install, runtime, PostgreSQL setup, health check.
 
 ## Дизайн-источник
 
@@ -78,6 +79,7 @@
 - iOS debug no-codesign build прошел.
 - Public server checks passed: web 200, admin 200, API health ok, AI health ok.
 - Server PostgreSQL persistence smoke passed after API restart.
+- Deploy shell syntax checks passed.
 
 ## Следующая задача
 
