@@ -46,10 +46,10 @@
 | Blocker-aware release check P1 | `release-check:local` validates check/build/RC status while recording Docker as blocker; `release-check:production` keeps Docker gate | `npm run release-check:local` passed | done |
 | Responsive web app P1 | Added `apps/web` Next.js user-facing adaptive RC web surface for desktop/mobile with light/dark tokens | `npm run check`, `npm run build` passed | done |
 | Cloud server test deployment P1 | Web, admin, API and AI service deployed to Ubuntu server behind Nginx with systemd services | Public web/API/AI/admin HTTP checks passed | done |
+| Cloud PostgreSQL persistence P1 | Installed PostgreSQL 16 + pgvector on server, applied migrations/seeds, switched API to `PERSISTENCE_MODE=postgres` | API registration/session smoke persisted after API restart | done |
 
 ## Блокеры окружения
 
 - `docker` не установлен.
 - Production government/payment/SMS/storage provider credentials are not provided; all related integrations stay in official adapter + local/manual mode.
 - Public server is HTTP-only by IP until domain/TLS is configured.
-- Server API uses `PERSISTENCE_MODE=local` until PostgreSQL credentials are configured.

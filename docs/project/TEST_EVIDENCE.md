@@ -98,6 +98,9 @@
 - Public admin check — `curl -IL http://89.207.250.217/admin` returned final `HTTP/1.1 200 OK`.
 - Public API check — `curl http://89.207.250.217/api/v1/health` returned `{"status":"ok","service":"api","jurisdiction":"KZ"}`.
 - Public AI check — `curl http://89.207.250.217/ai/health` returned `{"status":"ok","service":"ai","jurisdiction":"KZ"}`.
+- Server PostgreSQL setup — installed PostgreSQL 16 + `postgresql-16-pgvector`, created `ai_lawyer_kz`, applied migrations `0001`-`0004` and template seed.
+- Server API persistence mode — switched `ai-lawyer-api` to `PERSISTENCE_MODE=postgres` via `/etc/ai-lawyer-api.env`.
+- Server persistence smoke — OTP registration created 1 user, 1 session and 3 audit logs in PostgreSQL; data remained available after `systemctl restart ai-lawyer-api`.
 
 ## Заблокировано
 
@@ -105,7 +108,7 @@
 - Production Android signing — blocked, production keystore is not provided.
 - iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
 - Domain/TLS setup — blocked until domain DNS is provided.
-- Production persistence/secrets — blocked until PostgreSQL and external provider credentials are provided.
+- Production external secrets — blocked until SMS/payment/storage/government provider credentials are provided.
 
 ## Не запускалось
 
