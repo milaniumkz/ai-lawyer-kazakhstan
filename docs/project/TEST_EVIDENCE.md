@@ -107,6 +107,7 @@
 - Server release ops hardening — app services bind to localhost, UFW enabled with SSH/HTTP allowed, PostgreSQL backup dump created, daily backup timer enabled.
 - Server port exposure check — external TCP check allows `80`, while `3000`, `3001`, `3002` and `8000` time out; server `ss` shows app/database ports bound to `127.0.0.1`.
 - Final blocker-aware RC validation — `npm run release-check:local` passed after server ops hardening; Docker remains recorded as external blocker.
+- RC manifest — `docs/project/RC_RELEASE_MANIFEST.md` added for `v0.1.0-rc.1`.
 
 ## Заблокировано
 

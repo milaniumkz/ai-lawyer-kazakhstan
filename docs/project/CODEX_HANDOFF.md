@@ -83,6 +83,7 @@
 - Deploy shell syntax checks passed.
 - Server release ops checks passed: only SSH/HTTP public, backup dump created, timer active.
 - Final `npm run release-check:local` passed after server hardening.
+- RC manifest prepared for `v0.1.0-rc.1`.
 
 ## Следующая задача
 
