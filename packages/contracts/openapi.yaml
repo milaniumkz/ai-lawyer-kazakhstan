@@ -508,6 +508,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CitationValidationResult"
+  /templates:
+    get:
+      operationId: listTemplates
+      summary: List document templates
+      responses:
+        "200":
+          description: Templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Template"
+  /documents/generate:
+    post:
+      operationId: generateDocument
+      summary: Generate document draft from template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDocumentRequest"
+      responses:
+        "201":
+          description: Generated draft document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedDocument"
+  /cases/{caseId}/generated-documents:
+    get:
+      operationId: listGeneratedDocuments
+      summary: List generated documents for case
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Generated documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeneratedDocument"
 components:
   schemas:
     HealthResponse:
@@ -968,3 +1017,66 @@ components:
           enum: [clarify_or_human_review]
         fragment:
           $ref: "#/components/schemas/LegalSourceFragment"
+    Template:
+      type: object
+      required: [id, code, title, language, status, version, requiredFields, body]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        title:
+          type: string
+        language:
+          type: string
+          enum: [ru, kk, en]
+        status:
+          type: string
+          enum: [draft, expert_review, approved, published, archived]
+        version:
+          type: string
+        requiredFields:
+          type: array
+          items:
+            type: string
+        body:
+          type: string
+    GenerateDocumentRequest:
+      type: object
+      required: [templateId, caseId, fields]
+      properties:
+        templateId:
+          type: string
+        caseId:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        confirmedCitationIds:
+          type: array
+          items:
+            type: string
+    GeneratedDocument:
+      type: object
+      required: [id, templateId, caseId, status, title, body, expertReviewRequired, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+        caseId:
+          type: string
+        status:
+          type: string
+          enum: [draft_requires_user_confirmation, review_required, expert_approved]
+        title:
+          type: string
+        body:
+          type: string
+        expertReviewRequired:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time

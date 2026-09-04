@@ -2,6 +2,7 @@ import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
 import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
 import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
+import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,5 +43,12 @@ void main() {
 
     expect(find.text('Официальные источники РК'), findsOneWidget);
     expect(find.text('Citation Validator'), findsOneWidget);
+  });
+
+  testWidgets('shows pretrial claim builder', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
+
+    expect(find.text('Конструктор документа'), findsOneWidget);
+    expect(find.text('Сформировать проект'), findsOneWidget);
   });
 }

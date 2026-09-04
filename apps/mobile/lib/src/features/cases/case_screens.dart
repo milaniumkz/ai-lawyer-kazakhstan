@@ -35,7 +35,7 @@ class NewCaseScreen extends StatelessWidget {
           const _ProgressStrip(),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => context.go('/case/chat'),
+            onPressed: () => context.go('/workflow/pretrial-claim'),
             icon: const Icon(Icons.check_circle_outline),
             label: const Text('Подтвердить и создать дело'),
           ),

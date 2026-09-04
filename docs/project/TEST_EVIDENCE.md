@@ -24,7 +24,8 @@
 - AI OCR unittest — passed, review-required OCR stub.
 - Legal RAG API unit tests — passed, 4 tests for official import, citation validation, safe refusal, stale/future edition rejection.
 - AI RAG unittest — passed, safe refusal without confirmed source.
-- Flutter widget tests — passed, 5 tests for home, login route, case intake, documents OCR and legal citation screen.
+- Template API unit tests — passed, 2 tests for draft generation and required fields.
+- Flutter widget tests — passed, 6 tests for home, login route, case intake, documents OCR, legal citation and pretrial claim screen.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

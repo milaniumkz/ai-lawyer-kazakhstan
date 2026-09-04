@@ -11,6 +11,7 @@ const auditEvents = ['otp_requested', 'login', 'session_created', 'profile_creat
 const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 'classifying', 'ready'];
 const documentStatuses = ['upload_pending', 'quarantined', 'ocr_review_required', 'ready', 'rejected'];
 const ragStatuses = ['confirmed', 'invalid', 'insufficient_authoritative_sources', 'clarify_or_human_review'];
+const templateStatuses = ['draft', 'expert_review', 'approved', 'published', 'archived'];
 
 export default function AdminHome() {
   return (
@@ -63,6 +64,15 @@ export default function AdminHome() {
         <span>Юридический ответ показывается только с подтвержденной официальной цитатой РК; иначе safe refusal.</span>
         <div className="pills">
           {ragStatuses.map((status) => (
+            <span key={status}>{status}</span>
+          ))}
+        </div>
+      </section>
+      <section className="notice">
+        <strong>Templates</strong>
+        <span>Досудебная претензия генерируется только как проект с user confirmation и expert review flag.</span>
+        <div className="pills">
+          {templateStatuses.map((status) => (
             <span key={status}>{status}</span>
           ))}
         </div>
