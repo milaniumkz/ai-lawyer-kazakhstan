@@ -1,6 +1,6 @@
 # Release Notes Draft
 
-Release candidate: `v0.1.0-rc.2`.
+Release candidate: `v0.1.0-rc.3`.
 
 ## RU
 

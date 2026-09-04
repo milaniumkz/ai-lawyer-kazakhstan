@@ -83,12 +83,12 @@
 - Deploy shell syntax checks passed.
 - Server release ops checks passed: only SSH/HTTP public, backup dump created, timer active.
 - Final `npm run release-check:local` passed after server hardening.
-- RC manifest prepared for `v0.1.0-rc.2`.
+- RC manifest prepared for `v0.1.0-rc.3`.
 - Public server release check added and passed.
 - Final RC source archive uploaded to server and checksum verified.
-- RC2 source archive uploaded to server and checksum verified.
+- RC3 source archive pending final upload/checksum.
 - Production env gate added; production launch remains blocked until real HTTPS/secrets/integrations exist.
-- QA release bundle script added for `v0.1.0-rc.2`.
+- QA release bundle script prepared for `v0.1.0-rc.3`.
 
 ## Следующая задача
 
