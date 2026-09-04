@@ -13,6 +13,10 @@
 - Добавлен OpenAPI `/health`.
 - Добавлены Flutter widget test и NestJS unit test.
 - Добавлены release/status/test/blocker документы.
+- Дочитан master prompt до конца.
+- Добавлены `AGENTS.md`, `.env.example`, `Makefile`, root release scripts и GitHub Actions CI.
+- Добавлены project docs: architecture, acceptance criteria, AI routing, integrations, security, work plan.
+- Исправлен Next ESLint warning через локальный admin ESLint config.
 
 ## Дизайн-источник
 
@@ -24,10 +28,10 @@
 
 - Node, npm, Dart, Python и Flutter SDK доступны.
 - Flutter SDK находится в `/Volumes/PD1000/job/flutter/bin/flutter`.
-- `npm run lint`, `npm run typecheck`, `npm run build`, `npm test`, `flutter analyze`, `flutter test`, `python3 -m py_compile services/ai/app/main.py` прошли.
+- `npm run check`, `npm run build`, `python3 -m py_compile services/ai/app/main.py` прошли.
 - Docker отсутствует в окружении.
-- `npm install` сообщает 2 уязвимости; отдельный `npm audit` зависал без вывода.
+- `npm install` сообщает 2 уязвимости; `npm audit --json` не вернул результат за 20 секунд.
 
 ## Следующая задача
 
-Завершить чтение master prompt, затем реализовать первый полноценный P0 vertical slice: identity/auth/profile с OpenAPI, NestJS модулем, Flutter экранами входа/OTP/профиля, admin-наблюдаемостью и тестами.
+Реализовать первый полноценный P0 vertical slice: identity/auth/profile с OpenAPI, NestJS модулем, Flutter экранами входа/OTP/профиля, admin-наблюдаемостью и тестами.

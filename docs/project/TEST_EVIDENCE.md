@@ -15,7 +15,7 @@
 - `npm install` — зависимости установлены, создан lock-файл; npm сообщил 2 уязвимости.
 - `npm run lint` — passed.
 - `npm run typecheck` — passed.
-- `npm run build` — passed; Next предупредил, что Next ESLint plugin не подключен к базовой flat config.
+- `npm run build` — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.
@@ -24,7 +24,7 @@
 ## Заблокировано
 
 - `docker --version` — `docker: command not found`.
-- `npm audit --audit-level=moderate` — зависал без вывода и был остановлен; известно из `npm install`: 2 уязвимости.
+- `npm audit --json` — не вернул результат за 20 секунд; известно из `npm install`: 2 уязвимости.
 
 ## Не запускалось
 

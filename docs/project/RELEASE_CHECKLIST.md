@@ -2,7 +2,9 @@
 
 - [x] Создать базовую структуру монорепозитория.
 - [x] Зафиксировать дизайн-источник и initial tokens.
-- [ ] Установить и зафиксировать lock-файлы зависимостей.
+- [x] Установить и зафиксировать lock-файлы зависимостей.
+- [x] Добавить CI и root release scripts.
+- [x] Создать базовые architecture/security/integration docs.
 - [ ] Реализовать auth/profile vertical slice.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.

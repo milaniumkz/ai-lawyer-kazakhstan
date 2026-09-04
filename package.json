@@ -6,12 +6,21 @@
     "services/api"
   ],
   "scripts": {
+    "bootstrap": "npm install && npm --prefix services/ai run setup --if-present && /Volumes/PD1000/job/flutter/bin/flutter pub get --directory apps/mobile",
+    "format": "dart format apps/mobile/lib apps/mobile/test",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "test:flutter": "cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test",
+    "analyze:flutter": "/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile",
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run lint && npm run typecheck && npm test && npm run analyze:flutter && npm run test:flutter && python3 -m py_compile services/ai/app/main.py",
+    "docker:config": "docker compose -f infra/docker-compose.yml config",
+    "release-check": "npm run check && npm run build && npm run docker:config"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.5",
     "typescript-eslint": "^8.69.0"
   }
 }

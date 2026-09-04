@@ -17,12 +17,17 @@ export default defineConfig([
   ]),
   ...tsConfigs.map((config) => ({
     ...config,
-    files: ['apps/admin/**/*.{ts,tsx}', 'services/api/src/**/*.ts'],
+    files: ['services/api/src/**/*.ts'],
   })),
   {
-    files: ['apps/admin/**/*.{ts,tsx}'],
-    rules: {
-      'no-undef': 'off',
+    files: ['services/api/src/**/*.ts'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        expect: 'readonly',
+        it: 'readonly',
+        process: 'readonly',
+      },
     },
   },
 ]);
