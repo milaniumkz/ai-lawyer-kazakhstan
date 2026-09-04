@@ -19,7 +19,9 @@
 - [x] Добавить PostgreSQL baseline migration.
 - [x] Добавить OpenAPI contract check script.
 - [x] Добавить typed clients/codegen foundation.
-- [ ] Реализовать case/chat/document vertical slice.
+- [x] Добавить identity PostgreSQL repository foundation.
+- [x] Реализовать case/chat/document vertical slices в local/stub режиме.
+- [ ] Подключить PostgreSQL repository adapters к runtime services.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

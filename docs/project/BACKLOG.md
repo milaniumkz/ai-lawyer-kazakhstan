@@ -16,4 +16,5 @@
 - P1-004 Release candidate packaging — done.
 - P1-005 PostgreSQL migration baseline — done.
 - P1-006 Typed clients and codegen foundation — done.
-- P1-007 Repository interfaces and PostgreSQL-backed services — planned.
+- P1-007 Repository interfaces and PostgreSQL-backed services — in_progress.
+- P1-007A Identity PostgreSQL repository foundation — done.

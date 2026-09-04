@@ -36,6 +36,10 @@
 - PostgreSQL baseline migration inspection — passed for `users`, `legal_source_fragments embedding vector(1536)`, `audit_logs`.
 - Typed API clients generation — passed, 30 paths generated for TypeScript and Dart.
 - Contract freshness check — passed inside `npm run check`.
+- `npm install --workspace services/api --save-dev @types/pg` — passed, `found 0 vulnerabilities`.
+- Identity PostgreSQL repository API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 9 suites, 28 tests.
+- Full project check after identity repository foundation — `npm run check` passed.
+- Full Node workspace build after identity repository foundation — `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
@@ -45,7 +49,6 @@
 ## Заблокировано
 
 - `docker --version` — `docker: command not found`.
-- `npm audit --json` — не вернул результат за 20 секунд; известно из `npm install`: 2 уязвимости.
 - Production Android signing — blocked, production keystore is not provided.
 - iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
 

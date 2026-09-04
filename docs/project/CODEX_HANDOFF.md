@@ -35,6 +35,7 @@
 - Реализован P1-004 release packaging: Flutter Android/iOS scaffold, `kz.ailawyer.mobile` package id, Android debug/release APK, iOS debug no-codesign build, release docs.
 - Реализован P1-005 PostgreSQL migration baseline: identity/cases/documents/RAG/templates/usage/audit schema, pgvector column, template seed, OpenAPI contract check script.
 - Реализован P1-006 typed clients/codegen foundation: generated TS/Dart API path contracts and freshness checks.
+- Реализован P1-007 identity repository foundation: `DatabaseService`, repository interface, PostgreSQL adapter for users/sessions/profiles, hash-only persistence tests for refresh tokens and IIN/BIN.
 
 ## Дизайн-источник
 
@@ -48,10 +49,10 @@
 - Flutter SDK находится в `/Volumes/PD1000/job/flutter/bin/flutter`.
 - `npm run check`, `npm run build`, `python3 -m py_compile services/ai/app/main.py` прошли.
 - Docker отсутствует в окружении.
-- `npm install` сообщает 2 уязвимости; `npm audit --json` не вернул результат за 20 секунд.
+- Последний `npm install --workspace services/api --save-dev @types/pg` завершился с `found 0 vulnerabilities`.
 - Android debug/release APK builds прошли.
 - iOS debug no-codesign build прошел.
 
 ## Следующая задача
 
-Следующая задача: постепенно заменить local/in-memory services на repository interfaces и PostgreSQL-backed implementations, начиная с identity/users/sessions/profiles.
+Следующая задача: подключить repository interface к identity service через runtime config или продолжить PostgreSQL adapters для cases/documents/RAG.
