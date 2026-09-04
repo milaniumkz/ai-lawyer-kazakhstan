@@ -44,6 +44,7 @@
 - Реализован P1-008 identity repository runtime toggle: `PERSISTENCE_MODE=postgres` wires identity to Postgres adapter, default local mode preserved.
 - Реализован P1-009 cases repository runtime toggle: `PERSISTENCE_MODE=postgres` wires cases/chat/transcripts to Postgres adapter, default local mode preserved.
 - Реализован P1-010 documents repository runtime toggle: `PERSISTENCE_MODE=postgres` wires upload sessions/documents/OCR/evidence metadata to Postgres adapter, default local mode preserved.
+- Реализован P1-011 legal RAG repository runtime toggle: `PERSISTENCE_MODE=postgres` wires legal source manual import/search/citation answer lookup to Postgres adapter, default local mode preserved.
 
 ## Дизайн-источник
 
@@ -63,4 +64,4 @@
 
 ## Следующая задача
 
-Следующая задача: подключить RAG/templates/billing repositories к runtime services через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.
+Следующая задача: подключить templates/billing repositories к runtime services через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.

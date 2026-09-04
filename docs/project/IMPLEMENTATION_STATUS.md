@@ -31,6 +31,7 @@
 | Identity repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for identity service, local default preserved | API lint/typecheck/test passed, 51 tests | done |
 | Cases repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for cases/chat/transcripts, local default preserved | API lint/typecheck/test passed, 52 tests | done |
 | Documents repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for upload sessions/documents/OCR/evidence, local default preserved | API lint/typecheck/test passed, 53 tests | done |
+| Legal RAG repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for manual import/search/citation answer source lookup, local default preserved | API lint/typecheck/test passed, 54 tests | done |
 
 ## Блокеры окружения
 

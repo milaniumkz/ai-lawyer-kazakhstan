@@ -14,7 +14,7 @@ Default API persistence is `PERSISTENCE_MODE=local`. Set `PERSISTENCE_MODE=postg
 
 Production deployment requires approved Kazakhstan data residency infrastructure, runtime secrets, TLS/DNS, object storage, database backups, monitoring and legal approval of workflows. Do not deploy with `.env.example` values.
 
-`PERSISTENCE_MODE=postgres` is required for persistent identity sessions/profiles, cases/chat/transcripts and document/evidence metadata. Other service adapters are implemented but still need runtime toggle wiring and PostgreSQL smoke tests before production use.
+`PERSISTENCE_MODE=postgres` is required for persistent identity sessions/profiles, cases/chat/transcripts, document/evidence metadata and legal source fragments. Other service adapters are implemented but still need runtime toggle wiring and PostgreSQL smoke tests before production use.
 
 ## Rollback
 

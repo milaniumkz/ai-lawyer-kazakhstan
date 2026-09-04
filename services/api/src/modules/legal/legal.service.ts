@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { CitationValidationResult, LegalSourceFragment } from './legal.types';
+import { LEGAL_REPOSITORY } from './repositories/legal-repository.provider';
+import { LegalRepository } from './repositories/legal.repository';
 
 const OFFICIAL_HOSTS = ['zan.gov.kz', 'adilet.zan.kz', 'sud.gov.kz', 'gov.kz'];
 
@@ -8,7 +10,9 @@ const OFFICIAL_HOSTS = ['zan.gov.kz', 'adilet.zan.kz', 'sud.gov.kz', 'gov.kz'];
 export class LegalService {
   private readonly fragments = new Map<string, LegalSourceFragment>();
 
-  importFragment(input: Omit<LegalSourceFragment, 'id' | 'retrievedAt' | 'checksum' | 'embeddingVersion'>) {
+  constructor(@Optional() @Inject(LEGAL_REPOSITORY) private readonly repository?: LegalRepository) {}
+
+  async importFragment(input: Omit<LegalSourceFragment, 'id' | 'retrievedAt' | 'checksum' | 'embeddingVersion'>) {
     assertOfficialSource(input.sourceUrl);
     const fragment: LegalSourceFragment = {
       ...input,
@@ -17,11 +21,13 @@ export class LegalService {
       checksum: checksum(input.text),
       embeddingVersion: 'stub-v1',
     };
+    if (this.repository) return this.repository.importFragment(fragment);
     this.fragments.set(fragment.id, fragment);
     return fragment;
   }
 
-  search(query: string) {
+  async search(query: string) {
+    if (this.repository) return this.repository.searchFragments(query);
     const normalized = query.toLowerCase();
     return [...this.fragments.values()].filter(
       (fragment) =>
@@ -30,10 +36,10 @@ export class LegalService {
     );
   }
 
-  validateCitation(input: { fragmentId?: string; officialId?: string; article?: string; eventDate?: string; quotedText?: string }): CitationValidationResult {
-    const fragment = [...this.fragments.values()].find(
-      (candidate) => candidate.id === input.fragmentId || candidate.officialId === input.officialId,
-    );
+  async validateCitation(input: { fragmentId?: string; officialId?: string; article?: string; eventDate?: string; quotedText?: string }): Promise<CitationValidationResult> {
+    const fragment = this.repository
+      ? await findRepositoryFragment(this.repository, input)
+      : [...this.fragments.values()].find((candidate) => candidate.id === input.fragmentId || candidate.officialId === input.officialId);
     if (!fragment) return insufficient();
     if (fragment.status !== 'active') return invalid('Источник не находится в действующем статусе.');
     if (input.article && fragment.article !== input.article) return invalid('Статья не принадлежит указанному фрагменту.');
@@ -42,8 +48,8 @@ export class LegalService {
     return { status: 'confirmed', message: 'Норма подтверждена официальным источником РК.', fragment };
   }
 
-  answer(query: string) {
-    const matches = this.search(query);
+  async answer(query: string) {
+    const matches = await this.search(query);
     if (!matches.length) return insufficient();
     return {
       status: 'confirmed',
@@ -51,6 +57,12 @@ export class LegalService {
       fragment: matches[0],
     };
   }
+}
+
+async function findRepositoryFragment(repository: LegalRepository, input: { fragmentId?: string; officialId?: string }) {
+  if (input.fragmentId) return repository.findFragmentById(input.fragmentId);
+  if (input.officialId) return repository.findFragmentByOfficialId(input.officialId);
+  return undefined;
 }
 
 export function assertOfficialSource(sourceUrl: string) {
