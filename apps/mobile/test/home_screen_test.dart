@@ -247,7 +247,8 @@ void main() {
 
   testWidgets('case intake voice button and create action work',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
+    await tester
+        .pumpWidget(MaterialApp(home: NewCaseScreen(recorder: _FakeRecorder())));
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
@@ -341,6 +342,20 @@ void main() {
     expect(find.text('Оплата недоступна'), findsOneWidget);
     expect(find.textContaining('Payment provider'), findsOneWidget);
   });
+}
+
+class _FakeRecorder implements VoiceRecorderPort {
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<bool> hasPermission() async => true;
+
+  @override
+  Future<void> start(String path) async {}
+
+  @override
+  Future<String?> stop() async => '/tmp/mobile-test-voice.m4a';
 }
 
 Future<void> setLargeViewport(WidgetTester tester) async {

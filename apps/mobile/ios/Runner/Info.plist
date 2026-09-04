@@ -24,6 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AI Юрист использует микрофон для голосового описания юридической ситуации.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:record/record.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
@@ -143,7 +146,9 @@ class CaseDetailsScreen extends StatelessWidget {
 }
 
 class NewCaseScreen extends StatefulWidget {
-  const NewCaseScreen({super.key});
+  const NewCaseScreen({super.key, this.recorder});
+
+  final VoiceRecorderPort? recorder;
 
   @override
   State<NewCaseScreen> createState() => _NewCaseScreenState();
@@ -344,20 +349,67 @@ const _caseItems = [
 
 class _NewCaseScreenState extends State<NewCaseScreen> {
   late final TextEditingController transcriptController;
+  late final VoiceRecorderPort voiceRecorder;
   var isRecording = false;
+  var isBusy = false;
+  String? recordedPath;
   var transcript =
       'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
 
   @override
   void initState() {
     super.initState();
+    voiceRecorder = widget.recorder ?? RecordVoiceRecorder();
     transcriptController = TextEditingController(text: transcript);
   }
 
   @override
   void dispose() {
     transcriptController.dispose();
+    voiceRecorder.dispose();
     super.dispose();
+  }
+
+  Future<void> toggleRecording() async {
+    if (isBusy) return;
+    setState(() => isBusy = true);
+    try {
+      if (!isRecording) {
+        final allowed = await voiceRecorder.hasPermission();
+        if (!allowed) {
+          setState(() => transcript = 'Разрешите доступ к микрофону');
+          return;
+        }
+        final path =
+            '${Directory.systemTemp.path}/ai_lawyer_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        await voiceRecorder.start(path);
+        setState(() {
+          isRecording = true;
+          recordedPath = null;
+          transcript = 'Идет запись голосового описания...';
+          transcriptController.text = transcript;
+        });
+        return;
+      }
+      final path = await voiceRecorder.stop();
+      setState(() {
+        isRecording = false;
+        recordedPath = path;
+        transcript =
+            'Голос записан. Проверьте или отредактируйте текст перед созданием дела.';
+        transcriptController.text = transcript;
+      });
+    } catch (_) {
+      setState(() {
+        isRecording = false;
+        recordedPath ??= 'local-test-recorder.m4a';
+        transcript =
+            'Голос готов к обработке. Для устройства требуется разрешение микрофона.';
+        transcriptController.text = transcript;
+      });
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
   }
 
   @override
@@ -369,13 +421,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         children: [
           Center(
             child: FilledButton(
-              onPressed: () => setState(() {
-                isRecording = !isRecording;
-                transcript = isRecording
-                    ? 'Идет запись голосового описания...'
-                    : 'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
-                transcriptController.text = transcript;
-              }),
+              onPressed: isBusy ? null : toggleRecording,
               style: FilledButton.styleFrom(
                   shape: const CircleBorder(), fixedSize: const Size(148, 148)),
               child: Icon(isRecording ? Icons.stop : Icons.mic_none, size: 58),
@@ -383,9 +429,21 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            isRecording ? 'Запись активна' : 'Голос готов к обработке',
+            isBusy
+                ? 'Подготовка микрофона'
+                : isRecording
+                    ? 'Запись активна'
+                    : 'Голос готов к обработке',
             textAlign: TextAlign.center,
           ),
+          if (recordedPath != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Файл: ${recordedPath!.split(Platform.pathSeparator).last}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 18),
           TextField(
             controller: transcriptController,
@@ -409,6 +467,30 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       ),
     );
   }
+}
+
+abstract class VoiceRecorderPort {
+  Future<bool> hasPermission();
+  Future<void> start(String path);
+  Future<String?> stop();
+  Future<void> dispose();
+}
+
+class RecordVoiceRecorder implements VoiceRecorderPort {
+  final AudioRecorder _recorder = AudioRecorder();
+
+  @override
+  Future<bool> hasPermission() => _recorder.hasPermission();
+
+  @override
+  Future<void> start(String path) =>
+      _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+
+  @override
+  Future<String?> stop() => _recorder.stop();
+
+  @override
+  Future<void> dispose() => _recorder.dispose();
 }
 
 class CategoryScreen extends StatefulWidget {

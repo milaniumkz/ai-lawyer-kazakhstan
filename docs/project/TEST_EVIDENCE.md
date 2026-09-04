@@ -169,6 +169,7 @@
 - Deployed action-realism browser smoke — `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after deploy. Browser flow passed on HTTPS: OTP login via backend stub delivery, profile saved in API, case saved in API, unique PDF uploaded with SHA-256, OCR confirmed in API, document analysis saw 1 server document.
 - Web navigation/action correction — `npm run test:web-ui`, `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` and `npm run release-check:local` passed after fixing onboarding login route, empty intake continuation, notifications panel, legal tabs and active/archive source filter.
 - Web real voice upload + desktop shell — `npm run check`, `npm run build`, local HTTP smoke on `http://127.0.0.1:3100`, `npm --prefix services/api test -- cases.service.spec.ts`, web/API lint/typecheck/build, contract/admin/web/migration checks passed after adding multipart audio upload and desktop responsive shell.
+- Flutter native voice recorder — `/Volumes/PD1000/job/flutter/bin/flutter pub get --directory apps/mobile`, `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` and `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed after adding `record`, Android `RECORD_AUDIO`, iOS `NSMicrophoneUsageDescription`, and fake recorder widget test coverage.
 
 ## Заблокировано
 
