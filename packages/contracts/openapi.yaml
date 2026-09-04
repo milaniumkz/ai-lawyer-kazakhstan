@@ -207,6 +207,13 @@ paths:
     get:
       operationId: listAuditEvents
       summary: List recent audit events
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
       responses:
         "200":
           description: Recent audit events without secrets or raw IIN/BIN
@@ -665,6 +672,13 @@ paths:
     get:
       operationId: listProviders
       summary: List AI providers and kill switches
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
       responses:
         "200":
           description: Provider configs
@@ -677,6 +691,13 @@ paths:
     post:
       operationId: setProvider
       summary: Set provider kill switch
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
       requestBody:
         required: true
         content:

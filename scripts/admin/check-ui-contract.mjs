@@ -22,6 +22,7 @@ const requiredPageText = [
   'Переключить provider kill switch',
   'Audit events:',
   'Provider stub:',
+  "'x-user-role': 'admin'",
 ];
 
 for (const text of requiredPageText) {
@@ -64,6 +65,7 @@ if (!/JSON\.stringify\(tokens\.light/.test(page)) failures.push('admin page miss
 for (const requiredAction of ['loadAuditEvents', 'toggleStubProvider', "fetch(`/api/v1${path}`"]) {
   if (!page.includes(requiredAction)) failures.push(`admin page missing live action: ${requiredAction}`);
 }
+if (!apiPaths.includes('/admin/audit-events') || !apiPaths.includes('/admin/providers')) failures.push('admin generated paths missing RBAC endpoints');
 
 if (failures.length) {
   console.error(failures.join('\n'));

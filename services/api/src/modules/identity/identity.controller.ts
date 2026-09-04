@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Headers, Post } from '@nestjs/common';
+import { assertAdminRole } from '../../common/admin-rbac';
 import { IdentityService } from './identity.service';
 import { AuthChannel, ProfileType } from './identity.types';
 
@@ -63,7 +64,8 @@ export class IdentityController {
   }
 
   @Get('admin/audit-events')
-  auditEvents() {
+  auditEvents(@Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
     return this.identity.listAuditEvents();
   }
 }

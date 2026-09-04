@@ -100,6 +100,7 @@
 | Public account lifecycle smoke P1 | Public server check now exercises account export and deletion after registration/case/document/RAG demo flow and verifies exported payload does not leak the registration password | `npm run check`, `npm run build` passed; server smoke pending deploy refresh | done |
 | Web account compliance parity P1 | Web settings now calls `/api/v1/account/export` and `DELETE /api/v1/account`, clears local authenticated state after deletion, and contract gate requires these actions | `npm run check`, `npm run build`, web UI contract/lint/typecheck/build passed | done |
 | Admin live operations parity P1 | Admin dashboard now loads live `/api/v1/admin/audit-events` and toggles `/api/v1/admin/providers` kill switch state instead of showing only static operations text | `npm run check`, `npm run build`, admin UI contract/lint/typecheck/build passed | done |
+| Admin RBAC enforcement P1 | `/api/v1/admin/audit-events` and `/api/v1/admin/providers` now require `x-user-role: admin|superadmin`; admin UI sends the role header and smoke tests verify 403 without it | `npm run check`, `npm run build`, API smoke/admin contract passed | done |
 
 ## Блокеры окружения
 

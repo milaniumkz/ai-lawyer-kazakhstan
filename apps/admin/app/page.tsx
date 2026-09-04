@@ -32,6 +32,7 @@ export default function AdminHome() {
       headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'admin-ops',
+        'x-user-role': 'admin',
         ...(init?.headers ?? {}),
       },
     });

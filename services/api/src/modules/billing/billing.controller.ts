@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { assertAdminRole } from '../../common/admin-rbac';
 import { BillingService } from './billing.service';
 import { AiUsageEvent, ProviderConfig } from './billing.types';
 
@@ -17,12 +18,14 @@ export class BillingController {
   }
 
   @Get('admin/providers')
-  providers() {
+  providers(@Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
     return this.billing.listProviders();
   }
 
   @Post('admin/providers')
-  setProvider(@Body() body: ProviderConfig) {
+  setProvider(@Body() body: ProviderConfig, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
     return this.billing.setProvider(body);
   }
 }

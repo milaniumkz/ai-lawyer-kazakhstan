@@ -112,4 +112,16 @@ describe('AppModule HTTP smoke', () => {
       })
       .expect(201);
   });
+
+  it('enforces admin role on admin operations', async () => {
+    await request(app.getHttpServer()).get('/api/v1/admin/audit-events').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/admin/providers').expect(403);
+
+    await request(app.getHttpServer()).get('/api/v1/admin/audit-events').set('x-user-role', 'admin').expect(200);
+    await request(app.getHttpServer())
+      .post('/api/v1/admin/providers')
+      .set('x-user-role', 'admin')
+      .send({ provider: 'stub', enabled: true })
+      .expect(201);
+  });
 });
