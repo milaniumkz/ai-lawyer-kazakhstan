@@ -8,6 +8,7 @@ const cards = [
 ];
 
 const auditEvents = ['otp_requested', 'login', 'session_created', 'profile_created', 'logout_all_devices'];
+const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 'classifying', 'ready'];
 
 export default function AdminHome() {
   return (
@@ -34,6 +35,15 @@ export default function AdminHome() {
         <div className="pills">
           {auditEvents.map((event) => (
             <span key={event}>{event}</span>
+          ))}
+        </div>
+      </section>
+      <section className="notice">
+        <strong>Case/chat/voice</strong>
+        <span>Создание дела идемпотентно, голосовой intake работает в stub mode, статусы совместимы с SSE/WebSocket контрактом.</span>
+        <div className="pills">
+          {caseStatuses.map((status) => (
+            <span key={status}>{status}</span>
           ))}
         </div>
       </section>

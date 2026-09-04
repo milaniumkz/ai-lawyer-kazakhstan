@@ -94,16 +94,19 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.business_center_outlined,
                   title: 'Новое дело',
                   subtitle: 'Создать новое дело',
+                  route: '/case/new',
                 ),
                 _ActionCard(
                   icon: Icons.description_outlined,
                   title: 'Мои документы',
                   subtitle: 'Просмотр и загрузка',
+                  route: '/case/chat',
                 ),
                 _ActionCard(
                   icon: Icons.calendar_month_outlined,
                   title: 'Сроки',
                   subtitle: 'Даты и напоминания',
+                  route: '/case/chat',
                 ),
               ],
             ),
@@ -137,38 +140,44 @@ class _ActionCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.route,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final String route;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 160,
       height: 176,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: AppColors.gold, size: 34),
-              const SizedBox(height: 12),
-              Text(title,
+      child: InkWell(
+        onTap: () => context.go(route),
+        borderRadius: BorderRadius.circular(20),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: AppColors.gold, size: 34),
+                const SizedBox(height: 12),
+                Text(title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
         ),
       ),

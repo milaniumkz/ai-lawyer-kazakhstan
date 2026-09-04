@@ -180,6 +180,137 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AuditEvent"
+  /cases:
+    get:
+      operationId: listCases
+      summary: List cases owned by current user
+      parameters:
+        - in: header
+          name: x-user-id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Legal cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegalCase"
+    post:
+      operationId: createCase
+      summary: Create a legal case from confirmed text
+      parameters:
+        - in: header
+          name: idempotency-key
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseRequest"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCase"
+  /cases/{caseId}:
+    get:
+      operationId: getCase
+      summary: Get case by id
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Legal case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCase"
+  /cases/{caseId}/messages:
+    get:
+      operationId: listMessages
+      summary: List case messages
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: addMessage
+      summary: Add message to case chat
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMessageRequest"
+      responses:
+        "201":
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /voice/transcripts:
+    post:
+      operationId: createTranscript
+      summary: Create local/stub transcript job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTranscriptRequest"
+      responses:
+        "201":
+          description: Transcript job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranscriptJob"
+  /voice/transcripts/{id}:
+    get:
+      operationId: getTranscript
+      summary: Get transcript job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transcript job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranscriptJob"
 components:
   schemas:
     HealthResponse:
@@ -353,6 +484,115 @@ components:
           additionalProperties: true
         correlationId:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+    LegalCase:
+      type: object
+      required: [id, ownerUserId, title, problemText, category, confidence, status, readinessPercent, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerUserId:
+          type: string
+        profileId:
+          type: string
+        title:
+          type: string
+        problemText:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: string
+        confidence:
+          type: number
+        status:
+          type: string
+          enum: [consultation, clarification_required, collecting_documents, document_drafting, review_required]
+        readinessPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+    CreateCaseRequest:
+      type: object
+      required: [ownerUserId, problemText]
+      properties:
+        ownerUserId:
+          type: string
+        profileId:
+          type: string
+        problemText:
+          type: string
+          minLength: 10
+    Message:
+      type: object
+      required: [id, caseId, role, text, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, system]
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateMessageRequest:
+      type: object
+      required: [role, text]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        text:
+          type: string
+    CreateTranscriptRequest:
+      type: object
+      properties:
+        caseId:
+          type: string
+        language:
+          type: string
+          enum: [ru, kk, en]
+        audioRef:
+          type: string
+        text:
+          type: string
+    TranscriptJob:
+      type: object
+      required: [id, status, language, transcript, lowConfidenceFragments, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        status:
+          type: string
+          enum: [transcribing, classifying, retrieving_sources, validating, generating, review_required, ready, failed]
+        language:
+          type: string
+          enum: [ru, kk, en]
+        transcript:
+          type: string
+        lowConfidenceFragments:
+          type: array
+          items:
+            type: string
+        progress:
+          type: array
+          items:
+            type: string
         createdAt:
           type: string
           format: date-time

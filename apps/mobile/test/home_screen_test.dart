@@ -1,13 +1,30 @@
 import 'package:ai_lawyer_kz/main.dart';
+import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('shows the main voice action', (tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(const AiLawyerApp());
 
     expect(find.text('Рассказать проблему'), findsOneWidget);
     await tester.drag(find.text('Рассказать проблему'), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Последние дела'), findsOneWidget);
+  });
+
+  testWidgets('opens login route', (tester) async {
+    await tester.pumpWidget(const AiLawyerApp());
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    expect(find.text('Вход и регистрация'), findsWidgets);
+  });
+
+  testWidgets('shows case intake screen', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
+
+    expect(find.text('Подтвердить и создать дело'), findsOneWidget);
   });
 }

@@ -20,6 +20,9 @@
 - Реализован P0-002 local/stub identity slice: phone/email OTP, refresh rotation, logout all, sessions, profiles, audit events, IIN/BIN masking.
 - Добавлены Flutter экраны входа, OTP и профиля.
 - Admin dashboard показывает identity audit event classes.
+- Реализован P0-003 local/stub case/chat/voice intake slice: cases, messages, idempotency, transcript jobs, progress statuses, AI classifier stub.
+- Добавлены Flutter экраны нового дела и чата по делу.
+- Admin dashboard показывает case/chat/voice status classes.
 
 ## Дизайн-источник
 
@@ -37,4 +40,4 @@
 
 ## Следующая задача
 
-Реализовать P0-003: case/chat/voice intake vertical slice с OpenAPI, NestJS cases/messages, FastAPI classifier stub, Flutter case/chat screens, admin visibility и тестами.
+Реализовать P0-004: documents/evidence/OCR vertical slice с OpenAPI, NestJS upload/evidence metadata, AI OCR stub, Flutter documents/evidence screens, admin failed processing visibility и тестами.

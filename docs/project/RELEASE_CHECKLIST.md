@@ -6,6 +6,7 @@
 - [x] Добавить CI и root release scripts.
 - [x] Создать базовые architecture/security/integration docs.
 - [x] Реализовать auth/profile vertical slice.
+- [x] Реализовать case/chat/voice intake vertical slice.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
