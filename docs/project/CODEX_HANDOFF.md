@@ -39,6 +39,7 @@
 - Реализован P1-007B cases repository foundation: PostgreSQL adapter for cases/messages/transcripts and `case_idempotency_keys` migration.
 - Реализован P1-007C documents repository foundation: PostgreSQL adapter for upload sessions/files/OCR fields/evidence folders and `upload_sessions` migration.
 - Реализован P1-007D legal RAG repository foundation: PostgreSQL adapter for official legal source fragments and bounded active search.
+- Реализован P1-007E templates repository foundation: PostgreSQL adapter for versioned templates and generated legal documents.
 
 ## Дизайн-источник
 
@@ -58,4 +59,4 @@
 
 ## Следующая задача
 
-Следующая задача: продолжить PostgreSQL adapters для templates/billing или подключить готовые repositories к runtime services через config.
+Следующая задача: продолжить PostgreSQL adapter для billing или подключить готовые repositories к runtime services через config.
