@@ -46,6 +46,7 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/cases').set('x-user-id', userId).expect(200);
     await request(app.getHttpServer())
       .post(`/api/v1/cases/${legalCase.body.id}/messages`)
+      .set('x-user-id', userId)
       .send({ role: 'user', text: 'Что делать дальше?' })
       .expect(201);
 
@@ -111,6 +112,30 @@ describe('AppModule HTTP smoke', () => {
         correlationId: 'smoke',
       })
       .expect(201);
+  });
+
+  it('enforces case ownership on case and chat endpoints', async () => {
+    const auth = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ channel: 'phone', phone: '+77011234565', consentVersion: 'v1' })
+      .expect(201);
+    const tokens = await request(app.getHttpServer())
+      .post('/api/v1/auth/otp/verify')
+      .send({ otpId: auth.body.otpId, code: '111111' })
+      .expect(201);
+    const userId = tokens.body.user.id as string;
+    const legalCase = await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
+      .expect(201);
+
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}`).expect(403);
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}`).set('x-user-id', 'other-user').expect(403);
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}`).set('x-user-id', userId).expect(200);
+    await request(app.getHttpServer())
+      .post(`/api/v1/cases/${legalCase.body.id}/messages`)
+      .send({ role: 'user', text: 'Чужой запрос' })
+      .expect(403);
   });
 
   it('enforces admin role on admin operations', async () => {

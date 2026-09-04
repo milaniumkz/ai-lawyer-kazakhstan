@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -23,6 +23,14 @@ describe('CasesService', () => {
 
     const messages = await service.listMessages(legalCase.id);
     expect(messages.some((message) => message.text.includes('официальные источники РК'))).toBe(true);
+  });
+
+  it('rejects case access for another owner', async () => {
+    const service = new CasesService();
+    const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Нужно взыскать долг по расписке' });
+
+    await expect(service.getCase(legalCase.id, 'u2')).rejects.toThrow(ForbiddenException);
+    await expect(service.addMessage(legalCase.id, { role: 'user', text: 'Что делать дальше?' }, 'u2')).rejects.toThrow(ForbiddenException);
   });
 
   it('creates ready transcript job with progress states', async () => {

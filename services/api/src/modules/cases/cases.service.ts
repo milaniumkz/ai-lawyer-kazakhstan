@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -66,14 +66,18 @@ export class CasesService {
     return [...this.cases.values()].filter((item) => item.ownerUserId === ownerUserId);
   }
 
-  async getCase(caseId: string) {
+  async getCase(caseId: string, ownerUserId?: string) {
     const record = this.repository ? await this.repository.findCaseById(caseId) : this.cases.get(caseId);
     if (!record) throw new NotFoundException('CASE_NOT_FOUND');
+    if (ownerUserId !== undefined) {
+      if (!ownerUserId) throw new ForbiddenException('USER_REQUIRED');
+      if (record.ownerUserId !== ownerUserId) throw new ForbiddenException('CASE_ACCESS_DENIED');
+    }
     return record;
   }
 
-  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }) {
-    await this.getCase(caseId);
+  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }, ownerUserId?: string) {
+    await this.getCase(caseId, ownerUserId);
     if (!input.text) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
     const message: MessageRecord = { id: randomUUID(), caseId, role: input.role, text: input.text, createdAt: new Date().toISOString() };
     if (this.repository) await this.repository.createMessage(message);
@@ -94,8 +98,8 @@ export class CasesService {
     return message;
   }
 
-  async listMessages(caseId: string) {
-    await this.getCase(caseId);
+  async listMessages(caseId: string, ownerUserId?: string) {
+    await this.getCase(caseId, ownerUserId);
     if (this.repository) return this.repository.listMessages(caseId);
     return this.messages.get(caseId) ?? [];
   }

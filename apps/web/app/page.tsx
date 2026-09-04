@@ -321,8 +321,9 @@ export default function WebHome() {
       return;
     }
     try {
-      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", body: JSON.stringify({ role: "user", text: outgoing }) });
-      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`) as { role: "system" | "user" | "assistant"; text: string }[];
+      const userId = await ensureUser();
+      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
+      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as { role: "system" | "user" | "assistant"; text: string }[];
       setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ role: item.role as "user" | "assistant", text: item.text })));
       setSyncState("Чат сохранен в API");
     } catch (error) {

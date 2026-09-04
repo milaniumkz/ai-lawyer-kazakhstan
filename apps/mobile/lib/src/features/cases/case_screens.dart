@@ -729,17 +729,20 @@ class HttpCaseApi implements CaseApiPort {
         ApiContract.casesCaseIdMessages.replaceFirst('{caseId}', caseId);
     final post = await http.post(
       Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'),
-      headers: const {
+      headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-chat',
+        'x-user-id': AuthRuntime.userId,
       },
       body: jsonEncode({'role': 'user', 'text': text}),
     );
     if (post.statusCode < 200 || post.statusCode >= 300) {
       throw HttpException('message send failed: ${post.statusCode}');
     }
-    final get = await http
-        .get(Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'));
+    final get = await http.get(
+      Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'),
+      headers: {'x-user-id': AuthRuntime.userId},
+    );
     final body = jsonDecode(get.body);
     if (get.statusCode < 200 || get.statusCode >= 300) {
       throw HttpException('messages list failed: ${get.statusCode}');

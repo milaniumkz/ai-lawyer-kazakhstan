@@ -272,6 +272,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Legal case
@@ -289,6 +295,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Messages
@@ -307,6 +319,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:

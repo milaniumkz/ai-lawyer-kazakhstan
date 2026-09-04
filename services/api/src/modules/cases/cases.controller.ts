@@ -20,18 +20,18 @@ export class CasesController {
   }
 
   @Get('cases/:caseId')
-  getCase(@Param('caseId') caseId: string) {
-    return this.cases.getCase(caseId);
+  getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId = '') {
+    return this.cases.getCase(caseId, userId);
   }
 
   @Post('cases/:caseId/messages')
-  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }) {
-    return this.cases.addMessage(caseId, body);
+  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }, @Headers('x-user-id') userId = '') {
+    return this.cases.addMessage(caseId, body, userId);
   }
 
   @Get('cases/:caseId/messages')
-  listMessages(@Param('caseId') caseId: string) {
-    return this.cases.listMessages(caseId);
+  listMessages(@Param('caseId') caseId: string, @Headers('x-user-id') userId = '') {
+    return this.cases.listMessages(caseId, userId);
   }
 
   @Post('voice/transcripts')
