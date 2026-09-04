@@ -82,5 +82,6 @@
 - [x] Исправить web button semantics: “Новое дело”, настройки, подписка, помощь и активные nav-состояния.
 - [x] Убрать видимую QA-матрицу из web и заменить правую панель на рабочее пространство дела.
 - [x] Добавить web persistence, управляемые формы, file picker, видимый mobile status и нормальную классификацию дел.
+- [x] Добавить hash routes, явный dark/light theme switch и обновление статуса/прогресса дела от действий.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

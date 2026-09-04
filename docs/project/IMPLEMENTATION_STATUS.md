@@ -75,6 +75,7 @@
 | Web button semantics pass P1 | Fixed misleading web actions: home “Новое дело” opens intake creation, profile/settings/subscription/help are separate functional states, and side/bottom nav active states follow nested flows | Web UI contract, web lint/typecheck/build and local browser transition smoke passed | done |
 | Web real app shell pass P1 | Removed visible QA/design screen matrix from public web and replaced it with a functional case workspace: progress, tasks, case actions and documents | Web UI contract, web lint/build and local browser smoke passed | done |
 | Web dynamic state pass P1 | Added browser-persistent web state, controlled auth/profile/help forms, real file picker handoff, visible mobile status and improved case classification for labor/family/civil inputs | Web UI contract, web lint/typecheck/build and browser persistence smoke passed | done |
+| Web route/theme app pass P1 | Added hash-addressable app screens, explicit dark/light theme switch, dark design default and case progress/status updates from chat/documents/tasks/claim actions | `npm run release-check:local` passed | done |
 
 ## Блокеры окружения
 

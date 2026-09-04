@@ -1,4 +1,16 @@
 :root {
+  --bg: #06111d;
+  --panel: #0d1a28;
+  --panel-soft: #101f2f;
+  --text: #f8f4ec;
+  --muted: #a9b0ba;
+  --gold: #e6bd62;
+  --gold-strong: #ffd979;
+  --line: rgba(230, 189, 98, 0.38);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.appShell[data-theme="light"] {
   --bg: #fbf7ef;
   --panel: #ffffff;
   --panel-soft: #f5efe4;
@@ -10,29 +22,12 @@
   --shadow: 0 24px 70px rgba(32, 39, 44, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #06111d;
-    --panel: #0d1a28;
-    --panel-soft: #101f2f;
-    --text: #f8f4ec;
-    --muted: #a9b0ba;
-    --gold: #e6bd62;
-    --gold-strong: #ffd979;
-    --line: rgba(230, 189, 98, 0.38);
-    --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
-  }
-}
-
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(230, 189, 98, 0.12), transparent 28%),
-    radial-gradient(circle at 80% 6%, rgba(230, 189, 98, 0.08), transparent 22%),
-    var(--bg);
-  color: var(--text);
+  background: #06111d;
+  color: #f8f4ec;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -42,10 +37,16 @@ button { cursor: pointer; }
 
 .appShell {
   display: grid;
-  grid-template-columns: 230px minmax(420px, 560px) minmax(320px, 1fr);
+  grid-template-columns: 220px minmax(420px, 560px) 320px;
+  justify-content: center;
   gap: 22px;
   min-height: 100vh;
   padding: 22px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(230, 189, 98, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 6%, rgba(230, 189, 98, 0.08), transparent 22%),
+    var(--bg);
+  color: var(--text);
 }
 
 .sidebar,
@@ -134,6 +135,12 @@ button { cursor: pointer; }
   overflow: hidden;
   border-radius: 34px;
   min-height: calc(100vh - 44px);
+  max-width: 560px;
+  border-color: var(--gold);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(230, 189, 98, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 22%),
+    var(--panel);
 }
 
 .appStatus {
@@ -149,7 +156,26 @@ button { cursor: pointer; }
   color: var(--muted);
   padding: 8px 14px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appStatus button {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold-strong);
+}
+
+.appStatus span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -244,7 +270,7 @@ h3 { font-size: 28px; }
 
 .quickGrid button {
   min-height: 130px;
-  border-radius: 22px;
+  border-radius: 18px;
   color: var(--gold-strong);
   font-weight: 800;
   padding: 20px;
@@ -278,7 +304,7 @@ h3 { font-size: 28px; }
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
-  border-radius: 20px;
+  border-radius: 18px;
   color: var(--text);
   padding: 18px;
   text-align: left;

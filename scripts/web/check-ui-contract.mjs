@@ -57,6 +57,7 @@ const requiredActions = [
   'verifyOtp',
   'saveProfile',
   'appStatus',
+  'data-theme={theme}',
   'Задержка зарплаты',
   'работодател',
   'зарплат',
@@ -87,7 +88,7 @@ for (const action of requiredActions) {
 }
 
 const cssNeedles = [
-  '@media (prefers-color-scheme: dark)',
+  '.appShell[data-theme="light"]',
   '@media (max-width: 980px)',
   '@media (max-width: 620px)',
   '.appShell',

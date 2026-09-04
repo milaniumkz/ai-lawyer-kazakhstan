@@ -33,6 +33,8 @@ type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 type TaskItem = { title: string; due: string; done: boolean };
 type SavedState = {
+  view: View;
+  theme: "dark" | "light";
   cases: CaseItem[];
   activeCaseId: string;
   caseText: string;
@@ -82,6 +84,7 @@ const initialCases: CaseItem[] = [
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>("home");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [cases, setCases] = useState<CaseItem[]>(initialCases);
   const [activeCaseId, setActiveCaseId] = useState(initialCases[0].id);
   const [caseText, setCaseText] = useState("Нужно взыскать долг по договору займа. Есть расписка и переписка.");
@@ -125,6 +128,7 @@ export default function WebHome() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (window.location.hash !== `#${view}`) window.history.replaceState(null, "", `#${view}`);
   }, [view]);
 
   useEffect(() => {
@@ -132,6 +136,10 @@ export default function WebHome() {
     if (!raw) return;
     try {
       const saved = JSON.parse(raw) as Partial<SavedState>;
+      const hashView = window.location.hash.replace("#", "") as View;
+      if (screens.some((screen) => screen.view === hashView)) setView(hashView);
+      else if (saved.view) setView(saved.view);
+      if (saved.theme === "light" || saved.theme === "dark") setTheme(saved.theme);
       if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
@@ -153,9 +161,9 @@ export default function WebHome() {
   }, []);
 
   useEffect(() => {
-    const saved: SavedState = { cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks };
+    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
-  }, [cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
+  }, [view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
 
   function go(nextView: View) {
     setView(nextView);
@@ -191,10 +199,13 @@ export default function WebHome() {
       { role: "assistant", text: "Для ответа потребуется договор, расписка, переписка и подтвержденная норма из официального источника РК." },
     ]);
     setChatInput("");
+    updateActiveCase("AI уточняет факты", 72);
+    setSyncState("Сообщение добавлено в дело");
   }
 
   function addDocument(name: string) {
     setDocuments((items) => [{ name, status: "Загружен" }, ...items]);
+    updateActiveCase("Документы загружены", 76);
     setSyncState(`Документ добавлен: ${name}`);
   }
 
@@ -231,6 +242,11 @@ export default function WebHome() {
 
   function toggleTask(title: string) {
     setTasks((items) => items.map((item) => (item.title === title ? { ...item, done: !item.done } : item)));
+    updateActiveCase("Задачи обновлены", 78);
+  }
+
+  function updateActiveCase(status: string, progress: number) {
+    setCases((items) => items.map((item) => (item.id === activeCaseId ? { ...item, status, progress: Math.max(item.progress, progress) } : item)));
   }
 
   function startAuth(target: "login" | "register") {
@@ -417,7 +433,7 @@ export default function WebHome() {
           <div className="analysisBox">
             <strong>Проверка документов</strong>
             <p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : "Не хватает акта сверки. Подтвердите отсутствие или загрузите документ."}</p>
-            <button className="primary" onClick={() => { setAnalysisDone(true); go("analysis"); }}>Анализировать документы</button>
+            <button className="primary" onClick={() => { setAnalysisDone(true); updateActiveCase("Анализ документов завершен", 84); go("analysis"); }}>Анализировать документы</button>
             <button disabled={!analysisDone} onClick={() => go("claim")}>Сформировать претензию</button>
           </div>
         </section>
@@ -454,8 +470,8 @@ export default function WebHome() {
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <div className="claimPreview">Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя.</div>
           <div className="actionBar">
-            <button className="primary" onClick={() => { setClaimReady(true); go("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
-            <button disabled={!claimReady} onClick={() => { setSent(true); go("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
+            <button className="primary" onClick={() => { setClaimReady(true); updateActiveCase("Проект претензии готов", 91); go("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
+            <button disabled={!claimReady} onClick={() => { setSent(true); updateActiveCase("Отправка претензии зафиксирована", 100); go("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
           </div>
         </section>
       );
@@ -543,7 +559,7 @@ export default function WebHome() {
   }
 
   return (
-    <main className="appShell" data-design-screen-count={screens.length}>
+    <main className="appShell" data-theme={theme} data-design-screen-count={screens.length}>
       <aside className="sidebar">
         <strong>AI Юрист</strong>
         <nav>
@@ -555,10 +571,11 @@ export default function WebHome() {
           <Nav label="Профиль" current={["profile", "settings", "subscription", "help", "login", "register", "otp", "biometric"].includes(view)} onClick={() => go("profile")} />
         </nav>
         <button className="sync" onClick={syncWithApi}>Синхронизировать</button>
+        <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "Светлая тема" : "Темная тема"}</button>
         <small>{syncState}</small>
       </aside>
       <section className="deviceFrame">
-        <div className="appStatus">{syncState}</div>
+        <div className="appStatus"><span>{syncState}</span><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
         {renderView()}
         <nav className="bottomNav">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Главная</button>
