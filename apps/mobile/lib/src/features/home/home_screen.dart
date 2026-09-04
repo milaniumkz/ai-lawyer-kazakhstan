@@ -80,6 +80,7 @@ class HomeScreen extends StatelessWidget {
                   icon: const Icon(Icons.notifications_none),
                 ),
                 IconButton(
+                  key: const ValueKey('home-profile'),
                   tooltip: 'Профиль',
                   onPressed: () => context.go('/profile'),
                   icon: const Icon(Icons.person_outline),
@@ -94,7 +95,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 42),
             Center(
               child: FilledButton(
-                onPressed: () => context.go('/login'),
+                onPressed: () => context.go('/case/new'),
                 style: FilledButton.styleFrom(
                   shape: const CircleBorder(),
                   fixedSize: const Size(176, 176),
@@ -136,7 +137,7 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.calendar_month_outlined,
                   title: 'Сроки',
                   subtitle: 'Даты и напоминания',
-                  route: '/legal',
+                  route: '/deadlines',
                 ),
               ],
             ),

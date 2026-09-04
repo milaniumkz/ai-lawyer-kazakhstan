@@ -24,12 +24,20 @@ void main() {
     expect(find.text('Последние дела'), findsOneWidget);
   });
 
-  testWidgets('opens login route', (tester) async {
+  testWidgets('main voice button opens case intake route', (tester) async {
     await tester.pumpWidget(const AiLawyerApp());
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
-    expect(find.text('Вход и регистрация'), findsWidgets);
+    expect(find.text('Новое дело'), findsWidgets);
+  });
+
+  testWidgets('profile icon opens profile route', (tester) async {
+    await tester.pumpWidget(const AiLawyerApp());
+
+    await tester.tap(find.byKey(const ValueKey('home-profile')));
+    await tester.pumpAndSettle();
+    expect(find.text('Профиль пользователя'), findsWidgets);
   });
 
   testWidgets('onboarding buttons work', (tester) async {
@@ -50,11 +58,9 @@ void main() {
 
   testWidgets('registration otp and biometric flow works', (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/login'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Зарегистрироваться'));
     await tester.pumpAndSettle();
     expect(find.text('Регистрация пользователя'), findsWidgets);

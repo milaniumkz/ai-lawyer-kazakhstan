@@ -69,6 +69,7 @@
 - Профиль, настройки, помощь, biometric local flag и Legal Citation Validator получили рабочие действия; пустых `onTap/onPressed` в mobile/web не осталось.
 - Добавлены недостающие routes из дизайн-листа: регистрация, биометрия, определение категории, анализ документов, draft/send претензии, поиск нормы права.
 - Добавлен onboarding route; web получил кликабельную матрицу 25 дизайн-экранов с active screen preview.
+- Исправлены главные маршруты: mic открывает voice intake, “Сроки” открывает calendar/deadlines, profile icon стабильно ведет в профиль.
 
 ## Дизайн-источник
 
@@ -103,6 +104,7 @@
 - Latest profile/legal completion verified: Flutter analyze/test 19 tests, web build, `release-check:local`, `release-check:server`.
 - Latest 25-screen flow pass verified: Flutter analyze/test 21 tests, `release-check:local`, `release-check:server`.
 - Latest onboarding/web matrix pass verified: Flutter analyze/test 22 tests, web build, server rebuild, `release-check:local`, `release-check:server`.
+- Latest main route parity pass verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
 
 ## Следующая задача
 
