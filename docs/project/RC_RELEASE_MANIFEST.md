@@ -1,6 +1,6 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.1`
+Release: `v0.1.0-rc.2`
 
 Date: 2026-09-04
 
@@ -29,8 +29,8 @@ Date: 2026-09-04
 
 ## Source Archive
 
-- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.1.tar.gz`
-- SHA-256: `0959cee4e96ae911071a515dcbce49ddf3d64caaf2912ca352b72360cd6a9dc8`
+- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.2.tar.gz`
+- SHA-256: pending until archive build.
 
 ## Not Production Until
 
