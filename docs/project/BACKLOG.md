@@ -33,3 +33,4 @@
 - P1-015 Mobile design golden regression tests — done.
 - P1-016 Admin UI contract check — done.
 - P1-017 OpenAPI/controller route drift check — done.
+- P1-018 API HTTP smoke tests — done.

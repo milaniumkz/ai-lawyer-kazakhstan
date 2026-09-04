@@ -27,3 +27,4 @@ P1-014,P1,Database migration contract check,done
 P1-015,P1,Mobile design golden regression tests,done
 P1-016,P1,Admin UI contract check,done
 P1-017,P1,OpenAPI controller route drift check,done
+P1-018,P1,API HTTP smoke tests,done

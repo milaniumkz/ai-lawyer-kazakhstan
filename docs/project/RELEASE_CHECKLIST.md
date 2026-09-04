@@ -37,6 +37,7 @@
 - [x] Добавить Flutter light/dark golden regression tests для реализованных mobile screens.
 - [x] Добавить admin UI contract regression check.
 - [x] Добавить OpenAPI/controller route drift check.
+- [x] Добавить API HTTP smoke tests для основных vertical routes.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

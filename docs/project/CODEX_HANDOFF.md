@@ -51,6 +51,7 @@
 - Реализован P1-015 mobile design regression tests: light/dark home golden snapshots and core screen render smoke tests across both themes.
 - Реализован P1-016 admin UI contract check: required dashboard sections, official-source wording, generated API paths and light/dark tokens; included in root `npm run check`.
 - Реализован P1-017 OpenAPI/controller route drift check: all NestJS controller routes are compared against OpenAPI and generated clients.
+- Реализован P1-018 API HTTP smoke tests: in-process Nest app with `/api/v1` prefix covers health, identity, cases, documents, RAG, templates and billing.
 
 ## Дизайн-источник
 
@@ -70,4 +71,4 @@
 
 ## Следующая задача
 
-Следующая задача: продолжить RC hardening по runtime HTTP smoke/E2E, remaining mobile screens, или добавить PostgreSQL integration smoke tests when Docker/Postgres available.
+Следующая задача: продолжить RC hardening по remaining mobile screens/admin flows или добавить PostgreSQL integration smoke tests when Docker/Postgres available.

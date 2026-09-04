@@ -38,6 +38,7 @@
 | Mobile design regression tests P1 | Flutter light/dark golden snapshots for home screen and render smoke tests for core release screens in both themes | Flutter analyze/test passed, 11 widget/golden tests; `npm run check`, `npm run build` passed | done |
 | Admin UI contract check P1 | Static regression check for dashboard sections, official KZ guardrail wording, API paths and light/dark token consistency; included in root check | `npm run test:admin-ui`, `npm run check`, `npm run build` passed | done |
 | OpenAPI controller route drift check P1 | Contract checker compares all NestJS controller routes against OpenAPI paths and generated clients | `npm run test:contract`, `npm run check`, `npm run build` passed | done |
+| API HTTP smoke tests P1 | In-process Nest app smoke test with `/api/v1` global prefix across health/identity/cases/documents/RAG/templates/billing routes | API tests passed, 15 suites/58 tests; `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 

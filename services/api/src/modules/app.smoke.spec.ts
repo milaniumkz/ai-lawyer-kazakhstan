@@ -1,0 +1,115 @@
+import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import * as request from 'supertest';
+import { SafeHttpExceptionFilter } from '../common/safe-http-exception.filter';
+import { AppModule } from './app.module';
+
+describe('AppModule HTTP smoke', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    app = moduleRef.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalFilters(new SafeHttpExceptionFilter());
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('serves health through the public API prefix', async () => {
+    await request(app.getHttpServer()).get('/api/v1/health').expect(200).expect(({ body }) => {
+      expect(body).toMatchObject({ status: 'ok', jurisdiction: 'KZ' });
+    });
+  });
+
+  it('covers identity, cases, documents, RAG, templates and billing routes', async () => {
+    const auth = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ channel: 'phone', phone: '+77011234567', consentVersion: 'v1' })
+      .expect(201);
+
+    const tokens = await request(app.getHttpServer())
+      .post('/api/v1/auth/otp/verify')
+      .send({ otpId: auth.body.otpId, code: '111111' })
+      .expect(201);
+
+    const userId = tokens.body.user.id as string;
+    const legalCase = await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .set('idempotency-key', 'smoke-case-1')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по договору займа' })
+      .expect(201);
+
+    await request(app.getHttpServer()).get('/api/v1/cases').set('x-user-id', userId).expect(200);
+    await request(app.getHttpServer())
+      .post(`/api/v1/cases/${legalCase.body.id}/messages`)
+      .send({ role: 'user', text: 'Что делать дальше?' })
+      .expect(201);
+
+    const upload = await request(app.getHttpServer())
+      .post('/api/v1/files/upload-sessions')
+      .send({ caseId: legalCase.body.id, fileName: 'claim.pdf', mimeType: 'application/pdf', sizeBytes: 1024 })
+      .expect(201);
+    const document = await request(app.getHttpServer())
+      .post('/api/v1/files/complete')
+      .send({ uploadSessionId: upload.body.id, sha256: 'smoke-hash-1' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/v1/documents/${document.body.id}/ocr-confirm`)
+      .send({ fields: { amount: '150000' } })
+      .expect(201);
+
+    const source = await request(app.getHttpServer())
+      .post('/api/v1/legal-sources/manual-import')
+      .send({
+        officialId: 'adilet:smoke:001',
+        title: 'Официальный фрагмент РК',
+        sourceType: 'law',
+        authority: 'Әділет',
+        language: 'ru',
+        article: '1',
+        text: 'Официальный тестовый фрагмент о взыскании долга.',
+        sourceUrl: 'https://adilet.zan.kz/rus/docs/smoke',
+        effectiveFrom: '2024-01-01T00:00:00.000Z',
+        sourceVersion: '2024-01-01',
+        status: 'active',
+      })
+      .expect(201);
+    await request(app.getHttpServer()).post('/api/v1/citations/validate').send({ fragmentId: source.body.id, article: '1' }).expect(201);
+
+    const templates = await request(app.getHttpServer()).get('/api/v1/templates').expect(200);
+    await request(app.getHttpServer())
+      .post('/api/v1/documents/generate')
+      .send({
+        templateId: templates.body[0].id,
+        caseId: legalCase.body.id,
+        fields: {
+          claimantName: 'Иван Иванов',
+          respondentName: 'ТОО Борышкер',
+          claimAmount: '150000',
+          claimReason: 'задолженность по договору',
+          deadlineDate: '2026-09-20',
+        },
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/usage/ai')
+      .send({
+        userId,
+        provider: 'stub',
+        modelAlias: 'simple',
+        inputUnits: 1,
+        outputUnits: 1,
+        durationMs: 1,
+        estimatedCostKzt: 0,
+        complexity: 'simple',
+        risk: 'low',
+        correlationId: 'smoke',
+      })
+      .expect(201);
+  });
+});

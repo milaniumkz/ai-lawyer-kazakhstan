@@ -71,6 +71,8 @@
 - Full project check/build after admin UI contract check — `npm run check`, `npm run build` passed.
 - OpenAPI/controller route drift check — `npm run test:contract` passed.
 - Full project check/build after route drift check — `npm run check`, `npm run build` passed.
+- API HTTP smoke tests — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 15 suites, 58 tests.
+- Full project check/build after API HTTP smoke tests — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
