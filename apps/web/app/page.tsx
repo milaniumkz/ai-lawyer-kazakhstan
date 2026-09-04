@@ -38,6 +38,22 @@ type ApiDocument = { id: string; fileName: string; status: string; extractedFiel
 type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
 type ApiLegalAnswer = { status: string; message: string; fragment?: { title: string; article?: string; sourceUrl: string; text: string; retrievedAt?: string } };
 type TranscriptJob = { id: string; status: string; transcript: string; progress: string[] };
+type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
+type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
+type SpeechRecognitionInstance = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+type SpeechWindow = Window & {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+};
 type SavedState = {
   view: View;
   theme: "dark" | "light";
@@ -93,6 +109,7 @@ export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [view, setView] = useState<View>("home");
   const [hydrated, setHydrated] = useState(false);
@@ -109,6 +126,7 @@ export default function WebHome() {
   const [paused, setPaused] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioUrl, setAudioUrl] = useState("");
+  const [speechStatus, setSpeechStatus] = useState("Распознавание речи еще не запускалось");
   const [transcriptJobId, setTranscriptJobId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Гражданское право");
   const [authUserId, setAuthUserId] = useState("");
@@ -134,7 +152,7 @@ export default function WebHome() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("Дмитрий");
   const [email, setEmail] = useState("client@example.kz");
-  const [otp, setOtp] = useState("111111");
+  const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
   const [profileName, setProfileName] = useState("Дмитрий");
@@ -223,6 +241,7 @@ export default function WebHome() {
   }, [paused, recording]);
 
   useEffect(() => () => {
+    speechRecognitionRef.current?.stop();
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     if (audioUrl) URL.revokeObjectURL(audioUrl);
   }, [audioUrl]);
@@ -233,15 +252,8 @@ export default function WebHome() {
 
   async function ensureUser() {
     if (authUserId) return authUserId;
-    const suffix = Date.now().toString().slice(-7).padStart(7, "0");
-    const registered = await apiJson("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ channel: "phone", phone: `+7701${suffix}`, password: password || "Demo12345", consentVersion: "v1" }),
-    });
-    setOtpId(registered.otpId);
-    const verified = await apiJson("/auth/otp/verify", { method: "POST", body: JSON.stringify({ otpId: registered.otpId, code: "111111" }) });
-    setAuthUserId(verified.user.id);
-    return verified.user.id as string;
+    go("login");
+    throw new Error("Сначала войдите или зарегистрируйтесь");
   }
 
   function mapCase(record: ApiLegalCase): CaseItem {
@@ -350,19 +362,17 @@ export default function WebHome() {
   async function syncWithApi() {
     setSyncState("Синхронизация...");
     try {
-      const suffix = Date.now().toString().slice(-7).padStart(7, "0");
-      const registered = await apiJson("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ channel: "phone", phone: `+7701${suffix}`, password: "Demo12345", consentVersion: "v1" }),
-      });
-      const verified = await apiJson("/auth/otp/verify", { method: "POST", body: JSON.stringify({ otpId: registered.otpId, code: "111111" }) });
-      const legalCase = await apiJson("/cases", {
-        method: "POST",
-        headers: { "idempotency-key": `web-app-${Date.now()}` },
-        body: JSON.stringify({ ownerUserId: verified.user.id, problemText: caseText }),
-      });
-      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: legalQuery }) });
-      setSyncState(`Сохранено: дело ${legalCase.id.slice(0, 8)}, RAG ${answer.status}`);
+      await apiJson("/health");
+      if (!authUserId) {
+        setSyncState("API доступен. Для загрузки данных войдите в аккаунт.");
+        go("login");
+        return;
+      }
+      const remoteCases = await apiJson("/cases", { headers: { "x-user-id": authUserId } }) as ApiLegalCase[];
+      setCases(remoteCases.map(mapCase));
+      const budget = await apiJson("/subscriptions/current", { headers: { "x-user-id": authUserId } });
+      setSubscriptionStatus(`Тариф ${budget.plan}, расход ${budget.percent}%`);
+      setSyncState(`Синхронизировано: ${remoteCases.length} дел`);
     } catch (error) {
       setSyncState(error instanceof Error ? `Ошибка: ${error.message}` : "Ошибка синхронизации");
     }
@@ -507,6 +517,41 @@ export default function WebHome() {
     return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
   }
 
+  function getSpeechRecognitionConstructor() {
+    const speechWindow = window as SpeechWindow;
+    return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+  }
+
+  function startSpeechRecognition() {
+    const Recognition = getSpeechRecognitionConstructor();
+    if (!Recognition) {
+      setSpeechStatus("Live распознавание не поддерживается этим браузером");
+      return;
+    }
+    try {
+      const recognition = new Recognition();
+      recognition.lang = "ru-RU";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (event) => {
+        const text = Array.from(event.results)
+          .map((result) => result[0]?.transcript ?? "")
+          .join(" ")
+          .trim();
+        if (text) {
+          setCaseText(text);
+          setSpeechStatus("Речь распознана браузером");
+        }
+      };
+      recognition.onerror = () => setSpeechStatus("Live распознавание недоступно, аудио сохранено");
+      recognition.start();
+      speechRecognitionRef.current = recognition;
+      setSpeechStatus("Live распознавание включено");
+    } catch {
+      setSpeechStatus("Live распознавание не запустилось, аудио сохранено");
+    }
+  }
+
   async function startRecording() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setSyncState("Браузер не поддерживает запись голоса");
@@ -532,6 +577,7 @@ export default function WebHome() {
       setPaused(false);
       setRecording(true);
       recorder.start();
+      startSpeechRecognition();
       setSyncState("Идет реальная запись с микрофона");
     } catch {
       setSyncState("Микрофон недоступен: разрешите доступ в браузере");
@@ -546,12 +592,16 @@ export default function WebHome() {
     }
     if (recorder.state === "recording") {
       recorder.pause();
+      speechRecognitionRef.current?.stop();
+      speechRecognitionRef.current = null;
       setPaused(true);
+      setSpeechStatus("Live распознавание на паузе");
       setSyncState("Запись на паузе");
       return;
     }
     if (recorder.state === "paused") {
       recorder.resume();
+      startSpeechRecognition();
       setPaused(false);
       setSyncState("Запись продолжена");
     }
@@ -560,6 +610,8 @@ export default function WebHome() {
   async function finishRecording() {
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state !== "inactive") recorder.stop();
+    speechRecognitionRef.current?.stop();
+    speechRecognitionRef.current = null;
     setRecording(false);
     setPaused(false);
     setSyncState("Запись завершена, отправляю transcript job...");
@@ -595,7 +647,7 @@ export default function WebHome() {
     try {
       const registered = await apiJson("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ channel: "phone", phone, email: target === "register" ? email : undefined, password: password || "Demo12345", consentVersion: "v1" }),
+        body: JSON.stringify({ channel: "phone", phone, email: target === "register" ? email : undefined, password: password || undefined, consentVersion: "v1" }),
       });
       setOtpId(registered.otpId);
       setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
@@ -606,8 +658,8 @@ export default function WebHome() {
   }
 
   async function verifyOtp() {
-    if (otp.trim() !== "111111") {
-      setSyncState("Неверный SMS код");
+    if (!otp.trim()) {
+      setSyncState("Введите код из SMS");
       return;
     }
     if (!otpId) {
@@ -705,6 +757,7 @@ export default function WebHome() {
             <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
             <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl}>Запись голоса</audio>}
+            <small className="recordMeta">{speechStatus}</small>
             {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}
             <div className="wave" aria-hidden="true"></div>
           </div>

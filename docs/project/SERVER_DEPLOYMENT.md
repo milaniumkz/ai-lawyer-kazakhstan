@@ -4,16 +4,17 @@
 
 ## Public URLs
 
-- Web: `http://89.207.250.217/`
-- Admin: `http://89.207.250.217/admin`
-- API health: `http://89.207.250.217/api/v1/health`
-- AI health: `http://89.207.250.217/ai/health`
+- Web: `https://89-207-250-217.sslip.io/`
+- Admin: `https://89-207-250-217.sslip.io/admin`
+- API health: `https://89-207-250-217.sslip.io/api/v1/health`
+- AI health: `https://89-207-250-217.sslip.io/ai/health`
 
 ## Runtime
 
 - OS: Ubuntu 24.04 LTS.
-- Reverse proxy: Nginx on port 80.
-- Firewall: UFW allows SSH and HTTP; app internals are not public.
+- Reverse proxy: Nginx on ports 80/443.
+- Firewall: UFW allows SSH, HTTP and HTTPS; app internals are not public.
+- TLS: Let’s Encrypt certificate for `89-207-250-217.sslip.io`.
 - Node services: systemd + `npm run start`.
 - AI service: systemd + Uvicorn.
 - API mode: `APP_ENV=staging`, `PERSISTENCE_MODE=postgres`.
@@ -43,6 +44,10 @@ curl http://89.207.250.217/api/v1/health
 curl http://89.207.250.217/ai/health
 curl -I http://89.207.250.217/
 curl -IL http://89.207.250.217/admin
+curl https://89-207-250-217.sslip.io/api/v1/health
+curl https://89-207-250-217.sslip.io/ai/health
+curl -I https://89-207-250-217.sslip.io/
+curl -IL https://89-207-250-217.sslip.io/admin
 bash /opt/ai-lawyer-kz/app/scripts/deploy/server-health-check.sh
 ```
 
@@ -63,6 +68,6 @@ systemctl list-timers ai-lawyer-postgres-backup.timer --no-pager
 
 ## Remaining Blockers
 
-- No domain and TLS certificate yet; server is HTTP-only by IP.
+- Custom production domain/DNS is not provided; trusted test HTTPS is available through `sslip.io`.
 - Real SMS, payment, storage, government and official legal source API credentials are not provided.
 - Production Android signing and Apple distribution credentials are not provided.

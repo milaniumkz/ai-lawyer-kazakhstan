@@ -84,9 +84,10 @@
 | Web real-data voice pass P1 | Removed fake prefilled cases/legal norms, added real browser MediaRecorder voice capture with playback and transcript job API handoff, and made auth OTP call API before user data appears | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 | Server HTTPS mic-test pass P1 | Added reproducible self-signed HTTPS Nginx config and firewall 443 rule so browser microphone APIs can run on the test server before real domain/TLS is provided | Shell syntax check and local release-check passed | done |
 | Trusted HTTPS voice endpoint P1 | Issued Let’s Encrypt certificate for `89-207-250-217.sslip.io` and verified real browser microphone recording without certificate bypass | HTTPS server check and Playwright mic smoke passed | done |
+| Web real-user data pass P1 | Removed random auto-registration/sync behavior, removed hardcoded web OTP acceptance, and added browser live speech recognition status on top of real MediaRecorder capture | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 
 ## Блокеры окружения
 
 - `docker` не установлен.
 - Production government/payment/SMS/storage provider credentials are not provided; all related integrations stay in official adapter + local/manual mode.
-- Public server is HTTP-only by IP until domain/TLS is configured.
+- Custom production domain/DNS is not provided; trusted test HTTPS is available at `89-207-250-217.sslip.io`.

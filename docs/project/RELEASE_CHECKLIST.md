@@ -91,5 +91,7 @@
 - [x] Убрать fake web data и добавить реальную запись голоса через браузерный микрофон.
 - [x] Добавить HTTPS test endpoint для браузерной записи голоса на сервере.
 - [x] Выпустить trusted HTTPS на `89-207-250-217.sslip.io` и проверить реальную запись голоса.
-- [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
+- [x] Убрать random auto-registration/sync и hardcoded web OTP, чтобы данные появлялись только после реального входа/API действий.
+- [x] Добавить live browser speech-recognition status поверх реальной записи голоса.
+- [ ] Подключить custom production domain. Blocked: домен/DNS не предоставлены; trusted test HTTPS уже работает через `sslip.io`.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.
