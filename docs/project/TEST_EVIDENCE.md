@@ -161,6 +161,7 @@
 - Web legal design parity pass — `npm run test:web-ui`, web lint/typecheck/build and `npm run release-check:local` passed after restoring 3 home quick cards and adding functional legal norm search/tabs/cards/document actions.
 - Web real-data voice pass — `npm run release-check:local` passed after replacing fake voice timer with MediaRecorder, removing prefilled fake cases/legal norms, adding audio playback/transcript job handoff and API-backed OTP.
 - Server HTTPS mic-test pass — `bash -n scripts/deploy/server-runtime.sh scripts/deploy/server-install.sh scripts/deploy/server-firewall.sh` and `npm run release-check:local` passed; self-signed HTTPS is configured for microphone testing until real domain/TLS is available.
+- Trusted HTTPS voice endpoint — `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed; browser mic smoke passed with `secureContext=true`, `getUserMedia=true`, active recording, real timer and transcript job.
 
 ## Заблокировано
 
