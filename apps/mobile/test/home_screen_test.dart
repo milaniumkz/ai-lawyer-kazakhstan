@@ -4,10 +4,16 @@ import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
 import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
 import 'package:ai_lawyer_kz/src/features/subscription/subscription_screen.dart';
 import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
+import 'package:ai_lawyer_kz/src/api/api_contract.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('generated API contract exposes auth and case paths', () {
+    expect(ApiContract.authRegister, '/auth/register');
+    expect(ApiContract.cases, '/cases');
+  });
+
   testWidgets('shows the main voice action', (tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(const AiLawyerApp());

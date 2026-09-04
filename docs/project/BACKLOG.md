@@ -15,4 +15,5 @@
 - P1-003 Security/compliance hardening — done.
 - P1-004 Release candidate packaging — done.
 - P1-005 PostgreSQL migration baseline — done.
-- P1-006 Typed clients and codegen foundation — planned.
+- P1-006 Typed clients and codegen foundation — done.
+- P1-007 Repository interfaces and PostgreSQL-backed services — planned.

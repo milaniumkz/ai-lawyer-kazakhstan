@@ -21,6 +21,7 @@
 | Security/compliance hardening P1 | NestJS safe error envelope with correlation ID, sensitive detail masking, security scan for secrets and forbidden РФ legal tokens, docs update | `npm run check`, `npm run build`, security scan passed | done |
 | Release candidate packaging P1 | Flutter Android/iOS platform scaffold, project package IDs, Android debug/release APK, iOS debug no-codesign build, release docs/checksums | Android debug/release build passed, iOS debug no-codesign build passed | done |
 | PostgreSQL migration baseline P1 | Initial SQL schema for identity, cases, chat, documents, evidence, legal source fragments with pgvector, templates, generated documents, AI usage, audit logs; template seed; contract check script | `npm run check`, `node scripts/contracts/check-openapi.mjs`, migration text inspection passed | done |
+| Typed clients/codegen foundation P1 | OpenAPI path generator, generated TypeScript and Dart API path contracts, contract freshness check, admin/mobile usage | `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 

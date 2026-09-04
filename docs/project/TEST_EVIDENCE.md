@@ -34,6 +34,9 @@
 - iOS debug no-codesign build — passed, `apps/mobile/build/ios/iphoneos/Runner.app`.
 - OpenAPI contract script — passed via `node scripts/contracts/check-openapi.mjs`.
 - PostgreSQL baseline migration inspection — passed for `users`, `legal_source_fragments embedding vector(1536)`, `audit_logs`.
+- Typed API clients generation — passed, 30 paths generated for TypeScript and Dart.
+- Contract freshness check — passed inside `npm run check`.
+- Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

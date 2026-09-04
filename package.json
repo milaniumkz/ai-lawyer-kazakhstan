@@ -13,6 +13,7 @@
     "test": "npm run test --workspaces --if-present",
     "test:security": "node scripts/security-scan.mjs",
     "test:contract": "node scripts/contracts/check-openapi.mjs",
+    "generate:clients": "node scripts/contracts/generate-clients.mjs",
     "test:flutter": "cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test",
     "analyze:flutter": "/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile",
     "build": "npm run build --workspaces --if-present",

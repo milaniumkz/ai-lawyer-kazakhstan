@@ -1,4 +1,5 @@
 import { tokens } from '../src/design-system/tokens';
+import { apiPaths } from '../src/api/api-paths';
 
 const cards = [
   ['Активные дела', '128'],
@@ -88,6 +89,7 @@ export default function AdminHome() {
         </div>
       </section>
       <pre className="tokens">{JSON.stringify(tokens.light, null, 2)}</pre>
+      <pre className="tokens">API paths: {apiPaths.length}</pre>
     </main>
   );
 }

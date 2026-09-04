@@ -34,6 +34,7 @@
 - Реализован P1-003 security hardening: safe API error envelope, correlation ID, sensitive detail masking, secret/foreign-law scan.
 - Реализован P1-004 release packaging: Flutter Android/iOS scaffold, `kz.ailawyer.mobile` package id, Android debug/release APK, iOS debug no-codesign build, release docs.
 - Реализован P1-005 PostgreSQL migration baseline: identity/cases/documents/RAG/templates/usage/audit schema, pgvector column, template seed, OpenAPI contract check script.
+- Реализован P1-006 typed clients/codegen foundation: generated TS/Dart API path contracts and freshness checks.
 
 ## Дизайн-источник
 
@@ -53,4 +54,4 @@
 
 ## Следующая задача
 
-Следующая задача: добавить typed clients/codegen foundation для OpenAPI, затем постепенно заменить local/in-memory services на repository interfaces и PostgreSQL-backed implementations.
+Следующая задача: постепенно заменить local/in-memory services на repository interfaces и PostgreSQL-backed implementations, начиная с identity/users/sessions/profiles.

@@ -18,6 +18,7 @@
 - [x] Проверить iOS debug no-codesign build.
 - [x] Добавить PostgreSQL baseline migration.
 - [x] Добавить OpenAPI contract check script.
+- [x] Добавить typed clients/codegen foundation.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
