@@ -55,6 +55,8 @@ const requiredActions = [
   'type="file"',
   'capture="environment"',
   'crypto.subtle.digest("SHA-256"',
+  'profileTypeMap',
+  'application/pdf',
   'startAuth(',
   'verifyOtp',
   'saveProfile',

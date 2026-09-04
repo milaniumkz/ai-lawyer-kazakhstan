@@ -364,7 +364,10 @@ export default function WebHome() {
       headers: { "content-type": "application/json", "x-correlation-id": "web-app-sync", ...(init?.headers ?? {}) },
     });
     const body = await response.json();
-    if (!response.ok) throw new Error(body.message ?? body.error ?? `${path} failed`);
+    if (!response.ok) {
+      const message = body.message ?? body.error ?? `${path} failed`;
+      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    }
     return body;
   }
 
@@ -762,10 +765,15 @@ export default function WebHome() {
     setName(profileName);
     try {
       const userId = await ensureUser();
+      const profileTypeMap: Record<string, string> = {
+        "Физлицо": "person",
+        "ИП": "individual_entrepreneur",
+        "Юрлицо": "legal_entity",
+      };
       const cleanIinBin = profileId.replace(/\D/g, "");
       await apiJson("/profiles", {
         method: "POST",
-        body: JSON.stringify({ userId, type: profileType, displayName: profileName, iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined }),
+        body: JSON.stringify({ userId, type: profileTypeMap[profileType] ?? "person", displayName: profileName, iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined }),
       });
       setSyncState(`Профиль сохранен в API: ${profileType}`);
     } catch (error) {
@@ -940,7 +948,7 @@ export default function WebHome() {
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <div className="actionBar">
-            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
+            <input ref={fileInputRef} className="fileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
             <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
             <button className="primary" onClick={() => fileInputRef.current?.click()}>Загрузить файл</button>
             <button onClick={() => scanInputRef.current?.click()}>Сканировать документ</button>
