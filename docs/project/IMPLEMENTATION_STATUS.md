@@ -28,6 +28,7 @@
 | Legal RAG PostgreSQL repository P1 | Legal repository interface and PostgreSQL adapter for official source fragments/search/citation storage metadata | API lint/typecheck/test passed, 41 tests | done |
 | Templates PostgreSQL repository P1 | Template repository interface and PostgreSQL adapter for templates/generated documents/expert review metadata | API lint/typecheck/test passed, 45 tests | done |
 | Billing PostgreSQL repository P1 | Billing repository interface, subscriptions/provider config migration, PostgreSQL adapter for AI usage ledger without raw PII | API lint/typecheck/test passed, 50 tests | done |
+| Identity repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for identity service, local default preserved | API lint/typecheck/test passed, 51 tests | done |
 
 ## Блокеры окружения
 

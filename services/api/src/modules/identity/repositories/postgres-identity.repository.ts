@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../common/database/database.service';
-import { ProfileRecord, SessionRecord, UserRecord } from '../identity.types';
+import { AuditEvent, ProfileRecord, SessionRecord, UserRecord } from '../identity.types';
 import { IdentityRepository } from './identity.repository';
 
 @Injectable()
@@ -24,12 +24,25 @@ export class PostgresIdentityRepository implements IdentityRepository {
     return mapUser(result.rows[0]!);
   }
 
+  async findUserById(userId: string) {
+    const result = await this.db.query<UserRow>('SELECT * FROM users WHERE id = $1 LIMIT 1', [userId]);
+    return result.rows[0] ? mapUser(result.rows[0]) : undefined;
+  }
+
   async createSession(input: Pick<SessionRecord, 'userId' | 'refreshToken'>) {
     const result = await this.db.query<SessionRow>(
       'INSERT INTO sessions (user_id, refresh_token_hash) VALUES ($1, $2) RETURNING *',
       [input.userId, hashSensitiveValue(input.refreshToken)],
     );
     return mapSession(result.rows[0]!, input.refreshToken);
+  }
+
+  async findSessionByRefreshToken(refreshToken: string) {
+    const result = await this.db.query<SessionRow>(
+      'SELECT * FROM sessions WHERE refresh_token_hash = $1 AND revoked_at IS NULL LIMIT 1',
+      [hashSensitiveValue(refreshToken)],
+    );
+    return result.rows[0] ? mapSession(result.rows[0], refreshToken) : undefined;
   }
 
   async revokeSession(sessionId: string) {
@@ -69,6 +82,21 @@ export class PostgresIdentityRepository implements IdentityRepository {
     const result = await this.db.query<ProfileRow>('SELECT * FROM profiles WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
     return result.rows.map(mapProfile);
   }
+
+  async createAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>) {
+    const result = await this.db.query<AuditEventRow>(
+      `INSERT INTO audit_logs (action, actor_user_id, target_id, metadata, correlation_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [input.action, input.actorUserId ?? null, input.targetId ?? null, input.metadata, input.correlationId],
+    );
+    return mapAuditEvent(result.rows[0]!);
+  }
+
+  async listAuditEvents() {
+    const result = await this.db.query<AuditEventRow>('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100');
+    return result.rows.map(mapAuditEvent);
+  }
 }
 
 interface UserRow {
@@ -95,6 +123,16 @@ interface ProfileRow {
   display_name: string;
   iin_bin_hash?: string;
   address?: string;
+  created_at: Date;
+}
+
+interface AuditEventRow {
+  id: string;
+  action: string;
+  actor_user_id?: string | null;
+  target_id?: string | null;
+  metadata: AuditEvent['metadata'];
+  correlation_id: string;
   created_at: Date;
 }
 
@@ -129,6 +167,18 @@ export function mapProfile(row: ProfileRow): ProfileRecord {
     displayName: row.display_name,
     iinBin: row.iin_bin_hash ? '[hashed]' : undefined,
     address: row.address,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export function mapAuditEvent(row: AuditEventRow): AuditEvent {
+  return {
+    id: row.id,
+    action: row.action,
+    actorUserId: row.actor_user_id ?? undefined,
+    targetId: row.target_id ?? undefined,
+    metadata: row.metadata,
+    correlationId: row.correlation_id,
     createdAt: row.created_at.toISOString(),
   };
 }

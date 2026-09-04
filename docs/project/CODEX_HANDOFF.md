@@ -41,6 +41,7 @@
 - Реализован P1-007D legal RAG repository foundation: PostgreSQL adapter for official legal source fragments and bounded active search.
 - Реализован P1-007E templates repository foundation: PostgreSQL adapter for versioned templates and generated legal documents.
 - Реализован P1-007F billing repository foundation: PostgreSQL adapter for subscriptions, provider kill switch and AI usage ledger.
+- Реализован P1-008 identity repository runtime toggle: `PERSISTENCE_MODE=postgres` wires identity to Postgres adapter, default local mode preserved.
 
 ## Дизайн-источник
 
@@ -60,4 +61,4 @@
 
 ## Следующая задача
 
-Следующая задача: подключить готовые repositories к runtime services через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.
+Следующая задача: подключить cases/documents/RAG/templates/billing repositories к runtime services через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.

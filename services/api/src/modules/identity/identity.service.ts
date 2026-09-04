@@ -1,6 +1,8 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { AuditEvent, AuthChannel, ProfileRecord, ProfileType, SessionRecord, UserRecord } from './identity.types';
+import { IDENTITY_REPOSITORY } from './repositories/identity-repository.provider';
+import { IdentityRepository } from './repositories/identity.repository';
 
 const OTP_CODE = '111111';
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -13,6 +15,8 @@ export class IdentityService {
   private readonly otpRequests = new Map<string, { channel: AuthChannel; phone?: string; email?: string; expiresAt: number; consentVersion: string; passwordHash?: string }>();
   private readonly rateLimits = new Map<string, { count: number; resetAt: number }>();
   private readonly auditEvents: AuditEvent[] = [];
+
+  constructor(@Optional() @Inject(IDENTITY_REPOSITORY) private readonly repository?: IdentityRepository) {}
 
   register(input: { channel: AuthChannel; phone?: string; email?: string; password?: string; consentVersion: string }, correlationId: string) {
     this.assertChannel(input.channel, input.phone, input.email);
@@ -33,55 +37,67 @@ export class IdentityService {
     return { otpId, expiresAt: new Date(Date.now() + OTP_TTL_MS).toISOString(), deliveryMode: 'stub', testCode: OTP_CODE };
   }
 
-  verifyOtp(input: { otpId: string; code: string }, correlationId: string) {
+  async verifyOtp(input: { otpId: string; code: string }, correlationId: string) {
     const otp = this.otpRequests.get(input.otpId);
     if (!otp || otp.expiresAt < Date.now()) throw new UnauthorizedException('OTP_EXPIRED_OR_UNKNOWN');
     if (input.code !== OTP_CODE) throw new UnauthorizedException('OTP_INVALID');
 
-    const existing = [...this.users.values()].find((user) => user.phone === otp.phone || user.email === otp.email);
+    const existing = this.repository
+      ? await this.repository.findUserByContact({ phone: otp.phone, email: otp.email })
+      : [...this.users.values()].find((user) => user.phone === otp.phone || user.email === otp.email);
     const user =
       existing ??
-      this.createUser({
+      (await this.createUser({
         channel: otp.channel,
         phone: otp.phone,
         email: otp.email,
         passwordHash: otp.passwordHash,
         consentVersion: otp.consentVersion,
-      });
+      }));
     this.otpRequests.delete(input.otpId);
-    this.audit('login', user.id, user.id, { channel: user.channel }, correlationId);
+    await this.audit('login', user.id, user.id, { channel: user.channel }, correlationId);
     return this.issueTokens(user, correlationId);
   }
 
-  login(input: { phone?: string; email?: string; password?: string }, correlationId: string) {
-    const user = [...this.users.values()].find((candidate) => candidate.phone === input.phone || candidate.email === input.email);
+  async login(input: { phone?: string; email?: string; password?: string }, correlationId: string) {
+    const user = this.repository
+      ? await this.repository.findUserByContact({ phone: input.phone, email: input.email })
+      : [...this.users.values()].find((candidate) => candidate.phone === input.phone || candidate.email === input.email);
     if (!user) throw new UnauthorizedException('INVALID_CREDENTIALS');
     if (user.passwordHash && this.hash(input.password ?? '') !== user.passwordHash) {
-      this.audit('failed_login', undefined, user.id, { channel: user.channel }, correlationId);
+      await this.audit('failed_login', undefined, user.id, { channel: user.channel }, correlationId);
       throw new UnauthorizedException('INVALID_CREDENTIALS');
     }
-    this.audit('login', user.id, user.id, { channel: user.channel }, correlationId);
+    await this.audit('login', user.id, user.id, { channel: user.channel }, correlationId);
     return this.issueTokens(user, correlationId);
   }
 
-  refresh(input: { refreshToken: string }, correlationId: string) {
-    const session = [...this.sessions.values()].find((candidate) => candidate.refreshToken === input.refreshToken && !candidate.revokedAt);
+  async refresh(input: { refreshToken: string }, correlationId: string) {
+    const session = this.repository
+      ? await this.repository.findSessionByRefreshToken(input.refreshToken)
+      : [...this.sessions.values()].find((candidate) => candidate.refreshToken === input.refreshToken && !candidate.revokedAt);
     if (!session) throw new UnauthorizedException('INVALID_REFRESH_TOKEN');
-    session.revokedAt = new Date().toISOString();
-    const user = this.mustGetUser(session.userId);
-    this.audit('refresh_rotated', user.id, session.id, {}, correlationId);
+    if (this.repository) await this.repository.revokeSession(session.id);
+    else session.revokedAt = new Date().toISOString();
+    const user = await this.mustGetUser(session.userId);
+    await this.audit('refresh_rotated', user.id, session.id, {}, correlationId);
     return this.issueTokens(user, correlationId);
   }
 
-  logoutAll(userId: string, correlationId: string) {
-    for (const session of this.sessions.values()) {
-      if (session.userId === userId && !session.revokedAt) session.revokedAt = new Date().toISOString();
+  async logoutAll(userId: string, correlationId: string) {
+    if (this.repository) {
+      await this.repository.revokeAllSessions(userId);
+    } else {
+      for (const session of this.sessions.values()) {
+        if (session.userId === userId && !session.revokedAt) session.revokedAt = new Date().toISOString();
+      }
     }
-    this.audit('logout_all_devices', userId, userId, {}, correlationId);
+    await this.audit('logout_all_devices', userId, userId, {}, correlationId);
     return { revoked: true };
   }
 
-  listSessions(userId: string) {
+  async listSessions(userId: string) {
+    if (this.repository) return this.repository.listSessions(userId);
     return [...this.sessions.values()]
       .filter((session) => session.userId === userId)
       .map((session) => ({
@@ -92,37 +108,39 @@ export class IdentityService {
       }));
   }
 
-  createProfile(input: { userId: string; type: ProfileType; displayName: string; iinBin?: string; address?: string; bankAccount?: string }, correlationId: string) {
-    this.mustGetUser(input.userId);
+  async createProfile(input: { userId: string; type: ProfileType; displayName: string; iinBin?: string; address?: string; bankAccount?: string }, correlationId: string) {
+    await this.mustGetUser(input.userId);
     if (!input.displayName) throw new BadRequestException('DISPLAY_NAME_REQUIRED');
     if (input.iinBin && !isValidIinBin(input.iinBin)) throw new BadRequestException('IIN_BIN_INVALID');
 
-    const profile: ProfileRecord = {
-      id: randomUUID(),
-      userId: input.userId,
-      type: input.type,
-      displayName: input.displayName,
-      iinBin: input.iinBin,
-      address: input.address,
-      bankAccount: input.bankAccount,
-      createdAt: new Date().toISOString(),
-    };
-    this.profiles.set(profile.id, profile);
-    this.audit('profile_created', input.userId, profile.id, { type: input.type, iinBin: maskIinBin(input.iinBin) }, correlationId);
+    const profile = this.repository
+      ? await this.repository.createProfile(input)
+      : this.createLocalProfile(input);
+    await this.audit('profile_created', input.userId, profile.id, { type: input.type, iinBin: maskIinBin(input.iinBin) }, correlationId);
     return { ...profile, iinBin: maskIinBin(profile.iinBin) };
   }
 
-  listProfiles(userId: string) {
-    return [...this.profiles.values()]
-      .filter((profile) => profile.userId === userId)
-      .map((profile) => ({ ...profile, iinBin: maskIinBin(profile.iinBin) }));
+  async listProfiles(userId: string) {
+    const profiles = this.repository ? await this.repository.listProfiles(userId) : [...this.profiles.values()].filter((profile) => profile.userId === userId);
+    return profiles.map((profile) => ({ ...profile, iinBin: maskIinBin(profile.iinBin) }));
   }
 
-  listAuditEvents() {
+  async listAuditEvents() {
+    if (this.repository) return this.repository.listAuditEvents();
     return this.auditEvents.slice(-100).reverse();
   }
 
-  private createUser(input: { channel: AuthChannel; phone?: string; email?: string; passwordHash?: string; consentVersion: string }) {
+  private async createUser(input: { channel: AuthChannel; phone?: string; email?: string; passwordHash?: string; consentVersion: string }) {
+    if (this.repository) {
+      return this.repository.createUser({
+        channel: input.channel,
+        phone: input.phone,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        roles: ['user'],
+        consentVersion: input.consentVersion,
+      });
+    }
     const user: UserRecord = {
       id: randomUUID(),
       channel: input.channel,
@@ -137,21 +155,37 @@ export class IdentityService {
     return user;
   }
 
-  private issueTokens(user: UserRecord, correlationId: string) {
+  private async issueTokens(user: UserRecord, correlationId: string) {
     const session: SessionRecord = {
       id: randomUUID(),
       userId: user.id,
       refreshToken: `stub_refresh_${randomUUID()}`,
       createdAt: new Date().toISOString(),
     };
-    this.sessions.set(session.id, session);
-    this.audit('session_created', user.id, session.id, {}, correlationId);
+    const storedSession = this.repository ? await this.repository.createSession(session) : session;
+    if (!this.repository) this.sessions.set(session.id, session);
+    await this.audit('session_created', user.id, storedSession.id, {}, correlationId);
     return {
       accessToken: `stub_access_${user.id}`,
       refreshToken: session.refreshToken,
       tokenType: 'Bearer',
       user: { id: user.id, roles: user.roles, consentVersion: user.consentVersion },
     };
+  }
+
+  private createLocalProfile(input: { userId: string; type: ProfileType; displayName: string; iinBin?: string; address?: string; bankAccount?: string }) {
+    const profile: ProfileRecord = {
+      id: randomUUID(),
+      userId: input.userId,
+      type: input.type,
+      displayName: input.displayName,
+      iinBin: input.iinBin,
+      address: input.address,
+      bankAccount: input.bankAccount,
+      createdAt: new Date().toISOString(),
+    };
+    this.profiles.set(profile.id, profile);
+    return profile;
   }
 
   private assertChannel(channel: AuthChannel, phone?: string, email?: string) {
@@ -170,8 +204,8 @@ export class IdentityService {
     if (bucket.count > 5) throw new HttpException('RATE_LIMITED', HttpStatus.TOO_MANY_REQUESTS);
   }
 
-  private mustGetUser(userId: string) {
-    const user = this.users.get(userId);
+  private async mustGetUser(userId: string) {
+    const user = this.repository ? await this.repository.findUserById(userId) : this.users.get(userId);
     if (!user) throw new UnauthorizedException('USER_NOT_FOUND');
     return user;
   }
@@ -180,8 +214,10 @@ export class IdentityService {
     return createHash('sha256').update(value).digest('hex');
   }
 
-  private audit(action: string, actorUserId: string | undefined, targetId: string | undefined, metadata: AuditEvent['metadata'], correlationId: string) {
-    this.auditEvents.push({ id: randomUUID(), action, actorUserId, targetId, metadata, correlationId, createdAt: new Date().toISOString() });
+  private async audit(action: string, actorUserId: string | undefined, targetId: string | undefined, metadata: AuditEvent['metadata'], correlationId: string) {
+    const event = { action, actorUserId, targetId, metadata, correlationId };
+    if (this.repository) await this.repository.createAuditEvent(event);
+    else this.auditEvents.push({ id: randomUUID(), ...event, createdAt: new Date().toISOString() });
   }
 }
 
