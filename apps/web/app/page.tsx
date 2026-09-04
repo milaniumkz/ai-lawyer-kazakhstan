@@ -240,11 +240,6 @@ export default function WebHome() {
     }
   }
 
-  function toggleTask(title: string) {
-    setTasks((items) => items.map((item) => (item.title === title ? { ...item, done: !item.done } : item)));
-    updateActiveCase("Задачи обновлены", 78);
-  }
-
   function updateActiveCase(status: string, progress: number) {
     setCases((items) => items.map((item) => (item.id === activeCaseId ? { ...item, status, progress: Math.max(item.progress, progress) } : item)));
   }
@@ -536,15 +531,15 @@ export default function WebHome() {
       <section className="homeScreen">
         <div className="topLine">
           <div><h1>Здравствуйте, Дмитрий</h1><p>Ваш умный юридический помощник</p></div>
-          <button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button>
+          <div className="topActions"><button className="bell" onClick={() => setSyncState("Новых уведомлений нет")} aria-label="Уведомления">♧</button><button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button></div>
         </div>
         <button className={recording ? "mic active" : "mic"} onClick={() => { setRecording(true); go("newCase"); }} aria-label="Рассказать проблему"><span>⌾</span></button>
         <h2>Рассказать проблему</h2>
         <p className="hint">{recording ? "Запись активна. Нажмите еще раз, чтобы остановить." : "Нажмите и говорите голосом"}</p>
         <div className="quickGrid">
-          <button onClick={() => go("newCase")}>Новое дело<small>Создать новое дело</small></button>
-          <button onClick={() => go("documents")}>Мои документы<small>Просмотр и загрузка</small></button>
-          <button onClick={() => go("deadlines")}>Сроки и календарь<small>Даты и напоминания</small></button>
+          <button onClick={() => go("newCase")}><span className="quickIcon">▣</span>Новое дело<small>Создать новое дело</small></button>
+          <button onClick={() => go("documents")}><span className="quickIcon">□</span>Мои документы<small>Просмотр и загрузка</small></button>
+          <button onClick={() => go("deadlines")}><span className="quickIcon">▦</span>Сроки и календарь<small>Даты и напоминания</small></button>
         </div>
         <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
         <div className="list">
@@ -560,22 +555,8 @@ export default function WebHome() {
 
   return (
     <main className="appShell" data-theme={theme} data-design-screen-count={screens.length}>
-      <aside className="sidebar">
-        <strong>AI Юрист</strong>
-        <nav>
-          <Nav label="Главная" current={view === "home"} onClick={() => go("home")} />
-          <Nav label="Дела" current={["cases", "case", "chat", "newCase", "category"].includes(view)} onClick={() => go("cases")} />
-          <Nav label="Документы" current={["documents", "analysis", "documentCheck", "documentUpload"].includes(view)} onClick={() => go("documents")} />
-          <Nav label="Сроки" current={view === "deadlines"} onClick={() => go("deadlines")} />
-          <Nav label="Нормы права" current={["legal", "legalSearch"].includes(view)} onClick={() => go("legal")} />
-          <Nav label="Профиль" current={["profile", "settings", "subscription", "help", "login", "register", "otp", "biometric"].includes(view)} onClick={() => go("profile")} />
-        </nav>
-        <button className="sync" onClick={syncWithApi}>Синхронизировать</button>
-        <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "Светлая тема" : "Темная тема"}</button>
-        <small>{syncState}</small>
-      </aside>
       <section className="deviceFrame">
-        <div className="appStatus"><span>{syncState}</span><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
+        <div className="appStatus"><span>{syncState}</span><button aria-label="Синхронизировать" onClick={syncWithApi}>↻</button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
         {renderView()}
         <nav className="bottomNav">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Главная</button>
@@ -585,41 +566,6 @@ export default function WebHome() {
           <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => go("profile")}>Профиль</button>
         </nav>
       </section>
-      <aside className="rightPanel">
-        <Header title={activeCase.title} subtitle={`Дело №${activeCase.id} · ${activeCase.status}`} />
-        <div className="caseHero compact">
-          <span className="largeIcon">⚖</span>
-          <div><h2>{activeCase.progress}%</h2><p>готовность дела</p></div>
-        </div>
-        <progress value={activeCase.progress} max="100" />
-        <div className="sideSection">
-          <h3>Ближайшие задачи</h3>
-          <div className="taskList">
-            {tasks.map((task) => (
-              <button className={task.done ? "taskRow done" : "taskRow"} key={task.title} onClick={() => toggleTask(task.title)}>
-                <span>{task.done ? "✓" : ""}</span>
-                <strong>{task.title}</strong>
-                <small>{task.due}</small>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="sideSection">
-          <h3>Действия</h3>
-          <div className="sideActions">
-            <button className="primary" onClick={() => go("newCase")}>Новое дело</button>
-            <button onClick={() => go("chat")}>Чат по делу</button>
-            <button onClick={() => go("documents")}>Документы</button>
-            <button onClick={() => go("claim")}>Претензия</button>
-          </div>
-        </div>
-        <div className="sideSection">
-          <h3>Документы</h3>
-          <div className="miniDocs">
-            {documents.slice(0, 3).map((doc) => <button key={doc.name} onClick={() => go("documents")}><strong>{doc.name}</strong><small>{doc.status}</small></button>)}
-          </div>
-        </div>
-      </aside>
     </main>
   );
 }
@@ -630,8 +576,4 @@ function Header({ title, subtitle }: { title: string; subtitle: string }) {
 
 function Info({ label, value }: { label: string; value: string }) {
   return <div className="info"><small>{label}</small><strong>{value}</strong></div>;
-}
-
-function Nav({ label, current, onClick }: { label: string; current: boolean; onClick: () => void }) {
-  return <button className={current ? "active" : ""} onClick={onClick}>{label}</button>;
 }

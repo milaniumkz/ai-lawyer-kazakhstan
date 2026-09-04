@@ -94,9 +94,8 @@ const cssNeedles = [
   '.appShell',
   '.deviceFrame',
   '.bottomNav',
-  '.rightPanel',
-  '.taskList',
-  '.sideActions',
+  '.topActions',
+  '.quickIcon',
   'grid-template-columns: repeat(5, 1fr)',
 ];
 
@@ -111,6 +110,9 @@ for (const forbidden of ['Стенд готов', 'RC internal validation', 'Rel
 }
 for (const forbidden of ['className="screenList"', 'Проверка 25 экранов']) {
   if (page.includes(forbidden)) failures.push(`web app still exposes QA screen matrix: ${forbidden}`);
+}
+for (const forbidden of ['<aside className="sidebar"', '<aside className="rightPanel"']) {
+  if (page.includes(forbidden)) failures.push(`web app still renders desktop wrapper: ${forbidden}`);
 }
 
 if (failures.length) {

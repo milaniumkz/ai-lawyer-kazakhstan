@@ -83,5 +83,6 @@
 - [x] Убрать видимую QA-матрицу из web и заменить правую панель на рабочее пространство дела.
 - [x] Добавить web persistence, управляемые формы, file picker, видимый mobile status и нормальную классификацию дел.
 - [x] Добавить hash routes, явный dark/light theme switch и обновление статуса/прогресса дела от действий.
+- [x] Убрать public desktop wrapper из web, чтобы ПК и телефон показывали один app-screen по мобильным макетам.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

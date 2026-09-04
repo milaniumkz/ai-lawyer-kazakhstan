@@ -154,6 +154,7 @@
 - Web real app shell pass — `npm run test:web-ui`, web lint/build passed; browser smoke confirmed the visible 25-screen QA matrix is gone and the right panel renders real case tasks/actions/documents.
 - Web dynamic state pass — `npm run test:web-ui`, web lint/typecheck/build passed; browser smoke confirmed salary complaint creates a persisted “Задержка зарплаты / Трудовой спор” case after reload.
 - Web route/theme app pass — `npm run release-check:local` passed after adding hash routes, explicit dark/light theme state and case progress/status updates from app actions.
+- Web mobile-design shell pass — `npm run test:web-ui`, web lint/typecheck/build passed; browser smoke confirmed no public sidebar/right panel, centered 560px app frame and mic button route to `#newCase`.
 
 ## Заблокировано
 

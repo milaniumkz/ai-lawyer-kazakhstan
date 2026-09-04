@@ -132,6 +132,7 @@
 - Latest web real app shell verified: public-facing QA matrix removed from the right panel and replaced with functional case tasks, actions and document shortcuts.
 - Latest web dynamic state verified: controlled forms, local persistence, file picker handoff and salary-case classification render correctly after browser reload.
 - Latest web route/theme app pass verified: hash-addressable views, explicit theme toggle and case status/progress updates are included in local release check.
+- Latest web mobile-design shell verified: public web no longer renders desktop sidebar/right panel; desktop centers the same app frame used on phone.
 
 ## Следующая задача
 
