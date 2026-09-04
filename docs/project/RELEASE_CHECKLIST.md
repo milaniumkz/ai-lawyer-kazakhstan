@@ -35,6 +35,7 @@
 - [x] Подключить PostgreSQL repository adapters к runtime services для реализованных backend modules.
 - [x] Добавить автоматическую проверку PostgreSQL migration contracts.
 - [x] Добавить Flutter light/dark golden regression tests для реализованных mobile screens.
+- [x] Добавить admin UI contract regression check.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

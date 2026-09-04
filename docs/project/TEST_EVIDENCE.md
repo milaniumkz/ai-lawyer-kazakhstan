@@ -67,6 +67,8 @@
 - Mobile design golden generation — `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test --update-goldens` passed.
 - Mobile design regression checks — `flutter analyze`, `flutter test` passed; 11 tests including light/dark home golden snapshots.
 - Full project check/build after mobile design regression tests — `npm run check`, `npm run build` passed.
+- Admin UI contract check — `npm run test:admin-ui` passed.
+- Full project check/build after admin UI contract check — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

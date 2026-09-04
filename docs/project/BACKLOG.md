@@ -31,3 +31,4 @@
 - P1-013 Billing/subscriptions repository runtime toggle — done.
 - P1-014 Database migration contract check — done.
 - P1-015 Mobile design golden regression tests — done.
+- P1-016 Admin UI contract check — done.

@@ -32,7 +32,7 @@ export default function AdminHome() {
       </section>
       <section className="notice">
         <strong>Юридический guardrail</strong>
-        <span>Ответы строятся только по разрешенным источникам РК. Высокий риск требует проверки экспертом.</span>
+        <span>Ответы строятся только по официальным источникам РК. Высокий риск требует проверки экспертом.</span>
       </section>
       <section className="notice">
         <strong>Identity наблюдаемость</strong>
