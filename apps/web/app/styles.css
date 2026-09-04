@@ -457,6 +457,14 @@ progress {
   display: flex;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+}
+
+.docRow.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, var(--panel));
 }
 
 .wide {

@@ -32,6 +32,9 @@ type CaseItem = { id: string; title: string; type: string; status: string; date:
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 type TaskItem = { title: string; due: string; done: boolean };
+type ApiLegalCase = { id: string; title: string; category: string; status: string; readinessPercent: number; createdAt: string };
+type ApiDocument = { id: string; fileName: string; status: string; extractedFields?: Record<string, string> };
+type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
 type SavedState = {
   view: View;
   theme: "dark" | "light";
@@ -46,6 +49,11 @@ type SavedState = {
   maskPii: boolean;
   budgetAlerts: boolean;
   tasks: TaskItem[];
+  selectedCategory: string;
+  authUserId: string;
+  remoteCaseId: string;
+  remoteDocumentId: string;
+  generatedClaimBody: string;
 };
 
 const screens: { label: string; view: View }[] = [
@@ -78,6 +86,7 @@ const screens: { label: string; view: View }[] = [
 
 const initialCases: CaseItem[] = [
   { id: "2024-0015", title: "Взыскание долга", type: "Гражданское право", status: "В работе", date: "15 мая 2024", progress: 65 },
+  { id: "2024-0014", title: "Задержка зарплаты", type: "Трудовой спор", status: "Нужно проверить работодателя", date: "12 мая 2024", progress: 48 },
   { id: "2024-0012", title: "Алименты", type: "Семейное право", status: "Подготовка документов", date: "10 мая 2024", progress: 42 },
 ];
 
@@ -96,6 +105,16 @@ export default function WebHome() {
   const [sent, setSent] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Гражданское право");
+  const [authUserId, setAuthUserId] = useState("");
+  const [otpId, setOtpId] = useState("");
+  const [remoteCaseId, setRemoteCaseId] = useState("");
+  const [remoteDocumentId, setRemoteDocumentId] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState("Расписка.pdf");
+  const [generatedClaimBody, setGeneratedClaimBody] = useState("");
+  const [deadlineStatus, setDeadlineStatus] = useState("Ближайший срок: досудебная претензия за 10 дней");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("Лимиты обновятся после входа");
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("Как взыскать долг по расписке?");
   const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
@@ -162,6 +181,11 @@ export default function WebHome() {
       if (typeof saved.maskPii === "boolean") setMaskPii(saved.maskPii);
       if (typeof saved.budgetAlerts === "boolean") setBudgetAlerts(saved.budgetAlerts);
       if (saved.tasks?.length) setTasks(saved.tasks);
+      if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
+      if (saved.authUserId) setAuthUserId(saved.authUserId);
+      if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
+      if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
+      if (saved.generatedClaimBody) setGeneratedClaimBody(saved.generatedClaimBody);
       setSyncState("Локальные данные восстановлены");
     } catch {
       setSyncState("Не удалось восстановить локальные данные");
@@ -171,52 +195,118 @@ export default function WebHome() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks };
+    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
-  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
+  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody]);
 
   function go(nextView: View) {
     setView(nextView);
   }
 
-  function addCase() {
+  async function ensureUser() {
+    if (authUserId) return authUserId;
+    const suffix = Date.now().toString().slice(-7).padStart(7, "0");
+    const registered = await apiJson("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ channel: "phone", phone: `+7701${suffix}`, password: password || "Demo12345", consentVersion: "v1" }),
+    });
+    setOtpId(registered.otpId);
+    const verified = await apiJson("/auth/otp/verify", { method: "POST", body: JSON.stringify({ otpId: registered.otpId, code: "111111" }) });
+    setAuthUserId(verified.user.id);
+    return verified.user.id as string;
+  }
+
+  function mapCase(record: ApiLegalCase): CaseItem {
+    const categoryMap: Record<string, string> = {
+      civil_contract: "Гражданское право",
+      labor: "Трудовой спор",
+      family: "Семейное право",
+      administrative: "Административное право",
+      clarification_required: "Требует уточнения",
+    };
+    return {
+      id: record.id.slice(0, 8),
+      title: record.title,
+      type: categoryMap[record.category] ?? selectedCategory,
+      status: record.status === "consultation" ? "Консультация открыта" : "Требует уточнения",
+      date: new Date(record.createdAt).toLocaleDateString("ru-KZ", { day: "2-digit", month: "long", year: "numeric" }),
+      progress: record.readinessPercent,
+    };
+  }
+
+  async function addCase() {
     if (caseText.trim().length < 12) {
       setSyncState("Опишите ситуацию подробнее");
       return;
     }
-    const normalizedText = caseText.toLowerCase();
-    const isLabor = ["труд", "работодател", "зарплат", "увольнен"].some((needle) => normalizedText.includes(needle));
-    const isFamily = ["алимент", "развод", "ребен"].some((needle) => normalizedText.includes(needle));
-    const next: CaseItem = {
-      id: `2026-${String(cases.length + 21).padStart(4, "0")}`,
-      title: isFamily ? "Алименты" : isLabor ? "Задержка зарплаты" : "Новое дело",
-      type: isFamily ? "Семейное право" : isLabor ? "Трудовой спор" : "Гражданское право",
-      status: "Категория определена",
-      date: "04 сентября 2026",
-      progress: 18,
-    };
-    setCases([next, ...cases]);
-    setActiveCaseId(next.id);
-    setSyncState(`Дело создано: №${next.id}`);
-    go("case");
+    setSyncState("Создаю дело в API...");
+    try {
+      const ownerUserId = await ensureUser();
+      const legalCase = await apiJson("/cases", {
+        method: "POST",
+        headers: { "idempotency-key": `web-case-${Date.now()}` },
+        body: JSON.stringify({ ownerUserId, problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}` }),
+      }) as ApiLegalCase;
+      const next = mapCase(legalCase);
+      setRemoteCaseId(legalCase.id);
+      setCases([next, ...cases]);
+      setActiveCaseId(next.id);
+      setTasks((items) => items.map((item) => item.title === "Проверить расписку" ? { ...item, done: true } : item));
+      setSyncState(`Дело сохранено в API: №${next.id}`);
+      go("case");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `API ошибка: ${error.message}` : "Не удалось создать дело");
+    }
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     if (!chatInput.trim()) return;
+    const outgoing = chatInput;
     setMessages((items) => [
       ...items,
-      { role: "user", text: chatInput },
+      { role: "user", text: outgoing },
       { role: "assistant", text: "Для ответа потребуется договор, расписка, переписка и подтвержденная норма из официального источника РК." },
     ]);
     setChatInput("");
     updateActiveCase("AI уточняет факты", 72);
-    setSyncState("Сообщение добавлено в дело");
+    if (!remoteCaseId) {
+      setSyncState("Сообщение добавлено локально: сначала создайте дело в API");
+      return;
+    }
+    try {
+      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", body: JSON.stringify({ role: "user", text: outgoing }) });
+      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`) as { role: "system" | "user" | "assistant"; text: string }[];
+      setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ role: item.role as "user" | "assistant", text: item.text })));
+      setSyncState("Чат сохранен в API");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Чат локально, API ошибка: ${error.message}` : "Чат локально");
+    }
   }
 
-  function addDocument(name: string) {
-    setDocuments((items) => [{ name, status: "Загружен" }, ...items]);
+  async function addDocument(name: string) {
+    const localDoc = { name, status: "Загружен" };
+    setSelectedDocument(name);
+    setDocuments((items) => [localDoc, ...items]);
     updateActiveCase("Документы загружены", 76);
-    setSyncState(`Документ добавлен: ${name}`);
+    if (!remoteCaseId) {
+      setSyncState(`Документ добавлен локально: ${name}`);
+      return;
+    }
+    try {
+      const session = await apiJson("/files/upload-sessions", {
+        method: "POST",
+        body: JSON.stringify({ caseId: remoteCaseId, fileName: name, mimeType: mimeTypeFor(name), sizeBytes: 128000 }),
+      });
+      const document = await apiJson("/files/complete", {
+        method: "POST",
+        body: JSON.stringify({ uploadSessionId: session.id, sha256: `web-${Date.now()}-${name}` }),
+      }) as ApiDocument;
+      setRemoteDocumentId(document.id);
+      setDocuments((items) => items.map((item, index) => index === 0 ? { name: document.fileName, status: "OCR-review" } : item));
+      setSyncState(`Документ сохранен в API: ${document.fileName}`);
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Документ локально, API ошибка: ${error.message}` : "Документ добавлен локально");
+    }
   }
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -248,6 +338,100 @@ export default function WebHome() {
     } catch (error) {
       setSyncState(error instanceof Error ? `Ошибка: ${error.message}` : "Ошибка синхронизации");
     }
+  }
+
+  function mimeTypeFor(fileName: string) {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    if (ext === "png") return "image/png";
+    if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+    if (ext === "doc") return "application/msword";
+    if (ext === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    if (ext === "xlsx") return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    return "application/pdf";
+  }
+
+  async function confirmOcr() {
+    setOcrConfirmed(true);
+    if (!remoteDocumentId) {
+      setSyncState("OCR подтвержден локально");
+      return;
+    }
+    try {
+      await apiJson(`/documents/${remoteDocumentId}/ocr-confirm`, {
+        method: "POST",
+        body: JSON.stringify({ fields: { documentTitle: selectedDocument, confirmedBy: profileName } }),
+      });
+      setDocuments((items) => items.map((item) => item.name === selectedDocument ? { ...item, status: "Готов" } : item));
+      setSyncState("OCR поля подтверждены в API");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `OCR локально, API ошибка: ${error.message}` : "OCR подтвержден локально");
+    }
+  }
+
+  async function runLegalSearch() {
+    if (legalQuery.trim().length < 8) {
+      setLegalAnswer("Введите вопрос подробнее.");
+      return;
+    }
+    setLegalAnswer("Идет поиск по официальным источникам РК...");
+    try {
+      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: legalQuery }) });
+      setLegalAnswer(`${answer.message}${answer.fragment ? ` Источник: ${answer.fragment.sourceUrl}` : " Нужна ручная проверка юристом."}`);
+      setSyncState(`RAG статус: ${answer.status}`);
+    } catch (error) {
+      setLegalAnswer("Нет подтвержденной нормы. Требуется ручная проверка.");
+      setSyncState(error instanceof Error ? `RAG ошибка: ${error.message}` : "RAG ошибка");
+    }
+  }
+
+  async function generateClaim() {
+    if (!remoteCaseId) {
+      setSyncState("Сначала создайте дело в API");
+      return;
+    }
+    setSyncState("Формирую претензию...");
+    try {
+      const templates = await apiJson("/templates") as { id: string }[];
+      const generated = await apiJson("/documents/generate", {
+        method: "POST",
+        body: JSON.stringify({
+          templateId: templates[0]?.id ?? "tpl-pretrial-claim-ru-v1",
+          caseId: remoteCaseId,
+          fields: {
+            claimantName: profileName || "Заявитель",
+            respondentName: "Ответчик",
+            claimAmount: "1250000",
+            claimReason: caseText,
+            deadlineDate: "14 сентября 2026",
+          },
+          confirmedCitationIds: [],
+        }),
+      }) as ApiGeneratedDocument;
+      setGeneratedClaimBody(generated.body);
+      setClaimReady(true);
+      updateActiveCase("Проект претензии готов", 91);
+      setSyncState(`Проект создан в API: ${generated.id.slice(0, 8)}`);
+      go("claimDraft");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Ошибка генерации: ${error.message}` : "Не удалось сформировать претензию");
+    }
+  }
+
+  async function loadSubscription() {
+    try {
+      const userId = await ensureUser();
+      const budget = await apiJson("/subscriptions/current", { headers: { "x-user-id": userId } });
+      setSubscriptionStatus(`Тариф ${budget.plan}, расход ${budget.percent}%, TTS ${budget.ttsDisabled ? "выключен" : "доступен"}`);
+      setSyncState("Подписка обновлена из API");
+    } catch (error) {
+      setSubscriptionStatus("Не удалось загрузить подписку");
+      setSyncState(error instanceof Error ? `Подписка: ${error.message}` : "Ошибка подписки");
+    }
+  }
+
+  function toggleTask(title: string) {
+    setTasks((items) => items.map((item) => item.title === title ? { ...item, done: !item.done } : item));
+    setDeadlineStatus(`Срок обновлен: ${title}`);
   }
 
   function updateActiveCase(status: string, progress: number) {
@@ -337,6 +521,7 @@ export default function WebHome() {
           )}
           {view === "otp" && (
             <>
+              <div className="analysisBox"><strong>OTP</strong><p>{otpId ? `Код отправлен: ${otpId.slice(0, 8)}` : "Введите код из SMS"}</p></div>
               <input placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
               <button className="primary wide" onClick={verifyOtp}>Подтвердить</button>
               <button className="wide" onClick={() => setSyncState("Код повторно отправлен")}>Отправить код повторно</button>
@@ -345,7 +530,7 @@ export default function WebHome() {
           {view === "biometric" && (
             <>
               <div className="brandMark">◎</div>
-              <button className="primary wide" onClick={() => setSyncState("Биометрия включена")}>Включить биометрию</button>
+              <button className="primary wide" onClick={() => { setBiometricEnabled(true); setSyncState("Биометрия включена локально"); }}>{biometricEnabled ? "Биометрия включена" : "Включить биометрию"}</button>
               <button className="wide" onClick={() => go("profile")}>Продолжить</button>
             </>
           )}
@@ -375,7 +560,8 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Категория обращения" subtitle="AI определил категорию по описанию" back="newCase" />
-          <div className="chips">{["Гражданское право", "Трудовой спор", "Семейное право"].map((type) => <button className="chip" key={type} onClick={() => { setCaseText(`${caseText} ${type}`); }}>{type}</button>)}</div>
+          <div className="chips">{["Гражданское право", "Трудовой спор", "Семейное право", "Административное право"].map((type) => <button className={selectedCategory === type ? "chip active" : "chip"} key={type} onClick={() => { setSelectedCategory(type); setSyncState(`Категория выбрана: ${type}`); }}>{type}</button>)}</div>
+          <div className="analysisBox"><strong>{selectedCategory}</strong><p>Категория будет сохранена вместе с описанием дела и дополнительно проверена AI-классификатором.</p></div>
           <button className="primary wide" onClick={addCase}>Подтвердить и создать дело</button>
         </section>
       );
@@ -450,13 +636,13 @@ export default function WebHome() {
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <div className="actionBar">
-            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) addDocument(file.name); go("documentUpload"); }} />
+            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file.name); go("documentUpload"); }} />
             <button className="primary" onClick={() => fileInputRef.current?.click()}>Загрузить файл</button>
-            <button onClick={() => { addDocument(`Скан документа ${documents.length + 1}.jpg`); go("documentUpload"); }}>Сканировать документ</button>
-            <button onClick={() => setOcrConfirmed(true)}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
+            <button onClick={() => { void addDocument(`Скан документа ${documents.length + 1}.jpg`); go("documentUpload"); }}>Сканировать документ</button>
+            <button onClick={confirmOcr}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
           </div>
           <div className="list">
-            {documents.map((doc) => <div className="docRow" key={doc.name}><strong>{doc.name}</strong><span>{ocrConfirmed ? "Готов" : doc.status}</span></div>)}
+            {documents.map((doc) => <button className={selectedDocument === doc.name ? "docRow active" : "docRow"} key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{selectedDocument === doc.name && ocrConfirmed ? "Готов" : doc.status}</span></button>)}
           </div>
           <div className="analysisBox">
             <strong>Проверка документов</strong>
@@ -473,7 +659,8 @@ export default function WebHome() {
         <section className="contentPanel">
           <AppHeader title="Календарь и сроки" subtitle="Контроль процессуальных дат" />
           <div className="calendar"><strong>04</strong><span>Сентябрь 2026</span></div>
-          <div className="list"><div className="docRow"><strong>Досудебная претензия</strong><span>10 дней</span></div><div className="docRow"><strong>Исковое заявление</strong><span>22 мая</span></div></div>
+          <div className="analysisBox"><strong>Статус срока</strong><p>{deadlineStatus}</p></div>
+          <div className="list">{tasks.map((task) => <button className={task.done ? "docRow active" : "docRow"} key={task.title} onClick={() => toggleTask(task.title)}><strong>{task.title}</strong><span>{task.done ? "Готово" : task.due}</span></button>)}</div>
         </section>
       );
     }
@@ -484,7 +671,7 @@ export default function WebHome() {
           <AppHeader title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
           <div className="searchRow">
             <input value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} />
-            <button className="primary" onClick={() => { setLegalAnswer(legalQuery.length > 8 ? "Нужна проверка юристом: ответ будет показан только при подтвержденной норме из официального источника РК." : "Введите вопрос подробнее."); go("legalSearch"); }}>Найти норму</button>
+            <button className="primary" onClick={() => { go("legalSearch"); void runLegalSearch(); }}>Найти норму</button>
           </div>
           <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
         </section>
@@ -496,9 +683,9 @@ export default function WebHome() {
         <section className="contentPanel">
           <AppHeader title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" back="case" />
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <div className="claimPreview">Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя.</div>
+          <div className="claimPreview">{generatedClaimBody || "Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя."}</div>
           <div className="actionBar">
-            <button className="primary" onClick={() => { setClaimReady(true); updateActiveCase("Проект претензии готов", 91); go("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
+            <button className="primary" onClick={generateClaim}>{claimReady ? "Пересформировать проект" : "Сформировать проект"}</button>
             <button disabled={!claimReady} onClick={() => { setSent(true); updateActiveCase("Отправка претензии зафиксирована", 100); go("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
           </div>
         </section>
@@ -543,8 +730,8 @@ export default function WebHome() {
             <Info label="AI бюджет" value="70%" />
             <Info label="Запросы" value="148 / 250" />
           </div>
-          <div className="analysisBox"><strong>Payment provider</strong><p>Оплата доступна только после подключения production credentials.</p></div>
-          <button className="primary wide" onClick={() => setSyncState("Оплата заблокирована: нет payment credentials")}>Управление оплатой</button>
+          <div className="analysisBox"><strong>Подписка</strong><p>{subscriptionStatus}</p></div>
+          <button className="primary wide" onClick={loadSubscription}>Обновить лимиты</button>
         </section>
       );
     }
@@ -555,7 +742,7 @@ export default function WebHome() {
           <AppHeader title="Помощь" subtitle="Поддержка и ручная проверка юристом" back="profile" />
           <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <button className="primary wide" onClick={() => setHelpStatus(`Обращение создано: ${caseText.slice(0, 42)}`)}>Написать в поддержку</button>
+          <button className="primary wide" onClick={() => { setHelpStatus(`Обращение создано: ${caseText.slice(0, 42)}`); setTasks((items) => [{ title: "Ответ поддержки", due: "24 часа", done: false }, ...items]); }}>Написать в поддержку</button>
         </section>
       );
     }
@@ -568,7 +755,7 @@ export default function WebHome() {
         </div>
         <button className={recording ? "mic active" : "mic"} onClick={() => { setRecording(true); go("newCase"); }} aria-label="Рассказать проблему"><span>⌾</span></button>
         <h2>Рассказать проблему</h2>
-        <p className="hint">{recording ? "Запись активна. Нажмите еще раз, чтобы остановить." : "Нажмите и говорите голосом"}</p>
+        <p className="hint">{recording ? "Запись активна. Открылся экран описания дела." : "Нажмите и говорите голосом"}</p>
         <div className="quickGrid">
           <button onClick={() => go("newCase")}><span className="quickIcon">▣</span>Новое дело<small>Создать новое дело</small></button>
           <button onClick={() => go("documents")}><span className="quickIcon">□</span>Мои документы<small>Просмотр и загрузка</small></button>

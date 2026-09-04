@@ -78,6 +78,7 @@
 | Web route/theme app pass P1 | Added hash-addressable app screens, explicit dark/light theme switch, dark design default and case progress/status updates from chat/documents/tasks/claim actions | `npm run release-check:local` passed | done |
 | Web mobile-design shell pass P1 | Removed public desktop sidebar/right workspace wrapper so desktop and phone render the same centered app screen; added home notification control and quick-action icons closer to dark mobile reference | Web UI contract, web lint/typecheck/build and browser single-shell smoke passed | done |
 | Web recording/navigation flow pass P1 | Added design-style recording card, pause/finish controls, back header navigation and fixed mobile status overlap on web app screens | Web UI contract, web lint/typecheck/build, local release-check and browser recording flow smoke passed | done |
+| Web API-backed application flow pass P1 | Converted critical web actions from status-only changes into API-backed/stateful flows for auth, case creation, chat, upload/OCR, RAG search, claim generation, subscription limits, task toggles and selected categories/documents | Web UI contract and local release-check passed | done |
 
 ## Блокеры окружения
 

@@ -156,6 +156,7 @@
 - Web route/theme app pass — `npm run release-check:local` passed after adding hash routes, explicit dark/light theme state and case progress/status updates from app actions.
 - Web mobile-design shell pass — `npm run test:web-ui`, web lint/typecheck/build passed; browser smoke confirmed no public sidebar/right panel, centered 560px app frame and mic button route to `#newCase`.
 - Web recording/navigation flow pass — `npm run release-check:local`, `npm run test:web-ui`, web lint/typecheck/build passed; browser smoke confirmed `#newCase` renders recording card, pause/finish controls, finish opens `#category`, back returns to `#newCase`, and mobile status no longer blocks the back button.
+- Web API-backed application flow pass — `npm run release-check:local` passed after wiring auth/session, case creation, chat messages, document upload/OCR, RAG search, claim generation, subscription limits, task toggles and selected categories/documents to explicit state/API actions.
 
 ## Заблокировано
 

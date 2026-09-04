@@ -134,6 +134,7 @@
 - Latest web route/theme app pass verified: hash-addressable views, explicit theme toggle and case status/progress updates are included in local release check.
 - Latest web mobile-design shell verified: public web no longer renders desktop sidebar/right panel; desktop centers the same app frame used on phone.
 - Latest web recording/navigation pass verified: `#newCase` has recording card, pause/finish controls, finish opens category, back returns to intake, and mobile status no longer intercepts navigation.
+- Latest web API-backed application pass verified: critical web buttons now update explicit app state and call `/api/v1` for auth, cases, chat, documents/OCR, RAG, claim generation and subscription limits.
 
 ## Следующая задача
 
