@@ -32,3 +32,4 @@
 - P1-014 Database migration contract check — done.
 - P1-015 Mobile design golden regression tests — done.
 - P1-016 Admin UI contract check — done.
+- P1-017 OpenAPI/controller route drift check — done.

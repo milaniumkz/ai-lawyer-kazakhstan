@@ -50,6 +50,7 @@
 - Реализован P1-014 database migration contract check: validates migration order, required tables/columns, pgvector and template seed; included in root `npm run check`.
 - Реализован P1-015 mobile design regression tests: light/dark home golden snapshots and core screen render smoke tests across both themes.
 - Реализован P1-016 admin UI contract check: required dashboard sections, official-source wording, generated API paths and light/dark tokens; included in root `npm run check`.
+- Реализован P1-017 OpenAPI/controller route drift check: all NestJS controller routes are compared against OpenAPI and generated clients.
 
 ## Дизайн-источник
 
@@ -69,4 +70,4 @@
 
 ## Следующая задача
 
-Следующая задача: продолжить RC hardening по remaining mobile screens/E2E или добавить PostgreSQL integration smoke tests when Docker/Postgres available.
+Следующая задача: продолжить RC hardening по runtime HTTP smoke/E2E, remaining mobile screens, или добавить PostgreSQL integration smoke tests when Docker/Postgres available.

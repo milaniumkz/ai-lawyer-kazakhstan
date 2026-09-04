@@ -37,6 +37,7 @@
 | Database migration contract check P1 | Node script validates migration order, required PostgreSQL tables/columns, pgvector and template seed; included in root check | `npm run test:migrations`, `npm run check`, `npm run build` passed | done |
 | Mobile design regression tests P1 | Flutter light/dark golden snapshots for home screen and render smoke tests for core release screens in both themes | Flutter analyze/test passed, 11 widget/golden tests; `npm run check`, `npm run build` passed | done |
 | Admin UI contract check P1 | Static regression check for dashboard sections, official KZ guardrail wording, API paths and light/dark token consistency; included in root check | `npm run test:admin-ui`, `npm run check`, `npm run build` passed | done |
+| OpenAPI controller route drift check P1 | Contract checker compares all NestJS controller routes against OpenAPI paths and generated clients | `npm run test:contract`, `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 

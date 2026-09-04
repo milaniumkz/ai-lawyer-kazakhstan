@@ -69,6 +69,8 @@
 - Full project check/build after mobile design regression tests — `npm run check`, `npm run build` passed.
 - Admin UI contract check — `npm run test:admin-ui` passed.
 - Full project check/build after admin UI contract check — `npm run check`, `npm run build` passed.
+- OpenAPI/controller route drift check — `npm run test:contract` passed.
+- Full project check/build after route drift check — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

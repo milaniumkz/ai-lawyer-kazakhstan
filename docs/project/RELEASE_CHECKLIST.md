@@ -36,6 +36,7 @@
 - [x] Добавить автоматическую проверку PostgreSQL migration contracts.
 - [x] Добавить Flutter light/dark golden regression tests для реализованных mobile screens.
 - [x] Добавить admin UI contract regression check.
+- [x] Добавить OpenAPI/controller route drift check.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.
