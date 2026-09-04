@@ -19,7 +19,10 @@ GoRouter _buildRouter() => GoRouter(
       routes: [
         GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
         GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+        GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
         GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
+        GoRoute(
+            path: '/biometric', builder: (_, __) => const BiometricScreen()),
         GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
         GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
         GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
@@ -28,15 +31,26 @@ GoRouter _buildRouter() => GoRouter(
             path: '/case/details',
             builder: (_, __) => const CaseDetailsScreen()),
         GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
+        GoRoute(
+            path: '/case/category', builder: (_, __) => const CategoryScreen()),
         GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
         GoRoute(
             path: '/documents', builder: (_, __) => const DocumentsScreen()),
+        GoRoute(
+            path: '/documents/analysis',
+            builder: (_, __) => const DocumentAnalysisScreen()),
         GoRoute(
             path: '/deadlines', builder: (_, __) => const DeadlinesScreen()),
         GoRoute(path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
         GoRoute(
             path: '/workflow/pretrial-claim',
             builder: (_, __) => const PretrialClaimScreen()),
+        GoRoute(
+            path: '/workflow/pretrial-claim/draft',
+            builder: (_, __) => const ClaimDraftScreen()),
+        GoRoute(
+            path: '/workflow/pretrial-claim/send',
+            builder: (_, __) => const ClaimSendScreen()),
         GoRoute(
             path: '/subscription',
             builder: (_, __) => const SubscriptionScreen()),

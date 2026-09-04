@@ -401,9 +401,64 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
           const _ProgressStrip(),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => context.go('/workflow/pretrial-claim'),
+            onPressed: () => context.go('/case/category'),
             icon: const Icon(Icons.check_circle_outline),
             label: const Text('Подтвердить и создать дело'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoryScreen extends StatefulWidget {
+  const CategoryScreen({super.key});
+
+  @override
+  State<CategoryScreen> createState() => _CategoryScreenState();
+}
+
+class _CategoryScreenState extends State<CategoryScreen> {
+  var category = 'Гражданское право';
+
+  @override
+  Widget build(BuildContext context) {
+    return _CaseScaffold(
+      title: 'Определение категории спора',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in const [
+                'Гражданское право',
+                'Семейное право',
+                'Защита прав потребителя',
+                'Трудовой спор',
+              ])
+                ChoiceChip(
+                  label: Text(item),
+                  selected: category == item,
+                  onSelected: (_) => setState(() => category = item),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.auto_awesome_outlined),
+              title: Text('Категория: $category'),
+              subtitle:
+                  const Text('Риск: средний · требуется проверка документов'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => context.go('/documents'),
+            icon: const Icon(Icons.folder_open_outlined),
+            label: const Text('Продолжить к документам'),
           ),
         ],
       ),

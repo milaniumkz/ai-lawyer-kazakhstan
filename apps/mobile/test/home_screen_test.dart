@@ -32,10 +32,47 @@ void main() {
     expect(find.text('Вход и регистрация'), findsWidgets);
   });
 
+  testWidgets('registration otp and biometric flow works', (tester) async {
+    await setLargeViewport(tester);
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Зарегистрироваться'));
+    await tester.pumpAndSettle();
+    expect(find.text('Регистрация пользователя'), findsWidgets);
+
+    await tester.tap(find.text('Создать аккаунт'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подтвердить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Быстрый вход по биометрии'), findsWidgets);
+
+    await tester.tap(find.text('Включить биометрию'));
+    await tester.pumpAndSettle();
+    expect(find.text('Включено'), findsOneWidget);
+  });
+
   testWidgets('shows case intake screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
 
     expect(find.text('Подтвердить и создать дело'), findsOneWidget);
+  });
+
+  testWidgets('case category flow opens documents', (tester) async {
+    await setLargeViewport(tester);
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Новое дело'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.pumpAndSettle();
+    expect(find.text('Определение категории спора'), findsWidgets);
+
+    await tester.tap(find.text('Трудовой спор'));
+    await tester.pumpAndSettle();
+    expect(find.text('Категория: Трудовой спор'), findsOneWidget);
   });
 
   testWidgets('bottom navigation opens cases documents deadlines and profile',
@@ -100,6 +137,10 @@ void main() {
 
     expect(find.text('Официальные источники РК'), findsOneWidget);
     expect(find.text('Citation Validator'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Найти норму'));
+    await tester.pumpAndSettle();
+    expect(find.text('Норма найдена'), findsOneWidget);
 
     await tester.tap(find.text('Citation Validator'));
     await tester.pumpAndSettle();
@@ -178,7 +219,10 @@ void main() {
   testWidgets('document upload scan and OCR confirmation buttons work',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-documents')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Загрузить файл'));
     await tester.pumpAndSettle();
@@ -192,16 +236,30 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Подтвердить поля'));
     await tester.pumpAndSettle();
     expect(find.text('Поля подтверждены'), findsOneWidget);
+
+    await tester.tap(find.text('Анализировать документы'));
+    await tester.pumpAndSettle();
+    expect(find.text('Анализ документов'), findsWidgets);
+    await tester.tap(find.text('Подтвердить анализ'));
+    await tester.pumpAndSettle();
+    expect(find.text('Анализ завершен'), findsOneWidget);
   });
 
-  testWidgets('pretrial claim generation button updates draft', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
-
-    await tester.tap(find.text('Сформировать проект'));
+  testWidgets('pretrial claim draft and send flow works', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ClaimDraftScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Проект сформирован'), findsOneWidget);
-    expect(find.textContaining('сформирован'), findsWidgets);
+    expect(find.text('Проект досудебной претензии'), findsWidgets);
+    await tester.tap(find.text('Проверено пользователем'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Перейти к отправке'),
+        findsOneWidget);
+
+    await tester.pumpWidget(const MaterialApp(home: ClaimSendScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Зафиксировать отправку'));
+    await tester.pumpAndSettle();
+    expect(find.text('Отправка зафиксирована'), findsOneWidget);
   });
 
   testWidgets('shows subscription budget screen', (tester) async {

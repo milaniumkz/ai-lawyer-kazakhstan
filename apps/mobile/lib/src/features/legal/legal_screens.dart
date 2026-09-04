@@ -3,8 +3,15 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 
-class LegalSourcesScreen extends StatelessWidget {
+class LegalSourcesScreen extends StatefulWidget {
   const LegalSourcesScreen({super.key});
+
+  @override
+  State<LegalSourcesScreen> createState() => _LegalSourcesScreenState();
+}
+
+class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
+  var searched = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +29,30 @@ class LegalSourcesScreen extends StatelessWidget {
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
-            const TextField(
+            TextField(
+              onSubmitted: (_) => setState(() => searched = true),
               decoration: InputDecoration(
                 labelText: 'Поиск нормы права',
                 prefixIcon: Icon(Icons.search_outlined),
+                suffixIcon: IconButton(
+                  tooltip: 'Найти норму',
+                  onPressed: () => setState(() => searched = true),
+                  icon: const Icon(Icons.search),
+                ),
               ),
             ),
             const SizedBox(height: 16),
+            if (searched) ...[
+              const Card(
+                child: ListTile(
+                  leading: Icon(Icons.verified_outlined, color: AppColors.gold),
+                  title: Text('Норма найдена'),
+                  subtitle: Text(
+                      'Источник: zan.gov.kz · требуется проверка актуальности редакции.'),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             const _SafeRefusalCard(),
             const SizedBox(height: 12),
             const _CitationCard(),

@@ -122,6 +122,8 @@
 - Web functional scenario panel — `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` passed; deployed web rebuilt on server and `npm run release-check:server` returned `public server ok: http://89.207.250.217`.
 - Mobile profile/legal action completion — `rg "onPressed: \\(\\) \\{\\}|onTap: \\(\\) \\{\\}|TODO|Placeholder" apps/mobile/lib apps/web/app -n` returned no matches; Flutter analyze passed; Flutter test passed with 19 tests.
 - Final release gate after profile/legal completion — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Mobile 25-screen flow coverage pass — Flutter analyze passed; Flutter test passed with 21 tests after adding registration, biometric setup, category detection, document analysis, claim draft/send and legal norm search state.
+- Final release gate after 25-screen flow pass — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

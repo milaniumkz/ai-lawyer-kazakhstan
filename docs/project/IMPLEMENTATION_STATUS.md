@@ -58,6 +58,7 @@
 | Mobile design/navigation parity pass P1 | Added reusable bottom navigation, cases list with filters/search, case details screen, deadlines screen, clickable home case cards and working case detail actions aligned to dark design references | Flutter analyze passed; Flutter test passed with 18 widget/golden tests | done |
 | Web functional scenario panel P1 | Added active scenario workspace, executable actions, manual-review/blocker states and clickable activity log for desktop/mobile web testing | Web lint/typecheck/build passed; public server check passed | done |
 | Mobile profile/legal action completion P1 | Profile type switcher, biometric local flag, settings toggles/save, help request state, subscription/help/settings routes and Legal Citation Validator tap are now functional | Flutter analyze passed; Flutter test passed with 19 widget/golden tests; no empty handlers found | done |
+| Mobile 25-screen flow coverage pass P1 | Added missing release routes for registration, biometric setup, dispute category detection, document analysis, claim draft/send and legal norm search state | Flutter analyze passed; Flutter test passed with 21 widget/golden tests; release-check local/server passed | done |
 
 ## Блокеры окружения
 

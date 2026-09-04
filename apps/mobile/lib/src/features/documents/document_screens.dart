@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
@@ -49,10 +50,64 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               onConfirm: () => setState(() => confirmed = true),
             ),
             const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => context.go('/documents/analysis'),
+              icon: const Icon(Icons.analytics_outlined),
+              label: const Text('Анализировать документы'),
+            ),
+            const SizedBox(height: 12),
             _EvidenceCard(
               onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Открыта папка доказательств')),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DocumentAnalysisScreen extends StatefulWidget {
+  const DocumentAnalysisScreen({super.key});
+
+  @override
+  State<DocumentAnalysisScreen> createState() => _DocumentAnalysisScreenState();
+}
+
+class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
+  var checked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Анализ документов')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(
+              'Проверка документов',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(color: AppColors.goldDark),
+            ),
+            const SizedBox(height: 16),
+            LinearProgressIndicator(value: checked ? 1 : 0.62),
+            const SizedBox(height: 16),
+            const Card(
+              child: ListTile(
+                leading:
+                    Icon(Icons.warning_amber_outlined, color: AppColors.gold),
+                title: Text('Не хватает акта сверки'),
+                subtitle: Text('Добавьте документ или подтвердите отсутствие.'),
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => setState(() => checked = true),
+              icon: const Icon(Icons.check_outlined),
+              label: Text(checked ? 'Анализ завершен' : 'Подтвердить анализ'),
             ),
           ],
         ),

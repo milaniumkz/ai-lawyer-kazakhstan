@@ -67,6 +67,55 @@ class _LoginScreenState extends State<LoginScreen> {
                 context, 'Ссылка восстановления будет отправлена в stub mode'),
             child: const Text('Восстановить доступ'),
           ),
+          TextButton(
+            onPressed: () => context.go('/register'),
+            child: const Text('Зарегистрироваться'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  var consent = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      title: 'Регистрация пользователя',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const TextField(decoration: InputDecoration(labelText: 'Ф.И.О.')),
+          const SizedBox(height: 12),
+          const TextField(
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(labelText: '+7 номер телефона'),
+          ),
+          const SizedBox(height: 12),
+          const TextField(
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(labelText: 'E-mail'),
+          ),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: consent,
+            onChanged: (value) => setState(() => consent = value ?? false),
+            title: const Text('Согласие с обработкой данных v1'),
+          ),
+          FilledButton.icon(
+            onPressed: consent ? () => context.go('/otp') : null,
+            icon: const Icon(Icons.person_add_alt_outlined),
+            label: const Text('Создать аккаунт'),
+          ),
         ],
       ),
     );
@@ -93,7 +142,7 @@ class OtpScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: () => context.go('/profile'),
+            onPressed: () => context.go('/biometric'),
             icon: const Icon(Icons.verified_user_outlined),
             label: const Text('Подтвердить'),
           ),
@@ -101,6 +150,47 @@ class OtpScreen extends StatelessWidget {
             onPressed: () =>
                 _showAction(context, 'Код повторно отправлен: 111111'),
             child: const Text('Отправить код повторно'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BiometricScreen extends StatefulWidget {
+  const BiometricScreen({super.key});
+
+  @override
+  State<BiometricScreen> createState() => _BiometricScreenState();
+}
+
+class _BiometricScreenState extends State<BiometricScreen> {
+  var enabled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      title: 'Быстрый вход по биометрии',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(Icons.fingerprint, size: 96, color: AppColors.gold),
+          const SizedBox(height: 16),
+          Text(
+            enabled
+                ? 'Биометрия включена локально для тестирования'
+                : 'Включите локальный secure flag для быстрого входа',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () => setState(() => enabled = true),
+            icon: const Icon(Icons.fingerprint),
+            label: Text(enabled ? 'Включено' : 'Включить биометрию'),
+          ),
+          TextButton(
+            onPressed: () => context.go('/profile'),
+            child: const Text('Продолжить'),
           ),
         ],
       ),
