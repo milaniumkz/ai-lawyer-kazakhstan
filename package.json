@@ -27,7 +27,10 @@
     "release-check:production": "npm run release-check:local && npm run docker:config",
     "release-check": "npm run release-check:local",
     "deploy:package": "bash scripts/deploy/package-release.sh",
-    "deploy:server-health": "bash scripts/deploy/server-health-check.sh"
+    "deploy:server-health": "bash scripts/deploy/server-health-check.sh",
+    "deploy:firewall": "bash scripts/deploy/server-firewall.sh",
+    "deploy:backup-postgres": "bash scripts/deploy/server-backup-postgres.sh",
+    "deploy:install-backup-timer": "bash scripts/deploy/server-install-backup-timer.sh"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

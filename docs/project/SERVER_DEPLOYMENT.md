@@ -13,10 +13,12 @@
 
 - OS: Ubuntu 24.04 LTS.
 - Reverse proxy: Nginx on port 80.
+- Firewall: UFW allows SSH and HTTP; app internals are not public.
 - Node services: systemd + `npm run start`.
 - AI service: systemd + Uvicorn.
 - API mode: `APP_ENV=staging`, `PERSISTENCE_MODE=postgres`.
 - Database: local PostgreSQL 16 with `pgvector`; credentials are stored only in root-owned server files.
+- Backups: daily PostgreSQL dump timer `ai-lawyer-postgres-backup.timer`.
 
 ## Systemd Services
 
@@ -50,6 +52,13 @@ PostgreSQL persistence smoke:
 systemctl restart ai-lawyer-api
 curl http://127.0.0.1:3001/api/v1/health
 sudo -u postgres psql -d ai_lawyer_kz -tAc "SELECT count(*) FROM users;"
+```
+
+Backup check:
+
+```bash
+bash /opt/ai-lawyer-kz/app/scripts/deploy/server-backup-postgres.sh
+systemctl list-timers ai-lawyer-postgres-backup.timer --no-pager
 ```
 
 ## Remaining Blockers

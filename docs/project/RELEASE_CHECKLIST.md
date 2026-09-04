@@ -54,5 +54,6 @@
 - [x] Развернуть тестовый web/admin/api/ai стенд на cloud server по публичному IP.
 - [x] Включить PostgreSQL persistence на cloud server.
 - [x] Добавить воспроизводимые server deploy scripts.
+- [x] Закрыть внутренние app-порты и включить базовые backups/firewall на сервере.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

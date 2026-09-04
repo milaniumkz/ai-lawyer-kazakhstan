@@ -24,8 +24,7 @@ Type=simple
 WorkingDirectory=$APP_ROOT/app/apps/web
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=HOSTNAME=127.0.0.1
-ExecStart=/usr/bin/npm run start
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1
 Restart=always
 RestartSec=5
 
@@ -43,8 +42,7 @@ Type=simple
 WorkingDirectory=$APP_ROOT/app/apps/admin
 Environment=NODE_ENV=production
 Environment=PORT=3002
-Environment=HOSTNAME=127.0.0.1
-ExecStart=/usr/bin/npm run start
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1
 Restart=always
 RestartSec=5
 

@@ -56,6 +56,7 @@ cat > "$API_ENV_FILE" <<ENV
 NODE_ENV=production
 APP_ENV=staging
 PORT=3001
+HOST=127.0.0.1
 PERSISTENCE_MODE=postgres
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:5432/${DB_NAME}
 ENV

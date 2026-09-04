@@ -25,9 +25,12 @@ Use these scripts for the current Ubuntu test server flow:
 3. On the server, run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz` for a full install/update.
 4. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-postgres-setup.sh` to install PostgreSQL 16 + pgvector, apply migrations and switch API to `PERSISTENCE_MODE=postgres`.
 5. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-health-check.sh` after every deploy.
+6. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-firewall.sh` to keep only SSH and HTTP public.
+7. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install-backup-timer.sh` to enable daily PostgreSQL dumps.
 
 The scripts never store SSH credentials in the repository. Database credentials are generated on the server and stored in root-owned files only.
 `server-postgres-setup.sh` is safe to rerun on the current schema: it skips table creation when the baseline exists and reapplies seed/grants.
+Node/API services bind to `127.0.0.1`; Nginx is the only public application entrypoint.
 
 ## Rollback
 

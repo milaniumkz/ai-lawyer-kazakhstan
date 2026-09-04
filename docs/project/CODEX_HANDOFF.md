@@ -61,6 +61,7 @@
 - Развернут тестовый cloud server: web/admin/api/ai работают через Nginx и systemd на публичном IP.
 - На cloud server включен PostgreSQL 16 + pgvector, API переключен на `PERSISTENCE_MODE=postgres`.
 - Добавлены воспроизводимые deploy scripts: package, server install, runtime, PostgreSQL setup, health check.
+- Добавлены release ops scripts: firewall, PostgreSQL backup, daily backup timer, localhost binds.
 
 ## Дизайн-источник
 
@@ -80,6 +81,7 @@
 - Public server checks passed: web 200, admin 200, API health ok, AI health ok.
 - Server PostgreSQL persistence smoke passed after API restart.
 - Deploy shell syntax checks passed.
+- Server release ops checks passed: only SSH/HTTP public, backup dump created, timer active.
 
 ## Следующая задача
 

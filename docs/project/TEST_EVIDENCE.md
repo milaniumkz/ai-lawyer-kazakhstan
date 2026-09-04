@@ -104,6 +104,8 @@
 - Deploy script syntax check — `bash -n scripts/deploy/*.sh` passed.
 - Server deploy scripts uploaded — `/opt/ai-lawyer-kz/app/scripts/deploy/*.sh` installed on server; remote `server-health-check.sh` returned `server health ok`.
 - Server PostgreSQL setup idempotency — repeated remote `server-postgres-setup.sh` skipped existing schema, refreshed grants, returned `server health ok`.
+- Server release ops hardening — app services bind to localhost, UFW enabled with SSH/HTTP allowed, PostgreSQL backup dump created, daily backup timer enabled.
+- Server port exposure check — external TCP check allows `80`, while `3000`, `3001`, `3002` and `8000` time out; server `ss` shows app/database ports bound to `127.0.0.1`.
 
 ## Заблокировано
 
