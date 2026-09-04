@@ -11,6 +11,7 @@ export interface IdentityRepository {
   listSessions(userId: string): Promise<Array<Omit<SessionRecord, 'refreshToken'>>>;
   createProfile(input: Omit<ProfileRecord, 'id' | 'createdAt'>): Promise<ProfileRecord>;
   listProfiles(userId: string): Promise<ProfileRecord[]>;
+  deleteAccount(userId: string): Promise<void>;
   createAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>): Promise<AuditEvent>;
   listAuditEvents(): Promise<AuditEvent[]>;
 }

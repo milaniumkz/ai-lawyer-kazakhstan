@@ -17,10 +17,13 @@ void main() {
     AuthRuntime.userId = '';
     AuthRuntime.displayName = 'Тестовый пользователь';
     MobileCaseRuntime.activeCaseId = '';
+    WorkflowRuntime.generatedBody = '';
   });
 
   test('generated API contract exposes auth and case paths', () {
     expect(ApiContract.authRegister, '/auth/register');
+    expect(ApiContract.accountExport, '/account/export');
+    expect(ApiContract.account, '/account');
     expect(ApiContract.cases, '/cases');
   });
 
@@ -500,6 +503,31 @@ void main() {
     expect(find.text('Оплата недоступна'), findsOneWidget);
     expect(find.textContaining('Payment provider'), findsOneWidget);
   });
+
+  testWidgets('settings exports and deletes account through API',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'user-1';
+    final api = _FakeAccountApi();
+    await tester.pumpWidget(MaterialApp(home: SettingsScreen(accountApi: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Экспортировать данные'));
+    await tester.pumpAndSettle();
+    expect(api.exportedUserId, 'user-1');
+    expect(find.textContaining('Экспорт готов: 2 профилей, 1 сессий'),
+        findsOneWidget);
+
+    await tester.ensureVisible(find.text('Удалить аккаунт'));
+    await tester.tap(find.text('Удалить аккаунт'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Удалить'));
+    await tester.pumpAndSettle();
+
+    expect(api.deletedUserId, 'user-1');
+    expect(AuthRuntime.userId, isEmpty);
+    expect(find.text('Аккаунт удален, сессии отозваны'), findsOneWidget);
+  });
 }
 
 class _FakeRecorder implements VoiceRecorderPort {
@@ -700,6 +728,22 @@ class _FakeBillingApi implements BillingApiPort {
         percent: 72,
         ttsDisabled: false,
       );
+}
+
+class _FakeAccountApi implements AccountApiPort {
+  String? exportedUserId;
+  String? deletedUserId;
+
+  @override
+  Future<AccountExportResult> exportAccount(String userId) async {
+    exportedUserId = userId;
+    return const AccountExportResult(profileCount: 2, sessionCount: 1);
+  }
+
+  @override
+  Future<void> deleteAccount(String userId) async {
+    deletedUserId = userId;
+  }
 }
 
 Future<void> setLargeViewport(WidgetTester tester) async {

@@ -125,6 +125,41 @@ export class IdentityService {
     return profiles.map((profile) => ({ ...profile, iinBin: maskIinBin(profile.iinBin) }));
   }
 
+  async exportAccount(userId: string, correlationId: string) {
+    const user = await this.mustGetUser(userId);
+    const profiles = await this.listProfiles(userId);
+    const sessions = await this.listSessions(userId);
+    await this.audit('account_exported', userId, userId, { profileCount: profiles.length, sessionCount: sessions.length }, correlationId);
+    return {
+      exportedAt: new Date().toISOString(),
+      user: {
+        id: user.id,
+        channel: user.channel,
+        phone: user.phone,
+        email: user.email,
+        roles: user.roles,
+        consentVersion: user.consentVersion,
+        createdAt: user.createdAt,
+      },
+      profiles,
+      sessions,
+    };
+  }
+
+  async deleteAccount(userId: string, correlationId: string) {
+    await this.mustGetUser(userId);
+    await this.logoutAll(userId, correlationId);
+    await this.audit('account_deleted', userId, userId, {}, correlationId);
+    if (this.repository) {
+      await this.repository.deleteAccount(userId);
+    } else {
+      this.users.delete(userId);
+      const profileIds = [...this.profiles.values()].filter((profile) => profile.userId === userId).map((profile) => profile.id);
+      for (const profileId of profileIds) this.profiles.delete(profileId);
+    }
+    return { deleted: true };
+  }
+
   async listAuditEvents() {
     if (this.repository) return this.repository.listAuditEvents();
     return this.auditEvents.slice(-100).reverse();

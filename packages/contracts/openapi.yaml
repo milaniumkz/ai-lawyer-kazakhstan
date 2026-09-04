@@ -115,6 +115,42 @@ paths:
                 properties:
                   revoked:
                     type: boolean
+  /account/export:
+    get:
+      operationId: exportAccount
+      summary: Export current user's account data without secrets
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account export with sessions and masked profile identifiers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountExport"
+  /account:
+    delete:
+      operationId: deleteAccount
+      summary: Delete current user's account and revoke sessions
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAccountResponse"
   /sessions:
     get:
       operationId: listSessions
@@ -749,6 +785,50 @@ components:
             enum: [guest, user, legal_expert, support_operator, admin, superadmin]
         consentVersion:
           type: string
+    AccountExport:
+      type: object
+      required: [exportedAt, user, profiles, sessions]
+      properties:
+        exportedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          required: [id, channel, roles, consentVersion, createdAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            channel:
+              type: string
+              enum: [phone, email]
+            phone:
+              type: string
+            email:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+            consentVersion:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+    DeleteAccountResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
     Session:
       type: object
       required: [id, userId, createdAt]

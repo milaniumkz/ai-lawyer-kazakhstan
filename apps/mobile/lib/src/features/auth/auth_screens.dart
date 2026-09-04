@@ -500,16 +500,95 @@ class _ProfileTypeSelector extends StatelessWidget {
 }
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.accountApi});
+
+  final AccountApiPort? accountApi;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  late final AccountApiPort accountApi;
   var darkMode = false;
   var notifications = true;
   var piiMasking = true;
+  var isBusy = false;
+  var status = 'Настройки не синхронизированы';
+
+  @override
+  void initState() {
+    super.initState();
+    accountApi = widget.accountApi ?? HttpAccountApi();
+  }
+
+  Future<void> exportAccount() async {
+    if (isBusy) return;
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы экспортировать данные');
+      return;
+    }
+    setState(() {
+      isBusy = true;
+      status = 'Готовлю экспорт через API...';
+    });
+    try {
+      final exported = await accountApi.exportAccount(AuthRuntime.userId);
+      setState(() => status =
+          'Экспорт готов: ${exported.profileCount} профилей, ${exported.sessionCount} сессий');
+    } catch (error) {
+      setState(() => status = 'Экспорт API ошибка: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
+
+  Future<void> confirmDeleteAccount() async {
+    if (isBusy) return;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Удалить аккаунт?'),
+            content: const Text(
+                'Сессии будут отозваны, профильные данные удалены. Действие требует повторной регистрации.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Удалить'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    await deleteAccount();
+  }
+
+  Future<void> deleteAccount() async {
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы удалить аккаунт');
+      return;
+    }
+    setState(() {
+      isBusy = true;
+      status = 'Удаляю аккаунт через API...';
+    });
+    try {
+      await accountApi.deleteAccount(AuthRuntime.userId);
+      AuthRuntime.userId = '';
+      AuthRuntime.otpId = '';
+      AuthRuntime.otpCodeHint = null;
+      setState(() => status = 'Аккаунт удален, сессии отозваны');
+    } catch (error) {
+      setState(() => status = 'Удаление API ошибка: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -533,10 +612,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (value) => setState(() => piiMasking = value),
             title: const Text('Скрывать ИИН/БИН в логах'),
           ),
+          Text(status),
+          const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: () => _showAction(context, 'Настройки сохранены'),
+            onPressed: isBusy
+                ? null
+                : () {
+                    setState(() => status = 'Настройки сохранены локально');
+                    _showAction(context, 'Настройки сохранены');
+                  },
             icon: const Icon(Icons.save_outlined),
             label: const Text('Сохранить настройки'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: isBusy ? null : exportAccount,
+            icon: const Icon(Icons.download_outlined),
+            label: const Text('Экспортировать данные'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: isBusy ? null : confirmDeleteAccount,
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Удалить аккаунт'),
           ),
         ],
       ),
@@ -633,6 +731,11 @@ abstract class ProfileApiPort {
   });
 }
 
+abstract class AccountApiPort {
+  Future<AccountExportResult> exportAccount(String userId);
+  Future<void> deleteAccount(String userId);
+}
+
 class AuthOtpResult {
   const AuthOtpResult({required this.otpId, this.testCode});
 
@@ -644,6 +747,16 @@ class AuthSessionResult {
   const AuthSessionResult({required this.userId});
 
   final String userId;
+}
+
+class AccountExportResult {
+  const AccountExportResult({
+    required this.profileCount,
+    required this.sessionCount,
+  });
+
+  final int profileCount;
+  final int sessionCount;
 }
 
 abstract final class AuthRuntime {
@@ -753,6 +866,49 @@ class HttpProfileApi implements ProfileApiPort {
           '${body['message'] ?? body['error'] ?? ApiContract.profiles}');
     }
     return body['id'] as String;
+  }
+}
+
+class HttpAccountApi implements AccountApiPort {
+  HttpAccountApi({
+    this.baseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://89-207-250-217.sslip.io',
+    ),
+  });
+
+  final String baseUrl;
+
+  @override
+  Future<AccountExportResult> exportAccount(String userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.accountExport}'),
+      headers: {'x-user-id': userId, 'x-correlation-id': 'mobile-account'},
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+          '${body['message'] ?? body['error'] ?? 'account export failed'}');
+    }
+    return AccountExportResult(
+      profileCount: (body['profiles'] as List<dynamic>? ?? const []).length,
+      sessionCount: (body['sessions'] as List<dynamic>? ?? const []).length,
+    );
+  }
+
+  @override
+  Future<void> deleteAccount(String userId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.account}'),
+      headers: {'x-user-id': userId, 'x-correlation-id': 'mobile-account'},
+    );
+    final body = response.body.isEmpty
+        ? <String, dynamic>{}
+        : jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+          '${body['message'] ?? body['error'] ?? 'account delete failed'}');
+    }
   }
 }
 

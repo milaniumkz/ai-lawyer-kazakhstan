@@ -83,6 +83,10 @@ export class PostgresIdentityRepository implements IdentityRepository {
     return result.rows.map(mapProfile);
   }
 
+  async deleteAccount(userId: string) {
+    await this.db.query('DELETE FROM users WHERE id = $1', [userId]);
+  }
+
   async createAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>) {
     const result = await this.db.query<AuditEventRow>(
       `INSERT INTO audit_logs (action, actor_user_id, target_id, metadata, correlation_id)

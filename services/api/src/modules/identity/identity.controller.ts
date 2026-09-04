@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Post } from '@nestjs/common';
 import { IdentityService } from './identity.service';
 import { AuthChannel, ProfileType } from './identity.types';
 
@@ -50,6 +50,16 @@ export class IdentityController {
   @Get('profiles')
   profiles(@Headers('x-user-id') userId = '') {
     return this.identity.listProfiles(userId);
+  }
+
+  @Get('account/export')
+  exportAccount(@Headers('x-user-id') userId = '', @Headers('x-correlation-id') correlationId = 'local') {
+    return this.identity.exportAccount(userId, correlationId);
+  }
+
+  @Delete('account')
+  deleteAccount(@Headers('x-user-id') userId = '', @Headers('x-correlation-id') correlationId = 'local') {
+    return this.identity.deleteAccount(userId, correlationId);
   }
 
   @Get('admin/audit-events')

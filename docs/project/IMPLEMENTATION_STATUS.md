@@ -96,6 +96,7 @@
 | Flutter documents/OCR/evidence API parity P1 | Mobile documents screen now uses native file picker, hashes the selected file, creates upload session, completes metadata upload, confirms OCR, and creates evidence folders through API; camera scan is a documented adapter blocker instead of fake scan | `npm run check`, `npm run build`, Flutter analyze/test passed with fake picker/API coverage | done |
 | Flutter Legal RAG API parity P1 | Mobile legal screen now calls `/api/v1/rag/answer` for official-source answers and `/api/v1/citations/validate` for selected fragments, showing no-source fallback instead of fake norms | `npm run check`, `npm run build`, Flutter analyze/test passed with fake Legal API coverage | done |
 | Flutter workflows/subscription API parity P1 | Mobile pretrial claim builder now loads templates and generates drafts through `/api/v1/documents/generate`; subscription screen loads `/api/v1/subscriptions/current` for authenticated users while assisted submission/payment remain explicit blockers | `npm run check`, `npm run build`, Flutter analyze/test passed with fake workflow/billing API coverage | done |
+| Account export/delete compliance P1 | Added `/api/v1/account/export` and `DELETE /api/v1/account` contract/backend flows, Postgres account deletion, audit events, and Flutter settings actions for user data export/account deletion | `npm run check`, `npm run build`, API identity tests and Flutter settings fake API coverage passed | done |
 
 ## Блокеры окружения
 

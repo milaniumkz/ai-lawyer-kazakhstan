@@ -32,6 +32,29 @@ describe('IdentityService', () => {
     expect((await service.listAuditEvents()).some((event) => JSON.stringify(event).includes('000000000000'))).toBe(false);
   });
 
+  it('exports account data without password or raw profile identifiers', async () => {
+    const service = new IdentityService();
+    const otp = service.register({ channel: 'phone', phone: '+77011234566', password: 'secret', consentVersion: 'v1' }, 'test');
+    const auth = await service.verifyOtp({ otpId: otp.otpId, code: '111111' }, 'test');
+    await service.createProfile({ userId: auth.user.id, type: 'person', displayName: 'Test', iinBin: '000000000000' }, 'test');
+
+    const exported = await service.exportAccount(auth.user.id, 'test');
+
+    expect(JSON.stringify(exported)).not.toContain('secret');
+    expect(JSON.stringify(exported)).not.toContain('000000000000');
+    expect(exported.profiles[0].iinBin).toBe(maskIinBin('000000000000'));
+  });
+
+  it('deletes account and revokes future access', async () => {
+    const service = new IdentityService();
+    const otp = service.register({ channel: 'email', email: 'delete@example.kz', consentVersion: 'v1' }, 'test');
+    const auth = await service.verifyOtp({ otpId: otp.otpId, code: '111111' }, 'test');
+
+    await expect(service.deleteAccount(auth.user.id, 'test')).resolves.toEqual({ deleted: true });
+    await expect(service.listProfiles(auth.user.id)).resolves.toEqual([]);
+    await expect(service.exportAccount(auth.user.id, 'test')).rejects.toThrow(UnauthorizedException);
+  });
+
   it('rate limits OTP requests', () => {
     const service = new IdentityService();
     for (let index = 0; index < 5; index += 1) {
@@ -85,6 +108,7 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
     listSessions: jest.fn().mockResolvedValue([]),
     createProfile: jest.fn(),
     listProfiles: jest.fn().mockResolvedValue([]),
+    deleteAccount: jest.fn().mockResolvedValue(undefined),
     createAuditEvent: jest.fn().mockResolvedValue({
       id: 'audit-1',
       action: 'login',
