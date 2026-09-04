@@ -85,6 +85,7 @@
 | Server HTTPS mic-test pass P1 | Added reproducible self-signed HTTPS Nginx config and firewall 443 rule so browser microphone APIs can run on the test server before real domain/TLS is provided | Shell syntax check and local release-check passed | done |
 | Trusted HTTPS voice endpoint P1 | Issued Let’s Encrypt certificate for `89-207-250-217.sslip.io` and verified real browser microphone recording without certificate bypass | HTTPS server check and Playwright mic smoke passed | done |
 | Web real-user data pass P1 | Removed random auto-registration/sync behavior, removed hardcoded web OTP acceptance, and added browser live speech recognition status on top of real MediaRecorder capture | Web UI contract, web lint/typecheck/build, local release-check, deploy health, public server check and HTTPS browser voice smoke passed | done |
+| Web action realism pass P1 | Replaced remaining status-only web actions with real handlers: camera/file upload uses actual browser file metadata and SHA-256, profile saves via `/profiles`, document analysis validates OCR state, support creates a persistent request, claim send records a real user confirmation, and settings persist locally | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 
 ## Блокеры окружения
 

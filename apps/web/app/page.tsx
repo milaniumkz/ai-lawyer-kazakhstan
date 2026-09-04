@@ -30,13 +30,14 @@ type View =
   | "help";
 type CaseItem = { id: string; title: string; type: string; status: string; date: string; progress: number };
 type Message = { role: "user" | "assistant"; text: string };
-type DocumentItem = { name: string; status: string };
+type DocumentItem = { name: string; status: string; sizeBytes?: number; source?: "file" | "camera" };
 type TaskItem = { title: string; due: string; done: boolean };
 type LegalNorm = { title: string; article: string; source: string; date: string; text: string; url: string };
 type ApiLegalCase = { id: string; title: string; category: string; status: string; readinessPercent: number; createdAt: string };
 type ApiDocument = { id: string; fileName: string; status: string; extractedFields?: Record<string, string> };
 type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
 type ApiLegalAnswer = { status: string; message: string; fragment?: { title: string; article?: string; sourceUrl: string; text: string; retrievedAt?: string } };
+type ApiOtpResponse = { otpId: string; deliveryMode: "stub" | "sms" | "email"; testCode?: string };
 type TranscriptJob = { id: string; status: string; transcript: string; progress: string[] };
 type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
 type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
@@ -107,6 +108,7 @@ const emptyCase: CaseItem = { id: "new", title: "Новое дело", type: "Н
 
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -131,6 +133,7 @@ export default function WebHome() {
   const [selectedCategory, setSelectedCategory] = useState("Гражданское право");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
+  const [otpHint, setOtpHint] = useState("");
   const [remoteCaseId, setRemoteCaseId] = useState("");
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
@@ -323,26 +326,32 @@ export default function WebHome() {
     }
   }
 
-  async function addDocument(name: string) {
-    const localDoc = { name, status: "Загружен" };
-    setSelectedDocument(name);
+  async function fileSha256(file: File) {
+    const buffer = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest("SHA-256", buffer);
+    return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function addDocument(file: File, source: "file" | "camera" = "file") {
+    const localDoc: DocumentItem = { name: file.name, status: "Загружен", sizeBytes: file.size, source };
+    setSelectedDocument(file.name);
     setDocuments((items) => [localDoc, ...items]);
     updateActiveCase("Документы загружены", 76);
     if (!remoteCaseId) {
-      setSyncState(`Документ добавлен локально: ${name}`);
+      setSyncState(`Файл добавлен из браузера: ${file.name}. Для API сохранения сначала создайте дело.`);
       return;
     }
     try {
       const session = await apiJson("/files/upload-sessions", {
         method: "POST",
-        body: JSON.stringify({ caseId: remoteCaseId, fileName: name, mimeType: mimeTypeFor(name), sizeBytes: 128000 }),
+        body: JSON.stringify({ caseId: remoteCaseId, fileName: file.name, mimeType: file.type || mimeTypeFor(file.name), sizeBytes: file.size }),
       });
       const document = await apiJson("/files/complete", {
         method: "POST",
-        body: JSON.stringify({ uploadSessionId: session.id, sha256: `web-${Date.now()}-${name}` }),
+        body: JSON.stringify({ uploadSessionId: session.id, sha256: await fileSha256(file) }),
       }) as ApiDocument;
       setRemoteDocumentId(document.id);
-      setDocuments((items) => items.map((item, index) => index === 0 ? { name: document.fileName, status: "OCR-review" } : item));
+      setDocuments((items) => items.map((item, index) => index === 0 ? { ...item, name: document.fileName, status: "OCR-review" } : item));
       setSyncState(`Документ сохранен в API: ${document.fileName}`);
     } catch (error) {
       setSyncState(error instanceof Error ? `Документ локально, API ошибка: ${error.message}` : "Документ добавлен локально");
@@ -389,6 +398,10 @@ export default function WebHome() {
   }
 
   async function confirmOcr() {
+    if (!selectedDocument) {
+      setSyncState("Сначала загрузите или отсканируйте документ");
+      return;
+    }
     setOcrConfirmed(true);
     if (!remoteDocumentId) {
       setSyncState("OCR подтвержден локально");
@@ -493,6 +506,69 @@ export default function WebHome() {
     } catch (error) {
       setSyncState(error instanceof Error ? `Ошибка генерации: ${error.message}` : "Не удалось сформировать претензию");
     }
+  }
+
+  async function analyzeDocuments() {
+    if (!documents.length) {
+      setSyncState("Сначала загрузите документ");
+      go("documentUpload");
+      return;
+    }
+    if (!ocrConfirmed) {
+      setSyncState("Сначала подтвердите OCR поля");
+      go("documentCheck");
+      return;
+    }
+    setAnalysisDone(true);
+    updateActiveCase("Анализ документов завершен", 84);
+    if (remoteCaseId) {
+      try {
+        const remoteDocs = await apiJson(`/cases/${remoteCaseId}/documents`) as ApiDocument[];
+        setSyncState(`Анализ API завершен: документов ${remoteDocs.length}`);
+      } catch (error) {
+        setSyncState(error instanceof Error ? `Анализ локально, API ошибка: ${error.message}` : "Анализ завершен локально");
+      }
+    } else {
+      setSyncState("Анализ локальных файлов завершен. Для серверной обработки создайте дело.");
+    }
+    go("analysis");
+  }
+
+  function confirmClaimSent() {
+    if (!claimReady) {
+      setSyncState("Сначала сформируйте проект претензии");
+      return;
+    }
+    const sentAt = new Date().toLocaleString("ru-KZ");
+    setSent(true);
+    updateActiveCase("Отправка претензии зафиксирована", 100);
+    setTasks((items) => [{ title: `Отправка претензии подтверждена ${sentAt}`, due: "Зафиксировано", done: true }, ...items]);
+    setSyncState(`Отправка зафиксирована пользователем: ${sentAt}`);
+    go("claimSend");
+  }
+
+  function saveSettings() {
+    window.localStorage.setItem("ai-lawyer-web-settings", JSON.stringify({ maskPii, budgetAlerts, savedAt: new Date().toISOString() }));
+    setSyncState("Настройки сохранены в браузере");
+  }
+
+  async function createSupportRequest() {
+    if (caseText.trim().length < 8) {
+      setSyncState("Опишите обращение подробнее");
+      return;
+    }
+    const ticketId = `SUP-${Date.now().toString().slice(-6)}`;
+    if (remoteCaseId) {
+      try {
+        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", body: JSON.stringify({ role: "user", text: `Поддержка: ${caseText}` }) });
+      } catch {
+        // Support request still remains in local case history when API message sync is unavailable.
+      }
+    }
+    setHelpStatus(`Обращение ${ticketId} создано`);
+    setMessages((items) => [...items, { role: "user", text: `Поддержка: ${caseText}` }, { role: "assistant", text: `Обращение ${ticketId} принято в ручную проверку.` }]);
+    setTasks((items) => [{ title: `Ответ поддержки ${ticketId}`, due: "24 часа", done: false }, ...items]);
+    setSyncState(`Поддержка создана: ${ticketId}`);
   }
 
   async function loadSubscription() {
@@ -648,8 +724,9 @@ export default function WebHome() {
       const registered = await apiJson("/auth/register", {
         method: "POST",
         body: JSON.stringify({ channel: "phone", phone, email: target === "register" ? email : undefined, password: password || undefined, consentVersion: "v1" }),
-      });
+      }) as ApiOtpResponse;
       setOtpId(registered.otpId);
+      setOtpHint(registered.deliveryMode === "stub" && registered.testCode ? `RC local SMS: ${registered.testCode}` : "Код отправлен через подключенный канал");
       setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
       go("otp");
     } catch (error) {
@@ -677,9 +754,23 @@ export default function WebHome() {
     }
   }
 
-  function saveProfile() {
+  async function saveProfile() {
+    if (!profileName.trim()) {
+      setSyncState("Введите имя профиля");
+      return;
+    }
     setName(profileName);
-    setSyncState(`Профиль сохранен: ${profileType}`);
+    try {
+      const userId = await ensureUser();
+      const cleanIinBin = profileId.replace(/\D/g, "");
+      await apiJson("/profiles", {
+        method: "POST",
+        body: JSON.stringify({ userId, type: profileType, displayName: profileName, iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined }),
+      });
+      setSyncState(`Профиль сохранен в API: ${profileType}`);
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Профиль локально: ${error.message}` : `Профиль сохранен локально: ${profileType}`);
+    }
   }
 
   function AppHeader({ title, subtitle, back = "home" }: { title: string; subtitle: string; back?: View }) {
@@ -730,6 +821,7 @@ export default function WebHome() {
           {view === "otp" && (
             <>
               <div className="analysisBox"><strong>OTP</strong><p>{otpId ? `Код отправлен: ${otpId.slice(0, 8)}` : "Введите код из SMS"}</p></div>
+              {otpHint && <small className="recordMeta">{otpHint}</small>}
               <input placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
               <button className="primary wide" onClick={() => { void verifyOtp(); }}>Подтвердить</button>
               <button className="wide" onClick={() => { void startAuth("login"); }}>Отправить код повторно</button>
@@ -848,19 +940,20 @@ export default function WebHome() {
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <div className="actionBar">
-            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file.name); go("documentUpload"); }} />
+            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
+            <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
             <button className="primary" onClick={() => fileInputRef.current?.click()}>Загрузить файл</button>
-            <button onClick={() => { void addDocument(`Скан документа ${documents.length + 1}.jpg`); go("documentUpload"); }}>Сканировать документ</button>
+            <button onClick={() => scanInputRef.current?.click()}>Сканировать документ</button>
             <button onClick={confirmOcr}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
           </div>
           <div className="list">
             {!documents.length && <button className="docRow" onClick={() => fileInputRef.current?.click()}><strong>Документов нет</strong><span>Загрузить файл</span></button>}
-            {documents.map((doc) => <button className={selectedDocument === doc.name ? "docRow active" : "docRow"} key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{selectedDocument === doc.name && ocrConfirmed ? "Готов" : doc.status}</span></button>)}
+            {documents.map((doc) => <button className={selectedDocument === doc.name ? "docRow active" : "docRow"} key={`${doc.name}-${doc.sizeBytes ?? 0}`} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{selectedDocument === doc.name && ocrConfirmed ? "Готов" : `${doc.status}${doc.sizeBytes ? ` · ${Math.ceil(doc.sizeBytes / 1024)} КБ` : ""}`}</span></button>)}
           </div>
           <div className="analysisBox">
             <strong>Проверка документов</strong>
             <p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : "Не хватает акта сверки. Подтвердите отсутствие или загрузите документ."}</p>
-            <button className="primary" onClick={() => { setAnalysisDone(true); updateActiveCase("Анализ документов завершен", 84); go("analysis"); }}>Анализировать документы</button>
+            <button className="primary" onClick={analyzeDocuments}>Анализировать документы</button>
             <button disabled={!analysisDone} onClick={() => go("claim")}>Сформировать претензию</button>
           </div>
         </section>
@@ -918,7 +1011,7 @@ export default function WebHome() {
           <div className="claimPreview">{generatedClaimBody || "Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя."}</div>
           <div className="actionBar">
             <button className="primary" onClick={generateClaim}>{claimReady ? "Пересформировать проект" : "Сформировать проект"}</button>
-            <button disabled={!claimReady} onClick={() => { setSent(true); updateActiveCase("Отправка претензии зафиксирована", 100); go("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
+            <button disabled={!claimReady} onClick={confirmClaimSent}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
           </div>
         </section>
       );
@@ -932,7 +1025,7 @@ export default function WebHome() {
           <input placeholder="Ф.И.О. / название" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
           <input placeholder="ИИН/БИН" value={profileId} onChange={(event) => setProfileId(event.target.value)} />
           <div className="actionBar">
-            <button className="primary" onClick={saveProfile}>Сохранить профиль</button>
+            <button className="primary" onClick={() => { void saveProfile(); }}>Сохранить профиль</button>
             <button onClick={() => go("settings")}>Настройки</button>
             <button onClick={() => go("subscription")}>Подписка</button>
             <button onClick={() => go("help")}>Помощь и поддержка</button>
@@ -948,7 +1041,7 @@ export default function WebHome() {
           <label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Скрывать ИИН/БИН в логах</label>
           <label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Предупреждать о бюджете AI</label>
           <div className="analysisBox"><strong>Статус</strong><p>{maskPii ? "PII masking включен" : "PII masking выключен"} · {budgetAlerts ? "Уведомления включены" : "Уведомления выключены"}</p></div>
-          <button className="primary wide" onClick={() => setSyncState("Настройки сохранены")}>Сохранить настройки</button>
+          <button className="primary wide" onClick={saveSettings}>Сохранить настройки</button>
         </section>
       );
     }
@@ -974,7 +1067,7 @@ export default function WebHome() {
           <AppHeader title="Помощь" subtitle="Поддержка и ручная проверка юристом" back="profile" />
           <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <button className="primary wide" onClick={() => { setHelpStatus(`Обращение создано: ${caseText.slice(0, 42)}`); setTasks((items) => [{ title: "Ответ поддержки", due: "24 часа", done: false }, ...items]); }}>Написать в поддержку</button>
+          <button className="primary wide" onClick={() => { void createSupportRequest(); }}>Написать в поддержку</button>
         </section>
       );
     }

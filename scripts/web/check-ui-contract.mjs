@@ -53,9 +53,15 @@ const requiredActions = [
   'localStorage.setItem("ai-lawyer-web-state"',
   'localStorage.getItem("ai-lawyer-web-state"',
   'type="file"',
+  'capture="environment"',
+  'crypto.subtle.digest("SHA-256"',
   'startAuth(',
   'verifyOtp',
   'saveProfile',
+  'saveSettings',
+  'createSupportRequest',
+  'analyzeDocuments',
+  'confirmClaimSent',
   'finishRecording',
   'startRecording',
   'pauseRecording',
@@ -127,6 +133,14 @@ for (const needle of cssNeedles) {
 }
 
 if (/onClick=\{\(\) => \{\}\}/.test(page)) failures.push('web page contains empty onClick handler');
+for (const forbidden of [
+  'Скан документа ${documents.length + 1}.jpg',
+  'setSyncState("Настройки сохранены")',
+  'setHelpStatus(`Обращение создано:',
+  'setSent(true); updateActiveCase("Отправка претензии зафиксирована"',
+]) {
+  if (page.includes(forbidden)) failures.push(`web page still has status-only action: ${forbidden}`);
+}
 if (/defaultValue=/.test(page)) failures.push('web page still uses static defaultValue form fields');
 if (page.includes('00:47')) failures.push('web page still uses fake recording timer');
 for (const forbidden of ['Стенд готов', 'RC internal validation', 'Release Candidate', 'API demo не запускался']) {
