@@ -14,3 +14,5 @@
 - P1-002 Subscriptions, budget and admin operations — done.
 - P1-003 Security/compliance hardening — done.
 - P1-004 Release candidate packaging — done.
+- P1-005 PostgreSQL migration baseline — done.
+- P1-006 Typed clients and codegen foundation — planned.

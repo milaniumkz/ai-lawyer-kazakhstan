@@ -8,3 +8,5 @@ P1-001,P1,Legal workflows and document builder,done
 P1-002,P1,Subscriptions budget and admin operations,done
 P1-003,P1,Security compliance hardening,done
 P1-004,P1,Release candidate packaging,done
+P1-005,P1,PostgreSQL migration baseline,done
+P1-006,P1,Typed clients and codegen foundation,planned

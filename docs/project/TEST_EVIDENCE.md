@@ -32,6 +32,8 @@
 - Android debug build — passed, `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`, sha256 `9b3a3a97d7a443d25a4fec0ac742dcc62a1da0700f7d90568f824d4b07efe878`.
 - Android release build — passed with temporary debug signing config, `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, sha256 `10506dbe4ac5f6acbcb4ac89444ae4586ba6b16de866ccbabfa5ee929b4b83fc`.
 - iOS debug no-codesign build — passed, `apps/mobile/build/ios/iphoneos/Runner.app`.
+- OpenAPI contract script — passed via `node scripts/contracts/check-openapi.mjs`.
+- PostgreSQL baseline migration inspection — passed for `users`, `legal_source_fragments embedding vector(1536)`, `audit_logs`.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

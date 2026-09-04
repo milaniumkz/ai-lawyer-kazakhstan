@@ -16,6 +16,8 @@
 - [x] Собрать Android debug APK.
 - [x] Собрать Android release APK с temporary signing.
 - [x] Проверить iOS debug no-codesign build.
+- [x] Добавить PostgreSQL baseline migration.
+- [x] Добавить OpenAPI contract check script.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.

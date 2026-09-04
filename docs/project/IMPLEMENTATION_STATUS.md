@@ -20,6 +20,7 @@
 | Subscriptions/budget/admin P1 | OpenAPI subscriptions/AI usage/providers, NestJS local usage ledger, budget thresholds, TTS disable flag, provider kill switch, Flutter subscription screen, admin visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 | Security/compliance hardening P1 | NestJS safe error envelope with correlation ID, sensitive detail masking, security scan for secrets and forbidden РФ legal tokens, docs update | `npm run check`, `npm run build`, security scan passed | done |
 | Release candidate packaging P1 | Flutter Android/iOS platform scaffold, project package IDs, Android debug/release APK, iOS debug no-codesign build, release docs/checksums | Android debug/release build passed, iOS debug no-codesign build passed | done |
+| PostgreSQL migration baseline P1 | Initial SQL schema for identity, cases, chat, documents, evidence, legal source fragments with pgvector, templates, generated documents, AI usage, audit logs; template seed; contract check script | `npm run check`, `node scripts/contracts/check-openapi.mjs`, migration text inspection passed | done |
 
 ## Блокеры окружения
 

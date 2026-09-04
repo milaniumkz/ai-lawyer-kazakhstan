@@ -40,3 +40,9 @@ Rel(api, gov, "assisted/official adapters")
 - Backend enforces RBAC, ownership, idempotency and audit.
 - AI receives masked PII where possible and never becomes source of law.
 - Government integrations default to `assisted` unless official API access is documented.
+
+## Data Foundation
+
+The first migration is `infra/db/migrations/0001_initial_schema.sql`. It defines the release baseline for users, sessions, profiles, cases, messages, transcripts, files, evidence, legal source fragments with pgvector, templates, generated documents, AI usage and audit logs.
+
+Sensitive identifiers are stored as encrypted/hash-ready columns, not plain operational telemetry.
