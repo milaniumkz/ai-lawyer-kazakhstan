@@ -21,6 +21,50 @@ async function expectHealth(path, service) {
   }
 }
 
+async function expectPublicWebBundle() {
+  const response = await expectHttp('/');
+  if (!response.ok) return;
+  const html = await response.text();
+  const htmlNeedles = ['AI Юрист', 'Готово для внутреннего тестирования', '/_next/static/'];
+  for (const needle of htmlNeedles) {
+    if (!html.includes(needle)) failures.push(`public web html missing: ${needle}`);
+  }
+
+  const scriptPaths = [...html.matchAll(/src="([^"]*\/_next\/static\/chunks\/[^"]+\.js)"/g)].map((match) => match[1]);
+  if (!scriptPaths.length) {
+    failures.push('public web html missing Next.js chunk scripts');
+    return;
+  }
+
+  const bundleText = (
+    await Promise.all(
+      scriptPaths.slice(0, 8).map(async (path) => {
+        const script = await fetch(`${baseUrl}${path}`);
+        if (!script.ok) {
+          failures.push(`${path} returned ${script.status}`);
+          return '';
+        }
+        return script.text();
+      }),
+    )
+  ).join('\n');
+
+  const bundleNeedles = [
+    'API demo',
+    'Онбординг',
+    'Вход и регистрация',
+    'Главный экран',
+    'Документы и доказательства',
+    'Помощь',
+    '/auth/register',
+    '/documents/generate',
+    '/rag/answer',
+  ];
+  for (const needle of bundleNeedles) {
+    if (!bundleText.includes(needle)) failures.push(`public web bundle missing: ${needle}`);
+  }
+}
+
 async function apiJson(path, init) {
   const response = await fetch(`${baseUrl}/api/v1${path}`, {
     ...init,
@@ -147,7 +191,7 @@ function canConnect(port) {
   });
 }
 
-await expectHttp('/');
+await expectPublicWebBundle();
 await expectHttp('/admin');
 await expectHealth('/api/v1/health', 'api');
 await expectHealth('/ai/health', 'ai');

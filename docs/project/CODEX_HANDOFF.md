@@ -77,6 +77,7 @@
 - Public server release check now also runs the deployed API demo path: auth OTP, case, upload/OCR, document generation and RAG.
 - Design source contract gate added to root check: required dark/light PNG references and expected reference dimensions.
 - Design source contract now verifies all 25 dark design screens map to web labels, mobile routes and mobile render-test widgets; web API demo phone format fixed.
+- Public server release check now verifies deployed Next.js HTML/assets contain required web labels and API demo route strings.
 
 ## Дизайн-источник
 
@@ -119,6 +120,7 @@
 - Latest public API demo smoke verified: `release-check:server` and full `release-check:local && release-check:server`.
 - Latest design source contract verified: `test:design-source` and full `release-check:local && release-check:server`.
 - Latest design screen route matrix verified: `test:design-source`, web lint/typecheck/build and full release-check local/server.
+- Latest public web bundle smoke verified: `release-check:server` and full `release-check:local && release-check:server`.
 
 ## Следующая задача
 

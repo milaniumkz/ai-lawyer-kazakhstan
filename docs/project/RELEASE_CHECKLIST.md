@@ -75,5 +75,6 @@
 - [x] Добавить public API demo smoke в server release-check.
 - [x] Добавить design source contract gate в общий release-check.
 - [x] Добавить design screen route matrix для 25 экранов mobile/web.
+- [x] Добавить public web bundle smoke в server release-check.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.
