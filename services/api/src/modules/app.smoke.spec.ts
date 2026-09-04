@@ -87,6 +87,7 @@ describe('AppModule HTTP smoke', () => {
     const templates = await request(app.getHttpServer()).get('/api/v1/templates').expect(200);
     await request(app.getHttpServer())
       .post('/api/v1/documents/generate')
+      .set('x-user-id', userId)
       .send({
         templateId: templates.body[0].id,
         caseId: legalCase.body.id,
@@ -115,6 +116,38 @@ describe('AppModule HTTP smoke', () => {
         correlationId: 'smoke',
       })
       .expect(201);
+  });
+
+  it('enforces case ownership on generated documents', async () => {
+    const auth = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ channel: 'phone', phone: '+77011234563', consentVersion: 'v1' })
+      .expect(201);
+    const tokens = await request(app.getHttpServer())
+      .post('/api/v1/auth/otp/verify')
+      .send({ otpId: auth.body.otpId, code: '111111' })
+      .expect(201);
+    const userId = tokens.body.user.id as string;
+    const legalCase = await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
+      .expect(201);
+    const templates = await request(app.getHttpServer()).get('/api/v1/templates').expect(200);
+    const payload = {
+      templateId: templates.body[0].id,
+      caseId: legalCase.body.id,
+      fields: {
+        claimantName: 'Иван Иванов',
+        respondentName: 'ТОО Борышкер',
+        claimAmount: '150000',
+        claimReason: 'задолженность по договору',
+        deadlineDate: '2026-09-20',
+      },
+    };
+
+    await request(app.getHttpServer()).post('/api/v1/documents/generate').send(payload).expect(403);
+    await request(app.getHttpServer()).post('/api/v1/documents/generate').set('x-user-id', 'other-user').send(payload).expect(403);
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}/generated-documents`).set('x-user-id', userId).expect(200);
   });
 
   it('enforces case ownership on case and chat endpoints', async () => {

@@ -510,9 +510,11 @@ export default function WebHome() {
     }
     setSyncState("Формирую претензию...");
     try {
+      const userId = await ensureUser();
       const templates = await apiJson("/templates") as { id: string }[];
       const generated = await apiJson("/documents/generate", {
         method: "POST",
+        headers: { "x-user-id": userId },
         body: JSON.stringify({
           templateId: templates[0]?.id ?? "tpl-pretrial-claim-ru-v1",
           caseId: remoteCaseId,

@@ -250,9 +250,10 @@ class HttpWorkflowApi implements WorkflowApiPort {
     final response = await http.post(
       Uri.parse(
           '$baseUrl${ApiContract.basePath}${ApiContract.documentsGenerate}'),
-      headers: const {
+      headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-workflow',
+        'x-user-id': AuthRuntime.userId,
       },
       body: jsonEncode({
         'templateId': templateId,

@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { CasesService } from '../cases/cases.service';
 import { GeneratedDocument, TemplateRecord } from './templates.types';
 import { TEMPLATES_REPOSITORY } from './repositories/templates-repository.provider';
 import { TemplatesRepository } from './repositories/templates.repository';
@@ -26,14 +27,18 @@ export class TemplatesService {
   private readonly templates = new Map<string, TemplateRecord>([[PRETRIAL_CLAIM_TEMPLATE.id, PRETRIAL_CLAIM_TEMPLATE]]);
   private readonly generatedDocuments = new Map<string, GeneratedDocument>();
 
-  constructor(@Optional() @Inject(TEMPLATES_REPOSITORY) private readonly repository?: TemplatesRepository) {}
+  constructor(
+    @Optional() @Inject(TEMPLATES_REPOSITORY) private readonly repository?: TemplatesRepository,
+    @Optional() private readonly cases?: CasesService,
+  ) {}
 
   async listTemplates() {
     if (this.repository) return this.repository.listTemplates();
     return [...this.templates.values()];
   }
 
-  async generate(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }) {
+  async generate(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }, ownerUserId?: string) {
+    await this.assertCaseOwner(input.caseId, ownerUserId);
     const template = this.repository ? await this.repository.findTemplateById(input.templateId) : this.templates.get(input.templateId);
     if (!template) throw new NotFoundException('TEMPLATE_NOT_FOUND');
     const missing = template.requiredFields.filter((field) => !input.fields[field]);
@@ -60,8 +65,14 @@ export class TemplatesService {
     return document;
   }
 
-  async listGenerated(caseId: string) {
+  async listGenerated(caseId: string, ownerUserId?: string) {
+    await this.assertCaseOwner(caseId, ownerUserId);
     if (this.repository) return this.repository.listGenerated(caseId);
     return [...this.generatedDocuments.values()].filter((document) => document.caseId === caseId);
+  }
+
+  private async assertCaseOwner(caseId: string, ownerUserId?: string) {
+    if (ownerUserId === undefined || !this.cases) return;
+    await this.cases.getCase(caseId, ownerUserId);
   }
 }

@@ -173,6 +173,7 @@ async function expectPublicApiDemo() {
 
   const generated = await apiJson('/documents/generate', {
     method: 'POST',
+    headers: { 'x-user-id': userId },
     body: JSON.stringify({
       templateId,
       caseId: legalCase.id,

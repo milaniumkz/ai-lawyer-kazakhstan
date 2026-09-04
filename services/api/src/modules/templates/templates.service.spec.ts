@@ -1,4 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { CasesService } from '../cases/cases.service';
 import { TemplatesService } from './templates.service';
 import { TemplatesRepository } from './repositories/templates.repository';
 
@@ -28,6 +29,29 @@ describe('TemplatesService', () => {
     const [template] = await service.listTemplates();
 
     await expect(service.generate({ templateId: template.id, caseId: 'case-1', fields: {} })).rejects.toThrow(BadRequestException);
+  });
+
+  it('checks case ownership when owner header is provided', async () => {
+    const cases = { getCase: jest.fn().mockRejectedValue(new ForbiddenException('CASE_ACCESS_DENIED')) } as unknown as CasesService;
+    const service = new TemplatesService(undefined, cases);
+
+    await expect(
+      service.generate(
+        {
+          templateId: 'tpl-pretrial-claim-ru-v1',
+          caseId: 'case-1',
+          fields: {
+            claimantName: 'Иван Иванов',
+            respondentName: 'ТОО Борышкер',
+            claimAmount: '150000',
+            claimReason: 'задолженность по договору',
+            deadlineDate: '2026-09-20',
+          },
+        },
+        'other-user',
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(cases.getCase).toHaveBeenCalledWith('case-1', 'other-user');
   });
 
   it('uses configured repository for persistent generated documents', async () => {

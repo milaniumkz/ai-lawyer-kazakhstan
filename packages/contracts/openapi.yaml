@@ -654,6 +654,13 @@ paths:
     post:
       operationId: generateDocument
       summary: Generate document draft from template
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -677,6 +684,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Generated documents

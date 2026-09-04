@@ -103,6 +103,7 @@
 | Admin RBAC enforcement P1 | `/api/v1/admin/audit-events` and `/api/v1/admin/providers` now require `x-user-role: admin|superadmin`; admin UI sends the role header and smoke tests verify 403 without it | `npm run check`, `npm run build`, API smoke/admin contract passed | done |
 | Case/chat ownership enforcement P1 | Case details and case chat endpoints now require `x-user-id` and reject missing or mismatched owners; web/mobile chat clients send authenticated user headers | `npm run check`, `npm run build`, cases/app smoke, Flutter analyze/test and web UI contract passed | done |
 | Documents/evidence ownership enforcement P1 | Upload sessions, upload completion, OCR confirmation, case documents and evidence endpoints now validate `x-user-id` against case ownership; web/mobile document clients send owner headers | `npm run check`, `npm run build`, documents/app smoke, Flutter analyze/test and web UI contract passed | done |
+| Generated documents ownership enforcement P1 | Document generation and generated-document listing now require `x-user-id` and validate case ownership; web/mobile/public smoke send owner headers | `npm run check`, `npm run build`, templates/app smoke, Flutter analyze/test and web UI contract passed | done |
 
 ## Блокеры окружения
 
