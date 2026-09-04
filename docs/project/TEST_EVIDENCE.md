@@ -136,6 +136,8 @@
 - Final release gate after web UI contract — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Web dynamic API demo — `API demo` button calls `/api/v1/auth/register`, OTP verify, case creation, upload session, upload complete, OCR confirm, document generation and RAG answer; `npm run test:web-ui`, web lint/typecheck/build and server rebuild passed.
 - Final release gate after web dynamic API demo — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Public API demo smoke — `npm run release-check:server` now executes deployed `/api/v1` auth registration/OTP verify, case creation, upload session, upload complete, OCR confirmation, document generation and RAG answer; passed against `http://89.207.250.217`.
+- Final release gate after public API demo smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 
