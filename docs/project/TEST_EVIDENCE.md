@@ -62,6 +62,8 @@
 - Full project check/build after templates runtime repository toggle — `npm run check`, `npm run build` passed.
 - Billing repository runtime toggle API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 14 suites, 56 tests.
 - Full project check/build after billing runtime repository toggle — `npm run check`, `npm run build` passed.
+- Database migration contract check — `npm run test:migrations` passed; 4 migration files validated.
+- Full project check/build after migration contract check — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

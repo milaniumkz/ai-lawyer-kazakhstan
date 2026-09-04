@@ -33,6 +33,7 @@
 - [x] Подключить billing/subscriptions PostgreSQL repository к runtime через explicit config toggle.
 - [x] Реализовать case/chat/document vertical slices в local/stub режиме.
 - [x] Подключить PostgreSQL repository adapters к runtime services для реализованных backend modules.
+- [x] Добавить автоматическую проверку PostgreSQL migration contracts.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

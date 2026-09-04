@@ -29,3 +29,4 @@
 - P1-011 Legal RAG repository runtime toggle — done.
 - P1-012 Templates/generated documents repository runtime toggle — done.
 - P1-013 Billing/subscriptions repository runtime toggle — done.
+- P1-014 Database migration contract check — done.
