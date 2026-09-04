@@ -79,5 +79,6 @@
 - [x] Добавить mobile router-smoke для всех release routes.
 - [x] Заменить web-стенд на реальное stateful web-приложение.
 - [x] Привязать все 25 web design screens к точным функциональным состояниям.
+- [x] Исправить web button semantics: “Новое дело”, настройки, подписка, помощь и активные nav-состояния.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

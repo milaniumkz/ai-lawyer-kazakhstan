@@ -85,6 +85,9 @@ export default function WebHome() {
   ]);
   const [profileType, setProfileType] = useState("Физлицо");
   const [syncState, setSyncState] = useState("Не синхронизировано");
+  const [maskPii, setMaskPii] = useState(true);
+  const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
 
   const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0];
   const filteredCases = useMemo(
@@ -354,18 +357,56 @@ export default function WebHome() {
       );
     }
 
-    if (view === "profile" || view === "settings" || view === "subscription" || view === "help") {
+    if (view === "profile") {
       return (
         <section className="contentPanel">
-          <Header title={view === "profile" ? "Профиль" : view === "settings" ? "Настройки" : view === "subscription" ? "Подписка" : "Помощь"} subtitle="Профиль пользователя, безопасность и поддержка" />
+          <Header title="Профиль" subtitle="Профиль пользователя и тип клиента" />
           <div className="chips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
           <input placeholder="Ф.И.О. / название" defaultValue="Дмитрий" />
           <input placeholder="ИИН/БИН" defaultValue="********1234" />
-          <label className="toggle"><input type="checkbox" /> Скрывать ИИН/БИН в логах</label>
           <div className="actionBar">
             <button className="primary" onClick={() => setSyncState(`Профиль сохранен: ${profileType}`)}>Сохранить профиль</button>
-            <button onClick={() => setSyncState("Обращение создано")}>Написать в поддержку</button>
+            <button onClick={() => setView("settings")}>Настройки</button>
+            <button onClick={() => setView("help")}>Помощь и поддержка</button>
           </div>
+        </section>
+      );
+    }
+
+    if (view === "settings") {
+      return (
+        <section className="contentPanel">
+          <Header title="Настройки" subtitle="Безопасность, уведомления и приватность" />
+          <label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Скрывать ИИН/БИН в логах</label>
+          <label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Предупреждать о бюджете AI</label>
+          <div className="analysisBox"><strong>Статус</strong><p>{maskPii ? "PII masking включен" : "PII masking выключен"} · {budgetAlerts ? "Уведомления включены" : "Уведомления выключены"}</p></div>
+          <button className="primary wide" onClick={() => setSyncState("Настройки сохранены")}>Сохранить настройки</button>
+        </section>
+      );
+    }
+
+    if (view === "subscription") {
+      return (
+        <section className="contentPanel">
+          <Header title="Подписка" subtitle="Лимиты, история и контроль расходов" />
+          <div className="tileGrid">
+            <Info label="Тариф" value="RC Internal" />
+            <Info label="AI бюджет" value="70%" />
+            <Info label="Запросы" value="148 / 250" />
+          </div>
+          <div className="analysisBox"><strong>Payment provider</strong><p>Оплата доступна только после подключения production credentials.</p></div>
+          <button className="primary wide" onClick={() => setSyncState("Оплата заблокирована: нет payment credentials")}>Управление оплатой</button>
+        </section>
+      );
+    }
+
+    if (view === "help") {
+      return (
+        <section className="contentPanel">
+          <Header title="Помощь" subtitle="Поддержка и ручная проверка юристом" />
+          <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
+          <textarea defaultValue="Опишите вопрос для поддержки" />
+          <button className="primary wide" onClick={() => setHelpStatus("Обращение создано")}>Написать в поддержку</button>
         </section>
       );
     }
@@ -380,7 +421,7 @@ export default function WebHome() {
         <h2>Рассказать проблему</h2>
         <p className="hint">{recording ? "Запись активна. Нажмите еще раз, чтобы остановить." : "Нажмите и говорите голосом"}</p>
         <div className="quickGrid">
-          <button onClick={() => setView("case")}>Новое дело<small>Создать новое дело</small></button>
+          <button onClick={() => setView("newCase")}>Новое дело<small>Создать новое дело</small></button>
           <button onClick={() => setView("documents")}>Мои документы<small>Просмотр и загрузка</small></button>
           <button onClick={() => setView("deadlines")}>Сроки и календарь<small>Даты и напоминания</small></button>
         </div>
@@ -402,11 +443,11 @@ export default function WebHome() {
         <strong>AI Юрист</strong>
         <nav>
           <Nav label="Главная" current={view === "home"} onClick={() => setView("home")} />
-          <Nav label="Дела" current={view === "cases" || view === "case" || view === "chat"} onClick={() => setView("cases")} />
-          <Nav label="Документы" current={view === "documents" || view === "analysis"} onClick={() => setView("documents")} />
+          <Nav label="Дела" current={["cases", "case", "chat", "newCase", "category"].includes(view)} onClick={() => setView("cases")} />
+          <Nav label="Документы" current={["documents", "analysis", "documentCheck", "documentUpload"].includes(view)} onClick={() => setView("documents")} />
           <Nav label="Сроки" current={view === "deadlines"} onClick={() => setView("deadlines")} />
-          <Nav label="Нормы права" current={view === "legal"} onClick={() => setView("legal")} />
-          <Nav label="Профиль" current={view === "profile"} onClick={() => setView("profile")} />
+          <Nav label="Нормы права" current={["legal", "legalSearch"].includes(view)} onClick={() => setView("legal")} />
+          <Nav label="Профиль" current={["profile", "settings", "subscription", "help", "login", "register", "otp", "biometric"].includes(view)} onClick={() => setView("profile")} />
         </nav>
         <button className="sync" onClick={syncWithApi}>Синхронизировать</button>
         <small>{syncState}</small>
@@ -415,10 +456,10 @@ export default function WebHome() {
         {renderView()}
         <nav className="bottomNav">
           <button className={view === "home" ? "active" : ""} onClick={() => setView("home")}>Главная</button>
-          <button className={view === "cases" ? "active" : ""} onClick={() => setView("cases")}>Дела</button>
-          <button className={view === "documents" ? "active" : ""} onClick={() => setView("documents")}>Документы</button>
+          <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => setView("cases")}>Дела</button>
+          <button className={["documents", "analysis", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => setView("documents")}>Документы</button>
           <button className={view === "deadlines" ? "active" : ""} onClick={() => setView("deadlines")}>Сроки</button>
-          <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Профиль</button>
+          <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => setView("profile")}>Профиль</button>
         </nav>
       </section>
       <aside className="rightPanel">
