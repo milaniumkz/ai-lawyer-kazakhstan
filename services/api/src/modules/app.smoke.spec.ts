@@ -68,6 +68,7 @@ describe('AppModule HTTP smoke', () => {
 
     const source = await request(app.getHttpServer())
       .post('/api/v1/legal-sources/manual-import')
+      .set('x-user-role', 'admin')
       .send({
         officialId: 'adilet:smoke:001',
         title: 'Официальный фрагмент РК',
@@ -204,6 +205,7 @@ describe('AppModule HTTP smoke', () => {
   it('enforces admin role on admin operations', async () => {
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').expect(403);
     await request(app.getHttpServer()).get('/api/v1/admin/providers').expect(403);
+    await request(app.getHttpServer()).post('/api/v1/legal-sources/manual-import').send({}).expect(403);
 
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').set('x-user-role', 'admin').expect(200);
     await request(app.getHttpServer())

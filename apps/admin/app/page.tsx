@@ -24,6 +24,7 @@ type ProviderConfig = { provider: string; enabled: boolean; killSwitchReason?: s
 export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
   const [providerStatus, setProviderStatus] = useState('Provider status не загружен');
+  const [legalStatus, setLegalStatus] = useState('Legal source import не запускался');
   const [busy, setBusy] = useState(false);
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -69,6 +70,33 @@ export default function AdminHome() {
       setProviderStatus(`Provider stub: ${next.enabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
       setProviderStatus(error instanceof Error ? `Provider API error: ${error.message}` : 'Provider API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function importLegalSourceFixture() {
+    setBusy(true);
+    try {
+      const source = (await apiJson('/legal-sources/manual-import', {
+        method: 'POST',
+        body: JSON.stringify({
+          officialId: `admin:fixture:${Date.now()}`,
+          title: 'Admin RC официальный фрагмент',
+          sourceType: 'law',
+          authority: 'Әділет',
+          language: 'ru',
+          article: '1',
+          text: 'Официальный тестовый фрагмент РК для проверки ручного импорта.',
+          sourceUrl: 'https://adilet.zan.kz/rus/docs/admin-rc',
+          effectiveFrom: '2024-01-01T00:00:00.000Z',
+          sourceVersion: '2024-01-01',
+          status: 'active',
+        }),
+      })) as { id: string };
+      setLegalStatus(`Legal source imported: ${source.id.slice(0, 8)}`);
+    } catch (error) {
+      setLegalStatus(error instanceof Error ? `Legal source API error: ${error.message}` : 'Legal source API error');
     } finally {
       setBusy(false);
     }
@@ -124,6 +152,8 @@ export default function AdminHome() {
       <section className="notice">
         <strong>Legal RAG</strong>
         <span>Юридический ответ показывается только с подтвержденной официальной цитатой РК; иначе safe refusal.</span>
+        <button disabled={busy} onClick={() => { void importLegalSourceFixture(); }}>Импортировать legal source</button>
+        <small>{legalStatus}</small>
         <div className="pills">
           {ragStatuses.map((status) => (
             <span key={status}>{status}</span>

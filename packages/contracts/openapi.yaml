@@ -568,6 +568,13 @@ paths:
     post:
       operationId: manualImportLegalSource
       summary: Manually import an official KZ legal source fragment
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
       requestBody:
         required: true
         content:
