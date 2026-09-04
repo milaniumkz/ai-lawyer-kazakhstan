@@ -33,6 +33,7 @@
 | Documents repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for upload sessions/documents/OCR/evidence, local default preserved | API lint/typecheck/test passed, 53 tests | done |
 | Legal RAG repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for manual import/search/citation answer source lookup, local default preserved | API lint/typecheck/test passed, 54 tests | done |
 | Templates repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for template reads/generated documents, local default preserved | API lint/typecheck/test passed, 55 tests | done |
+| Billing repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for subscriptions/provider settings/AI usage ledger, local default preserved | API lint/typecheck/test passed, 56 tests | done |
 
 ## Блокеры окружения
 

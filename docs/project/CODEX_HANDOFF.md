@@ -46,6 +46,7 @@
 - Реализован P1-010 documents repository runtime toggle: `PERSISTENCE_MODE=postgres` wires upload sessions/documents/OCR/evidence metadata to Postgres adapter, default local mode preserved.
 - Реализован P1-011 legal RAG repository runtime toggle: `PERSISTENCE_MODE=postgres` wires legal source manual import/search/citation answer lookup to Postgres adapter, default local mode preserved.
 - Реализован P1-012 templates repository runtime toggle: `PERSISTENCE_MODE=postgres` wires template reads/generated legal documents to Postgres adapter, default local mode preserved.
+- Реализован P1-013 billing repository runtime toggle: `PERSISTENCE_MODE=postgres` wires subscriptions/provider settings/AI usage ledger to Postgres adapter, default local mode preserved.
 
 ## Дизайн-источник
 
@@ -65,4 +66,4 @@
 
 ## Следующая задача
 
-Следующая задача: подключить billing repository к runtime service через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.
+Следующая задача: добавить PostgreSQL integration smoke tests when Docker/Postgres available или продолжить RC hardening по design/golden/E2E.
