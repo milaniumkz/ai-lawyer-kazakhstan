@@ -576,6 +576,7 @@ export default function WebHome() {
     setLegalNorms([]);
     setSelectedNorm(null);
     setLegalAnswer(`Раздел выбран: ${tab}. Запустите поиск по официальным источникам РК.`);
+    setSyncState(`Раздел норм права: ${tab}`);
   }
 
   function toggleLegalFilter() {
@@ -583,6 +584,7 @@ export default function WebHome() {
     setLegalNorms([]);
     setSelectedNorm(null);
     setLegalAnswer(legalActiveOnly ? "Фильтр: включая архивные редакции." : "Фильтр: только действующие редакции.");
+    setSyncState(legalActiveOnly ? "Фильтр норм: включая архивные редакции" : "Фильтр норм: только действующие редакции");
   }
 
   async function createSupportRequest() {
