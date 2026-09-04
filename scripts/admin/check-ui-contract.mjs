@@ -18,6 +18,10 @@ const requiredPageText = [
   'Budget operations',
   'официальным источникам РК',
   'без raw PII',
+  'Загрузить audit events',
+  'Переключить provider kill switch',
+  'Audit events:',
+  'Provider stub:',
 ];
 
 for (const text of requiredPageText) {
@@ -32,6 +36,7 @@ const requiredPaths = [
   '/documents/generate',
   '/usage/ai',
   '/admin/providers',
+  '/admin/audit-events',
 ];
 
 for (const path of requiredPaths) {
@@ -56,6 +61,9 @@ for (const [label, cssNeedle, tokenNeedle] of tokenPairs) {
 
 if (!/@media \(prefers-color-scheme: dark\)/.test(css)) failures.push('admin css missing dark theme media query');
 if (!/JSON\.stringify\(tokens\.light/.test(page)) failures.push('admin page missing visible token dump for QA');
+for (const requiredAction of ['loadAuditEvents', 'toggleStubProvider', "fetch(`/api/v1${path}`"]) {
+  if (!page.includes(requiredAction)) failures.push(`admin page missing live action: ${requiredAction}`);
+}
 
 if (failures.length) {
   console.error(failures.join('\n'));

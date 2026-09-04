@@ -84,6 +84,25 @@ body {
   padding: 24px;
 }
 
+.notice button {
+  width: fit-content;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--gold);
+  color: #20272c;
+  padding: 10px 14px;
+  font-weight: 800;
+}
+
+.notice button:disabled {
+  opacity: 0.64;
+}
+
+.notice small {
+  color: var(--gold-dark);
+}
+
 .pills {
   display: flex;
   flex-wrap: wrap;
