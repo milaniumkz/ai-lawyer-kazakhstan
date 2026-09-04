@@ -54,6 +54,8 @@
 - Full project check/build after identity runtime repository toggle — `npm run check`, `npm run build` passed.
 - Cases repository runtime toggle API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 14 suites, 52 tests.
 - Full project check/build after cases runtime repository toggle — `npm run check`, `npm run build` passed.
+- Documents repository runtime toggle API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 14 suites, 53 tests.
+- Full project check/build after documents runtime repository toggle — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
