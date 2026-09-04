@@ -138,6 +138,8 @@
 - Final release gate after web dynamic API demo — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Public API demo smoke — `npm run release-check:server` now executes deployed `/api/v1` auth registration/OTP verify, case creation, upload session, upload complete, OCR confirmation, document generation and RAG answer; passed against `http://89.207.250.217`.
 - Final release gate after public API demo smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Design source contract gate — `npm run test:design-source` passed; it verifies 25 dark PNG references, 20 light PNG references, numbered dark screens 01-25 and expected mobile reference dimensions.
+- Final release gate after design source contract — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

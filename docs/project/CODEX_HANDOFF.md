@@ -75,6 +75,7 @@
 - Web UI contract gate added to root check: 25 design screen labels, primary actions, responsive CSS and empty onClick guard.
 - Web `API demo` button now runs real `/api/v1` calls for auth/case/upload/OCR/document generation/RAG in local/stub mode.
 - Public server release check now also runs the deployed API demo path: auth OTP, case, upload/OCR, document generation and RAG.
+- Design source contract gate added to root check: required dark/light PNG references and expected reference dimensions.
 
 ## Дизайн-источник
 
@@ -115,6 +116,7 @@
 - Latest web UI contract gate verified: `npm run test:web-ui`, `release-check:local`, `release-check:server`.
 - Latest web dynamic API demo verified: web lint/typecheck/build, server rebuild, `release-check:local`, `release-check:server`.
 - Latest public API demo smoke verified: `release-check:server` and full `release-check:local && release-check:server`.
+- Latest design source contract verified: `test:design-source` and full `release-check:local && release-check:server`.
 
 ## Следующая задача
 
