@@ -25,7 +25,7 @@ async function expectPublicWebBundle() {
   const response = await expectHttp('/');
   if (!response.ok) return;
   const html = await response.text();
-  const htmlNeedles = ['AI Юрист', 'Готово для внутреннего тестирования', '/_next/static/'];
+  const htmlNeedles = ['AI Юрист', 'Здравствуйте, Дмитрий', 'Рассказать проблему', '/_next/static/'];
   for (const needle of htmlNeedles) {
     if (!html.includes(needle)) failures.push(`public web html missing: ${needle}`);
   }
@@ -50,14 +50,14 @@ async function expectPublicWebBundle() {
   ).join('\n');
 
   const bundleNeedles = [
-    'API demo',
+    'Синхронизировать',
+    'Подтвердить и создать дело',
     'Онбординг',
     'Вход и регистрация',
     'Главный экран',
     'Документы и доказательства',
     'Помощь',
     '/auth/register',
-    '/documents/generate',
     '/rag/answer',
   ];
   for (const needle of bundleNeedles) {

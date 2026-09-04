@@ -33,24 +33,26 @@ const requiredScreens = [
 ];
 
 const requiredActions = [
-  'Начать дело',
-  'API:',
-  'AI:',
-  'Выполнить',
-  'На проверку',
-  'Blocker',
-  'API demo',
-  'runFlow(',
-  'runFlowAction(',
-  'openScreen(',
-  'checkHealth(',
-  'runApiDemo(',
+  'Рассказать проблему',
+  'Синхронизировать',
+  'Подтвердить и создать дело',
+  'Продолжить работу',
+  'Открыть документы',
+  'Загрузить файл',
+  'Сканировать документ',
+  'Подтвердить поля',
+  'Анализировать документы',
+  'Сформировать претензию',
+  'Найти норму',
+  'Отправить',
+  'Сохранить профиль',
+  'syncWithApi(',
+  'addCase(',
+  'sendMessage(',
+  'addDocument(',
   '/auth/register',
   '/auth/otp/verify',
   '/cases',
-  '/files/upload-sessions',
-  '/files/complete',
-  '/documents/generate',
   '/rag/answer',
 ];
 
@@ -64,13 +66,13 @@ for (const action of requiredActions) {
 
 const cssNeedles = [
   '@media (prefers-color-scheme: dark)',
-  '@media (max-width: 860px)',
-  '@media (max-width: 520px)',
-  '.screenGrid',
-  '.workspace',
-  '.apiResult',
-  '.phone',
-  'grid-template-columns: repeat(2, minmax(0, 1fr))',
+  '@media (max-width: 980px)',
+  '@media (max-width: 620px)',
+  '.appShell',
+  '.deviceFrame',
+  '.bottomNav',
+  '.screenList',
+  'grid-template-columns: repeat(5, 1fr)',
 ];
 
 for (const needle of cssNeedles) {
@@ -78,6 +80,9 @@ for (const needle of cssNeedles) {
 }
 
 if (/onClick=\{\(\) => \{\}\}/.test(page)) failures.push('web page contains empty onClick handler');
+for (const forbidden of ['Стенд готов', 'RC internal validation', 'Release Candidate', 'API demo не запускался']) {
+  if (page.includes(forbidden)) failures.push(`web app still contains stand marker: ${forbidden}`);
+}
 
 if (failures.length) {
   console.error(failures.join('\n'));
