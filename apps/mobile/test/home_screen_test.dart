@@ -290,6 +290,33 @@ void main() {
     expect(find.text('Сформировать проект'), findsOneWidget);
   });
 
+  testWidgets('pretrial claim builder generates draft through API',
+      (tester) async {
+    MobileCaseRuntime.activeCaseId = 'case-1';
+    final api = _FakeWorkflowApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => PretrialClaimScreen(workflowApi: api),
+          ),
+          GoRoute(
+            path: '/workflow/pretrial-claim/draft',
+            builder: (_, __) => const ClaimDraftScreen(),
+          ),
+        ],
+      ),
+    ));
+
+    await tester.tap(find.text('Сформировать проект'));
+    await tester.pumpAndSettle();
+
+    expect(api.generatedCaseId, 'case-1');
+    expect(find.text('Проект досудебной претензии'), findsWidgets);
+    expect(find.textContaining('API проект претензии'), findsOneWidget);
+  });
+
   testWidgets('case intake voice button and create action work',
       (tester) async {
     await tester.pumpWidget(
@@ -451,6 +478,16 @@ void main() {
     expect(find.text('Лимиты и расходы'), findsOneWidget);
     expect(find.text('AI расходы считаются без персональных данных.'),
         findsOneWidget);
+  });
+
+  testWidgets('subscription loads budget from API', (tester) async {
+    AuthRuntime.userId = 'user-1';
+    await tester.pumpWidget(
+        MaterialApp(home: SubscriptionScreen(billingApi: _FakeBillingApi())));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Текущий план: RC Internal'), findsOneWidget);
+    expect(find.textContaining('AI расходы: 72%'), findsOneWidget);
   });
 
   testWidgets('subscription payment button shows blocker dialog',
@@ -635,6 +672,34 @@ class _FakeLegalApi implements LegalApiPort {
     validatedFragmentId = fragment.id;
     return 'Цитата проверена API';
   }
+}
+
+class _FakeWorkflowApi implements WorkflowApiPort {
+  String? generatedCaseId;
+
+  @override
+  Future<GeneratedClaimDraft> generateClaim({
+    required String caseId,
+    required String claimantName,
+    required String respondentName,
+    required String claimAmount,
+    required String claimReason,
+  }) async {
+    generatedCaseId = caseId;
+    return const GeneratedClaimDraft(
+      id: 'draft-12345678',
+      body: 'API проект претензии: требование подтверждено пользователем.',
+    );
+  }
+}
+
+class _FakeBillingApi implements BillingApiPort {
+  @override
+  Future<BillingStatus> current(String userId) async => const BillingStatus(
+        plan: 'RC Internal',
+        percent: 72,
+        ttsDisabled: false,
+      );
 }
 
 Future<void> setLargeViewport(WidgetTester tester) async {

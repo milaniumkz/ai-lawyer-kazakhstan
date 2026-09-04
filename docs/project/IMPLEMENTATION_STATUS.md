@@ -95,6 +95,7 @@
 | Flutter cases/chat API parity P1 | Mobile case intake creates API cases for authenticated users, cases list can refresh from `/api/v1/cases`, and chat sends/refreshes messages through `/api/v1/cases/{caseId}/messages` with local fallback only when no case exists | `npm run check`, `npm run build`, Flutter analyze/test passed with fake case/chat API coverage | done |
 | Flutter documents/OCR/evidence API parity P1 | Mobile documents screen now uses native file picker, hashes the selected file, creates upload session, completes metadata upload, confirms OCR, and creates evidence folders through API; camera scan is a documented adapter blocker instead of fake scan | `npm run check`, `npm run build`, Flutter analyze/test passed with fake picker/API coverage | done |
 | Flutter Legal RAG API parity P1 | Mobile legal screen now calls `/api/v1/rag/answer` for official-source answers and `/api/v1/citations/validate` for selected fragments, showing no-source fallback instead of fake norms | `npm run check`, `npm run build`, Flutter analyze/test passed with fake Legal API coverage | done |
+| Flutter workflows/subscription API parity P1 | Mobile pretrial claim builder now loads templates and generates drafts through `/api/v1/documents/generate`; subscription screen loads `/api/v1/subscriptions/current` for authenticated users while assisted submission/payment remain explicit blockers | `npm run check`, `npm run build`, Flutter analyze/test passed with fake workflow/billing API coverage | done |
 
 ## Блокеры окружения
 

@@ -175,6 +175,7 @@
 - Flutter cases/chat API parity — `npm run check && npm run build` passed after adding `HttpCaseApi`, authenticated case creation from intake, cases refresh, chat API send/list, and fake API tests for create/chat.
 - Flutter documents/OCR/evidence API parity — `npm run check && npm run build` passed after adding `file_picker`, `crypto`, native file metadata/SHA-256, upload session/complete, OCR confirm, evidence API client, and fake picker/API widget coverage.
 - Flutter Legal RAG API parity — `npm run check && npm run build` passed after wiring mobile legal search/citation validation to injectable `/rag/answer` and `/citations/validate` clients with fake API widget coverage.
+- Flutter workflows/subscription API parity — `npm run check && npm run build` passed after wiring mobile pretrial draft generation to templates/documents API and subscription limits to billing API with fake API widget coverage.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
