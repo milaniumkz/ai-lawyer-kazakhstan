@@ -437,6 +437,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         return;
       }
       final job = await voiceApi.uploadAudio(
+        userId: AuthRuntime.userId,
         path: recordedPath!,
         transcript: transcriptController.text.trim(),
       );
@@ -581,6 +582,7 @@ abstract class VoiceRecorderPort {
 
 abstract class VoiceTranscriptPort {
   Future<VoiceTranscriptJob> uploadAudio({
+    required String userId,
     required String path,
     required String transcript,
   });
@@ -622,9 +624,11 @@ class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
 
   @override
   Future<VoiceTranscriptJob> uploadAudio({
+    required String userId,
     required String path,
     required String transcript,
   }) async {
+    if (userId.isEmpty) throw const FormatException('Сначала подтвердите OTP');
     final uri = Uri.parse(
       '$baseUrl${ApiContract.basePath}${ApiContract.voiceTranscriptsAudio}',
     );
@@ -633,6 +637,7 @@ class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
       ..fields['text'] = transcript
       ..files.add(await http.MultipartFile.fromPath('audio', path));
     request.headers['x-correlation-id'] = 'mobile-voice-upload';
+    request.headers['x-user-id'] = userId;
     final response = await request.send();
     final body = await response.stream.bytesToString();
     if (response.statusCode < 200 || response.statusCode >= 300) {

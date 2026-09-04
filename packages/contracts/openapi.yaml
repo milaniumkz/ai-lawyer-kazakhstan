@@ -362,6 +362,13 @@ paths:
     post:
       operationId: createTranscript
       summary: Create local/stub transcript job
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -379,6 +386,13 @@ paths:
     post:
       operationId: createAudioTranscript
       summary: Upload real audio and create transcript job
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -414,6 +428,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Transcript job
@@ -1118,9 +1138,12 @@ components:
           type: string
     TranscriptJob:
       type: object
-      required: [id, status, language, transcript, lowConfidenceFragments, createdAt]
+      required: [id, ownerUserId, status, language, transcript, lowConfidenceFragments, createdAt]
       properties:
         id:
+          type: string
+          format: uuid
+        ownerUserId:
           type: string
           format: uuid
         caseId:

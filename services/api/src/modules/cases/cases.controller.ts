@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { assertUserId } from '../../common/user-context';
 import { CasesService } from './cases.service';
 
 @Controller()
@@ -35,8 +36,8 @@ export class CasesController {
   }
 
   @Post('voice/transcripts')
-  createTranscript(@Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }) {
-    return this.cases.createTranscript(body);
+  createTranscript(@Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.createTranscript(body, assertUserId(userId));
   }
 
   @Post('voice/transcripts/audio')
@@ -44,12 +45,13 @@ export class CasesController {
   createAudioTranscript(
     @UploadedFile() file: { originalname: string; mimetype: string; size: number; buffer: Buffer },
     @Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; text?: string },
+    @Headers('x-user-id') userId?: string | string[],
   ) {
-    return this.cases.createTranscriptFromAudio(body, file);
+    return this.cases.createTranscriptFromAudio(body, file, assertUserId(userId));
   }
 
   @Get('voice/transcripts/:id')
-  getTranscript(@Param('id') id: string) {
-    return this.cases.getTranscript(id);
+  getTranscript(@Param('id') id: string, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.getTranscript(id, assertUserId(userId));
   }
 }

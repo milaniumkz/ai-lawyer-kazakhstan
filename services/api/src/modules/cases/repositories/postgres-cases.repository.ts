@@ -75,10 +75,11 @@ export class PostgresCasesRepository implements CasesRepository {
   async createTranscript(input: Omit<TranscriptJob, 'id' | 'createdAt'>) {
     const result = await this.db.query<TranscriptRow>(
       `INSERT INTO transcript_jobs
-        (case_id, status, language, transcript, low_confidence_fragments, audio_file_id, audio_mime_type, audio_size_bytes, audio_sha256, audio_storage_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        (owner_user_id, case_id, status, language, transcript, low_confidence_fragments, audio_file_id, audio_mime_type, audio_size_bytes, audio_sha256, audio_storage_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
+        input.ownerUserId,
         input.caseId ?? null,
         input.status,
         input.language,
@@ -102,7 +103,7 @@ export class PostgresCasesRepository implements CasesRepository {
 
 interface CaseRow {
   id: string;
-  owner_user_id: string;
+  owner_user_id?: string | null;
   profile_id?: string | null;
   title: string;
   problem_text: string;
@@ -124,6 +125,7 @@ interface MessageRow {
 
 interface TranscriptRow {
   id: string;
+  owner_user_id: string;
   case_id?: string | null;
   status: TranscriptJob['status'];
   language: TranscriptJob['language'];
@@ -140,7 +142,7 @@ interface TranscriptRow {
 export function mapCase(row: CaseRow): LegalCaseRecord {
   return {
     id: row.id,
-    ownerUserId: row.owner_user_id,
+    ownerUserId: row.owner_user_id ?? '',
     profileId: row.profile_id ?? undefined,
     title: row.title,
     problemText: row.problem_text,
@@ -166,6 +168,7 @@ export function mapMessage(row: MessageRow): MessageRecord {
 export function mapTranscript(row: TranscriptRow): TranscriptJob {
   return {
     id: row.id,
+    ownerUserId: row.owner_user_id,
     caseId: row.case_id ?? undefined,
     status: row.status,
     language: row.language,

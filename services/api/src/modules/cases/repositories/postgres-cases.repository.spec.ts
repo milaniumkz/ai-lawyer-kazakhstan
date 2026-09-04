@@ -36,6 +36,7 @@ describe('PostgresCasesRepository mapping', () => {
     expect(
       mapTranscript({
         id: 'transcript-1',
+        owner_user_id: 'user-1',
         case_id: null,
         status: 'ready',
         language: 'ru',
@@ -43,7 +44,7 @@ describe('PostgresCasesRepository mapping', () => {
         low_confidence_fragments: ['неразборчиво'],
         created_at: new Date('2026-09-04T00:00:00.000Z'),
       }),
-    ).toMatchObject({ caseId: undefined, lowConfidenceFragments: ['неразборчиво'] });
+    ).toMatchObject({ ownerUserId: 'user-1', caseId: undefined, lowConfidenceFragments: ['неразборчиво'] });
   });
 });
 
@@ -89,6 +90,7 @@ describe('PostgresCasesRepository persistence contract', () => {
   it('creates transcript jobs with progress status fields', async () => {
     const { db, query } = createDbMock({
       id: 'transcript-1',
+      owner_user_id: 'user-1',
       case_id: 'case-1',
       status: 'ready',
       language: 'ru',
@@ -99,6 +101,7 @@ describe('PostgresCasesRepository persistence contract', () => {
     const repository = new PostgresCasesRepository(db);
 
     await repository.createTranscript({
+      ownerUserId: 'user-1',
       caseId: 'case-1',
       status: 'ready',
       language: 'ru',
@@ -107,6 +110,7 @@ describe('PostgresCasesRepository persistence contract', () => {
     });
 
     expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO transcript_jobs'), [
+      'user-1',
       'case-1',
       'ready',
       'ru',

@@ -19,9 +19,9 @@ describe('CasesService', () => {
   it('adds user message and safe assistant fallback', async () => {
     const service = new CasesService();
     const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Нужно взыскать долг по расписке' });
-    await service.addMessage(legalCase.id, { role: 'user', text: 'Что делать дальше?' });
+    await service.addMessage(legalCase.id, { role: 'user', text: 'Что делать дальше?' }, 'u1');
 
-    const messages = await service.listMessages(legalCase.id);
+    const messages = await service.listMessages(legalCase.id, 'u1');
     expect(messages.some((message) => message.text.includes('официальные источники РК'))).toBe(true);
   });
 
@@ -35,8 +35,9 @@ describe('CasesService', () => {
 
   it('creates ready transcript job with progress states', async () => {
     const service = new CasesService();
-    const job = await service.createTranscript({ language: 'ru', text: 'Алименты, часть записи неразборчиво' });
+    const job = await service.createTranscript({ language: 'ru', text: 'Алименты, часть записи неразборчиво' }, 'u1');
 
+    expect(job.ownerUserId).toBe('u1');
     expect(job.status).toBe('ready');
     expect(job.progress).toContain('transcribing');
     expect(job.lowConfidenceFragments).toEqual(['неразборчиво']);
@@ -49,8 +50,10 @@ describe('CasesService', () => {
     const job = await service.createTranscriptFromAudio(
       { language: 'ru', text: 'Голосовое описание долга по расписке' },
       { originalname: 'voice.webm', mimetype: 'audio/webm;codecs=opus', size: 12, buffer: Buffer.from('real-audio') },
+      'u1',
     );
 
+    expect(job.ownerUserId).toBe('u1');
     expect(job.status).toBe('ready');
     expect(job.audioFileId).toBeDefined();
     expect(job.audioMimeType).toBe('audio/webm');
@@ -69,14 +72,14 @@ describe('CasesService', () => {
     const service = new CasesService(repository);
 
     const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Нужно взыскать долг по расписке' }, 'idem-1');
-    await service.addMessage(legalCase.id, { role: 'user', text: 'Что делать дальше?' });
-    await service.createTranscript({ caseId: legalCase.id, language: 'ru', text: 'текст обращения' });
+    await service.addMessage(legalCase.id, { role: 'user', text: 'Что делать дальше?' }, 'u1');
+    await service.createTranscript({ caseId: legalCase.id, language: 'ru', text: 'текст обращения' }, 'u1');
 
     expect(repository.findCaseByIdempotencyKey).toHaveBeenCalledWith('idem-1');
     expect(repository.createCase).toHaveBeenCalled();
     expect(repository.rememberIdempotencyKey).toHaveBeenCalledWith({ key: 'idem-1', ownerUserId: 'u1', caseId: 'case-1' });
     expect(repository.createMessage).toHaveBeenCalledTimes(3);
-    expect(repository.createTranscript).toHaveBeenCalled();
+    expect(repository.createTranscript).toHaveBeenCalledWith(expect.objectContaining({ ownerUserId: 'u1' }));
   });
 });
 

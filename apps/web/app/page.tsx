@@ -379,10 +379,10 @@ export default function WebHome() {
     return body;
   }
 
-  async function apiForm(path: string, formData: FormData) {
+  async function apiForm(path: string, formData: FormData, userId?: string) {
     const response = await fetch(`/api/v1${path}`, {
       method: "POST",
-      headers: { "x-correlation-id": "web-voice-upload" },
+      headers: { "x-correlation-id": "web-voice-upload", ...(userId ? { "x-user-id": userId } : {}) },
       body: formData,
     });
     const body = await response.json();
@@ -779,6 +779,7 @@ export default function WebHome() {
     setSyncState("Запись завершена, сохраняю аудио...");
     try {
       const blob = await stopRecordingAndGetBlob();
+      const userId = await ensureUser();
       if (!blob || blob.size === 0) throw new Error("Пустая запись: попробуйте еще раз");
       const extension = blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
       const formData = new FormData();
@@ -786,7 +787,7 @@ export default function WebHome() {
       formData.append("language", "ru");
       if (remoteCaseId) formData.append("caseId", remoteCaseId);
       if (caseText.trim()) formData.append("text", caseText.trim());
-      const job = await apiForm("/voice/transcripts/audio", formData) as TranscriptJob;
+      const job = await apiForm("/voice/transcripts/audio", formData, userId) as TranscriptJob;
       setTranscriptJobId(job.id);
       if (job.transcript) setCaseText(job.transcript);
       setSyncState(job.audioFileId ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}` : `Transcript job готов: ${job.id.slice(0, 8)}`);

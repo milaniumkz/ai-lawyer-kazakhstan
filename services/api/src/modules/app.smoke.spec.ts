@@ -1,13 +1,19 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import * as request from 'supertest';
 import { SafeHttpExceptionFilter } from '../common/safe-http-exception.filter';
 import { AppModule } from './app.module';
 
 describe('AppModule HTTP smoke', () => {
   let app: INestApplication;
+  let voiceUploadDir: string;
 
   beforeAll(async () => {
+    voiceUploadDir = await mkdtemp(join(tmpdir(), 'app-smoke-voice-'));
+    process.env.VOICE_UPLOAD_DIR = voiceUploadDir;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api/v1');
@@ -17,6 +23,8 @@ describe('AppModule HTTP smoke', () => {
 
   afterAll(async () => {
     await app.close();
+    delete process.env.VOICE_UPLOAD_DIR;
+    await rm(voiceUploadDir, { recursive: true, force: true });
   });
 
   it('serves health through the public API prefix', async () => {
@@ -74,6 +82,20 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-id', userId)
       .send({ fields: { amount: '150000' } })
       .expect(201);
+    await request(app.getHttpServer())
+      .post('/api/v1/voice/transcripts/audio')
+      .attach('audio', Buffer.from('smoke-audio'), { filename: 'voice.webm', contentType: 'audio/webm' })
+      .expect(403);
+    const transcript = await request(app.getHttpServer())
+      .post('/api/v1/voice/transcripts/audio')
+      .set('x-user-id', userId)
+      .field('caseId', legalCase.body.id)
+      .field('language', 'ru')
+      .field('text', 'Голосовое описание взыскания долга')
+      .attach('audio', Buffer.from('smoke-audio'), { filename: 'voice.webm', contentType: 'audio/webm' })
+      .expect(201);
+    await request(app.getHttpServer()).get(`/api/v1/voice/transcripts/${transcript.body.id}`).set('x-user-id', 'other-user').expect(403);
+    await request(app.getHttpServer()).get(`/api/v1/voice/transcripts/${transcript.body.id}`).set('x-user-id', userId).expect(200);
 
     const source = await request(app.getHttpServer())
       .post('/api/v1/legal-sources/manual-import')

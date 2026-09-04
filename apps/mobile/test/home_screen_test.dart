@@ -549,9 +549,11 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
 
   @override
   Future<VoiceTranscriptJob> uploadAudio({
+    required String userId,
     required String path,
     required String transcript,
   }) async {
+    expect(userId, isNotEmpty);
     uploadedPath = path;
     return const VoiceTranscriptJob(
       id: '12345678-1234-1234-1234-123456789012',

@@ -104,10 +104,12 @@ export class CasesService {
     return this.messages.get(caseId) ?? [];
   }
 
-  async createTranscript(input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }) {
+  async createTranscript(input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }, ownerUserId: string) {
+    if (input.caseId) await this.getCase(input.caseId, ownerUserId);
     const transcript = input.text?.trim() || 'Пользователь описал юридическую проблему голосом. Требуется подтверждение текста.';
     const job: TranscriptJob = {
       id: randomUUID(),
+      ownerUserId,
       caseId: input.caseId,
       status: 'ready',
       language: input.language ?? 'ru',
@@ -123,7 +125,10 @@ export class CasesService {
   async createTranscriptFromAudio(
     input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; text?: string },
     file?: { originalname: string; mimetype: string; size: number; buffer: Buffer },
+    ownerUserId?: string,
   ) {
+    if (!ownerUserId) throw new ForbiddenException('USER_REQUIRED');
+    if (input.caseId) await this.getCase(input.caseId, ownerUserId);
     if (!file?.buffer?.length) throw new BadRequestException('AUDIO_FILE_REQUIRED');
     const mimeType = normalizeAudioMimeType(file.mimetype);
     if (!ALLOWED_AUDIO_MIME_TYPES.has(mimeType)) throw new BadRequestException('AUDIO_MIME_TYPE_NOT_ALLOWED');
@@ -139,6 +144,7 @@ export class CasesService {
     const transcript = input.text?.trim() || 'Аудио сохранено. Расшифровка требует подключения STT-провайдера или ручного подтверждения текста.';
     const job: TranscriptJob = {
       id: randomUUID(),
+      ownerUserId,
       caseId: input.caseId,
       status: input.text?.trim() ? 'ready' : 'review_required',
       language: input.language ?? 'ru',
@@ -157,9 +163,11 @@ export class CasesService {
     return result;
   }
 
-  async getTranscript(id: string) {
+  async getTranscript(id: string, ownerUserId?: string) {
     const job = this.repository ? await this.repository.findTranscriptById(id) : this.transcripts.get(id);
     if (!job) throw new NotFoundException('TRANSCRIPT_NOT_FOUND');
+    if (!ownerUserId) throw new ForbiddenException('USER_REQUIRED');
+    if (job.ownerUserId !== ownerUserId) throw new ForbiddenException('TRANSCRIPT_ACCESS_DENIED');
     return job;
   }
 }

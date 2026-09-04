@@ -107,6 +107,7 @@
 | Legal source import RBAC P1 | Manual official-source import now requires `x-user-role: admin|superadmin`; admin dashboard imports a real local/manual official-source fixture through `/api/v1/legal-sources/manual-import` | `npm run check`, `npm run build`, app smoke and admin contract passed | done |
 | AI usage ledger RBAC P1 | `/api/v1/usage/ai` now requires `x-user-role: admin|superadmin`; admin dashboard can record a real local AI usage ledger event through API | `npm run check`, `npm run build`, app/billing smoke and admin contract passed | done |
 | User-scoped API hardening P1 | Sessions, profiles, logout-all, account export/delete and subscription reads now require `x-user-id`; profile creation rejects header/body user mismatch, with web/mobile clients sending owner headers | `npm run check`, `npm run build`, app/identity/billing smoke and web/mobile type checks passed | done |
+| Voice transcript ownership P1 | Voice transcript create/upload/read endpoints now require `x-user-id`, transcript jobs store `ownerUserId`, case-bound transcripts validate case ownership, and web/mobile upload real audio with owner headers | `npm run check`, `npm run build`, cases/app smoke, migration check and Flutter tests passed | done |
 
 ## Блокеры окружения
 

@@ -39,6 +39,7 @@ export interface MessageRecord {
 
 export interface TranscriptJob {
   id: string;
+  ownerUserId: string;
   caseId?: string;
   status: ChatProgressStatus;
   language: 'ru' | 'kk' | 'en';
