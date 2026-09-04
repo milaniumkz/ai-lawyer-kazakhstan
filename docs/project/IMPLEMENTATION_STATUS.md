@@ -93,6 +93,7 @@
 | Flutter voice upload parity P1 | Mobile case intake uploads recorded `.m4a` files to the same `/api/v1/voice/transcripts/audio` endpoint through an injectable HTTP client before moving to category review | `npm run check`, `npm run build`, Flutter analyze/test passed with upload flow test | done |
 | Flutter auth/profile API parity P1 | Mobile login/register now request OTP through `/api/v1/auth/register`, OTP verifies through `/api/v1/auth/otp/verify`, and profile save calls `/api/v1/profiles` with contract enum mapping | `npm run check`, `npm run build`, Flutter analyze/test passed with fake API coverage | done |
 | Flutter cases/chat API parity P1 | Mobile case intake creates API cases for authenticated users, cases list can refresh from `/api/v1/cases`, and chat sends/refreshes messages through `/api/v1/cases/{caseId}/messages` with local fallback only when no case exists | `npm run check`, `npm run build`, Flutter analyze/test passed with fake case/chat API coverage | done |
+| Flutter documents/OCR/evidence API parity P1 | Mobile documents screen now uses native file picker, hashes the selected file, creates upload session, completes metadata upload, confirms OCR, and creates evidence folders through API; camera scan is a documented adapter blocker instead of fake scan | `npm run check`, `npm run build`, Flutter analyze/test passed with fake picker/API coverage | done |
 
 ## Блокеры окружения
 

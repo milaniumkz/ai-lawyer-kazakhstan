@@ -368,14 +368,35 @@ void main() {
   testWidgets('document upload scan and OCR confirmation buttons work',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('nav-documents')));
+    MobileCaseRuntime.activeCaseId = '11111111-1111-1111-1111-111111111111';
+    final docs = _FakeDocumentApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => DocumentsScreen(
+              filePicker: _FakeDocumentPicker(),
+              documentApi: docs,
+            ),
+          ),
+          GoRoute(
+            path: '/documents/analysis',
+            builder: (_, __) => const DocumentAnalysisScreen(),
+          ),
+          GoRoute(
+            path: '/workflow/pretrial-claim',
+            builder: (_, __) => const PretrialClaimScreen(),
+          ),
+        ],
+      ),
+    ));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Загрузить файл'));
     await tester.pumpAndSettle();
     expect(find.text('Файл добавлен'), findsOneWidget);
+    expect(docs.uploadedFileName, 'claim.pdf');
 
     await tester.tap(find.text('Сканировать документ'));
     await tester.pumpAndSettle();
@@ -385,6 +406,11 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Подтвердить поля'));
     await tester.pumpAndSettle();
     expect(find.text('Поля подтверждены'), findsOneWidget);
+    expect(docs.ocrDocumentId, 'document-1');
+
+    await tester.tap(find.text('Договор и переписка'));
+    await tester.pumpAndSettle();
+    expect(docs.evidenceCaseId, MobileCaseRuntime.activeCaseId);
 
     await tester.tap(find.text('Анализировать документы'));
     await tester.pumpAndSettle();
@@ -536,6 +562,48 @@ class _FakeProfileApi implements ProfileApiPort {
   }) async {
     savedUserId = userId;
     return 'profile-12345678';
+  }
+}
+
+class _FakeDocumentPicker implements DocumentFilePickerPort {
+  @override
+  Future<PickedDocumentFile?> pick() async => const PickedDocumentFile(
+        name: 'claim.pdf',
+        path: '/tmp/claim.pdf',
+        sizeBytes: 128,
+        mimeType: 'application/pdf',
+        sha256: 'abc123',
+      );
+}
+
+class _FakeDocumentApi implements DocumentApiPort {
+  String? uploadedFileName;
+  String? ocrDocumentId;
+  String? evidenceCaseId;
+
+  @override
+  Future<UploadedDocumentResult> uploadMetadata({
+    required String caseId,
+    required PickedDocumentFile file,
+  }) async {
+    uploadedFileName = file.name;
+    return const UploadedDocumentResult(
+        id: 'document-1', fileName: 'claim.pdf');
+  }
+
+  @override
+  Future<void> confirmOcr(String documentId, Map<String, String> fields) async {
+    ocrDocumentId = documentId;
+  }
+
+  @override
+  Future<String> createEvidence({
+    required String caseId,
+    required String title,
+    required List<String> documentIds,
+  }) async {
+    evidenceCaseId = caseId;
+    return 'evidence-12345678';
   }
 }
 
