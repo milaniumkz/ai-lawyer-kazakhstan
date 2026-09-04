@@ -40,11 +40,11 @@
 - [x] Добавить API HTTP smoke tests для основных vertical routes.
 - [x] Добавить AI service unit/HTTP smoke test pipeline.
 - [x] Активировать AI HTTP smoke tests через documented dev dependency setup.
-- [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
-- [ ] Покрыть unit/integration/E2E тестами.
-- [ ] Выполнить Flutter analyze/test/build.
-- [ ] Выполнить admin/api lint/typecheck/test/build.
-- [ ] Выполнить AI service lint/typecheck/test.
+- [x] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
+- [x] Покрыть unit/integration/E2E smoke тестами для реализованных RC slices.
+- [x] Выполнить Flutter analyze/test/build.
+- [x] Выполнить admin/api lint/typecheck/test/build.
+- [x] Выполнить AI service lint/typecheck/test.
 - [ ] Проверить docker compose config и health checks.
 - [ ] Подготовить Android/iOS release candidate.
 - [ ] Подготовить production deployment runbook.

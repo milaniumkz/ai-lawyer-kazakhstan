@@ -78,6 +78,8 @@
 - AI dependency setup — `python3 -m pip install -e "services/ai[dev]"` passed.
 - Active AI HTTP smoke tests — `npm run test:ai` passed; 6 tests, 0 skipped.
 - Full project check/build after active AI HTTP smoke — `npm run check`, `npm run build` passed.
+- Official legal source ingestion adapter checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 16 suites, 60 tests.
+- Full project check/build after official legal source ingestion adapter — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
