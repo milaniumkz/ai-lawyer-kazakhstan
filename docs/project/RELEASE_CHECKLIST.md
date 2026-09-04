@@ -69,5 +69,6 @@
 - [x] Добавить mobile onboarding route и web matrix всех 25 дизайн-экранов.
 - [x] Исправить главные mobile маршруты: mic → voice intake, сроки → calendar/deadlines, profile icon → profile.
 - [x] Расширить mobile render regression на все реализованные release screens в light/dark themes.
+- [x] Закрыть mobile flow документы/анализ → формирование досудебной претензии.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

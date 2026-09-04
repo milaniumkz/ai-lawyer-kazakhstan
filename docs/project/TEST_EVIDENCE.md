@@ -130,6 +130,8 @@
 - Final release gate after main route parity — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Full mobile screen render regression — `apps/mobile/test/design_golden_test.dart` now renders all implemented release screens across light/dark themes; Flutter analyze and Flutter test passed with 23 tests.
 - Final release gate after full mobile render regression — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Document-to-claim vertical flow — document analysis confirmation now enables transition to pretrial claim builder; Flutter analyze and Flutter test passed with 23 tests.
+- Final release gate after document-to-claim flow — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

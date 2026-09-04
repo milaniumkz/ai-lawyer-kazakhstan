@@ -71,6 +71,7 @@
 - Добавлен onboarding route; web получил кликабельную матрицу 25 дизайн-экранов с active screen preview.
 - Исправлены главные маршруты: mic открывает voice intake, “Сроки” открывает calendar/deadlines, profile icon стабильно ведет в профиль.
 - Mobile design regression smoke теперь рендерит все реализованные release screens в light/dark themes.
+- Document analysis confirmation now enables transition to pretrial claim builder, closing the document-to-claim vertical flow.
 
 ## Дизайн-источник
 
@@ -107,6 +108,7 @@
 - Latest onboarding/web matrix pass verified: Flutter analyze/test 22 tests, web build, server rebuild, `release-check:local`, `release-check:server`.
 - Latest main route parity pass verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
 - Latest full mobile render regression verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
+- Latest document-to-claim flow verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
 
 ## Следующая задача
 

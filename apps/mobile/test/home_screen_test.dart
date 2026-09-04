@@ -265,6 +265,10 @@ void main() {
     await tester.tap(find.text('Подтвердить анализ'));
     await tester.pumpAndSettle();
     expect(find.text('Анализ завершен'), findsOneWidget);
+
+    await tester.tap(find.text('Сформировать претензию'));
+    await tester.pumpAndSettle();
+    expect(find.text('Конструктор документа'), findsOneWidget);
   });
 
   testWidgets('pretrial claim draft and send flow works', (tester) async {

@@ -109,6 +109,13 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
               icon: const Icon(Icons.check_outlined),
               label: Text(checked ? 'Анализ завершен' : 'Подтвердить анализ'),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed:
+                  checked ? () => context.go('/workflow/pretrial-claim') : null,
+              icon: const Icon(Icons.article_outlined),
+              label: const Text('Сформировать претензию'),
+            ),
           ],
         ),
       ),
