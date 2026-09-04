@@ -1,4 +1,5 @@
 import 'package:ai_lawyer_kz/main.dart';
+import 'package:ai_lawyer_kz/src/features/auth/auth_screens.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
 import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
 import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
@@ -59,7 +60,22 @@ void main() {
 
   testWidgets('registration otp and biometric flow works', (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/login'));
+    final api = _FakeAuthApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        initialLocation: '/login',
+        routes: [
+          GoRoute(
+              path: '/login', builder: (_, __) => LoginScreen(authApi: api)),
+          GoRoute(
+              path: '/register',
+              builder: (_, __) => RegisterScreen(authApi: api)),
+          GoRoute(path: '/otp', builder: (_, __) => OtpScreen(authApi: api)),
+          GoRoute(
+              path: '/biometric', builder: (_, __) => const BiometricScreen()),
+        ],
+      ),
+    ));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Зарегистрироваться'));
@@ -68,8 +84,11 @@ void main() {
 
     await tester.tap(find.text('Создать аккаунт'));
     await tester.pumpAndSettle();
+    expect(api.registerCalled, isTrue);
+    expect(find.text('RC local SMS: 111111'), findsOneWidget);
     await tester.tap(find.text('Подтвердить'));
     await tester.pumpAndSettle();
+    expect(api.verifyCalled, isTrue);
     expect(find.text('Быстрый вход по биометрии'), findsWidgets);
 
     await tester.tap(find.text('Включить биометрию'));
@@ -239,6 +258,19 @@ void main() {
     expect(find.text('Обращение создано'), findsOneWidget);
   });
 
+  testWidgets('profile save calls API with confirmed user', (tester) async {
+    AuthRuntime.userId = 'user-1';
+    final api = _FakeProfileApi();
+    await tester.pumpWidget(MaterialApp(home: ProfileScreen(profileApi: api)));
+
+    await tester.ensureVisible(find.text('Сохранить профиль'));
+    await tester.tap(find.text('Сохранить профиль'));
+    await tester.pumpAndSettle();
+
+    expect(api.savedUserId, 'user-1');
+    expect(find.textContaining('Профиль сохранен'), findsOneWidget);
+  });
+
   testWidgets('shows pretrial claim builder', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
 
@@ -404,6 +436,47 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
       id: '12345678-1234-1234-1234-123456789012',
       transcript: 'Голос отправлен в API',
     );
+  }
+}
+
+class _FakeAuthApi implements AuthApiPort {
+  var registerCalled = false;
+  var verifyCalled = false;
+
+  @override
+  Future<AuthOtpResult> register({
+    required String channel,
+    String? phone,
+    String? email,
+    String? password,
+  }) async {
+    registerCalled = true;
+    return const AuthOtpResult(otpId: 'otp-1', testCode: '111111');
+  }
+
+  @override
+  Future<AuthSessionResult> verifyOtp({
+    required String otpId,
+    required String code,
+  }) async {
+    verifyCalled = true;
+    return const AuthSessionResult(userId: 'user-1');
+  }
+}
+
+class _FakeProfileApi implements ProfileApiPort {
+  String? savedUserId;
+
+  @override
+  Future<String> createProfile({
+    required String userId,
+    required String type,
+    required String displayName,
+    String? iinBin,
+    String? address,
+  }) async {
+    savedUserId = userId;
+    return 'profile-12345678';
   }
 }
 
