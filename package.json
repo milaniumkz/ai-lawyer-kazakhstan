@@ -27,6 +27,7 @@
     "release-check:production": "npm run release-check:local && npm run docker:config && node scripts/release/check-production-env.mjs",
     "release-check:production-env": "node scripts/release/check-production-env.mjs",
     "release-check:server": "node scripts/release/check-public-server.mjs",
+    "release:bundle": "bash scripts/release/build-release-bundle.sh",
     "release-check": "npm run release-check:local",
     "deploy:package": "bash scripts/deploy/package-release.sh",
     "deploy:server-health": "bash scripts/deploy/server-health-check.sh",

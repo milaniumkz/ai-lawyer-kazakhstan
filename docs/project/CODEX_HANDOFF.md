@@ -88,6 +88,7 @@
 - Final RC source archive uploaded to server and checksum verified.
 - RC2 source archive uploaded to server and checksum verified.
 - Production env gate added; production launch remains blocked until real HTTPS/secrets/integrations exist.
+- QA release bundle script added for `v0.1.0-rc.2`.
 
 ## Следующая задача
 

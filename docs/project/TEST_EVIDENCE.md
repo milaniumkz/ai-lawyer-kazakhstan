@@ -111,6 +111,7 @@
 - Public server release check — `npm run release-check:server` passed for web/admin/API/AI and closed internal ports.
 - Final RC source archive — `v0.1.0-rc.2` archive uploaded to server and verified with SHA-256 `9b0463459cac806af0ce07d88eb9fc7fc871ef784672ad16eda78132ec2a8d24`.
 - Production env gate — `npm run release-check:production-env` blocks placeholder/missing production secrets and non-HTTPS URLs as expected.
+- QA release bundle — `npm run release:bundle` produced bundle under `dist/release/v0.1.0-rc.2` with `SHA256SUMS`; bundle SHA-256 `e96dd688fec7f41f2a09ea4ee550c0db95ee046cfe975a95bbb359cd20e34415`.
 
 ## Заблокировано
 

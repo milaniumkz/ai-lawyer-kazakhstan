@@ -58,5 +58,6 @@
 - [x] Подготовить RC release manifest.
 - [x] Добавить public server release check.
 - [x] Добавить production env gate.
+- [x] Добавить QA release bundle script.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

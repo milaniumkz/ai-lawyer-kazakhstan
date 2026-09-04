@@ -53,6 +53,7 @@
 | RC release manifest P1 | Release manifest records scope, URLs, gates and remaining production blockers | Manifest added for `v0.1.0-rc.1` | done |
 | Public server release check P1 | Added a local script that verifies public web/admin/API/AI URLs and rejects exposed internal app ports | `npm run release-check:server` passed | done |
 | Production env gate P1 | Added explicit production blocker check for HTTPS URLs, PostgreSQL, real secrets and non-stub integrations | `npm run release-check:production-env` correctly blocks placeholder env | done |
+| QA release bundle P1 | Added reproducible release bundle script with docs, OpenAPI, Android APK, source archive and SHA256SUMS | `npm run release:bundle` passed | done |
 
 ## Блокеры окружения
 
