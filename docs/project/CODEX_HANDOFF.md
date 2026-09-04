@@ -85,6 +85,7 @@
 - Final `npm run release-check:local` passed after server hardening.
 - RC manifest prepared for `v0.1.0-rc.1`.
 - Public server release check added and passed.
+- Final RC source archive uploaded to server and checksum verified.
 
 ## Следующая задача
 

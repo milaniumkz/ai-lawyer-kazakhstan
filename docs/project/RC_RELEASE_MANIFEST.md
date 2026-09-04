@@ -23,8 +23,14 @@ Date: 2026-09-04
 ## Release Gates
 
 - `npm run release-check:local` must pass.
+- `npm run release-check:server` must pass.
 - Server `server-health-check.sh` must pass.
 - Docker, domain/TLS, store signing and external integrations remain documented blockers.
+
+## Source Archive
+
+- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.1.tar.gz`
+- SHA-256: `0959cee4e96ae911071a515dcbce49ddf3d64caaf2912ca352b72360cd6a9dc8`
 
 ## Not Production Until
 

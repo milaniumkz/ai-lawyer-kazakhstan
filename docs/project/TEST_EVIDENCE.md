@@ -109,6 +109,7 @@
 - Final blocker-aware RC validation — `npm run release-check:local` passed after server ops hardening; Docker remains recorded as external blocker.
 - RC manifest — `docs/project/RC_RELEASE_MANIFEST.md` added for `v0.1.0-rc.1`.
 - Public server release check — `npm run release-check:server` passed for web/admin/API/AI and closed internal ports.
+- Final RC source archive — `v0.1.0-rc.1` archive uploaded to server and verified with SHA-256 `0959cee4e96ae911071a515dcbce49ddf3d64caaf2912ca352b72360cd6a9dc8`.
 
 ## Заблокировано
 
