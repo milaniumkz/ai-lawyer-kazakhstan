@@ -15,6 +15,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   http: ^1.4.0
   record: ^6.1.2
+  speech_to_text: ^7.4.0
 
 dev_dependencies:
   flutter_test:

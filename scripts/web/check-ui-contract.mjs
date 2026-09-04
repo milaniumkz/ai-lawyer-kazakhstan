@@ -79,6 +79,8 @@ const requiredActions = [
   'pauseRecording',
   'MediaRecorder',
   'navigator.mediaDevices.getUserMedia',
+  'speechDraftRef',
+  'recognizedText',
   'voicePlayback',
   'Transcript job',
   'ensureUser',

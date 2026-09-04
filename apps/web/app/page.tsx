@@ -114,6 +114,7 @@ export default function WebHome() {
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
+  const speechDraftRef = useRef("");
   const [view, setView] = useState<View>("home");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -681,6 +682,7 @@ export default function WebHome() {
           .join(" ")
           .trim();
         if (text) {
+          speechDraftRef.current = text;
           setCaseText(text);
           setSpeechStatus("Речь распознана браузером");
         }
@@ -704,6 +706,7 @@ export default function WebHome() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       audioBlobRef.current = null;
+      speechDraftRef.current = "";
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
         setAudioUrl("");
@@ -783,11 +786,13 @@ export default function WebHome() {
       const userId = await ensureUser();
       if (!blob || blob.size === 0) throw new Error("Пустая запись: попробуйте еще раз");
       const extension = blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
+      const recognizedText = speechDraftRef.current.trim() || caseText.trim();
+      if (recognizedText) setCaseText(recognizedText);
       const formData = new FormData();
       formData.append("audio", blob, `voice-${Date.now()}.${extension}`);
       formData.append("language", "ru");
       if (remoteCaseId) formData.append("caseId", remoteCaseId);
-      if (caseText.trim()) formData.append("text", caseText.trim());
+      if (recognizedText) formData.append("text", recognizedText);
       const job = await apiForm("/voice/transcripts/audio", formData, userId) as TranscriptJob;
       setTranscriptJobId(job.id);
       if (job.transcript) setCaseText(job.transcript);

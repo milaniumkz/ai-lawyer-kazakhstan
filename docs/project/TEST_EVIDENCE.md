@@ -191,6 +191,7 @@
 - Voice transcript ownership — `npm test --workspace services/api -- cases.service.spec.ts postgres-cases.repository.spec.ts app.smoke.spec.ts`, service typecheck, Flutter analyze/test and `npm run check && npm run build` passed after requiring `x-user-id` on voice transcript create/upload/read and adding migration `0006_transcript_owner_user.sql`.
 - Case creation ownership — `npm test --workspace services/api -- app.smoke.spec.ts cases.service.spec.ts`, service/web typecheck, Flutter analyze/test and `npm run check && npm run build` passed after requiring `x-user-id` for `/cases` create and updating web/mobile/public smoke callers.
 - OpenAPI auth-header security gate — `npm run test:security`, `npm run test:contract` and `npm run check && npm run build` passed after adding OpenAPI header enforcement for protected user/admin endpoints.
+- Mobile/web speech recognition — Flutter `speech_to_text` integration added with widget coverage for recognized microphone text; web mobile stores browser-recognized text before upload. `npm run check`, `npm run build`, web typecheck/UI contract and `flutter build apk --release` passed.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

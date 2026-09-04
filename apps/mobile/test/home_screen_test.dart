@@ -322,16 +322,20 @@ void main() {
 
   testWidgets('case intake voice button and create action work',
       (tester) async {
-    await tester.pumpWidget(
-        MaterialApp(home: NewCaseScreen(recorder: _FakeRecorder())));
+    await tester.pumpWidget(MaterialApp(
+        home: NewCaseScreen(
+            recorder: _FakeRecorder(),
+            speechRecognizer: _FakeSpeechRecognizer())));
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     expect(find.text('Запись активна'), findsOneWidget);
+    expect(find.text('Распознанный текст из микрофона'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     expect(find.text('Голос готов к обработке'), findsOneWidget);
+    expect(find.text('Текст распознан'), findsOneWidget);
   });
 
   testWidgets('case intake uploads recorded audio before category route',
@@ -345,7 +349,10 @@ void main() {
           GoRoute(
             path: '/',
             builder: (_, __) => NewCaseScreen(
-                recorder: _FakeRecorder(), voiceApi: api, caseApi: cases),
+                recorder: _FakeRecorder(),
+                speechRecognizer: _FakeSpeechRecognizer(),
+                voiceApi: api,
+                caseApi: cases),
           ),
           GoRoute(
             path: '/case/category',
@@ -365,6 +372,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.uploadedPath, '/tmp/mobile-test-voice.m4a');
+    expect(api.uploadedTranscript, 'Распознанный текст из микрофона');
     expect(cases.createdText, 'Голос отправлен в API');
     expect(find.text('Категория готова'), findsOneWidget);
   });
@@ -544,8 +552,30 @@ class _FakeRecorder implements VoiceRecorderPort {
   Future<String?> stop() async => '/tmp/mobile-test-voice.m4a';
 }
 
+class _FakeSpeechRecognizer implements SpeechRecognizerPort {
+  var lastWords = 'Распознанный текст из микрофона';
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<bool> start({
+    required String localeId,
+    required SpeechResultCallback onText,
+    required SpeechStatusCallback onStatus,
+  }) async {
+    onStatus('Распознаю речь...');
+    onText(lastWords, false);
+    return true;
+  }
+
+  @override
+  Future<String> stop() async => lastWords;
+}
+
 class _FakeVoiceApi implements VoiceTranscriptPort {
   String? uploadedPath;
+  String? uploadedTranscript;
 
   @override
   Future<VoiceTranscriptJob> uploadAudio({
@@ -555,6 +585,7 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
   }) async {
     expect(userId, isNotEmpty);
     uploadedPath = path;
+    uploadedTranscript = transcript;
     return const VoiceTranscriptJob(
       id: '12345678-1234-1234-1234-123456789012',
       transcript: 'Голос отправлен в API',

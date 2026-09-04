@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../api/api_contract.dart';
 import '../auth/auth_screens.dart';
@@ -188,9 +189,15 @@ class CaseDetailsScreen extends StatelessWidget {
 }
 
 class NewCaseScreen extends StatefulWidget {
-  const NewCaseScreen({super.key, this.recorder, this.voiceApi, this.caseApi});
+  const NewCaseScreen(
+      {super.key,
+      this.recorder,
+      this.speechRecognizer,
+      this.voiceApi,
+      this.caseApi});
 
   final VoiceRecorderPort? recorder;
+  final SpeechRecognizerPort? speechRecognizer;
   final VoiceTranscriptPort? voiceApi;
   final CaseApiPort? caseApi;
 
@@ -396,19 +403,22 @@ const caseItems = [
 class _NewCaseScreenState extends State<NewCaseScreen> {
   late final TextEditingController transcriptController;
   late final VoiceRecorderPort voiceRecorder;
+  late final SpeechRecognizerPort speechRecognizer;
   late final VoiceTranscriptPort voiceApi;
   late final CaseApiPort caseApi;
   var isRecording = false;
   var isBusy = false;
   String? recordedPath;
   String? transcriptJobId;
-  var transcript =
-      'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
+  var speechStatus = 'Распознавание не запущено';
+  var recognizedSpeech = '';
+  var transcript = '';
 
   @override
   void initState() {
     super.initState();
     voiceRecorder = widget.recorder ?? RecordVoiceRecorder();
+    speechRecognizer = widget.speechRecognizer ?? DeviceSpeechRecognizer();
     voiceApi = widget.voiceApi ?? HttpVoiceTranscriptApi();
     caseApi = widget.caseApi ?? HttpCaseApi();
     transcriptController = TextEditingController(text: transcript);
@@ -418,6 +428,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
   void dispose() {
     transcriptController.dispose();
     voiceRecorder.dispose();
+    speechRecognizer.dispose();
     super.dispose();
   }
 
@@ -481,26 +492,69 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         setState(() {
           isRecording = true;
           recordedPath = null;
-          transcript = 'Идет запись голосового описания...';
+          recognizedSpeech = '';
+          transcript = 'Говорите, текст появится здесь автоматически...';
           transcriptController.text = transcript;
+          speechStatus = 'Запускаю распознавание...';
+        });
+        final speechStarted = await speechRecognizer.start(
+          localeId: 'ru_RU',
+          onText: (text, isFinal) {
+            if (!mounted || text.trim().isEmpty) return;
+            setState(() {
+              recognizedSpeech = text.trim();
+              transcript = recognizedSpeech;
+              transcriptController.text = recognizedSpeech;
+              transcriptController.selection = TextSelection.fromPosition(
+                TextPosition(offset: transcriptController.text.length),
+              );
+              speechStatus = isFinal ? 'Текст распознан' : 'Распознаю речь...';
+            });
+          },
+          onStatus: (status) {
+            if (mounted) setState(() => speechStatus = status);
+          },
+        );
+        setState(() {
+          if (!speechStarted && recognizedSpeech.isEmpty) {
+            transcript =
+                'Говорите. Если устройство не поддержит STT, отредактируйте текст вручную.';
+            transcriptController.text = transcript;
+          }
+          speechStatus = speechStarted
+              ? 'Распознаю речь...'
+              : 'STT недоступен на устройстве';
         });
         return;
       }
       final path = await voiceRecorder.stop();
+      final lastSpeech = await speechRecognizer.stop();
       setState(() {
         isRecording = false;
         recordedPath = path;
-        transcript =
-            'Голос записан. Проверьте или отредактируйте текст перед созданием дела.';
-        transcriptController.text = transcript;
+        final finalText =
+            (lastSpeech.trim().isNotEmpty ? lastSpeech : recognizedSpeech)
+                .trim();
+        if (finalText.isNotEmpty) {
+          transcript = finalText;
+          transcriptController.text = finalText;
+          speechStatus = 'Текст распознан';
+        } else {
+          transcript =
+              'Голос записан. Распознавание не вернуло текст, введите описание вручную.';
+          transcriptController.text = transcript;
+          speechStatus = 'Текст не распознан';
+        }
       });
     } catch (_) {
+      await speechRecognizer.stop();
       setState(() {
         isRecording = false;
         recordedPath ??= 'local-test-recorder.m4a';
         transcript =
             'Голос готов к обработке. Для устройства требуется разрешение микрофона.';
         transcriptController.text = transcript;
+        speechStatus = 'Ошибка распознавания';
       });
     } finally {
       if (mounted) setState(() => isBusy = false);
@@ -530,6 +584,12 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
                     ? 'Запись активна'
                     : 'Голос готов к обработке',
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            speechStatus,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           if (recordedPath != null) ...[
             const SizedBox(height: 8),
@@ -580,12 +640,64 @@ abstract class VoiceRecorderPort {
   Future<void> dispose();
 }
 
+typedef SpeechResultCallback = void Function(String text, bool isFinal);
+typedef SpeechStatusCallback = void Function(String status);
+
+abstract class SpeechRecognizerPort {
+  Future<bool> start({
+    required String localeId,
+    required SpeechResultCallback onText,
+    required SpeechStatusCallback onStatus,
+  });
+  Future<String> stop();
+  Future<void> dispose();
+}
+
 abstract class VoiceTranscriptPort {
   Future<VoiceTranscriptJob> uploadAudio({
     required String userId,
     required String path,
     required String transcript,
   });
+}
+
+class DeviceSpeechRecognizer implements SpeechRecognizerPort {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  String _lastWords = '';
+
+  @override
+  Future<bool> start({
+    required String localeId,
+    required SpeechResultCallback onText,
+    required SpeechStatusCallback onStatus,
+  }) async {
+    final available = await _speech.initialize(
+      onStatus: onStatus,
+      onError: (error) => onStatus('Ошибка STT: ${error.errorMsg}'),
+    );
+    if (!available) return false;
+    await _speech.listen(
+      listenOptions: stt.SpeechListenOptions(
+        localeId: localeId,
+        listenMode: stt.ListenMode.dictation,
+        partialResults: true,
+      ),
+      onResult: (result) {
+        _lastWords = result.recognizedWords;
+        onText(_lastWords, result.finalResult);
+      },
+    );
+    return true;
+  }
+
+  @override
+  Future<String> stop() async {
+    await _speech.stop();
+    return _lastWords;
+  }
+
+  @override
+  Future<void> dispose() => _speech.cancel();
 }
 
 class VoiceTranscriptJob {
