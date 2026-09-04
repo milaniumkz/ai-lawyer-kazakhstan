@@ -291,7 +291,7 @@ export default function WebHome() {
       const ownerUserId = await ensureUser();
       const legalCase = await apiJson("/cases", {
         method: "POST",
-        headers: { "idempotency-key": `web-case-${Date.now()}` },
+        headers: { "idempotency-key": `web-case-${Date.now()}`, "x-user-id": ownerUserId },
         body: JSON.stringify({ ownerUserId, problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}` }),
       }) as ApiLegalCase;
       const next = mapCase(legalCase);
@@ -620,7 +620,8 @@ export default function WebHome() {
     const ticketId = `SUP-${Date.now().toString().slice(-6)}`;
     if (remoteCaseId) {
       try {
-        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", body: JSON.stringify({ role: "user", text: `Поддержка: ${caseText}` }) });
+        const userId = await ensureUser();
+        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: `Поддержка: ${caseText}` }) });
       } catch {
         // Support request still remains in local case history when API message sync is unavailable.
       }

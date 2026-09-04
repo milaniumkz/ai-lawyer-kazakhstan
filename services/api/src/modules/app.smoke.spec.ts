@@ -57,6 +57,7 @@ describe('AppModule HTTP smoke', () => {
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
       .set('idempotency-key', 'smoke-case-1')
+      .set('x-user-id', userId)
       .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по договору займа' })
       .expect(201);
 
@@ -163,6 +164,7 @@ describe('AppModule HTTP smoke', () => {
     const userId = tokens.body.user.id as string;
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
+      .set('x-user-id', userId)
       .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
       .expect(201);
     const templates = await request(app.getHttpServer()).get('/api/v1/templates').expect(200);
@@ -193,8 +195,18 @@ describe('AppModule HTTP smoke', () => {
       .send({ otpId: auth.body.otpId, code: '111111' })
       .expect(201);
     const userId = tokens.body.user.id as string;
+    await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .set('x-user-id', 'other-user')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
+      .expect(403);
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
+      .set('x-user-id', userId)
       .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
       .expect(201);
 
@@ -219,6 +231,7 @@ describe('AppModule HTTP smoke', () => {
     const userId = tokens.body.user.id as string;
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
+      .set('x-user-id', userId)
       .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
       .expect(201);
 

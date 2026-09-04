@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { assertUserId } from '../../common/user-context';
+import { assertSameUser, assertUserId } from '../../common/user-context';
 import { CasesService } from './cases.service';
 
 @Controller()
@@ -11,28 +11,30 @@ export class CasesController {
   createCase(
     @Body() body: { ownerUserId: string; profileId?: string; problemText: string },
     @Headers('idempotency-key') idempotencyKey?: string,
+    @Headers('x-user-id') userId?: string | string[],
   ) {
+    assertSameUser(userId, body.ownerUserId);
     return this.cases.createCase(body, idempotencyKey);
   }
 
   @Get('cases')
-  listCases(@Headers('x-user-id') userId = '') {
-    return this.cases.listCases(userId);
+  listCases(@Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.listCases(assertUserId(userId));
   }
 
   @Get('cases/:caseId')
-  getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId = '') {
-    return this.cases.getCase(caseId, userId);
+  getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.getCase(caseId, assertUserId(userId));
   }
 
   @Post('cases/:caseId/messages')
-  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }, @Headers('x-user-id') userId = '') {
-    return this.cases.addMessage(caseId, body, userId);
+  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.addMessage(caseId, body, assertUserId(userId));
   }
 
   @Get('cases/:caseId/messages')
-  listMessages(@Param('caseId') caseId: string, @Headers('x-user-id') userId = '') {
-    return this.cases.listMessages(caseId, userId);
+  listMessages(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.listMessages(caseId, assertUserId(userId));
   }
 
   @Post('voice/transcripts')

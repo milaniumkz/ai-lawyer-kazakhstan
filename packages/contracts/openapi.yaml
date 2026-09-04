@@ -269,6 +269,12 @@ paths:
           name: idempotency-key
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:

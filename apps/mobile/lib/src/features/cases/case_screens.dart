@@ -712,6 +712,7 @@ class HttpCaseApi implements CaseApiPort {
         'idempotency-key':
             'mobile-case-${DateTime.now().millisecondsSinceEpoch}',
         'x-correlation-id': 'mobile-case-create',
+        'x-user-id': ownerUserId,
       },
       body:
           jsonEncode({'ownerUserId': ownerUserId, 'problemText': problemText}),

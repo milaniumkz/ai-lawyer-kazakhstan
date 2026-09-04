@@ -122,7 +122,7 @@ async function expectPublicApiDemo() {
 
   const legalCase = await apiJson('/cases', {
     method: 'POST',
-    headers: { 'idempotency-key': `public-demo-${Date.now()}` },
+    headers: { 'idempotency-key': `public-demo-${Date.now()}`, 'x-user-id': userId },
     body: JSON.stringify({
       ownerUserId: userId,
       problemText: 'Нужно взыскать долг по договору займа. Есть расписка и переписка.',
