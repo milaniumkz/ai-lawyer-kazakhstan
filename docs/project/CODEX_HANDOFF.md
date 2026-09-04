@@ -142,6 +142,7 @@
 - Latest trusted HTTPS voice endpoint verified: Let’s Encrypt certificate issued for `89-207-250-217.sslip.io`; browser mic smoke passed without ignoring certificate errors.
 - Latest web real-user data pass verified and deployed: random auto-registration/sync and hardcoded web OTP acceptance were removed; voice intake now shows live browser speech-recognition status on top of real MediaRecorder capture.
 - Latest web action realism pass verified: remaining status-only actions were replaced with real browser file/camera inputs, SHA-256 upload metadata, `/profiles` save, OCR-gated analysis, persistent support request, explicit claim-send confirmation and persisted settings.
+- Latest deployed browser smoke verified: HTTPS OTP login, profile API save, case API save, unique PDF upload, OCR API confirmation and analysis with 1 server document.
 
 ## Следующая задача
 
