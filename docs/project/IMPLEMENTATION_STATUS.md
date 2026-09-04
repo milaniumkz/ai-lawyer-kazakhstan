@@ -82,6 +82,7 @@
 | Web hash routing and legal entry pass P1 | Added live `hashchange` routing and a direct home entry to legal norms so functional screens remain reachable from URL and UI navigation | Web UI contract and local release-check passed | done |
 | Web legal design parity pass P1 | Restored the home quick-action count to match the reference and rebuilt legal norms as a functional native screen with search, tabs, selectable source cards and document/source actions | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 | Web real-data voice pass P1 | Removed fake prefilled cases/legal norms, added real browser MediaRecorder voice capture with playback and transcript job API handoff, and made auth OTP call API before user data appears | Web UI contract, web lint/typecheck/build and local release-check passed | done |
+| Server HTTPS mic-test pass P1 | Added reproducible self-signed HTTPS Nginx config and firewall 443 rule so browser microphone APIs can run on the test server before real domain/TLS is provided | Shell syntax check and local release-check passed | done |
 
 ## Блокеры окружения
 

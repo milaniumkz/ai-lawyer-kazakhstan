@@ -7,5 +7,6 @@ if ! command -v ufw >/dev/null 2>&1; then
 fi
 ufw allow OpenSSH
 ufw allow 80/tcp
+ufw allow 443/tcp
 ufw --force enable
 ufw status verbose

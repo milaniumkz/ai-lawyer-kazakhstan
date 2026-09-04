@@ -84,12 +84,70 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
+mkdir -p /etc/ai-lawyer-kz/tls
+if [ ! -f /etc/ai-lawyer-kz/tls/selfsigned.crt ] || [ ! -f /etc/ai-lawyer-kz/tls/selfsigned.key ]; then
+  openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+    -keyout /etc/ai-lawyer-kz/tls/selfsigned.key \
+    -out /etc/ai-lawyer-kz/tls/selfsigned.crt \
+    -subj "/CN=89.207.250.217" \
+    -addext "subjectAltName=IP:89.207.250.217"
+  chmod 600 /etc/ai-lawyer-kz/tls/selfsigned.key
+fi
+
 cat >/etc/nginx/sites-available/ai-lawyer-kz <<'NGINX'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
 
+    client_max_body_size 25m;
+
+    location /admin {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /api/v1/ {
+        proxy_pass http://127.0.0.1:3001/api/v1/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    location /ai/ {
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name _;
+
+    ssl_certificate /etc/ai-lawyer-kz/tls/selfsigned.crt;
+    ssl_certificate_key /etc/ai-lawyer-kz/tls/selfsigned.key;
     client_max_body_size 25m;
 
     location /admin {
