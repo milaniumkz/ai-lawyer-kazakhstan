@@ -52,14 +52,17 @@ describe('AppModule HTTP smoke', () => {
 
     const upload = await request(app.getHttpServer())
       .post('/api/v1/files/upload-sessions')
+      .set('x-user-id', userId)
       .send({ caseId: legalCase.body.id, fileName: 'claim.pdf', mimeType: 'application/pdf', sizeBytes: 1024 })
       .expect(201);
     const document = await request(app.getHttpServer())
       .post('/api/v1/files/complete')
+      .set('x-user-id', userId)
       .send({ uploadSessionId: upload.body.id, sha256: 'smoke-hash-1' })
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/v1/documents/${document.body.id}/ocr-confirm`)
+      .set('x-user-id', userId)
       .send({ fields: { amount: '150000' } })
       .expect(201);
 
@@ -136,6 +139,33 @@ describe('AppModule HTTP smoke', () => {
       .post(`/api/v1/cases/${legalCase.body.id}/messages`)
       .send({ role: 'user', text: 'Чужой запрос' })
       .expect(403);
+  });
+
+  it('enforces case ownership on document endpoints', async () => {
+    const auth = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ channel: 'phone', phone: '+77011234564', consentVersion: 'v1' })
+      .expect(201);
+    const tokens = await request(app.getHttpServer())
+      .post('/api/v1/auth/otp/verify')
+      .send({ otpId: auth.body.otpId, code: '111111' })
+      .expect(201);
+    const userId = tokens.body.user.id as string;
+    const legalCase = await request(app.getHttpServer())
+      .post('/api/v1/cases')
+      .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по расписке' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-sessions')
+      .send({ caseId: legalCase.body.id, fileName: 'claim.pdf', mimeType: 'application/pdf', sizeBytes: 1024 })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-sessions')
+      .set('x-user-id', 'other-user')
+      .send({ caseId: legalCase.body.id, fileName: 'claim.pdf', mimeType: 'application/pdf', sizeBytes: 1024 })
+      .expect(403);
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}/documents`).set('x-user-id', userId).expect(200);
   });
 
   it('enforces admin role on admin operations', async () => {

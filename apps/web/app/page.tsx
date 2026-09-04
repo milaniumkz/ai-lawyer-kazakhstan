@@ -347,12 +347,15 @@ export default function WebHome() {
       return;
     }
     try {
+      const userId = await ensureUser();
       const session = await apiJson("/files/upload-sessions", {
         method: "POST",
+        headers: { "x-user-id": userId },
         body: JSON.stringify({ caseId: remoteCaseId, fileName: file.name, mimeType: file.type || mimeTypeFor(file.name), sizeBytes: file.size }),
       });
       const document = await apiJson("/files/complete", {
         method: "POST",
+        headers: { "x-user-id": userId },
         body: JSON.stringify({ uploadSessionId: session.id, sha256: await fileSha256(file) }),
       }) as ApiDocument;
       setRemoteDocumentId(document.id);
@@ -430,8 +433,10 @@ export default function WebHome() {
       return;
     }
     try {
+      const userId = await ensureUser();
       await apiJson(`/documents/${remoteDocumentId}/ocr-confirm`, {
         method: "POST",
+        headers: { "x-user-id": userId },
         body: JSON.stringify({ fields: { documentTitle: selectedDocument, confirmedBy: profileName } }),
       });
       setDocuments((items) => items.map((item) => item.name === selectedDocument ? { ...item, status: "Готов" } : item));
@@ -546,7 +551,8 @@ export default function WebHome() {
     updateActiveCase("Анализ документов завершен", 84);
     if (remoteCaseId) {
       try {
-        const remoteDocs = await apiJson(`/cases/${remoteCaseId}/documents`) as ApiDocument[];
+        const userId = await ensureUser();
+        const remoteDocs = await apiJson(`/cases/${remoteCaseId}/documents`, { headers: { "x-user-id": userId } }) as ApiDocument[];
         setSyncState(`Анализ API завершен: документов ${remoteDocs.length}`);
       } catch (error) {
         setSyncState(error instanceof Error ? `Анализ локально, API ошибка: ${error.message}` : "Анализ завершен локально");

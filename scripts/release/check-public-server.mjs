@@ -135,6 +135,7 @@ async function expectPublicApiDemo() {
 
   const upload = await apiJson('/files/upload-sessions', {
     method: 'POST',
+    headers: { 'x-user-id': userId },
     body: JSON.stringify({
       caseId: legalCase.id,
       fileName: 'raspiska.pdf',
@@ -149,6 +150,7 @@ async function expectPublicApiDemo() {
 
   const document = await apiJson('/files/complete', {
     method: 'POST',
+    headers: { 'x-user-id': userId },
     body: JSON.stringify({ uploadSessionId: upload.id, sha256: `public-demo-${Date.now()}` }),
   });
   if (!document?.id) {
@@ -158,6 +160,7 @@ async function expectPublicApiDemo() {
 
   await apiJson(`/documents/${document.id}/ocr-confirm`, {
     method: 'POST',
+    headers: { 'x-user-id': userId },
     body: JSON.stringify({ fields: { documentTitle: 'Расписка', amount: '1250000' } }),
   });
 

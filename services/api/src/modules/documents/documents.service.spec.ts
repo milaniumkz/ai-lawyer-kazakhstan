@@ -1,4 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { CasesService } from '../cases/cases.service';
 import { DocumentsService, safeFileName, validateFile } from './documents.service';
 import { DocumentsRepository } from './repositories/documents.repository';
 
@@ -57,6 +58,24 @@ describe('DocumentsService', () => {
 
     expect(folder.assessment).toBe('possibly_admissible');
     expect(await service.listEvidence('case-1')).toHaveLength(1);
+  });
+
+  it('checks case ownership when owner header is provided', async () => {
+    const cases = { getCase: jest.fn().mockRejectedValue(new ForbiddenException('CASE_ACCESS_DENIED')) } as unknown as CasesService;
+    const service = new DocumentsService(undefined, cases);
+
+    await expect(
+      service.createUploadSession(
+        {
+          caseId: 'case-1',
+          fileName: 'claim.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 1024,
+        },
+        'other-user',
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(cases.getCase).toHaveBeenCalledWith('case-1', 'other-user');
   });
 
   it('normalizes unsafe filenames', () => {

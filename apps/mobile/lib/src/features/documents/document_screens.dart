@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
 import '../../api/api_contract.dart';
+import '../auth/auth_screens.dart';
 import '../cases/case_screens.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
@@ -301,9 +302,10 @@ class HttpDocumentApi implements DocumentApiPort {
       String path, Map<String, dynamic> payload) async {
     final response = await http.post(
       Uri.parse('$baseUrl${ApiContract.basePath}$path'),
-      headers: const {
+      headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-documents',
+        'x-user-id': AuthRuntime.userId,
       },
       body: jsonEncode(payload),
     );

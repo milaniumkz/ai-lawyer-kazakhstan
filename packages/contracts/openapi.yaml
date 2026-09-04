@@ -405,6 +405,13 @@ paths:
     post:
       operationId: createUploadSession
       summary: Create secure upload session metadata
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -422,6 +429,13 @@ paths:
     post:
       operationId: completeUpload
       summary: Complete upload and create document metadata
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -451,6 +465,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Case documents
@@ -470,6 +490,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -493,6 +519,13 @@ paths:
     post:
       operationId: createEvidenceFolder
       summary: Create evidence folder with preliminary assessment
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -516,6 +549,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Evidence folders

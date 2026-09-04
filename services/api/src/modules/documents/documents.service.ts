@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
+import { CasesService } from '../cases/cases.service';
 import { DocumentRecord, EvidenceFolder, UploadSession } from './documents.types';
 import { DOCUMENTS_REPOSITORY } from './repositories/documents-repository.provider';
 import { DocumentsRepository } from './repositories/documents.repository';
@@ -23,9 +24,13 @@ export class DocumentsService {
   private readonly evidenceFolders = new Map<string, EvidenceFolder>();
   private readonly hashes = new Map<string, string>();
 
-  constructor(@Optional() @Inject(DOCUMENTS_REPOSITORY) private readonly repository?: DocumentsRepository) {}
+  constructor(
+    @Optional() @Inject(DOCUMENTS_REPOSITORY) private readonly repository?: DocumentsRepository,
+    @Optional() private readonly cases?: CasesService,
+  ) {}
 
-  async createUploadSession(input: { caseId: string; fileName: string; mimeType: string; sizeBytes: number }) {
+  async createUploadSession(input: { caseId: string; fileName: string; mimeType: string; sizeBytes: number }, ownerUserId?: string) {
+    await this.assertCaseOwner(input.caseId, ownerUserId);
     validateFile(input.fileName, input.mimeType, input.sizeBytes);
     const session: UploadSession = {
       id: randomUUID(),
@@ -42,11 +47,12 @@ export class DocumentsService {
     return session;
   }
 
-  async completeUpload(input: { uploadSessionId: string; sha256?: string }) {
+  async completeUpload(input: { uploadSessionId: string; sha256?: string }, ownerUserId?: string) {
     const session = this.repository
       ? await this.repository.findUploadSessionById(input.uploadSessionId)
       : this.uploadSessions.get(input.uploadSessionId);
     if (!session) throw new NotFoundException('UPLOAD_SESSION_NOT_FOUND');
+    await this.assertCaseOwner(session.caseId, ownerUserId);
     const sha256 = input.sha256 ?? hashStub(`${session.caseId}:${session.fileName}:${session.sizeBytes}`);
     const duplicate = this.repository ? await this.repository.findDocumentBySha256(sha256) : this.hashes.has(sha256);
     if (duplicate) throw new BadRequestException('DUPLICATE_FILE');
@@ -68,21 +74,24 @@ export class DocumentsService {
     return document;
   }
 
-  async listDocuments(caseId: string) {
+  async listDocuments(caseId: string, ownerUserId?: string) {
+    await this.assertCaseOwner(caseId, ownerUserId);
     if (this.repository) return this.repository.listDocuments(caseId);
     return [...this.documents.values()].filter((document) => document.caseId === caseId);
   }
 
-  async confirmOcr(documentId: string, fields: Record<string, string>) {
+  async confirmOcr(documentId: string, fields: Record<string, string>, ownerUserId?: string) {
     const document = this.repository ? await this.repository.findDocumentById(documentId) : this.documents.get(documentId);
     if (!document) throw new NotFoundException('DOCUMENT_NOT_FOUND');
+    await this.assertCaseOwner(document.caseId, ownerUserId);
     if (this.repository) return this.repository.updateDocumentOcr({ documentId, fields, status: 'ready' });
     document.extractedFields = fields;
     document.status = 'ready';
     return document;
   }
 
-  async createEvidenceFolder(input: { caseId: string; title: string; documentIds?: string[] }) {
+  async createEvidenceFolder(input: { caseId: string; title: string; documentIds?: string[] }, ownerUserId?: string) {
+    await this.assertCaseOwner(input.caseId, ownerUserId);
     if (!input.title) throw new BadRequestException('EVIDENCE_TITLE_REQUIRED');
     const folder: EvidenceFolder = {
       id: randomUUID(),
@@ -97,9 +106,15 @@ export class DocumentsService {
     return folder;
   }
 
-  async listEvidence(caseId: string) {
+  async listEvidence(caseId: string, ownerUserId?: string) {
+    await this.assertCaseOwner(caseId, ownerUserId);
     if (this.repository) return this.repository.listEvidence(caseId);
     return [...this.evidenceFolders.values()].filter((folder) => folder.caseId === caseId);
+  }
+
+  private async assertCaseOwner(caseId: string, ownerUserId?: string) {
+    if (ownerUserId === undefined || !this.cases) return;
+    await this.cases.getCase(caseId, ownerUserId);
   }
 }
 

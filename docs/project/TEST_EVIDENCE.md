@@ -183,6 +183,7 @@
 - Admin live operations parity — `npm run test:admin-ui`, admin lint/typecheck/build and `npm run check && npm run build` passed after adding live audit loading and provider kill-switch toggling to the admin dashboard.
 - Admin RBAC enforcement — `npm test --workspace services/api -- app.smoke.spec.ts`, contract/admin checks and `npm run check && npm run build` passed after requiring `x-user-role: admin|superadmin` for admin endpoints.
 - Case/chat ownership enforcement — `npm test --workspace services/api -- cases.service.spec.ts app.smoke.spec.ts`, contract/web checks, Flutter analyze/test and `npm run check && npm run build` passed after enforcing `x-user-id` ownership on case details and chat.
+- Documents/evidence ownership enforcement — `npm test --workspace services/api -- documents.service.spec.ts app.smoke.spec.ts`, contract/web checks, Flutter analyze/test and `npm run check && npm run build` passed after enforcing `x-user-id` ownership on uploads, OCR, documents and evidence.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
