@@ -12,6 +12,7 @@
 | FastAPI AI service | Добавлен `/health` | `python3 -m py_compile services/ai/app/main.py` passed | in_progress |
 | OpenAPI | Добавлен контракт `/health` | Проверяется следующими contract tests в P0-002 | in_progress |
 | Docker Compose PostgreSQL/Redis/MinIO | Добавлен `infra/docker-compose.yml` | Заблокировано: Docker не установлен | in_progress |
+| Identity auth/profile P0 | OpenAPI auth/profile/sessions/audit, NestJS local OTP/session/profile service, Flutter login/OTP/profile screens, admin audit visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 
 ## Блокеры окружения
 

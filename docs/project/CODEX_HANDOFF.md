@@ -17,6 +17,9 @@
 - Добавлены `AGENTS.md`, `.env.example`, `Makefile`, root release scripts и GitHub Actions CI.
 - Добавлены project docs: architecture, acceptance criteria, AI routing, integrations, security, work plan.
 - Исправлен Next ESLint warning через локальный admin ESLint config.
+- Реализован P0-002 local/stub identity slice: phone/email OTP, refresh rotation, logout all, sessions, profiles, audit events, IIN/BIN masking.
+- Добавлены Flutter экраны входа, OTP и профиля.
+- Admin dashboard показывает identity audit event classes.
 
 ## Дизайн-источник
 
@@ -34,4 +37,4 @@
 
 ## Следующая задача
 
-Реализовать первый полноценный P0 vertical slice: identity/auth/profile с OpenAPI, NestJS модулем, Flutter экранами входа/OTP/профиля, admin-наблюдаемостью и тестами.
+Реализовать P0-003: case/chat/voice intake vertical slice с OpenAPI, NestJS cases/messages, FastAPI classifier stub, Flutter case/chat screens, admin visibility и тестами.

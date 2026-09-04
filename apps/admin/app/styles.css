@@ -84,6 +84,20 @@ body {
   padding: 24px;
 }
 
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pills span {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--gold-dark);
+}
+
 .tokens {
   overflow: auto;
   margin-top: 16px;

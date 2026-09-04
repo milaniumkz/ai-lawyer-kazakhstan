@@ -17,6 +17,169 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /auth/register:
+    post:
+      operationId: register
+      summary: Start phone or email registration with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: OTP request created in configured delivery mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpChallenge"
+  /auth/otp/verify:
+    post:
+      operationId: verifyOtp
+      summary: Verify OTP and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpRequest"
+      responses:
+        "201":
+          description: Auth token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/login:
+    post:
+      operationId: login
+      summary: Login with phone or email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "201":
+          description: Auth token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/refresh:
+    post:
+      operationId: refresh
+      summary: Rotate refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "201":
+          description: Rotated token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/logout-all:
+    post:
+      operationId: logoutAll
+      summary: Revoke all user sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revoked]
+                properties:
+                  revoked:
+                    type: boolean
+  /sessions:
+    get:
+      operationId: listSessions
+      summary: List current user's sessions
+      parameters:
+        - in: header
+          name: x-user-id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sessions without refresh token values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+  /profiles:
+    get:
+      operationId: listProfiles
+      summary: List profiles for current user
+      parameters:
+        - in: header
+          name: x-user-id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profiles with masked IIN/BIN
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+    post:
+      operationId: createProfile
+      summary: Create person/IP/legal entity/representative profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProfileRequest"
+      responses:
+        "201":
+          description: Created profile with masked IIN/BIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /admin/audit-events:
+    get:
+      operationId: listAuditEvents
+      summary: List recent audit events
+      responses:
+        "200":
+          description: Recent audit events without secrets or raw IIN/BIN
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEvent"
 components:
   schemas:
     HealthResponse:
@@ -31,3 +194,165 @@ components:
         jurisdiction:
           type: string
           enum: [KZ]
+    RegisterRequest:
+      type: object
+      required: [channel, consentVersion]
+      properties:
+        channel:
+          type: string
+          enum: [phone, email]
+        phone:
+          type: string
+          pattern: "^\\+7\\d{10}$"
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        consentVersion:
+          type: string
+    OtpChallenge:
+      type: object
+      required: [otpId, expiresAt, deliveryMode]
+      properties:
+        otpId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        deliveryMode:
+          type: string
+          enum: [stub, sms, email]
+        testCode:
+          type: string
+          description: Present only in local/stub mode.
+    VerifyOtpRequest:
+      type: object
+      required: [otpId, code]
+      properties:
+        otpId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, user]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        user:
+          $ref: "#/components/schemas/AuthUser"
+    AuthUser:
+      type: object
+      required: [id, roles, consentVersion]
+      properties:
+        id:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, user, legal_expert, support_operator, admin, superadmin]
+        consentVersion:
+          type: string
+    Session:
+      type: object
+      required: [id, userId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+    CreateProfileRequest:
+      type: object
+      required: [userId, type, displayName]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [person, individual_entrepreneur, legal_entity, representative]
+        displayName:
+          type: string
+        iinBin:
+          type: string
+          pattern: "^\\d{12}$"
+        address:
+          type: string
+        bankAccount:
+          type: string
+    Profile:
+      type: object
+      required: [id, userId, type, displayName, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [person, individual_entrepreneur, legal_entity, representative]
+        displayName:
+          type: string
+        iinBin:
+          type: string
+          description: Masked value only.
+        address:
+          type: string
+        bankAccount:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AuditEvent:
+      type: object
+      required: [id, action, metadata, correlationId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        actorUserId:
+          type: string
+        targetId:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        correlationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

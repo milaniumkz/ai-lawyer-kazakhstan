@@ -16,6 +16,8 @@
 - `npm run lint` — passed.
 - `npm run typecheck` — passed.
 - `npm run build` — passed.
+- OpenAPI YAML parse via Node parser — passed.
+- Identity API unit tests — passed, 5 tests for OTP, refresh rotation, masking, rate limit, invalid input.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
 
@@ -38,11 +39,22 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
           children: [
-            Text(
-              'Здравствуйте',
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: AppColors.goldDark,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Здравствуйте',
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: AppColors.goldDark,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Профиль',
+                  onPressed: () => context.go('/profile'),
+                  icon: const Icon(Icons.person_outline),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
@@ -52,7 +64,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 42),
             Center(
               child: FilledButton(
-                onPressed: () {},
+                onPressed: () => context.go('/login'),
                 style: FilledButton.styleFrom(
                   shape: const CircleBorder(),
                   fixedSize: const Size(176, 176),
