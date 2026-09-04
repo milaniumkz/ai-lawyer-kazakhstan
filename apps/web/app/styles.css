@@ -252,6 +252,15 @@ h2 {
   color: var(--text);
 }
 
+.apiResult {
+  margin-top: 12px;
+  border-radius: 14px;
+  background: rgba(7, 20, 33, 0.06);
+  color: var(--muted);
+  padding: 12px 14px;
+  line-height: 1.45;
+}
+
 .compact {
   margin-top: 16px;
 }

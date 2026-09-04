@@ -134,6 +134,8 @@
 - Final release gate after document-to-claim flow — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Web UI contract gate — `npm run test:web-ui` passed and is included in root `npm run check`; it verifies all 25 design screen labels, primary web actions, responsive CSS and absence of empty `onClick` handlers.
 - Final release gate after web UI contract — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Web dynamic API demo — `API demo` button calls `/api/v1/auth/register`, OTP verify, case creation, upload session, upload complete, OCR confirm, document generation and RAG answer; `npm run test:web-ui`, web lint/typecheck/build and server rebuild passed.
+- Final release gate after web dynamic API demo — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

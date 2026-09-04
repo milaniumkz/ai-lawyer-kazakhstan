@@ -44,6 +44,7 @@ export default function WebHome() {
   const [activeFlow, setActiveFlow] = useState(flows[0]);
   const [flowState, setFlowState] = useState("Выберите сценарий");
   const [activeScreen, setActiveScreen] = useState("Главный экран");
+  const [apiResult, setApiResult] = useState("API demo не запускался");
   const [log, setLog] = useState<string[]>(["Стенд готов к RC-тестированию"]);
   const [apiStatus, setApiStatus] = useState("не проверено");
   const [aiStatus, setAiStatus] = useState("не проверено");
@@ -75,6 +76,97 @@ export default function WebHome() {
     setActiveScreen(screen);
     setFlowState(`${screen}: экран открыт`);
     setLog((items) => [`${screen}: экран открыт`, ...items].slice(0, 5));
+  }
+
+  async function apiJson(path: string, init?: RequestInit) {
+    const response = await fetch(`/api/v1${path}`, {
+      ...init,
+      headers: {
+        "content-type": "application/json",
+        "x-correlation-id": "web-rc-demo",
+        ...(init?.headers ?? {}),
+      },
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.message ?? body.error ?? `${path} failed`);
+    return body;
+  }
+
+  async function createDemoUser() {
+    const suffix = Date.now().toString().slice(-8);
+    const registered = await apiJson("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        channel: "phone",
+        phone: `+7701${suffix}`,
+        password: "Demo12345",
+        consentVersion: "v1",
+      }),
+    });
+    const verified = await apiJson("/auth/otp/verify", {
+      method: "POST",
+      body: JSON.stringify({ otpId: registered.otpId, code: "111111" }),
+    });
+    return verified.user.id as string;
+  }
+
+  async function runApiDemo() {
+    setApiResult("Выполняется API demo...");
+    try {
+      const userId = await createDemoUser();
+      const legalCase = await apiJson("/cases", {
+        method: "POST",
+        headers: { "idempotency-key": `web-demo-${Date.now()}` },
+        body: JSON.stringify({
+          ownerUserId: userId,
+          problemText: "Нужно взыскать долг по договору займа. Есть расписка и переписка.",
+        }),
+      });
+      const upload = await apiJson("/files/upload-sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          caseId: legalCase.id,
+          fileName: "raspiska.pdf",
+          mimeType: "application/pdf",
+          sizeBytes: 120000,
+        }),
+      });
+      const document = await apiJson("/files/complete", {
+        method: "POST",
+        body: JSON.stringify({ uploadSessionId: upload.id, sha256: `web-demo-${Date.now()}` }),
+      });
+      await apiJson(`/documents/${document.id}/ocr-confirm`, {
+        method: "POST",
+        body: JSON.stringify({ fields: { documentTitle: "Расписка", amount: "1250000" } }),
+      });
+      const templates = await apiJson("/templates");
+      const generated = await apiJson("/documents/generate", {
+        method: "POST",
+        body: JSON.stringify({
+          templateId: templates[0].id,
+          caseId: legalCase.id,
+          fields: {
+            claimantName: "ООО Альфа",
+            respondentName: "ООО Бета",
+            claimAmount: "1250000",
+            claimReason: "договор займа",
+            deadlineDate: "2026-10-01",
+          },
+        }),
+      });
+      const answer = await apiJson("/rag/answer", {
+        method: "POST",
+        body: JSON.stringify({ query: "Как взыскать долг по расписке?" }),
+      });
+      const summary = `OK: user ${userId.slice(0, 8)}, case ${legalCase.id.slice(0, 8)}, doc ${document.status}, draft ${generated.status}, RAG ${answer.status}`;
+      setApiResult(summary);
+      setFlowState(summary);
+      setLog((items) => [summary, ...items].slice(0, 5));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "API demo failed";
+      setApiResult(`Ошибка: ${message}`);
+      setLog((items) => [`API demo: ${message}`, ...items].slice(0, 5));
+    }
   }
 
   return (
@@ -132,7 +224,11 @@ export default function WebHome() {
             <button className="secondary" onClick={() => runFlowAction("Внешняя интеграция заблокирована без ключей")}>
               Blocker
             </button>
+            <button className="secondary" onClick={runApiDemo}>
+              API demo
+            </button>
           </div>
+          <div className="apiResult">{apiResult}</div>
         </div>
         <div className="panel">
           <p className="eyebrow">Журнал действий</p>

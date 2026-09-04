@@ -39,10 +39,19 @@ const requiredActions = [
   'Выполнить',
   'На проверку',
   'Blocker',
+  'API demo',
   'runFlow(',
   'runFlowAction(',
   'openScreen(',
   'checkHealth(',
+  'runApiDemo(',
+  '/auth/register',
+  '/auth/otp/verify',
+  '/cases',
+  '/files/upload-sessions',
+  '/files/complete',
+  '/documents/generate',
+  '/rag/answer',
 ];
 
 for (const screen of requiredScreens) {
@@ -59,6 +68,7 @@ const cssNeedles = [
   '@media (max-width: 520px)',
   '.screenGrid',
   '.workspace',
+  '.apiResult',
   '.phone',
   'grid-template-columns: repeat(2, minmax(0, 1fr))',
 ];
