@@ -86,5 +86,6 @@
 - [x] Убрать public desktop wrapper из web, чтобы ПК и телефон показывали один app-screen по мобильным макетам.
 - [x] Исправить web voice-intake: запись/пауза/завершение, переход в категорию и кнопка назад работают на мобильном web.
 - [x] Перевести критичные web-кнопки на реальные state/API-backed действия вместо status-only поведения.
+- [x] Исправить web hash-routing и добавить прямой вход в “Нормы права” с главного экрана.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

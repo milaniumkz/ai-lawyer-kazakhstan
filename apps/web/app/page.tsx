@@ -194,6 +194,15 @@ export default function WebHome() {
   }, []);
 
   useEffect(() => {
+    function applyHashView() {
+      const hashView = window.location.hash.replace("#", "") as View;
+      if (screens.some((screen) => screen.view === hashView)) setView(hashView);
+    }
+    window.addEventListener("hashchange", applyHashView);
+    return () => window.removeEventListener("hashchange", applyHashView);
+  }, []);
+
+  useEffect(() => {
     if (!hydrated) return;
     const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
@@ -760,6 +769,7 @@ export default function WebHome() {
           <button onClick={() => go("newCase")}><span className="quickIcon">▣</span>Новое дело<small>Создать новое дело</small></button>
           <button onClick={() => go("documents")}><span className="quickIcon">□</span>Мои документы<small>Просмотр и загрузка</small></button>
           <button onClick={() => go("deadlines")}><span className="quickIcon">▦</span>Сроки и календарь<small>Даты и напоминания</small></button>
+          <button onClick={() => go("legal")}><span className="quickIcon">§</span>Нормы права<small>Официальные источники РК</small></button>
         </div>
         <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
         <div className="list">

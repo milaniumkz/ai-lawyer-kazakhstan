@@ -135,6 +135,7 @@
 - Latest web mobile-design shell verified: public web no longer renders desktop sidebar/right panel; desktop centers the same app frame used on phone.
 - Latest web recording/navigation pass verified: `#newCase` has recording card, pause/finish controls, finish opens category, back returns to intake, and mobile status no longer intercepts navigation.
 - Latest web API-backed application pass verified: critical web buttons now update explicit app state and call `/api/v1` for auth, cases, chat, documents/OCR, RAG, claim generation and subscription limits.
+- Latest web hash routing pass verified: `hashchange` now updates the visible screen, and legal norms are reachable directly from the home quick actions.
 
 ## Следующая задача
 
