@@ -51,3 +51,6 @@
 - [x] Составить финальную RC acceptance matrix.
 - [x] Добавить blocker-aware local release check.
 - [x] Добавить responsive web app для ПК и телефона.
+- [x] Развернуть тестовый web/admin/api/ai стенд на cloud server по публичному IP.
+- [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
+- [ ] Переключить сервер на production PostgreSQL/secrets. Blocked: credentials не предоставлены.

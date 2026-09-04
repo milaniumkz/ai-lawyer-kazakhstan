@@ -92,12 +92,20 @@
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.
 - `python3 -m py_compile services/ai/app/main.py` — passed.
+- Cloud server deployment — uploaded archived release source to `/opt/ai-lawyer-kz`, configured Nginx and systemd services.
+- Server service health — `ai-lawyer-web`, `ai-lawyer-admin`, `ai-lawyer-api`, `ai-lawyer-ai`, `nginx` active.
+- Public web check — `curl -I http://89.207.250.217/` returned `HTTP/1.1 200 OK`.
+- Public admin check — `curl -IL http://89.207.250.217/admin` returned final `HTTP/1.1 200 OK`.
+- Public API check — `curl http://89.207.250.217/api/v1/health` returned `{"status":"ok","service":"api","jurisdiction":"KZ"}`.
+- Public AI check — `curl http://89.207.250.217/ai/health` returned `{"status":"ok","service":"ai","jurisdiction":"KZ"}`.
 
 ## Заблокировано
 
 - `docker --version` — `docker: command not found`.
 - Production Android signing — blocked, production keystore is not provided.
 - iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
+- Domain/TLS setup — blocked until domain DNS is provided.
+- Production persistence/secrets — blocked until PostgreSQL and external provider credentials are provided.
 
 ## Не запускалось
 

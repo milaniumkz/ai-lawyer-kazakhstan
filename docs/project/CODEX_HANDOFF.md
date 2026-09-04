@@ -58,6 +58,7 @@
 - Реализован P1-022 final RC acceptance matrix: internal validation status, closed criteria and external blockers.
 - Реализован P1-023 blocker-aware release check: `release-check:local` passes without Docker while recording it as blocker; `release-check:production` keeps Docker gate.
 - Реализован P1-024 responsive web app: `apps/web` Next.js surface for desktop/mobile testing with light/dark design tokens.
+- Развернут тестовый cloud server: web/admin/api/ai работают через Nginx и systemd на публичном IP.
 
 ## Дизайн-источник
 
@@ -74,7 +75,8 @@
 - Последний `npm install --workspace services/api --save-dev @types/pg` завершился с `found 0 vulnerabilities`.
 - Android debug/release APK builds прошли.
 - iOS debug no-codesign build прошел.
+- Public server checks passed: web 200, admin 200, API health ok, AI health ok.
 
 ## Следующая задача
 
-Следующая задача: deploy web/admin/api/ai to the provided Ubuntu server and verify public URLs.
+Следующая задача: подключить домен/TLS и production persistence/secrets, когда будут предоставлены доступы.
