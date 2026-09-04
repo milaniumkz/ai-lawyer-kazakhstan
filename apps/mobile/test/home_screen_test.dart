@@ -100,6 +100,44 @@ void main() {
 
     expect(find.text('Официальные источники РК'), findsOneWidget);
     expect(find.text('Citation Validator'), findsOneWidget);
+
+    await tester.tap(find.text('Citation Validator'));
+    await tester.pumpAndSettle();
+    expect(find.text('Цитата проверена'), findsOneWidget);
+  });
+
+  testWidgets('profile settings help and biometric actions work',
+      (tester) async {
+    await setLargeViewport(tester);
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ИП'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ChoiceChip, 'ИП'), findsOneWidget);
+
+    await tester.tap(find.text('Быстрый вход по биометрии'));
+    await tester.pumpAndSettle();
+    expect(find.text('Локальный secure flag включен'), findsOneWidget);
+
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    expect(find.text('Скрывать ИИН/БИН в логах'), findsOneWidget);
+
+    await tester.tap(find.text('Сохранить настройки'));
+    await tester.pumpAndSettle();
+    expect(find.text('Настройки сохранены'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Помощь и поддержка'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Написать в поддержку'));
+    await tester.tap(find.text('Написать в поддержку'));
+    await tester.pumpAndSettle();
+    expect(find.text('Обращение создано'), findsOneWidget);
   });
 
   testWidgets('shows pretrial claim builder', (tester) async {

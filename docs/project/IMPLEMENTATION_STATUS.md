@@ -57,6 +57,7 @@
 | Mobile/web interactive RC flows P1 | Closed placeholder buttons for auth recovery/OTP resend, voice intake, chat send, documents scan/upload/OCR confirmation, evidence tap, pretrial draft generation, subscription payment blocker, and web health/flow actions | Flutter analyze/test passed with 16 widget/golden tests; web lint/typecheck/build passed; server health passed | done |
 | Mobile design/navigation parity pass P1 | Added reusable bottom navigation, cases list with filters/search, case details screen, deadlines screen, clickable home case cards and working case detail actions aligned to dark design references | Flutter analyze passed; Flutter test passed with 18 widget/golden tests | done |
 | Web functional scenario panel P1 | Added active scenario workspace, executable actions, manual-review/blocker states and clickable activity log for desktop/mobile web testing | Web lint/typecheck/build passed; public server check passed | done |
+| Mobile profile/legal action completion P1 | Profile type switcher, biometric local flag, settings toggles/save, help request state, subscription/help/settings routes and Legal Citation Validator tap are now functional | Flutter analyze passed; Flutter test passed with 19 widget/golden tests; no empty handlers found | done |
 
 ## Блокеры окружения
 

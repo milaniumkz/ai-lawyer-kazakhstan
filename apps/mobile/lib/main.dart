@@ -21,6 +21,8 @@ GoRouter _buildRouter() => GoRouter(
         GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
         GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
         GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+        GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
         GoRoute(path: '/cases', builder: (_, __) => const CasesListScreen()),
         GoRoute(
             path: '/case/details',

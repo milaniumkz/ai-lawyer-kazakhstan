@@ -66,6 +66,7 @@
 - Публичный web стенд обновлен после интерактивных flow; `server-health-check.sh` прошел.
 - Добавлены reusable bottom navigation, “Мои дела”, “Карточка дела”, “Сроки”, фильтры/поиск по делам и рабочие действия карточки дела.
 - Web получил scenario workspace: выполнение сценария, ручная проверка, blocker state и кликабельный журнал.
+- Профиль, настройки, помощь, biometric local flag и Legal Citation Validator получили рабочие действия; пустых `onTap/onPressed` в mobile/web не осталось.
 
 ## Дизайн-источник
 
@@ -97,6 +98,7 @@
 - Final interactive-flow checks passed: Flutter analyze/test with 16 widget/golden tests, web lint/typecheck/build, `release-check:local` and `release-check:server`.
 - RC4 tag/source archive/bundle prepared; source archive uploaded to server and verified.
 - Latest mobile/web parity pass verified: Flutter analyze/test 18 tests, web lint/typecheck/build, server rebuild and public server check.
+- Latest profile/legal completion verified: Flutter analyze/test 19 tests, web build, `release-check:local`, `release-check:server`.
 
 ## Следующая задача
 

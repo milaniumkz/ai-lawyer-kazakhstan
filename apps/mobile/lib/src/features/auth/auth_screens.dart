@@ -112,8 +112,16 @@ void _showAction(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  var profileType = 'Физлицо';
+  var biometricEnabled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +131,10 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _ProfileTypeSelector(),
+          _ProfileTypeSelector(
+            selected: profileType,
+            onSelected: (value) => setState(() => profileType = value),
+          ),
           const SizedBox(height: 16),
           const TextField(
             decoration: InputDecoration(
@@ -152,6 +163,34 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.save_outlined),
             label: const Text('Сохранить профиль'),
           ),
+          const SizedBox(height: 10),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: biometricEnabled,
+            onChanged: (value) => setState(() => biometricEnabled = value),
+            title: const Text('Быстрый вход по биометрии'),
+            subtitle: Text(biometricEnabled
+                ? 'Локальный secure flag включен'
+                : 'Можно включить после проверки устройства'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.workspace_premium_outlined),
+            title: const Text('Подписка'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/subscription'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: const Text('Настройки'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Помощь и поддержка'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/help'),
+          ),
           const SizedBox(height: 16),
           const _SecurityNotice(),
         ],
@@ -161,19 +200,111 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _ProfileTypeSelector extends StatelessWidget {
-  const _ProfileTypeSelector();
+  const _ProfileTypeSelector(
+      {required this.selected, required this.onSelected});
+
+  final String selected;
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    const types = ['Физлицо', 'ИП', 'Юрлицо', 'Представитель'];
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: const [
-        ChoiceChip(label: Text('Физлицо'), selected: true),
-        ChoiceChip(label: Text('ИП'), selected: false),
-        ChoiceChip(label: Text('Юрлицо'), selected: false),
-        ChoiceChip(label: Text('Представитель'), selected: false),
+      children: [
+        for (final type in types)
+          ChoiceChip(
+            label: Text(type),
+            selected: selected == type,
+            onSelected: (_) => onSelected(type),
+          ),
       ],
+    );
+  }
+}
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  var darkMode = false;
+  var notifications = true;
+  var piiMasking = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      title: 'Настройки',
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: darkMode,
+            onChanged: (value) => setState(() => darkMode = value),
+            title: const Text('Темная тема'),
+          ),
+          SwitchListTile(
+            value: notifications,
+            onChanged: (value) => setState(() => notifications = value),
+            title: const Text('Уведомления'),
+          ),
+          SwitchListTile(
+            value: piiMasking,
+            onChanged: (value) => setState(() => piiMasking = value),
+            title: const Text('Скрывать ИИН/БИН в логах'),
+          ),
+          FilledButton.icon(
+            onPressed: () => _showAction(context, 'Настройки сохранены'),
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Сохранить настройки'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HelpScreen extends StatefulWidget {
+  const HelpScreen({super.key});
+
+  @override
+  State<HelpScreen> createState() => _HelpScreenState();
+}
+
+class _HelpScreenState extends State<HelpScreen> {
+  var requestCreated = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      title: 'Помощь и поддержка',
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ListTile(
+            leading: Icon(Icons.support_agent_outlined),
+            title: Text('Чат поддержки'),
+            subtitle: Text('Ответ в local mode имитируется для тестирования'),
+          ),
+          const ListTile(
+            leading: Icon(Icons.privacy_tip_outlined),
+            title: Text('Безопасность данных'),
+            subtitle: Text('PII маскируется, внешние провайдеры отключены'),
+          ),
+          FilledButton.icon(
+            onPressed: () => setState(() => requestCreated = true),
+            icon: const Icon(Icons.send_outlined),
+            label: Text(
+                requestCreated ? 'Обращение создано' : 'Написать в поддержку'),
+          ),
+        ],
+      ),
     );
   }
 }

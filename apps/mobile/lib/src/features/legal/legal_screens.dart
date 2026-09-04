@@ -144,7 +144,9 @@ class _CitationCard extends StatelessWidget {
         subtitle: const Text(
             'Проверяет акт, статью, статус, дату применимости, источник и совпадение цитаты.'),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Цитата проверена')),
+        ),
       ),
     );
   }

@@ -64,5 +64,6 @@
 - [x] Подключить рабочую нижнюю навигацию mobile по основным разделам.
 - [x] Добавить mobile screens “Мои дела”, “Карточка дела”, “Сроки” по дизайн-референсам.
 - [x] Добавить web scenario workspace с рабочими действиями и состояниями.
+- [x] Закрыть пустые обработчики mobile/web и покрыть профиль/настройки/помощь/legal validator тестами.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.
