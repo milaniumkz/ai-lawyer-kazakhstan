@@ -83,7 +83,9 @@ const cssNeedles = [
   '.appShell',
   '.deviceFrame',
   '.bottomNav',
-  '.screenList',
+  '.rightPanel',
+  '.taskList',
+  '.sideActions',
   'grid-template-columns: repeat(5, 1fr)',
 ];
 
@@ -94,6 +96,9 @@ for (const needle of cssNeedles) {
 if (/onClick=\{\(\) => \{\}\}/.test(page)) failures.push('web page contains empty onClick handler');
 for (const forbidden of ['Стенд готов', 'RC internal validation', 'Release Candidate', 'API demo не запускался']) {
   if (page.includes(forbidden)) failures.push(`web app still contains stand marker: ${forbidden}`);
+}
+for (const forbidden of ['className="screenList"', 'Проверка 25 экранов']) {
+  if (page.includes(forbidden)) failures.push(`web app still exposes QA screen matrix: ${forbidden}`);
 }
 
 if (failures.length) {

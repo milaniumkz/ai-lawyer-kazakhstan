@@ -31,6 +31,7 @@ type View =
 type CaseItem = { id: string; title: string; type: string; status: string; date: string; progress: number };
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
+type TaskItem = { title: string; due: string; done: boolean };
 
 const screens: { label: string; view: View }[] = [
   { label: "Онбординг", view: "onboarding" },
@@ -88,6 +89,11 @@ export default function WebHome() {
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
+  const [tasks, setTasks] = useState<TaskItem[]>([
+    { title: "Проверить расписку", due: "Сегодня", done: false },
+    { title: "Подготовить претензию", due: "10 дней", done: false },
+    { title: "Сверить срок исковой давности", due: "До подачи", done: true },
+  ]);
 
   const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0];
   const filteredCases = useMemo(
@@ -156,6 +162,10 @@ export default function WebHome() {
     } catch (error) {
       setSyncState(error instanceof Error ? `Ошибка: ${error.message}` : "Ошибка синхронизации");
     }
+  }
+
+  function toggleTask(title: string) {
+    setTasks((items) => items.map((item) => (item.title === title ? { ...item, done: !item.done } : item)));
   }
 
   function renderView() {
@@ -367,6 +377,7 @@ export default function WebHome() {
           <div className="actionBar">
             <button className="primary" onClick={() => setSyncState(`Профиль сохранен: ${profileType}`)}>Сохранить профиль</button>
             <button onClick={() => setView("settings")}>Настройки</button>
+            <button onClick={() => setView("subscription")}>Подписка</button>
             <button onClick={() => setView("help")}>Помощь и поддержка</button>
           </div>
         </section>
@@ -438,7 +449,7 @@ export default function WebHome() {
   }
 
   return (
-    <main className="appShell">
+    <main className="appShell" data-design-screen-count={screens.length}>
       <aside className="sidebar">
         <strong>AI Юрист</strong>
         <nav>
@@ -463,16 +474,38 @@ export default function WebHome() {
         </nav>
       </section>
       <aside className="rightPanel">
-        <Header title="Новое дело" subtitle="Голосовое описание и категория спора" />
-        <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-        <div className="actionBar"><button className="primary" onClick={addCase}>Подтвердить и создать дело</button><button onClick={() => setView("legal")}>Поиск нормы права</button></div>
-        <div className="screenList">
-          {screens.map((screen, index) => (
-            <button key={screen.label} onClick={() => setView(screen.view)}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              {screen.label}
-            </button>
-          ))}
+        <Header title={activeCase.title} subtitle={`Дело №${activeCase.id} · ${activeCase.status}`} />
+        <div className="caseHero compact">
+          <span className="largeIcon">⚖</span>
+          <div><h2>{activeCase.progress}%</h2><p>готовность дела</p></div>
+        </div>
+        <progress value={activeCase.progress} max="100" />
+        <div className="sideSection">
+          <h3>Ближайшие задачи</h3>
+          <div className="taskList">
+            {tasks.map((task) => (
+              <button className={task.done ? "taskRow done" : "taskRow"} key={task.title} onClick={() => toggleTask(task.title)}>
+                <span>{task.done ? "✓" : ""}</span>
+                <strong>{task.title}</strong>
+                <small>{task.due}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="sideSection">
+          <h3>Действия</h3>
+          <div className="sideActions">
+            <button className="primary" onClick={() => setView("newCase")}>Новое дело</button>
+            <button onClick={() => setView("chat")}>Чат по делу</button>
+            <button onClick={() => setView("documents")}>Документы</button>
+            <button onClick={() => setView("claim")}>Претензия</button>
+          </div>
+        </div>
+        <div className="sideSection">
+          <h3>Документы</h3>
+          <div className="miniDocs">
+            {documents.slice(0, 3).map((doc) => <button key={doc.name} onClick={() => setView("documents")}><strong>{doc.name}</strong><small>{doc.status}</small></button>)}
+          </div>
         </div>
       </aside>
     </main>

@@ -151,6 +151,7 @@
 - Web 25-screen functional mapping — `npm run test:web-ui`, web lint/typecheck/build and `npm run release-check:local` passed after mapping every design screen 01-25 to an exact web state instead of grouped/approximate navigation.
 - Web app navigation polish — `npm run release-check:local` passed after adding scroll-to-top on view changes so each selected web screen opens from its header.
 - Web button semantics pass — `npm run test:web-ui`, web lint/typecheck/build passed; browser smoke confirmed home “Новое дело” opens the creation screen, not case details, and screens 23/24/25 open distinct settings/subscription/help states.
+- Web real app shell pass — `npm run test:web-ui`, web lint/build passed; browser smoke confirmed the visible 25-screen QA matrix is gone and the right panel renders real case tasks/actions/documents.
 
 ## Заблокировано
 
