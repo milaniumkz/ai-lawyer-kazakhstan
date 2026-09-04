@@ -13,7 +13,8 @@ export class BillingController {
   }
 
   @Post('usage/ai')
-  recordUsage(@Body() body: Omit<AiUsageEvent, 'id' | 'createdAt'>) {
+  recordUsage(@Body() body: Omit<AiUsageEvent, 'id' | 'createdAt'>, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
     return this.billing.recordUsage(body);
   }
 

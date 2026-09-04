@@ -726,6 +726,13 @@ paths:
     post:
       operationId: recordAiUsage
       summary: Record AI usage without raw PII
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
       requestBody:
         required: true
         content:

@@ -21,9 +21,11 @@ const requiredPageText = [
   'Загрузить audit events',
   'Переключить provider kill switch',
   'Импортировать legal source',
+  'Записать AI usage',
   'Audit events:',
   'Provider stub:',
   'Legal source imported:',
+  'AI usage recorded:',
   "'x-user-role': 'admin'",
 ];
 
@@ -65,7 +67,7 @@ for (const [label, cssNeedle, tokenNeedle] of tokenPairs) {
 
 if (!/@media \(prefers-color-scheme: dark\)/.test(css)) failures.push('admin css missing dark theme media query');
 if (!/JSON\.stringify\(tokens\.light/.test(page)) failures.push('admin page missing visible token dump for QA');
-for (const requiredAction of ['loadAuditEvents', 'toggleStubProvider', 'importLegalSourceFixture', "fetch(`/api/v1${path}`"]) {
+for (const requiredAction of ['loadAuditEvents', 'toggleStubProvider', 'importLegalSourceFixture', 'recordAiUsageFixture', "fetch(`/api/v1${path}`"]) {
   if (!page.includes(requiredAction)) failures.push(`admin page missing live action: ${requiredAction}`);
 }
 if (!apiPaths.includes('/admin/audit-events') || !apiPaths.includes('/admin/providers')) failures.push('admin generated paths missing RBAC endpoints');

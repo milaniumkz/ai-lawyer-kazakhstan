@@ -104,6 +104,7 @@ describe('AppModule HTTP smoke', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/usage/ai')
+      .set('x-user-role', 'admin')
       .send({
         userId,
         provider: 'stub',
@@ -206,6 +207,7 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').expect(403);
     await request(app.getHttpServer()).get('/api/v1/admin/providers').expect(403);
     await request(app.getHttpServer()).post('/api/v1/legal-sources/manual-import').send({}).expect(403);
+    await request(app.getHttpServer()).post('/api/v1/usage/ai').send({}).expect(403);
 
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').set('x-user-role', 'admin').expect(200);
     await request(app.getHttpServer())

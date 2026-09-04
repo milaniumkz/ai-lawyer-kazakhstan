@@ -25,6 +25,7 @@ export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
   const [providerStatus, setProviderStatus] = useState('Provider status не загружен');
   const [legalStatus, setLegalStatus] = useState('Legal source import не запускался');
+  const [usageStatus, setUsageStatus] = useState('AI usage ledger не записывался');
   const [busy, setBusy] = useState(false);
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -102,6 +103,32 @@ export default function AdminHome() {
     }
   }
 
+  async function recordAiUsageFixture() {
+    setBusy(true);
+    try {
+      const result = (await apiJson('/usage/ai', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: 'admin-rc-user',
+          provider: 'stub',
+          modelAlias: 'simple',
+          inputUnits: 12,
+          outputUnits: 8,
+          durationMs: 240,
+          estimatedCostKzt: 1,
+          complexity: 'simple',
+          risk: 'low',
+          correlationId: 'admin-ops',
+        }),
+      })) as { budget: { usedKzt: number; monthlyLimitKzt: number } };
+      setUsageStatus(`AI usage recorded: ₸ ${result.budget.usedKzt}/${result.budget.monthlyLimitKzt}`);
+    } catch (error) {
+      setUsageStatus(error instanceof Error ? `AI usage API error: ${error.message}` : 'AI usage API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="shell">
       <section className="hero">
@@ -172,6 +199,8 @@ export default function AdminHome() {
       <section className="notice">
         <strong>Budget operations</strong>
         <span>Usage ledger хранит provider/model alias, units, cost, complexity, risk и correlation ID без raw PII.</span>
+        <button disabled={busy} onClick={() => { void recordAiUsageFixture(); }}>Записать AI usage</button>
+        <small>{usageStatus}</small>
         <button disabled={busy} onClick={() => { void toggleStubProvider(); }}>Переключить provider kill switch</button>
         <small>{providerStatus}</small>
         <div className="pills">
