@@ -29,6 +29,7 @@ export const apiPaths = [
   "/templates",
   "/usage/ai",
   "/voice/transcripts",
+  "/voice/transcripts/audio",
   "/voice/transcripts/{id}"
 ] as const;
 export type ApiPath = (typeof apiPaths)[number];

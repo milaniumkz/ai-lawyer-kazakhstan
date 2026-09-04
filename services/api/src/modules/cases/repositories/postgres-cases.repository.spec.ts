@@ -106,7 +106,18 @@ describe('PostgresCasesRepository persistence contract', () => {
       lowConfidenceFragments: [],
     });
 
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO transcript_jobs'), ['case-1', 'ready', 'ru', 'текст', []]);
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO transcript_jobs'), [
+      'case-1',
+      'ready',
+      'ru',
+      'текст',
+      [],
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 });
 

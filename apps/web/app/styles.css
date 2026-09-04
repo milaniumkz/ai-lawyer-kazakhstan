@@ -37,8 +37,10 @@ button { cursor: pointer; }
 
 .appShell {
   display: grid;
-  grid-template-columns: minmax(420px, 560px);
+  grid-template-columns: minmax(220px, 280px) minmax(420px, 620px) minmax(280px, 360px);
   justify-content: center;
+  align-items: start;
+  gap: 20px;
   min-height: 100vh;
   padding: 22px;
   background:
@@ -66,7 +68,12 @@ button { cursor: pointer; }
 
 .sidebar,
 .rightPanel {
-  display: none;
+  position: sticky;
+  top: 22px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   border-radius: 22px;
   padding: 22px;
   min-height: calc(100vh - 44px);
@@ -136,7 +143,8 @@ button { cursor: pointer; }
   overflow: hidden;
   border-radius: 34px;
   min-height: calc(100vh - 44px);
-  max-width: 560px;
+  width: 100%;
+  max-width: 620px;
   border-color: var(--gold);
   background:
     radial-gradient(circle at 50% 20%, rgba(230, 189, 98, 0.18), transparent 28%),
@@ -627,6 +635,7 @@ textarea { min-height: 132px; resize: vertical; }
 }
 .taskRow.done strong { text-decoration: line-through; color: var(--muted); }
 .sideActions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.compactTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 0; }
 .miniDocs button { text-align: left; }
 .miniDocs small { display: block; margin-top: 4px; color: var(--muted); }
 
@@ -651,6 +660,11 @@ textarea { min-height: 132px; resize: vertical; }
 button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+@media (max-width: 1180px) {
+  .appShell { grid-template-columns: minmax(190px, 240px) minmax(420px, 620px); }
+  .rightPanel { display: none; }
 }
 
 @media (max-width: 980px) {

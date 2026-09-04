@@ -1,10 +1,13 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { extname, join } from 'node:path';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
 
 const PROGRESS: ChatProgressStatus[] = ['transcribing', 'classifying', 'retrieving_sources', 'validating', 'generating', 'ready'];
+const ALLOWED_AUDIO_MIME_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav', 'audio/x-wav']);
 
 @Injectable()
 export class CasesService {
@@ -113,11 +116,63 @@ export class CasesService {
     return { ...stored, progress: PROGRESS };
   }
 
+  async createTranscriptFromAudio(
+    input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; text?: string },
+    file?: { originalname: string; mimetype: string; size: number; buffer: Buffer },
+  ) {
+    if (!file?.buffer?.length) throw new BadRequestException('AUDIO_FILE_REQUIRED');
+    const mimeType = normalizeAudioMimeType(file.mimetype);
+    if (!ALLOWED_AUDIO_MIME_TYPES.has(mimeType)) throw new BadRequestException('AUDIO_MIME_TYPE_NOT_ALLOWED');
+
+    const audioFileId = randomUUID();
+    const audioSha256 = createHash('sha256').update(file.buffer).digest('hex');
+    const storageDir = process.env.VOICE_UPLOAD_DIR ?? join(process.cwd(), 'storage', 'voice');
+    const extension = safeAudioExtension(file.originalname, mimeType);
+    const audioStorageKey = `${audioFileId}${extension}`;
+    await mkdir(storageDir, { recursive: true });
+    await writeFile(join(storageDir, audioStorageKey), file.buffer);
+
+    const transcript = input.text?.trim() || 'Аудио сохранено. Расшифровка требует подключения STT-провайдера или ручного подтверждения текста.';
+    const job: TranscriptJob = {
+      id: randomUUID(),
+      caseId: input.caseId,
+      status: input.text?.trim() ? 'ready' : 'review_required',
+      language: input.language ?? 'ru',
+      transcript,
+      lowConfidenceFragments: input.text?.trim() ? [] : ['stt_provider_not_configured'],
+      audioFileId,
+      audioMimeType: mimeType,
+      audioSizeBytes: file.size,
+      audioSha256,
+      audioStorageKey,
+      createdAt: new Date().toISOString(),
+    };
+    const stored = this.repository ? await this.repository.createTranscript(job) : job;
+    const result = { ...stored, audioFileId, audioMimeType: mimeType, audioSizeBytes: file.size, audioSha256, audioStorageKey, progress: PROGRESS };
+    if (!this.repository) this.transcripts.set(job.id, result);
+    return result;
+  }
+
   async getTranscript(id: string) {
     const job = this.repository ? await this.repository.findTranscriptById(id) : this.transcripts.get(id);
     if (!job) throw new NotFoundException('TRANSCRIPT_NOT_FOUND');
     return job;
   }
+}
+
+function normalizeAudioMimeType(mimeType: string) {
+  return mimeType.split(';')[0]?.trim().toLowerCase() || 'audio/webm';
+}
+
+function safeAudioExtension(fileName: string, mimeType: string) {
+  const current = extname(fileName).toLowerCase();
+  if (/^\.[a-z0-9]{2,5}$/.test(current)) return current;
+  if (mimeType === 'audio/mp4') return '.m4a';
+  if (mimeType === 'audio/aac') return '.aac';
+  if (mimeType === 'audio/wav' || mimeType === 'audio/x-wav') return '.wav';
+  if (mimeType === 'audio/mpeg') return '.mp3';
+  if (mimeType === 'audio/ogg') return '.ogg';
+  return '.webm';
 }
 
 export function classifyProblem(text: string) {

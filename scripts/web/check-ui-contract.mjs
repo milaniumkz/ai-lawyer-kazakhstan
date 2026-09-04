@@ -83,6 +83,9 @@ const requiredActions = [
   'generateClaim',
   'loadSubscription',
   'toggleTask',
+  'apiForm(',
+  '/voice/transcripts/audio',
+  'audioBlobRef',
   'selectedCategory',
   'remoteCaseId',
   'remoteDocumentId',
@@ -128,6 +131,9 @@ const cssNeedles = [
   '.appShell',
   '.deviceFrame',
   '.bottomNav',
+  '.sidebar',
+  '.rightPanel',
+  '.compactTiles',
   '.topActions',
   '.quickIcon',
   '.screenHeader',
@@ -162,8 +168,8 @@ for (const forbidden of ['Стенд готов', 'RC internal validation', 'Rel
 for (const forbidden of ['className="screenList"', 'Проверка 25 экранов']) {
   if (page.includes(forbidden)) failures.push(`web app still exposes QA screen matrix: ${forbidden}`);
 }
-for (const forbidden of ['<aside className="sidebar"', '<aside className="rightPanel"']) {
-  if (page.includes(forbidden)) failures.push(`web app still renders desktop wrapper: ${forbidden}`);
+for (const required of ['<aside className="sidebar"', '<aside className="rightPanel"']) {
+  if (!page.includes(required)) failures.push(`web app missing desktop wrapper: ${required}`);
 }
 
 if (failures.length) {

@@ -294,6 +294,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TranscriptJob"
+  /voice/transcripts/audio:
+    post:
+      operationId: createAudioTranscript
+      summary: Upload real audio and create transcript job
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                caseId:
+                  type: string
+                language:
+                  type: string
+                  enum: [ru, kk, en]
+                text:
+                  type: string
+      responses:
+        "201":
+          description: Transcript job with stored audio metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranscriptJob"
   /voice/transcripts/{id}:
     get:
       operationId: getTranscript
@@ -903,6 +932,17 @@ components:
           type: array
           items:
             type: string
+        audioFileId:
+          type: string
+          format: uuid
+        audioMimeType:
+          type: string
+        audioSizeBytes:
+          type: integer
+        audioSha256:
+          type: string
+        audioStorageKey:
+          type: string
         progress:
           type: array
           items:

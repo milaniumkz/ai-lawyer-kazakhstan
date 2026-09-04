@@ -88,6 +88,7 @@
 | Web action realism pass P1 | Replaced remaining status-only web actions with real handlers: camera/file upload uses actual browser file metadata and SHA-256, profile saves via `/profiles`, document analysis validates OCR state, support creates a persistent request, claim send records a real user confirmation, and settings persist locally | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 | Web API flow polish P1 | Fixed web profile API payload to send contract enum values, formatted API error messages safely, restricted document picker to allowed upload types, and kept RC OTP hint tied to backend `deliveryMode=stub` | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 | Web navigation/action correction P1 | Fixed misleading web controls: existing-account onboarding opens login, case intake cannot continue with empty text, notifications open a real task panel, legal source tabs reset search state, and legal filter toggles active/archive mode | Web UI contract, web lint/typecheck/build and local release-check passed | done |
+| Web real voice upload + desktop shell P1 | Voice intake now waits for the real MediaRecorder blob, uploads audio via multipart `/api/v1/voice/transcripts/audio`, stores server-side audio metadata, and renders desktop side/context panels while preserving mobile bottom navigation | API/web lint/typecheck/build, cases service test, OpenAPI/web/admin/migration checks passed | done |
 
 ## Блокеры окружения
 

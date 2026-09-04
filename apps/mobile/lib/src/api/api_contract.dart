@@ -12,13 +12,11 @@ abstract final class ApiContract {
   static const casesCaseId = '/cases/{caseId}';
   static const casesCaseIdDocuments = '/cases/{caseId}/documents';
   static const casesCaseIdEvidence = '/cases/{caseId}/evidence';
-  static const casesCaseIdGeneratedDocuments =
-      '/cases/{caseId}/generated-documents';
+  static const casesCaseIdGeneratedDocuments = '/cases/{caseId}/generated-documents';
   static const casesCaseIdMessages = '/cases/{caseId}/messages';
   static const citationsValidate = '/citations/validate';
   static const documentsGenerate = '/documents/generate';
-  static const documentsDocumentIdOcrConfirm =
-      '/documents/{documentId}/ocr-confirm';
+  static const documentsDocumentIdOcrConfirm = '/documents/{documentId}/ocr-confirm';
   static const evidence = '/evidence';
   static const filesComplete = '/files/complete';
   static const filesUploadSessions = '/files/upload-sessions';
@@ -32,5 +30,6 @@ abstract final class ApiContract {
   static const templates = '/templates';
   static const usageAi = '/usage/ai';
   static const voiceTranscripts = '/voice/transcripts';
+  static const voiceTranscriptsAudio = '/voice/transcripts/audio';
   static const voiceTranscriptsId = '/voice/transcripts/{id}';
 }

@@ -74,10 +74,22 @@ export class PostgresCasesRepository implements CasesRepository {
 
   async createTranscript(input: Omit<TranscriptJob, 'id' | 'createdAt'>) {
     const result = await this.db.query<TranscriptRow>(
-      `INSERT INTO transcript_jobs (case_id, status, language, transcript, low_confidence_fragments)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO transcript_jobs
+        (case_id, status, language, transcript, low_confidence_fragments, audio_file_id, audio_mime_type, audio_size_bytes, audio_sha256, audio_storage_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [input.caseId ?? null, input.status, input.language, input.transcript, input.lowConfidenceFragments],
+      [
+        input.caseId ?? null,
+        input.status,
+        input.language,
+        input.transcript,
+        input.lowConfidenceFragments,
+        input.audioFileId ?? null,
+        input.audioMimeType ?? null,
+        input.audioSizeBytes ?? null,
+        input.audioSha256 ?? null,
+        input.audioStorageKey ?? null,
+      ],
     );
     return mapTranscript(result.rows[0]!);
   }
@@ -117,6 +129,11 @@ interface TranscriptRow {
   language: TranscriptJob['language'];
   transcript: string;
   low_confidence_fragments: string[];
+  audio_file_id?: string | null;
+  audio_mime_type?: string | null;
+  audio_size_bytes?: string | number | null;
+  audio_sha256?: string | null;
+  audio_storage_key?: string | null;
   created_at: Date;
 }
 
@@ -154,6 +171,11 @@ export function mapTranscript(row: TranscriptRow): TranscriptJob {
     language: row.language,
     transcript: row.transcript,
     lowConfidenceFragments: row.low_confidence_fragments,
+    audioFileId: row.audio_file_id ?? undefined,
+    audioMimeType: row.audio_mime_type ?? undefined,
+    audioSizeBytes: row.audio_size_bytes == null ? undefined : Number(row.audio_size_bytes),
+    audioSha256: row.audio_sha256 ?? undefined,
+    audioStorageKey: row.audio_storage_key ?? undefined,
     createdAt: row.created_at.toISOString(),
   };
 }

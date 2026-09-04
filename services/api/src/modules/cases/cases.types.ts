@@ -44,5 +44,10 @@ export interface TranscriptJob {
   language: 'ru' | 'kk' | 'en';
   transcript: string;
   lowConfidenceFragments: string[];
+  audioFileId?: string;
+  audioMimeType?: string;
+  audioSizeBytes?: number;
+  audioSha256?: string;
+  audioStorageKey?: string;
   createdAt: string;
 }

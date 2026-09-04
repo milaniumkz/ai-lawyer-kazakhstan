@@ -1,4 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { CasesService } from './cases.service';
 import { CasesRepository } from './repositories/cases.repository';
 
@@ -29,6 +32,23 @@ describe('CasesService', () => {
     expect(job.status).toBe('ready');
     expect(job.progress).toContain('transcribing');
     expect(job.lowConfidenceFragments).toEqual(['неразборчиво']);
+  });
+
+  it('stores uploaded audio metadata for transcript jobs', async () => {
+    const uploadDir = await mkdtemp(join(tmpdir(), 'voice-upload-'));
+    process.env.VOICE_UPLOAD_DIR = uploadDir;
+    const service = new CasesService();
+    const job = await service.createTranscriptFromAudio(
+      { language: 'ru', text: 'Голосовое описание долга по расписке' },
+      { originalname: 'voice.webm', mimetype: 'audio/webm;codecs=opus', size: 12, buffer: Buffer.from('real-audio') },
+    );
+
+    expect(job.status).toBe('ready');
+    expect(job.audioFileId).toBeDefined();
+    expect(job.audioMimeType).toBe('audio/webm');
+    expect(job.audioSha256).toHaveLength(64);
+    await rm(uploadDir, { recursive: true, force: true });
+    delete process.env.VOICE_UPLOAD_DIR;
   });
 
   it('rejects too short problem text', async () => {

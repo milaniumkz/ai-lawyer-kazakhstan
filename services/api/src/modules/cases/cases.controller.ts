@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CasesService } from './cases.service';
 
 @Controller()
@@ -36,6 +37,15 @@ export class CasesController {
   @Post('voice/transcripts')
   createTranscript(@Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }) {
     return this.cases.createTranscript(body);
+  }
+
+  @Post('voice/transcripts/audio')
+  @UseInterceptors(FileInterceptor('audio', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  createAudioTranscript(
+    @UploadedFile() file: { originalname: string; mimetype: string; size: number; buffer: Buffer },
+    @Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; text?: string },
+  ) {
+    return this.cases.createTranscriptFromAudio(body, file);
   }
 
   @Get('voice/transcripts/:id')

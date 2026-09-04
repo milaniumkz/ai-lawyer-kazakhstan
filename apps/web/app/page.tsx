@@ -38,7 +38,7 @@ type ApiDocument = { id: string; fileName: string; status: string; extractedFiel
 type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
 type ApiLegalAnswer = { status: string; message: string; fragment?: { title: string; article?: string; sourceUrl: string; text: string; retrievedAt?: string } };
 type ApiOtpResponse = { otpId: string; deliveryMode: "stub" | "sms" | "email"; testCode?: string };
-type TranscriptJob = { id: string; status: string; transcript: string; progress: string[] };
+type TranscriptJob = { id: string; status: string; transcript: string; progress: string[]; audioFileId?: string; audioSha256?: string };
 type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
 type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
 type SpeechRecognitionInstance = {
@@ -113,6 +113,7 @@ export default function WebHome() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioBlobRef = useRef<Blob | null>(null);
   const [view, setView] = useState<View>("home");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -126,6 +127,7 @@ export default function WebHome() {
   const [sent, setSent] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioUrl, setAudioUrl] = useState("");
   const [speechStatus, setSpeechStatus] = useState("Распознавание речи еще не запускалось");
@@ -364,6 +366,20 @@ export default function WebHome() {
     const response = await fetch(`/api/v1${path}`, {
       ...init,
       headers: { "content-type": "application/json", "x-correlation-id": "web-app-sync", ...(init?.headers ?? {}) },
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      const message = body.message ?? body.error ?? `${path} failed`;
+      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    }
+    return body;
+  }
+
+  async function apiForm(path: string, formData: FormData) {
+    const response = await fetch(`/api/v1${path}`, {
+      method: "POST",
+      headers: { "x-correlation-id": "web-voice-upload" },
+      body: formData,
     });
     const body = await response.json();
     if (!response.ok) {
@@ -633,6 +649,11 @@ export default function WebHome() {
     return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
   }
 
+  function getSupportedAudioMimeType() {
+    const options = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"];
+    return options.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+  }
+
   function startSpeechRecognition() {
     const Recognition = getSpeechRecognitionConstructor();
     if (!Recognition) {
@@ -664,6 +685,7 @@ export default function WebHome() {
   }
 
   async function startRecording() {
+    if (recording || voiceBusy) return;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setSyncState("Браузер не поддерживает запись голоса");
       return;
@@ -671,15 +693,21 @@ export default function WebHome() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
+      audioBlobRef.current = null;
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl("");
+      }
       mediaStreamRef.current = stream;
-      const recorder = new MediaRecorder(stream);
+      const mimeType = getSupportedAudioMimeType();
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       mediaRecorderRef.current = recorder;
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        audioBlobRef.current = blob;
         setAudioUrl(URL.createObjectURL(blob));
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
@@ -718,26 +746,46 @@ export default function WebHome() {
     }
   }
 
-  async function finishRecording() {
+  function stopRecordingAndGetBlob() {
     const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") recorder.stop();
+    if (!recorder || recorder.state === "inactive") return Promise.resolve(audioBlobRef.current);
+    return new Promise<Blob | null>((resolve) => {
+      const previousStop = recorder.onstop;
+      recorder.onstop = (event) => {
+        previousStop?.call(recorder, event);
+        window.setTimeout(() => resolve(audioBlobRef.current), 0);
+      };
+      recorder.requestData();
+      recorder.stop();
+    });
+  }
+
+  async function finishRecording() {
+    if (voiceBusy) return;
+    setVoiceBusy(true);
     speechRecognitionRef.current?.stop();
     speechRecognitionRef.current = null;
     setRecording(false);
     setPaused(false);
-    setSyncState("Запись завершена, отправляю transcript job...");
+    setSyncState("Запись завершена, сохраняю аудио...");
     try {
-      const job = await apiJson("/voice/transcripts", {
-        method: "POST",
-        body: JSON.stringify({ caseId: remoteCaseId || undefined, language: "ru", audioRef: audioUrl || "browser-mediarecorder", text: caseText }),
-      }) as TranscriptJob;
+      const blob = await stopRecordingAndGetBlob();
+      if (!blob || blob.size === 0) throw new Error("Пустая запись: попробуйте еще раз");
+      const extension = blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
+      const formData = new FormData();
+      formData.append("audio", blob, `voice-${Date.now()}.${extension}`);
+      formData.append("language", "ru");
+      if (remoteCaseId) formData.append("caseId", remoteCaseId);
+      if (caseText.trim()) formData.append("text", caseText.trim());
+      const job = await apiForm("/voice/transcripts/audio", formData) as TranscriptJob;
       setTranscriptJobId(job.id);
       if (job.transcript) setCaseText(job.transcript);
-      setSyncState(`Transcript job готов: ${job.id.slice(0, 8)}`);
+      setSyncState(job.audioFileId ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}` : `Transcript job готов: ${job.id.slice(0, 8)}`);
       go("category");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Запись сохранена, API transcript ошибка: ${error.message}` : "Запись сохранена локально");
-      go("category");
+      setSyncState(error instanceof Error ? `Ошибка записи: ${error.message}` : "Ошибка записи");
+    } finally {
+      setVoiceBusy(false);
     }
   }
 
@@ -884,17 +932,17 @@ export default function WebHome() {
           <AppHeader title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
           <h1 className="heroTitle">Опишите проблему</h1>
           <p className="hint">Расскажите о ситуации голосом, а мы поможем с решением</p>
-          <button className={recording ? "mic small active" : "mic small"} onClick={() => { void startRecording(); }} aria-label="Записать голос"><span>⌾</span></button>
+          <button className={recording ? "mic small active" : "mic small"} disabled={voiceBusy} onClick={() => { void startRecording(); }} aria-label="Записать голос"><span>⌾</span></button>
           <div className="recordCard">
-            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
+            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{voiceBusy ? "Сохраняю аудио" : recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
             <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl}>Запись голоса</audio>}
             <small className="recordMeta">{speechStatus}</small>
             {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}
             <div className="wave" aria-hidden="true"></div>
           </div>
-          <button className="primary wide" onClick={recording ? finishRecording : continueCaseIntake}>{recording ? "■ Завершить запись" : "Продолжить"}</button>
-          <button className="wide" onClick={pauseRecording}>{paused ? "▶ Продолжить" : "Ⅱ Пауза"}</button>
+          <button className="primary wide" disabled={voiceBusy} onClick={recording ? finishRecording : continueCaseIntake}>{voiceBusy ? "Сохраняю..." : recording ? "■ Завершить запись" : "Продолжить"}</button>
+          <button className="wide" disabled={voiceBusy} onClick={pauseRecording}>{recording ? (paused ? "▶ Продолжить" : "Ⅱ Пауза") : "Начать запись"}</button>
         </section>
       );
     }
@@ -1142,6 +1190,24 @@ export default function WebHome() {
 
   return (
     <main className="appShell" data-theme={theme} data-design-screen-count={screens.length}>
+      <aside className="sidebar" aria-label="Навигация ПК">
+        <strong>AI Юрист</strong>
+        <small>Казахстан · RC</small>
+        <nav>
+          {[
+            ["home", "Главная"],
+            ["newCase", "Новое дело"],
+            ["cases", "Дела"],
+            ["documents", "Документы"],
+            ["legal", "Нормы права"],
+            ["deadlines", "Сроки"],
+            ["subscription", "Подписка"],
+            ["profile", "Профиль"],
+          ].map(([target, label]) => (
+            <button key={target} className={view === target ? "active" : ""} onClick={() => go(target as View)}>{label}</button>
+          ))}
+        </nav>
+      </aside>
       <section className="deviceFrame">
         <div className="appStatus"><span>{syncState}</span><button aria-label="Синхронизировать" onClick={syncWithApi}>↻</button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
         {renderView()}
@@ -1153,6 +1219,29 @@ export default function WebHome() {
           <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => go("profile")}>Профиль</button>
         </nav>
       </section>
+      <aside className="rightPanel" aria-label="Контекст дела">
+        <div className="caseHero compact">
+          <span className="roundIcon">⚖</span>
+          <div><h2>{activeCase.title}</h2><p>{activeCase.status}</p></div>
+        </div>
+        <div className="tileGrid compactTiles">
+          <Info label="Готовность" value={`${activeCase.progress}%`} />
+          <Info label="Документы" value={`${documents.length}`} />
+        </div>
+        <div className="sideSection">
+          <h3>Быстрые действия</h3>
+          <div className="sideActions">
+            <button onClick={() => go("newCase")}>Голос</button>
+            <button onClick={() => go("chat")}>Чат</button>
+            <button onClick={() => go("documents")}>Файлы</button>
+            <button onClick={() => go("legal")}>RAG</button>
+          </div>
+        </div>
+        <div className="sideSection">
+          <h3>Сроки</h3>
+          <div className="taskList">{tasks.slice(0, 3).map((task) => <button className={task.done ? "taskRow done" : "taskRow"} key={task.title} onClick={() => toggleTask(task.title)}><span>{task.done ? "✓" : ""}</span><strong>{task.title}</strong><small>{task.due}</small></button>)}</div>
+        </div>
+      </aside>
     </main>
   );
 }
