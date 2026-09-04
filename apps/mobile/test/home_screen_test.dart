@@ -218,7 +218,9 @@ void main() {
   });
 
   testWidgets('shows legal citation guardrails screen', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LegalSourcesScreen()));
+    final api = _FakeLegalApi();
+    await tester
+        .pumpWidget(MaterialApp(home: LegalSourcesScreen(legalApi: api)));
 
     expect(find.text('Официальные источники РК'), findsOneWidget);
     expect(find.text('Citation Validator'), findsOneWidget);
@@ -226,10 +228,12 @@ void main() {
     await tester.tap(find.byTooltip('Найти норму'));
     await tester.pumpAndSettle();
     expect(find.text('Норма найдена'), findsOneWidget);
+    expect(api.answeredQuery, 'взыскание долга по расписке');
 
     await tester.tap(find.text('Citation Validator'));
     await tester.pumpAndSettle();
-    expect(find.text('Цитата проверена'), findsOneWidget);
+    expect(find.text('Цитата проверена API'), findsOneWidget);
+    expect(api.validatedFragmentId, 'fragment-1');
   });
 
   testWidgets('profile settings help and biometric actions work',
@@ -604,6 +608,32 @@ class _FakeDocumentApi implements DocumentApiPort {
   }) async {
     evidenceCaseId = caseId;
     return 'evidence-12345678';
+  }
+}
+
+class _FakeLegalApi implements LegalApiPort {
+  String? answeredQuery;
+  String? validatedFragmentId;
+
+  @override
+  Future<LegalAnswerResult> answer(String query) async {
+    answeredQuery = query;
+    return const LegalAnswerResult(
+      message: 'Норма найдена через API',
+      fragment: LegalAnswerFragment(
+        id: 'fragment-1',
+        sourceUrl: 'https://zan.gov.kz/test',
+        text: 'Тестовый официальный фрагмент',
+        officialId: 'KZ-TEST',
+        article: 'ст. 1',
+      ),
+    );
+  }
+
+  @override
+  Future<String> validateCitation(LegalAnswerFragment fragment) async {
+    validatedFragmentId = fragment.id;
+    return 'Цитата проверена API';
   }
 }
 
