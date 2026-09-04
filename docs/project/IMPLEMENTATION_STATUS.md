@@ -35,6 +35,7 @@
 | Templates repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for template reads/generated documents, local default preserved | API lint/typecheck/test passed, 55 tests | done |
 | Billing repository runtime toggle P1 | `PERSISTENCE_MODE=postgres` optional repository wiring for subscriptions/provider settings/AI usage ledger, local default preserved | API lint/typecheck/test passed, 56 tests | done |
 | Database migration contract check P1 | Node script validates migration order, required PostgreSQL tables/columns, pgvector and template seed; included in root check | `npm run test:migrations`, `npm run check`, `npm run build` passed | done |
+| Mobile design regression tests P1 | Flutter light/dark golden snapshots for home screen and render smoke tests for core release screens in both themes | Flutter analyze/test passed, 11 widget/golden tests; `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 

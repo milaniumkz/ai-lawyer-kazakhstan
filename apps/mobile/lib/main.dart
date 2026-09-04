@@ -34,7 +34,9 @@ final _router = GoRouter(
 );
 
 class AiLawyerApp extends StatelessWidget {
-  const AiLawyerApp({super.key});
+  const AiLawyerApp({super.key, this.themeMode = ThemeMode.system});
+
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,7 @@ class AiLawyerApp extends StatelessWidget {
       title: 'AI Юрист',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
