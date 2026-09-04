@@ -20,3 +20,4 @@
 - P1-007A Identity PostgreSQL repository foundation — done.
 - P1-007B Cases/chat/transcripts PostgreSQL repository foundation — done.
 - P1-007C Documents/evidence PostgreSQL repository foundation — done.
+- P1-007D Legal RAG PostgreSQL repository foundation — done.

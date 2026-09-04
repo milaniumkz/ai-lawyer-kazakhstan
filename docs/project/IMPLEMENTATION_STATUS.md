@@ -25,6 +25,7 @@
 | Identity PostgreSQL repository P1 | `DatabaseService`, identity repository interface and PostgreSQL adapter for users/sessions/profiles; refresh token and IIN/BIN hashing before persistence | API lint/typecheck/test passed, 28 tests | done |
 | Cases PostgreSQL repository P1 | Case repository interface, PostgreSQL adapter for cases/messages/transcripts, idempotency key migration | API lint/typecheck/test passed, 33 tests | done |
 | Documents PostgreSQL repository P1 | Document repository interface, PostgreSQL adapter for upload sessions/files/OCR fields/evidence folders, upload session migration | API lint/typecheck/test passed, 38 tests | done |
+| Legal RAG PostgreSQL repository P1 | Legal repository interface and PostgreSQL adapter for official source fragments/search/citation storage metadata | API lint/typecheck/test passed, 41 tests | done |
 
 ## Блокеры окружения
 
