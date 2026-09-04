@@ -72,6 +72,7 @@
 - Исправлены главные маршруты: mic открывает voice intake, “Сроки” открывает calendar/deadlines, profile icon стабильно ведет в профиль.
 - Mobile design regression smoke теперь рендерит все реализованные release screens в light/dark themes.
 - Document analysis confirmation now enables transition to pretrial claim builder, closing the document-to-claim vertical flow.
+- Web UI contract gate added to root check: 25 design screen labels, primary actions, responsive CSS and empty onClick guard.
 
 ## Дизайн-источник
 
@@ -109,6 +110,7 @@
 - Latest main route parity pass verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
 - Latest full mobile render regression verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
 - Latest document-to-claim flow verified: Flutter analyze/test 23 tests, `release-check:local`, `release-check:server`.
+- Latest web UI contract gate verified: `npm run test:web-ui`, `release-check:local`, `release-check:server`.
 
 ## Следующая задача
 

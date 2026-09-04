@@ -70,5 +70,6 @@
 - [x] Исправить главные mobile маршруты: mic → voice intake, сроки → calendar/deadlines, profile icon → profile.
 - [x] Расширить mobile render regression на все реализованные release screens в light/dark themes.
 - [x] Закрыть mobile flow документы/анализ → формирование досудебной претензии.
+- [x] Добавить web UI contract gate в общий release-check.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

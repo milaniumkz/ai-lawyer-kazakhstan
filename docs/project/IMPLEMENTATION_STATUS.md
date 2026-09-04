@@ -63,6 +63,7 @@
 | Main screen route parity P1 | Main microphone now opens voice case intake, “Сроки” card opens deadlines, and profile icon has stable direct routing | Flutter analyze passed; Flutter test passed with 23 widget/golden tests; release-check local/server passed | done |
 | Full mobile screen render regression P1 | Expanded design regression smoke to render all implemented mobile release screens in both light and dark themes | Flutter analyze passed; Flutter test passed with 23 widget/golden tests; release-check local/server passed | done |
 | Document-to-claim vertical flow P1 | Document analysis now continues to pretrial claim builder after user confirmation, closing the case/category/documents/analysis/claim path | Flutter analyze passed; Flutter test passed with 23 widget/golden tests; release-check local/server passed | done |
+| Web UI contract gate P1 | Added release-check coverage for all 25 web design screen labels, primary web actions, adaptive CSS and empty handler guard | `npm run test:web-ui`, `npm run release-check:local`, `npm run release-check:server` passed | done |
 
 ## Блокеры окружения
 

@@ -132,6 +132,8 @@
 - Final release gate after full mobile render regression — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Document-to-claim vertical flow — document analysis confirmation now enables transition to pretrial claim builder; Flutter analyze and Flutter test passed with 23 tests.
 - Final release gate after document-to-claim flow — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Web UI contract gate — `npm run test:web-ui` passed and is included in root `npm run check`; it verifies all 25 design screen labels, primary web actions, responsive CSS and absence of empty `onClick` handlers.
+- Final release gate after web UI contract — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 
