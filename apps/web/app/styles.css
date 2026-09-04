@@ -54,6 +54,7 @@ button { cursor: pointer; }
 .contentPanel,
 .caseRow,
 .docRow,
+.normCard,
 .info,
 .analysisBox,
 .claimPreview,
@@ -465,6 +466,73 @@ progress {
 .docRow.active {
   border-color: var(--gold);
   background: color-mix(in srgb, var(--gold) 14%, var(--panel));
+}
+
+.legalSearch {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel-soft);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+
+.legalSearch span,
+.legalSearch button {
+  color: var(--gold-strong);
+  font-size: 28px;
+}
+
+.legalSearch input {
+  border: 0;
+  background: transparent;
+}
+
+.legalSearch button {
+  border: 0;
+  background: transparent;
+}
+
+.normCard {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  border-radius: 18px;
+  color: var(--text);
+  padding: 18px;
+  text-align: left;
+}
+
+.normCard.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, var(--panel));
+}
+
+.normCard em,
+.normCard span {
+  color: var(--gold-strong);
+  font-style: normal;
+}
+
+.normCard strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+}
+
+.normCard small,
+.normCard p {
+  color: var(--muted);
+}
+
+.stickyActions {
+  position: sticky;
+  bottom: 88px;
+  z-index: 14;
+  padding-top: 14px;
+  background: linear-gradient(180deg, transparent, var(--panel) 24%);
 }
 
 .wide {

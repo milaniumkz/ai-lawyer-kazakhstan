@@ -32,6 +32,7 @@ type CaseItem = { id: string; title: string; type: string; status: string; date:
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 type TaskItem = { title: string; due: string; done: boolean };
+type LegalNorm = { title: string; article: string; source: string; date: string; text: string };
 type ApiLegalCase = { id: string; title: string; category: string; status: string; readinessPercent: number; createdAt: string };
 type ApiDocument = { id: string; fileName: string; status: string; extractedFields?: Record<string, string> };
 type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
@@ -90,6 +91,12 @@ const initialCases: CaseItem[] = [
   { id: "2024-0012", title: "Алименты", type: "Семейное право", status: "Подготовка документов", date: "10 мая 2024", progress: 42 },
 ];
 
+const legalNorms: LegalNorm[] = [
+  { title: "Гражданский кодекс РК", article: "Статья 272. Надлежащее исполнение обязательства", source: "adilet.zan.kz", date: "04.09.2026", text: "Обязательство должно исполняться надлежащим образом в соответствии с условиями обязательства и требованиями законодательства." },
+  { title: "Гражданский кодекс РК", article: "Статья 353. Ответственность за неправомерное пользование чужими деньгами", source: "adilet.zan.kz", date: "04.09.2026", text: "При денежном обязательстве применимость нормы требует проверки суммы, срока и основания требования." },
+  { title: "Трудовой кодекс РК", article: "Статья 113. Порядок и сроки выплаты заработной платы", source: "adilet.zan.kz", date: "04.09.2026", text: "Заработная плата выплачивается в сроки, установленные трудовым договором и актами работодателя." },
+];
+
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>("home");
@@ -118,6 +125,8 @@ export default function WebHome() {
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("Как взыскать долг по расписке?");
   const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
+  const [legalTab, setLegalTab] = useState("Кодексы");
+  const [selectedNorm, setSelectedNorm] = useState(legalNorms[0]);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК." },
@@ -391,6 +400,18 @@ export default function WebHome() {
       setLegalAnswer("Нет подтвержденной нормы. Требуется ручная проверка.");
       setSyncState(error instanceof Error ? `RAG ошибка: ${error.message}` : "RAG ошибка");
     }
+  }
+
+  function addNormToDocument() {
+    const citation = `${selectedNorm.title}, ${selectedNorm.article}, источник: ${selectedNorm.source}`;
+    setGeneratedClaimBody((body) => `${body || "Проект документа"}\n\nПодтвержденная норма: ${citation}`);
+    setSyncState(`Норма добавлена в документ: ${selectedNorm.article}`);
+    go("claimDraft");
+  }
+
+  function openOfficialSource() {
+    setLegalAnswer(`Официальный источник подготовлен к открытию: ${selectedNorm.source}. В RC режиме внешний переход фиксируется как assisted flow.`);
+    setSyncState(`Источник выбран: ${selectedNorm.source}`);
   }
 
   async function generateClaim() {
@@ -677,12 +698,30 @@ export default function WebHome() {
     if (view === "legal" || view === "legalSearch") {
       return (
         <section className="contentPanel">
-          <AppHeader title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
-          <div className="searchRow">
-            <input value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} />
-            <button className="primary" onClick={() => { go("legalSearch"); void runLegalSearch(); }}>Найти норму</button>
+          <AppHeader title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Официальные источники РК" />
+          <div className="legalSearch">
+            <span>⌕</span>
+            <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="Поиск по нормам права, статьям, законам..." />
+            <button aria-label="Фильтр" onClick={() => setSyncState("Фильтр: действующие редакции")}>☷</button>
+          </div>
+          <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => setLegalTab(tab)}>{tab}</button>)}</div>
+          <div className="list">
+            {legalNorms.map((norm, index) => (
+              <button className={selectedNorm.article === norm.article ? "normCard active" : "normCard"} key={`${norm.title}-${norm.article}`} onClick={() => { setSelectedNorm(norm); setLegalAnswer(norm.text); }}>
+                {index === 0 && <em>Рекомендованная норма</em>}
+                <strong>{norm.title}</strong>
+                <span>{norm.article}</span>
+                <small>Источник: {norm.source} · Актуально на {norm.date}</small>
+                <p>{norm.text}</p>
+              </button>
+            ))}
           </div>
           <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
+          <div className="actionBar stickyActions">
+            <button className="primary" onClick={() => { go("legalSearch"); void runLegalSearch(); }}>Найти норму</button>
+            <button className="primary" onClick={addNormToDocument}>Добавить в документ</button>
+            <button onClick={openOfficialSource}>Открыть источник</button>
+          </div>
         </section>
       );
     }
@@ -769,7 +808,6 @@ export default function WebHome() {
           <button onClick={() => go("newCase")}><span className="quickIcon">▣</span>Новое дело<small>Создать новое дело</small></button>
           <button onClick={() => go("documents")}><span className="quickIcon">□</span>Мои документы<small>Просмотр и загрузка</small></button>
           <button onClick={() => go("deadlines")}><span className="quickIcon">▦</span>Сроки и календарь<small>Даты и напоминания</small></button>
-          <button onClick={() => go("legal")}><span className="quickIcon">§</span>Нормы права<small>Официальные источники РК</small></button>
         </div>
         <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
         <div className="list">

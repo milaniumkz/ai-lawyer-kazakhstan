@@ -80,6 +80,7 @@
 | Web recording/navigation flow pass P1 | Added design-style recording card, pause/finish controls, back header navigation and fixed mobile status overlap on web app screens | Web UI contract, web lint/typecheck/build, local release-check and browser recording flow smoke passed | done |
 | Web API-backed application flow pass P1 | Converted critical web actions from status-only changes into API-backed/stateful flows for auth, case creation, chat, upload/OCR, RAG search, claim generation, subscription limits, task toggles and selected categories/documents | Web UI contract and local release-check passed | done |
 | Web hash routing and legal entry pass P1 | Added live `hashchange` routing and a direct home entry to legal norms so functional screens remain reachable from URL and UI navigation | Web UI contract and local release-check passed | done |
+| Web legal design parity pass P1 | Restored the home quick-action count to match the reference and rebuilt legal norms as a functional native screen with search, tabs, selectable source cards and document/source actions | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 
 ## Блокеры окружения
 

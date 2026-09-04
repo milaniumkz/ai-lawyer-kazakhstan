@@ -136,6 +136,7 @@
 - Latest web recording/navigation pass verified: `#newCase` has recording card, pause/finish controls, finish opens category, back returns to intake, and mobile status no longer intercepts navigation.
 - Latest web API-backed application pass verified: critical web buttons now update explicit app state and call `/api/v1` for auth, cases, chat, documents/OCR, RAG, claim generation and subscription limits.
 - Latest web hash routing pass verified: `hashchange` now updates the visible screen, and legal norms are reachable directly from the home quick actions.
+- Latest web legal design parity pass verified: home quick actions match the 3-card reference again, and legal norms now have search, category tabs, selectable cards, add-to-document and source actions.
 
 ## Следующая задача
 
