@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_ROOT="${APP_ROOT:-/opt/ai-lawyer-kz}"
 API_ENV_FILE="${API_ENV_FILE:-/etc/ai-lawyer-api.env}"
+PUBLIC_HOST="${PUBLIC_HOST:-89-207-250-217.sslip.io}"
 
 if [ ! -f "$API_ENV_FILE" ]; then
   cat > "$API_ENV_FILE" <<'ENV'
@@ -93,99 +94,105 @@ if [ ! -f /etc/ai-lawyer-kz/tls/selfsigned.crt ] || [ ! -f /etc/ai-lawyer-kz/tls
     -addext "subjectAltName=IP:89.207.250.217"
   chmod 600 /etc/ai-lawyer-kz/tls/selfsigned.key
 fi
+SSL_CERT="/etc/ai-lawyer-kz/tls/selfsigned.crt"
+SSL_KEY="/etc/ai-lawyer-kz/tls/selfsigned.key"
+if [ -f "/etc/letsencrypt/live/$PUBLIC_HOST/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$PUBLIC_HOST/privkey.pem" ]; then
+  SSL_CERT="/etc/letsencrypt/live/$PUBLIC_HOST/fullchain.pem"
+  SSL_KEY="/etc/letsencrypt/live/$PUBLIC_HOST/privkey.pem"
+fi
 
-cat >/etc/nginx/sites-available/ai-lawyer-kz <<'NGINX'
+cat >/etc/nginx/sites-available/ai-lawyer-kz <<NGINX
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name _;
+    server_name $PUBLIC_HOST _;
 
     client_max_body_size 25m;
 
     location /admin {
         proxy_pass http://127.0.0.1:3002;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location /api/v1/ {
         proxy_pass http://127.0.0.1:3001/api/v1/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
     }
 
     location /ai/ {
         proxy_pass http://127.0.0.1:8000/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location / {
         proxy_pass http://127.0.0.1:3000/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name _;
+    server_name $PUBLIC_HOST _;
 
-    ssl_certificate /etc/ai-lawyer-kz/tls/selfsigned.crt;
-    ssl_certificate_key /etc/ai-lawyer-kz/tls/selfsigned.key;
+    ssl_certificate $SSL_CERT;
+    ssl_certificate_key $SSL_KEY;
     client_max_body_size 25m;
 
     location /admin {
         proxy_pass http://127.0.0.1:3002;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location /api/v1/ {
         proxy_pass http://127.0.0.1:3001/api/v1/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
     }
 
     location /ai/ {
         proxy_pass http://127.0.0.1:8000/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location / {
         proxy_pass http://127.0.0.1:3000/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 NGINX

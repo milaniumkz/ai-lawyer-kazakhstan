@@ -5,7 +5,7 @@ ARCHIVE="${1:-/opt/ai-lawyer-kz.tar.gz}"
 APP_ROOT="${APP_ROOT:-/opt/ai-lawyer-kz}"
 
 apt-get update
-apt-get install -y ca-certificates curl gnupg nginx openssl python3-venv python3-pip build-essential
+apt-get install -y ca-certificates curl gnupg nginx openssl certbot python3-certbot-nginx python3-venv python3-pip build-essential
 
 if ! command -v node >/dev/null 2>&1 || ! node --version | grep -q '^v24'; then
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
