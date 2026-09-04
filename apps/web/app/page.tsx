@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type View =
   | "onboarding"
@@ -32,6 +32,19 @@ type CaseItem = { id: string; title: string; type: string; status: string; date:
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 type TaskItem = { title: string; due: string; done: boolean };
+type SavedState = {
+  cases: CaseItem[];
+  activeCaseId: string;
+  caseText: string;
+  documents: DocumentItem[];
+  messages: Message[];
+  profileType: string;
+  profileName: string;
+  profileId: string;
+  maskPii: boolean;
+  budgetAlerts: boolean;
+  tasks: TaskItem[];
+};
 
 const screens: { label: string; view: View }[] = [
   { label: "Онбординг", view: "onboarding" },
@@ -67,6 +80,7 @@ const initialCases: CaseItem[] = [
 ];
 
 export default function WebHome() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>("home");
   const [cases, setCases] = useState<CaseItem[]>(initialCases);
   const [activeCaseId, setActiveCaseId] = useState(initialCases[0].id);
@@ -84,7 +98,15 @@ export default function WebHome() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК." },
   ]);
+  const [phone, setPhone] = useState("+77010000000");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("Дмитрий");
+  const [email, setEmail] = useState("client@example.kz");
+  const [otp, setOtp] = useState("111111");
+  const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
+  const [profileName, setProfileName] = useState("Дмитрий");
+  const [profileId, setProfileId] = useState("********1234");
   const [syncState, setSyncState] = useState("Не синхронизировано");
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
@@ -105,18 +127,60 @@ export default function WebHome() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [view]);
 
+  useEffect(() => {
+    const raw = window.localStorage.getItem("ai-lawyer-web-state");
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw) as Partial<SavedState>;
+      if (saved.cases?.length) setCases(saved.cases);
+      if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
+      if (saved.caseText) setCaseText(saved.caseText);
+      if (saved.documents?.length) setDocuments(saved.documents);
+      if (saved.messages?.length) setMessages(saved.messages);
+      if (saved.profileType) setProfileType(saved.profileType);
+      if (saved.profileName) {
+        setProfileName(saved.profileName);
+        setName(saved.profileName);
+      }
+      if (saved.profileId) setProfileId(saved.profileId);
+      if (typeof saved.maskPii === "boolean") setMaskPii(saved.maskPii);
+      if (typeof saved.budgetAlerts === "boolean") setBudgetAlerts(saved.budgetAlerts);
+      if (saved.tasks?.length) setTasks(saved.tasks);
+      setSyncState("Локальные данные восстановлены");
+    } catch {
+      setSyncState("Не удалось восстановить локальные данные");
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved: SavedState = { cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks };
+    window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
+  }, [cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
+
+  function go(nextView: View) {
+    setView(nextView);
+  }
+
   function addCase() {
+    if (caseText.trim().length < 12) {
+      setSyncState("Опишите ситуацию подробнее");
+      return;
+    }
+    const normalizedText = caseText.toLowerCase();
+    const isLabor = ["труд", "работодател", "зарплат", "увольнен"].some((needle) => normalizedText.includes(needle));
+    const isFamily = ["алимент", "развод", "ребен"].some((needle) => normalizedText.includes(needle));
     const next: CaseItem = {
       id: `2026-${String(cases.length + 21).padStart(4, "0")}`,
-      title: caseText.includes("алимент") ? "Алименты" : "Новое дело",
-      type: caseText.includes("труд") ? "Трудовой спор" : "Гражданское право",
+      title: isFamily ? "Алименты" : isLabor ? "Задержка зарплаты" : "Новое дело",
+      type: isFamily ? "Семейное право" : isLabor ? "Трудовой спор" : "Гражданское право",
       status: "Категория определена",
       date: "04 сентября 2026",
       progress: 18,
     };
     setCases([next, ...cases]);
     setActiveCaseId(next.id);
-    setView("case");
+    setSyncState(`Дело создано: №${next.id}`);
+    go("case");
   }
 
   function sendMessage() {
@@ -131,6 +195,7 @@ export default function WebHome() {
 
   function addDocument(name: string) {
     setDocuments((items) => [{ name, status: "Загружен" }, ...items]);
+    setSyncState(`Документ добавлен: ${name}`);
   }
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -168,14 +233,42 @@ export default function WebHome() {
     setTasks((items) => items.map((item) => (item.title === title ? { ...item, done: !item.done } : item)));
   }
 
+  function startAuth(target: "login" | "register") {
+    if (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11) {
+      setSyncState("Введите корректный номер +7");
+      return;
+    }
+    if (target === "register" && (!name.trim() || !email.includes("@") || !consent)) {
+      setSyncState("Заполните имя, email и согласие");
+      return;
+    }
+    setSyncState(target === "register" ? "Аккаунт подготовлен, код отправлен" : "Код отправлен");
+    go("otp");
+  }
+
+  function verifyOtp() {
+    if (otp.trim() !== "111111") {
+      setSyncState("Неверный SMS код");
+      return;
+    }
+    setProfileName(name.trim() || profileName);
+    setSyncState("Вход подтвержден");
+    go("biometric");
+  }
+
+  function saveProfile() {
+    setName(profileName);
+    setSyncState(`Профиль сохранен: ${profileType}`);
+  }
+
   function renderView() {
     if (view === "onboarding") {
       return (
         <section className="contentPanel centerPanel">
           <div className="brandMark">⚖</div>
           <Header title="AI Юрист Казахстан" subtitle="Юридический помощник с проверкой официальных источников РК" />
-          <button className="primary wide" onClick={() => setView("login")}>Начать</button>
-          <button className="wide" onClick={() => setView("home")}>Уже есть аккаунт</button>
+          <button className="primary wide" onClick={() => go("login")}>Начать</button>
+          <button className="wide" onClick={() => go("home")}>Уже есть аккаунт</button>
         </section>
       );
     }
@@ -189,25 +282,25 @@ export default function WebHome() {
           />
           {view === "login" && (
             <>
-              <input placeholder="+7 номер телефона" />
-              <input placeholder="Пароль или PIN" type="password" />
-              <button className="primary wide" onClick={() => setView("otp")}>Получить код</button>
-              <button className="wide" onClick={() => setView("register")}>Зарегистрироваться</button>
+              <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <input placeholder="Пароль или PIN" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <button className="primary wide" onClick={() => startAuth("login")}>Получить код</button>
+              <button className="wide" onClick={() => go("register")}>Зарегистрироваться</button>
             </>
           )}
           {view === "register" && (
             <>
-              <input placeholder="Ф.И.О." />
-              <input placeholder="+7 номер телефона" />
-              <input placeholder="E-mail" />
-              <label className="toggle"><input type="checkbox" defaultChecked /> Согласие с обработкой данных v1</label>
-              <button className="primary wide" onClick={() => setView("otp")}>Создать аккаунт</button>
+              <input placeholder="Ф.И.О." value={name} onChange={(event) => setName(event.target.value)} />
+              <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <input placeholder="E-mail" value={email} onChange={(event) => setEmail(event.target.value)} />
+              <label className="toggle"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Согласие с обработкой данных v1</label>
+              <button className="primary wide" onClick={() => startAuth("register")}>Создать аккаунт</button>
             </>
           )}
           {view === "otp" && (
             <>
-              <input placeholder="Код из SMS" defaultValue="111111" />
-              <button className="primary wide" onClick={() => setView("biometric")}>Подтвердить</button>
+              <input placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
+              <button className="primary wide" onClick={verifyOtp}>Подтвердить</button>
               <button className="wide" onClick={() => setSyncState("Код повторно отправлен")}>Отправить код повторно</button>
             </>
           )}
@@ -215,7 +308,7 @@ export default function WebHome() {
             <>
               <div className="brandMark">◎</div>
               <button className="primary wide" onClick={() => setSyncState("Биометрия включена")}>Включить биометрию</button>
-              <button className="wide" onClick={() => setView("profile")}>Продолжить</button>
+              <button className="wide" onClick={() => go("profile")}>Продолжить</button>
             </>
           )}
         </section>
@@ -229,7 +322,7 @@ export default function WebHome() {
           <button className={recording ? "mic small active" : "mic small"} onClick={() => setRecording(!recording)} aria-label="Записать голос"><span>⌾</span></button>
           <p className="hint">{recording ? "Запись активна" : "Нажмите и говорите голосом"}</p>
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <button className="primary wide" onClick={() => setView("category")}>Продолжить</button>
+          <button className="primary wide" onClick={() => go("category")}>Продолжить</button>
         </section>
       );
     }
@@ -254,7 +347,7 @@ export default function WebHome() {
           </div>
           <div className="list">
             {filteredCases.map((item) => (
-              <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); setView("case"); }}>
+              <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
                 <span className="roundIcon">⚖</span>
                 <span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span>
                 <em>{item.date}</em>
@@ -282,9 +375,9 @@ export default function WebHome() {
             <Info label="Маршрут" value="Досудебная подготовка" />
           </div>
           <div className="actionBar">
-            <button className="primary" onClick={() => setView("chat")}>Продолжить работу</button>
-            <button onClick={() => setView("documents")}>Открыть документы</button>
-            <button onClick={() => setView("claim")}>Сформировать претензию</button>
+            <button className="primary" onClick={() => go("chat")}>Продолжить работу</button>
+            <button onClick={() => go("documents")}>Открыть документы</button>
+            <button onClick={() => go("claim")}>Сформировать претензию</button>
           </div>
         </section>
       );
@@ -313,8 +406,9 @@ export default function WebHome() {
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <div className="actionBar">
-            <button className="primary" onClick={() => { addDocument("Договор займа.pdf"); setView("documentUpload"); }}>Загрузить файл</button>
-            <button onClick={() => { addDocument("Скан документа.jpg"); setView("documentUpload"); }}>Сканировать документ</button>
+            <input ref={fileInputRef} className="fileInput" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) addDocument(file.name); go("documentUpload"); }} />
+            <button className="primary" onClick={() => fileInputRef.current?.click()}>Загрузить файл</button>
+            <button onClick={() => { addDocument(`Скан документа ${documents.length + 1}.jpg`); go("documentUpload"); }}>Сканировать документ</button>
             <button onClick={() => setOcrConfirmed(true)}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
           </div>
           <div className="list">
@@ -323,8 +417,8 @@ export default function WebHome() {
           <div className="analysisBox">
             <strong>Проверка документов</strong>
             <p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : "Не хватает акта сверки. Подтвердите отсутствие или загрузите документ."}</p>
-            <button className="primary" onClick={() => { setAnalysisDone(true); setView("analysis"); }}>Анализировать документы</button>
-            <button disabled={!analysisDone} onClick={() => setView("claim")}>Сформировать претензию</button>
+            <button className="primary" onClick={() => { setAnalysisDone(true); go("analysis"); }}>Анализировать документы</button>
+            <button disabled={!analysisDone} onClick={() => go("claim")}>Сформировать претензию</button>
           </div>
         </section>
       );
@@ -346,7 +440,7 @@ export default function WebHome() {
           <Header title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
           <div className="searchRow">
             <input value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} />
-            <button className="primary" onClick={() => { setLegalAnswer("В официальных источниках не найдено достаточного подтверждения. Требуется проверка юристом."); setView("legalSearch"); }}>Найти норму</button>
+            <button className="primary" onClick={() => { setLegalAnswer(legalQuery.length > 8 ? "Нужна проверка юристом: ответ будет показан только при подтвержденной норме из официального источника РК." : "Введите вопрос подробнее."); go("legalSearch"); }}>Найти норму</button>
           </div>
           <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
         </section>
@@ -360,8 +454,8 @@ export default function WebHome() {
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <div className="claimPreview">Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя.</div>
           <div className="actionBar">
-            <button className="primary" onClick={() => { setClaimReady(true); setView("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
-            <button disabled={!claimReady} onClick={() => { setSent(true); setView("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
+            <button className="primary" onClick={() => { setClaimReady(true); go("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
+            <button disabled={!claimReady} onClick={() => { setSent(true); go("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
           </div>
         </section>
       );
@@ -372,13 +466,13 @@ export default function WebHome() {
         <section className="contentPanel">
           <Header title="Профиль" subtitle="Профиль пользователя и тип клиента" />
           <div className="chips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
-          <input placeholder="Ф.И.О. / название" defaultValue="Дмитрий" />
-          <input placeholder="ИИН/БИН" defaultValue="********1234" />
+          <input placeholder="Ф.И.О. / название" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
+          <input placeholder="ИИН/БИН" value={profileId} onChange={(event) => setProfileId(event.target.value)} />
           <div className="actionBar">
-            <button className="primary" onClick={() => setSyncState(`Профиль сохранен: ${profileType}`)}>Сохранить профиль</button>
-            <button onClick={() => setView("settings")}>Настройки</button>
-            <button onClick={() => setView("subscription")}>Подписка</button>
-            <button onClick={() => setView("help")}>Помощь и поддержка</button>
+            <button className="primary" onClick={saveProfile}>Сохранить профиль</button>
+            <button onClick={() => go("settings")}>Настройки</button>
+            <button onClick={() => go("subscription")}>Подписка</button>
+            <button onClick={() => go("help")}>Помощь и поддержка</button>
           </div>
         </section>
       );
@@ -416,8 +510,8 @@ export default function WebHome() {
         <section className="contentPanel">
           <Header title="Помощь" subtitle="Поддержка и ручная проверка юристом" />
           <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
-          <textarea defaultValue="Опишите вопрос для поддержки" />
-          <button className="primary wide" onClick={() => setHelpStatus("Обращение создано")}>Написать в поддержку</button>
+          <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+          <button className="primary wide" onClick={() => setHelpStatus(`Обращение создано: ${caseText.slice(0, 42)}`)}>Написать в поддержку</button>
         </section>
       );
     }
@@ -426,20 +520,20 @@ export default function WebHome() {
       <section className="homeScreen">
         <div className="topLine">
           <div><h1>Здравствуйте, Дмитрий</h1><p>Ваш умный юридический помощник</p></div>
-          <button className="avatar" onClick={() => setView("profile")}>ДС</button>
+          <button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button>
         </div>
-        <button className={recording ? "mic active" : "mic"} onClick={() => setRecording(!recording)} aria-label="Рассказать проблему"><span>⌾</span></button>
+        <button className={recording ? "mic active" : "mic"} onClick={() => { setRecording(true); go("newCase"); }} aria-label="Рассказать проблему"><span>⌾</span></button>
         <h2>Рассказать проблему</h2>
         <p className="hint">{recording ? "Запись активна. Нажмите еще раз, чтобы остановить." : "Нажмите и говорите голосом"}</p>
         <div className="quickGrid">
-          <button onClick={() => setView("newCase")}>Новое дело<small>Создать новое дело</small></button>
-          <button onClick={() => setView("documents")}>Мои документы<small>Просмотр и загрузка</small></button>
-          <button onClick={() => setView("deadlines")}>Сроки и календарь<small>Даты и напоминания</small></button>
+          <button onClick={() => go("newCase")}>Новое дело<small>Создать новое дело</small></button>
+          <button onClick={() => go("documents")}>Мои документы<small>Просмотр и загрузка</small></button>
+          <button onClick={() => go("deadlines")}>Сроки и календарь<small>Даты и напоминания</small></button>
         </div>
-        <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => setView("cases")}>Все дела</button></div>
+        <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
         <div className="list">
           {cases.slice(0, 2).map((item) => (
-            <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); setView("case"); }}>
+            <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
               <span className="roundIcon">⚖</span><span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span><em>{item.date}</em>
             </button>
           ))}
@@ -453,24 +547,25 @@ export default function WebHome() {
       <aside className="sidebar">
         <strong>AI Юрист</strong>
         <nav>
-          <Nav label="Главная" current={view === "home"} onClick={() => setView("home")} />
-          <Nav label="Дела" current={["cases", "case", "chat", "newCase", "category"].includes(view)} onClick={() => setView("cases")} />
-          <Nav label="Документы" current={["documents", "analysis", "documentCheck", "documentUpload"].includes(view)} onClick={() => setView("documents")} />
-          <Nav label="Сроки" current={view === "deadlines"} onClick={() => setView("deadlines")} />
-          <Nav label="Нормы права" current={["legal", "legalSearch"].includes(view)} onClick={() => setView("legal")} />
-          <Nav label="Профиль" current={["profile", "settings", "subscription", "help", "login", "register", "otp", "biometric"].includes(view)} onClick={() => setView("profile")} />
+          <Nav label="Главная" current={view === "home"} onClick={() => go("home")} />
+          <Nav label="Дела" current={["cases", "case", "chat", "newCase", "category"].includes(view)} onClick={() => go("cases")} />
+          <Nav label="Документы" current={["documents", "analysis", "documentCheck", "documentUpload"].includes(view)} onClick={() => go("documents")} />
+          <Nav label="Сроки" current={view === "deadlines"} onClick={() => go("deadlines")} />
+          <Nav label="Нормы права" current={["legal", "legalSearch"].includes(view)} onClick={() => go("legal")} />
+          <Nav label="Профиль" current={["profile", "settings", "subscription", "help", "login", "register", "otp", "biometric"].includes(view)} onClick={() => go("profile")} />
         </nav>
         <button className="sync" onClick={syncWithApi}>Синхронизировать</button>
         <small>{syncState}</small>
       </aside>
       <section className="deviceFrame">
+        <div className="appStatus">{syncState}</div>
         {renderView()}
         <nav className="bottomNav">
-          <button className={view === "home" ? "active" : ""} onClick={() => setView("home")}>Главная</button>
-          <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => setView("cases")}>Дела</button>
-          <button className={["documents", "analysis", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => setView("documents")}>Документы</button>
-          <button className={view === "deadlines" ? "active" : ""} onClick={() => setView("deadlines")}>Сроки</button>
-          <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => setView("profile")}>Профиль</button>
+          <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Главная</button>
+          <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => go("cases")}>Дела</button>
+          <button className={["documents", "analysis", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => go("documents")}>Документы</button>
+          <button className={view === "deadlines" ? "active" : ""} onClick={() => go("deadlines")}>Сроки</button>
+          <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => go("profile")}>Профиль</button>
         </nav>
       </section>
       <aside className="rightPanel">
@@ -495,16 +590,16 @@ export default function WebHome() {
         <div className="sideSection">
           <h3>Действия</h3>
           <div className="sideActions">
-            <button className="primary" onClick={() => setView("newCase")}>Новое дело</button>
-            <button onClick={() => setView("chat")}>Чат по делу</button>
-            <button onClick={() => setView("documents")}>Документы</button>
-            <button onClick={() => setView("claim")}>Претензия</button>
+            <button className="primary" onClick={() => go("newCase")}>Новое дело</button>
+            <button onClick={() => go("chat")}>Чат по делу</button>
+            <button onClick={() => go("documents")}>Документы</button>
+            <button onClick={() => go("claim")}>Претензия</button>
           </div>
         </div>
         <div className="sideSection">
           <h3>Документы</h3>
           <div className="miniDocs">
-            {documents.slice(0, 3).map((doc) => <button key={doc.name} onClick={() => setView("documents")}><strong>{doc.name}</strong><small>{doc.status}</small></button>)}
+            {documents.slice(0, 3).map((doc) => <button key={doc.name} onClick={() => go("documents")}><strong>{doc.name}</strong><small>{doc.status}</small></button>)}
           </div>
         </div>
       </aside>

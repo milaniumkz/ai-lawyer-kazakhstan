@@ -74,6 +74,7 @@
 | Web 25-screen functional mapping P1 | Added concrete web app states for every design screen 01-25, including onboarding/auth/OTP/biometric, new case/category, document check/upload/analysis, claim draft/send and legal search; right screen list now opens exact views | Web UI contract and `npm run release-check:local` passed | done |
 | Web button semantics pass P1 | Fixed misleading web actions: home “Новое дело” opens intake creation, profile/settings/subscription/help are separate functional states, and side/bottom nav active states follow nested flows | Web UI contract, web lint/typecheck/build and local browser transition smoke passed | done |
 | Web real app shell pass P1 | Removed visible QA/design screen matrix from public web and replaced it with a functional case workspace: progress, tasks, case actions and documents | Web UI contract, web lint/build and local browser smoke passed | done |
+| Web dynamic state pass P1 | Added browser-persistent web state, controlled auth/profile/help forms, real file picker handoff, visible mobile status and improved case classification for labor/family/civil inputs | Web UI contract, web lint/typecheck/build and browser persistence smoke passed | done |
 
 ## Блокеры окружения
 

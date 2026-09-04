@@ -50,6 +50,16 @@ const requiredActions = [
   'addCase(',
   'sendMessage(',
   'addDocument(',
+  'localStorage.setItem("ai-lawyer-web-state"',
+  'localStorage.getItem("ai-lawyer-web-state"',
+  'type="file"',
+  'startAuth(',
+  'verifyOtp',
+  'saveProfile',
+  'appStatus',
+  'Задержка зарплаты',
+  'работодател',
+  'зарплат',
   'view: "onboarding"',
   'view: "login"',
   'view: "register"',
@@ -94,6 +104,7 @@ for (const needle of cssNeedles) {
 }
 
 if (/onClick=\{\(\) => \{\}\}/.test(page)) failures.push('web page contains empty onClick handler');
+if (/defaultValue=/.test(page)) failures.push('web page still uses static defaultValue form fields');
 for (const forbidden of ['Стенд готов', 'RC internal validation', 'Release Candidate', 'API demo не запускался']) {
   if (page.includes(forbidden)) failures.push(`web app still contains stand marker: ${forbidden}`);
 }

@@ -81,5 +81,6 @@
 - [x] Привязать все 25 web design screens к точным функциональным состояниям.
 - [x] Исправить web button semantics: “Новое дело”, настройки, подписка, помощь и активные nav-состояния.
 - [x] Убрать видимую QA-матрицу из web и заменить правую панель на рабочее пространство дела.
+- [x] Добавить web persistence, управляемые формы, file picker, видимый mobile status и нормальную классификацию дел.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

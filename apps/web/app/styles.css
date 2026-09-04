@@ -38,6 +38,7 @@ body {
 
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
+.fileInput { display: none; }
 
 .appShell {
   display: grid;
@@ -135,10 +136,28 @@ button { cursor: pointer; }
   min-height: calc(100vh - 44px);
 }
 
+.appStatus {
+  position: absolute;
+  z-index: 12;
+  top: 18px;
+  left: 50%;
+  max-width: calc(100% - 36px);
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--muted);
+  padding: 8px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .homeScreen,
 .contentPanel {
   min-height: calc(100vh - 44px);
-  padding: 42px 30px 112px;
+  padding: 62px 30px 112px;
 }
 
 .centerPanel,

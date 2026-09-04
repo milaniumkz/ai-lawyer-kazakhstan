@@ -130,6 +130,7 @@
 - Latest web 25-screen functional mapping verified with web UI contract, web lint/typecheck/build and local release-check.
 - Latest web button semantics verified: home “Новое дело” opens the real case intake, profile/settings/subscription/help render separate functional states, and nested nav active states are consistent.
 - Latest web real app shell verified: public-facing QA matrix removed from the right panel and replaced with functional case tasks, actions and document shortcuts.
+- Latest web dynamic state verified: controlled forms, local persistence, file picker handoff and salary-case classification render correctly after browser reload.
 
 ## Следующая задача
 
