@@ -11,6 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  setUp(() {
+    AuthRuntime.otpId = '';
+    AuthRuntime.otpCodeHint = null;
+    AuthRuntime.userId = '';
+    AuthRuntime.displayName = 'Тестовый пользователь';
+    MobileCaseRuntime.activeCaseId = '';
+  });
+
   test('generated API contract exposes auth and case paths', () {
     expect(ApiContract.authRegister, '/auth/register');
     expect(ApiContract.cases, '/cases');
@@ -295,13 +303,15 @@ void main() {
   testWidgets('case intake uploads recorded audio before category route',
       (tester) async {
     final api = _FakeVoiceApi();
+    final cases = _FakeCaseApi();
+    AuthRuntime.userId = 'user-1';
     await tester.pumpWidget(MaterialApp.router(
       routerConfig: GoRouter(
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, __) =>
-                NewCaseScreen(recorder: _FakeRecorder(), voiceApi: api),
+            builder: (_, __) => NewCaseScreen(
+                recorder: _FakeRecorder(), voiceApi: api, caseApi: cases),
           ),
           GoRoute(
             path: '/case/category',
@@ -321,7 +331,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.uploadedPath, '/tmp/mobile-test-voice.m4a');
+    expect(cases.createdText, 'Голос отправлен в API');
     expect(find.text('Категория готова'), findsOneWidget);
+  });
+
+  testWidgets('chat sends messages through case API when case exists',
+      (tester) async {
+    final cases = _FakeCaseApi();
+    MobileCaseRuntime.activeCaseId = 'case-1';
+    await tester.pumpWidget(MaterialApp(home: CaseChatScreen(caseApi: cases)));
+
+    await tester.enterText(find.byType(TextField), 'Какие документы нужны?');
+    await tester.ensureVisible(find.byTooltip('Отправить'));
+    await tester.tap(find.byTooltip('Отправить'));
+    await tester.pumpAndSettle();
+
+    expect(cases.sentText, 'Какие документы нужны?');
+    expect(find.text('Ответ из API'), findsOneWidget);
   });
 
   testWidgets('chat send button adds user and assistant messages',
@@ -436,6 +462,39 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
       id: '12345678-1234-1234-1234-123456789012',
       transcript: 'Голос отправлен в API',
     );
+  }
+}
+
+class _FakeCaseApi implements CaseApiPort {
+  String? createdText;
+  String? sentText;
+
+  @override
+  Future<CaseListItem> createCase({
+    required String ownerUserId,
+    required String problemText,
+  }) async {
+    createdText = problemText;
+    return const CaseListItem('Дело из API', 'Гражданское право · Дело №case-1',
+        '● В работе', Icons.balance_outlined, 'case-1');
+  }
+
+  @override
+  Future<List<CaseListItem>> listCases(String ownerUserId) async => [
+        const CaseListItem('Дело из API', 'Гражданское право · Дело №case-1',
+            '● В работе', Icons.balance_outlined, 'case-1'),
+      ];
+
+  @override
+  Future<List<ChatMessageItem>> sendMessage({
+    required String caseId,
+    required String text,
+  }) async {
+    sentText = text;
+    return [
+      ChatMessageItem(text: text, assistant: false),
+      const ChatMessageItem(text: 'Ответ из API', assistant: true),
+    ];
   }
 }
 

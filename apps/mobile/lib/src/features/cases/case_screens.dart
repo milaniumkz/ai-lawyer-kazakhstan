@@ -7,19 +7,51 @@ import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 
 import '../../api/api_contract.dart';
+import '../auth/auth_screens.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 
 class CasesListScreen extends StatefulWidget {
-  const CasesListScreen({super.key});
+  const CasesListScreen({super.key, this.caseApi});
+
+  final CaseApiPort? caseApi;
 
   @override
   State<CasesListScreen> createState() => _CasesListScreenState();
 }
 
 class _CasesListScreenState extends State<CasesListScreen> {
+  late final CaseApiPort caseApi;
   var selectedFilter = 'Все';
+  var status = 'Локальные последние дела';
+  var cases = caseItems;
   final filters = const ['Все', 'В работе', 'Суд', 'Претензии'];
+
+  @override
+  void initState() {
+    super.initState();
+    caseApi = widget.caseApi ?? HttpCaseApi();
+    if (AuthRuntime.userId.isNotEmpty) {
+      refreshCases();
+    }
+  }
+
+  Future<void> refreshCases() async {
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы загрузить дела из API');
+      return;
+    }
+    setState(() => status = 'Загружаю дела из API...');
+    try {
+      final remote = await caseApi.listCases(AuthRuntime.userId);
+      setState(() {
+        cases = remote.isEmpty ? caseItems : remote;
+        status = 'Дела загружены из API: ${remote.length}';
+      });
+    } catch (error) {
+      setState(() => status = 'Cases API ошибка: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +66,11 @@ class _CasesListScreenState extends State<CasesListScreen> {
               delegate: _CaseSearchDelegate(),
             ),
             icon: const Icon(Icons.search),
+          ),
+          IconButton(
+            tooltip: 'Обновить из API',
+            onPressed: refreshCases,
+            icon: const Icon(Icons.sync_outlined),
           ),
         ],
       ),
@@ -54,8 +91,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
                   ),
               ],
             ),
+            Text(status),
+            const SizedBox(height: 12),
             const SizedBox(height: 18),
-            for (final item in _caseItems)
+            for (final item in cases)
               _CaseListTile(
                 item: item,
                 onTap: () => context.go('/case/details'),
@@ -149,10 +188,11 @@ class CaseDetailsScreen extends StatelessWidget {
 }
 
 class NewCaseScreen extends StatefulWidget {
-  const NewCaseScreen({super.key, this.recorder, this.voiceApi});
+  const NewCaseScreen({super.key, this.recorder, this.voiceApi, this.caseApi});
 
   final VoiceRecorderPort? recorder;
   final VoiceTranscriptPort? voiceApi;
+  final CaseApiPort? caseApi;
 
   @override
   State<NewCaseScreen> createState() => _NewCaseScreenState();
@@ -180,7 +220,7 @@ class _CaseSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final items = _caseItems
+    final items = caseItems
         .where((item) => item.title.toLowerCase().contains(query.toLowerCase()))
         .toList();
     return ListView(
@@ -199,7 +239,7 @@ class _CaseSearchDelegate extends SearchDelegate<String> {
 class _CaseListTile extends StatelessWidget {
   const _CaseListTile({required this.item, required this.onTap});
 
-  final _CaseItem item;
+  final CaseListItem item;
   final VoidCallback onTap;
 
   @override
@@ -329,25 +369,27 @@ void _showAction(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-class _CaseItem {
-  const _CaseItem(this.title, this.subtitle, this.status, this.icon);
+class CaseListItem {
+  const CaseListItem(this.title, this.subtitle, this.status, this.icon,
+      [this.id = '']);
 
   final String title;
   final String subtitle;
   final String status;
   final IconData icon;
+  final String id;
 }
 
-const _caseItems = [
-  _CaseItem('Взыскание долга', 'Гражданское право · Дело №2024-0015',
+const caseItems = [
+  CaseListItem('Взыскание долга', 'Гражданское право · Дело №2024-0015',
       '● В работе', Icons.balance_outlined),
-  _CaseItem('Алименты', 'Семейное право · Дело №2024-0012',
+  CaseListItem('Алименты', 'Семейное право · Дело №2024-0012',
       '● Ожидает документов', Icons.family_restroom_outlined),
-  _CaseItem('Претензия к подрядчику', 'Договорное право · Дело №2024-0008',
+  CaseListItem('Претензия к подрядчику', 'Договорное право · Дело №2024-0008',
       '● Отправлено', Icons.description_outlined),
-  _CaseItem('Раздел имущества', 'Семейное право · Дело №2024-0003',
+  CaseListItem('Раздел имущества', 'Семейное право · Дело №2024-0003',
       '● Срок близко', Icons.account_balance_outlined),
-  _CaseItem('Защита прав потребителя', 'Защита прав · Дело №2024-0001',
+  CaseListItem('Защита прав потребителя', 'Защита прав · Дело №2024-0001',
       '● В работе', Icons.verified_user_outlined),
 ];
 
@@ -355,6 +397,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
   late final TextEditingController transcriptController;
   late final VoiceRecorderPort voiceRecorder;
   late final VoiceTranscriptPort voiceApi;
+  late final CaseApiPort caseApi;
   var isRecording = false;
   var isBusy = false;
   String? recordedPath;
@@ -367,6 +410,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     super.initState();
     voiceRecorder = widget.recorder ?? RecordVoiceRecorder();
     voiceApi = widget.voiceApi ?? HttpVoiceTranscriptApi();
+    caseApi = widget.caseApi ?? HttpCaseApi();
     transcriptController = TextEditingController(text: transcript);
   }
 
@@ -379,12 +423,19 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
 
   Future<void> submitCase() async {
     if (isBusy) return;
-    if (recordedPath == null) {
-      context.go('/case/category');
-      return;
-    }
     setState(() => isBusy = true);
     try {
+      if (recordedPath == null) {
+        if (AuthRuntime.userId.isNotEmpty) {
+          final created = await caseApi.createCase(
+            ownerUserId: AuthRuntime.userId,
+            problemText: transcriptController.text.trim(),
+          );
+          MobileCaseRuntime.activeCaseId = created.id;
+        }
+        if (mounted) context.go('/case/category');
+        return;
+      }
       final job = await voiceApi.uploadAudio(
         path: recordedPath!,
         transcript: transcriptController.text.trim(),
@@ -394,6 +445,13 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         transcript = job.transcript;
         transcriptController.text = job.transcript;
       });
+      if (AuthRuntime.userId.isNotEmpty) {
+        final created = await caseApi.createCase(
+          ownerUserId: AuthRuntime.userId,
+          problemText: job.transcript,
+        );
+        MobileCaseRuntime.activeCaseId = created.id;
+      }
       if (mounted) context.go('/case/category');
     } catch (_) {
       setState(() {
@@ -588,6 +646,135 @@ class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
   }
 }
 
+abstract class CaseApiPort {
+  Future<List<CaseListItem>> listCases(String ownerUserId);
+  Future<CaseListItem> createCase({
+    required String ownerUserId,
+    required String problemText,
+  });
+  Future<List<ChatMessageItem>> sendMessage({
+    required String caseId,
+    required String text,
+  });
+}
+
+abstract final class MobileCaseRuntime {
+  static String activeCaseId = '';
+}
+
+class ChatMessageItem {
+  const ChatMessageItem({required this.text, required this.assistant});
+
+  final String text;
+  final bool assistant;
+}
+
+class HttpCaseApi implements CaseApiPort {
+  HttpCaseApi({
+    this.baseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://89-207-250-217.sslip.io',
+    ),
+  });
+
+  final String baseUrl;
+
+  @override
+  Future<List<CaseListItem>> listCases(String ownerUserId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.cases}'),
+      headers: {'x-user-id': ownerUserId, 'x-correlation-id': 'mobile-cases'},
+    );
+    final body = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException('cases list failed: ${response.statusCode}');
+    }
+    return [
+      for (final item in body as List<dynamic>)
+        caseFromJson(item as Map<String, dynamic>),
+    ];
+  }
+
+  @override
+  Future<CaseListItem> createCase({
+    required String ownerUserId,
+    required String problemText,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.cases}'),
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key':
+            'mobile-case-${DateTime.now().millisecondsSinceEpoch}',
+        'x-correlation-id': 'mobile-case-create',
+      },
+      body:
+          jsonEncode({'ownerUserId': ownerUserId, 'problemText': problemText}),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+          '${body['message'] ?? body['error'] ?? 'case create failed'}');
+    }
+    MobileCaseRuntime.activeCaseId = body['id'] as String;
+    return caseFromJson(body);
+  }
+
+  @override
+  Future<List<ChatMessageItem>> sendMessage({
+    required String caseId,
+    required String text,
+  }) async {
+    final messagePath =
+        ApiContract.casesCaseIdMessages.replaceFirst('{caseId}', caseId);
+    final post = await http.post(
+      Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'),
+      headers: const {
+        'content-type': 'application/json',
+        'x-correlation-id': 'mobile-chat',
+      },
+      body: jsonEncode({'role': 'user', 'text': text}),
+    );
+    if (post.statusCode < 200 || post.statusCode >= 300) {
+      throw HttpException('message send failed: ${post.statusCode}');
+    }
+    final get = await http
+        .get(Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'));
+    final body = jsonDecode(get.body);
+    if (get.statusCode < 200 || get.statusCode >= 300) {
+      throw HttpException('messages list failed: ${get.statusCode}');
+    }
+    return [
+      for (final item in body as List<dynamic>)
+        if ((item as Map<String, dynamic>)['role'] != 'system')
+          ChatMessageItem(
+            text: item['text'] as String,
+            assistant: item['role'] == 'assistant',
+          ),
+    ];
+  }
+}
+
+CaseListItem caseFromJson(Map<String, dynamic> json) {
+  final id = json['id'] as String? ?? '';
+  return CaseListItem(
+    json['title'] as String? ?? 'Дело из API',
+    '${_categoryTitle(json['category'] as String?)} · Дело №${id.length > 8 ? id.substring(0, 8) : id}',
+    json['status'] == 'consultation' ? '● В работе' : '● Требует уточнения',
+    Icons.balance_outlined,
+    id,
+  );
+}
+
+String _categoryTitle(String? value) {
+  return switch (value) {
+    'family' => 'Семейное право',
+    'labor' => 'Трудовой спор',
+    'administrative' => 'Административное право',
+    _ => 'Гражданское право',
+  };
+}
+
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
 
@@ -644,22 +831,31 @@ class _CategoryScreenState extends State<CategoryScreen> {
 }
 
 class CaseChatScreen extends StatefulWidget {
-  const CaseChatScreen({super.key});
+  const CaseChatScreen({super.key, this.caseApi});
+
+  final CaseApiPort? caseApi;
 
   @override
   State<CaseChatScreen> createState() => _CaseChatScreenState();
 }
 
 class _CaseChatScreenState extends State<CaseChatScreen> {
+  late final CaseApiPort caseApi;
   final controller = TextEditingController();
-  final messages = <({String text, bool assistant})>[
-    (
-      text:
-          'AI может ошибаться. Нужны подтвержденные официальные источники РК.',
-      assistant: true
-    ),
-    (text: 'Нужно взыскать долг по договору займа.', assistant: false),
+  final messages = <ChatMessageItem>[
+    const ChatMessageItem(
+        text:
+            'AI может ошибаться. Нужны подтвержденные официальные источники РК.',
+        assistant: true),
+    const ChatMessageItem(
+        text: 'Нужно взыскать долг по договору займа.', assistant: false),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    caseApi = widget.caseApi ?? HttpCaseApi();
+  }
 
   @override
   void dispose() {
@@ -690,15 +886,24 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
                 onPressed: () {
                   final text = controller.text.trim();
                   if (text.isEmpty) return;
-                  setState(() {
-                    messages.add((text: text, assistant: false));
-                    messages.add((
-                      text:
-                          'Принято. Для ответа потребуется подтвержденная норма РК или ручная проверка юриста.',
-                      assistant: true
-                    ));
+                  if (MobileCaseRuntime.activeCaseId.isNotEmpty) {
+                    caseApi
+                        .sendMessage(
+                            caseId: MobileCaseRuntime.activeCaseId, text: text)
+                        .then((remote) {
+                      if (mounted) {
+                        setState(() => messages
+                          ..clear()
+                          ..addAll(remote));
+                      }
+                    }).catchError((_) {
+                      if (mounted) _appendLocalMessage(text);
+                    });
                     controller.clear();
-                  });
+                    return;
+                  }
+                  _appendLocalMessage(text);
+                  controller.clear();
                 },
                 icon: const Icon(Icons.send_outlined),
               ),
@@ -707,6 +912,16 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
         ],
       ),
     );
+  }
+
+  void _appendLocalMessage(String text) {
+    setState(() {
+      messages.add(ChatMessageItem(text: text, assistant: false));
+      messages.add(const ChatMessageItem(
+          text:
+              'Принято. Для ответа потребуется подтвержденная норма РК или ручная проверка юриста.',
+          assistant: true));
+    });
   }
 }
 

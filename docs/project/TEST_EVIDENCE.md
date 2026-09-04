@@ -172,6 +172,7 @@
 - Flutter native voice recorder — `/Volumes/PD1000/job/flutter/bin/flutter pub get --directory apps/mobile`, `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` and `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed after adding `record`, Android `RECORD_AUDIO`, iOS `NSMicrophoneUsageDescription`, and fake recorder widget test coverage.
 - Flutter voice upload parity — `npm run check && npm run build` passed after adding `http`, `INTERNET` permission, `HttpVoiceTranscriptApi`, and widget coverage proving recorded audio is uploaded before the category route opens.
 - Flutter auth/profile API parity — `npm run check && npm run build` passed after wiring mobile login/register/OTP/profile forms to injectable HTTP API clients and adding fake API widget coverage for OTP request/verify and profile save.
+- Flutter cases/chat API parity — `npm run check && npm run build` passed after adding `HttpCaseApi`, authenticated case creation from intake, cases refresh, chat API send/list, and fake API tests for create/chat.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
