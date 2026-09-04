@@ -177,6 +177,7 @@
 - Flutter Legal RAG API parity — `npm run check && npm run build` passed after wiring mobile legal search/citation validation to injectable `/rag/answer` and `/citations/validate` clients with fake API widget coverage.
 - Flutter workflows/subscription API parity — `npm run check && npm run build` passed after wiring mobile pretrial draft generation to templates/documents API and subscription limits to billing API with fake API widget coverage.
 - Account export/delete compliance — `npm run check && npm run build` passed after adding `/account/export`, `DELETE /account`, identity service export/delete tests, generated client paths and Flutter settings fake API coverage.
+- Public account lifecycle smoke gate — `npm run check && npm run build` passed after extending `release-check:server` to verify `/account/export`, `DELETE /account`, password non-disclosure and blocked export after deletion.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

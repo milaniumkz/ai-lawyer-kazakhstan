@@ -82,6 +82,21 @@ async function apiJson(path, init) {
   return body;
 }
 
+async function expectApiFailure(path, init, expectedStatus) {
+  const response = await fetch(`${baseUrl}/api/v1${path}`, {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      'x-correlation-id': 'public-api-demo-check',
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (response.status !== expectedStatus) {
+    const body = await response.text();
+    failures.push(`/api/v1${path} returned ${response.status}, expected ${expectedStatus}: ${body}`);
+  }
+}
+
 async function expectPublicApiDemo() {
   const suffix = Date.now().toString().slice(-7).padStart(7, '0');
   const registered = await apiJson('/auth/register', {
@@ -174,6 +189,19 @@ async function expectPublicApiDemo() {
     body: JSON.stringify({ query: 'Как взыскать долг по расписке?' }),
   });
   if (!answer?.status) failures.push('/api/v1/rag/answer did not return answer status');
+
+  const exported = await apiJson('/account/export', {
+    headers: { 'x-user-id': userId },
+  });
+  if (exported?.user?.id !== userId) failures.push('/api/v1/account/export did not return current user');
+  if (JSON.stringify(exported).includes('Demo12345')) failures.push('/api/v1/account/export leaked password');
+
+  const deleted = await apiJson('/account', {
+    method: 'DELETE',
+    headers: { 'x-user-id': userId },
+  });
+  if (deleted?.deleted !== true) failures.push('/api/v1/account did not confirm deletion');
+  await expectApiFailure('/account/export', { headers: { 'x-user-id': userId } }, 401);
 }
 
 function canConnect(port) {
