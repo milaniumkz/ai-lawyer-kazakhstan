@@ -45,6 +45,7 @@
 - [x] Выполнить Flutter analyze/test/build.
 - [x] Выполнить admin/api lint/typecheck/test/build.
 - [x] Выполнить AI service lint/typecheck/test.
-- [ ] Проверить docker compose config и health checks.
-- [ ] Подготовить Android/iOS release candidate.
-- [ ] Подготовить production deployment runbook.
+- [ ] Проверить docker compose config и health checks. Blocked: Docker не установлен.
+- [x] Подготовить Android/iOS release candidate для internal validation: Android debug/release APK, iOS debug no-codesign build.
+- [x] Подготовить production deployment runbook с documented blockers.
+- [x] Составить финальную RC acceptance matrix.

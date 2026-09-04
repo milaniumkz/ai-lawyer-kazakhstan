@@ -37,3 +37,4 @@
 - P1-019 AI service test pipeline — done.
 - P1-020 AI runtime dependency setup — done.
 - P1-021 Official legal source ingestion adapter — done.
+- P1-022 Final RC acceptance matrix — done.

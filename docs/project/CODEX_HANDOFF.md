@@ -55,6 +55,7 @@
 - Реализован P1-019 AI service test pipeline: root/CI run AI unittest discovery; FastAPI endpoint smoke tests skip until runtime deps are installed.
 - Реализован P1-020 AI runtime dependency setup: `services/ai[dev]` installs in CI, `httpx2` added, AI HTTP smoke now runs locally with 0 skipped tests.
 - Реализован P1-021 official legal source ingestion adapter: official KZ source list plus manual/admin fallback blockers, no fake production ingestion.
+- Реализован P1-022 final RC acceptance matrix: internal validation status, closed criteria and external blockers.
 
 ## Дизайн-источник
 
@@ -74,4 +75,4 @@
 
 ## Следующая задача
 
-Следующая задача: close final RC evidence matrix, continue mobile/admin UI hardening или PostgreSQL smoke tests when Docker/Postgres available.
+Следующая задача: Docker/PostgreSQL health checks after Docker install, production signing setup, или deeper pixel-perfect mobile/admin design parity.

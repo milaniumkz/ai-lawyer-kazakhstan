@@ -29,8 +29,8 @@
 - Safe error envelope unit test — passed, correlation ID and sensitive detail masking.
 - Security scan — passed for product source, packages, CI and env template.
 - Flutter widget tests — passed, 7 tests for home, login route, case intake, documents OCR, legal citation, pretrial claim and subscription screen.
-- Android debug build — passed, `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`, sha256 `9b3a3a97d7a443d25a4fec0ac742dcc62a1da0700f7d90568f824d4b07efe878`.
-- Android release build — passed with temporary debug signing config, `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, sha256 `10506dbe4ac5f6acbcb4ac89444ae4586ba6b16de866ccbabfa5ee929b4b83fc`.
+- Android debug build — passed, `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`, sha256 `00447a20ad23d2494ee7fc9bfed0937430d153b7765a3df581f4b9638c7f34c8`.
+- Android release build — passed with temporary debug signing config, `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, sha256 `b324151dd625c0cdca94d8a992fbb6267963b5255109cca45b3247c81b1ba15f`.
 - iOS debug no-codesign build — passed, `apps/mobile/build/ios/iphoneos/Runner.app`.
 - OpenAPI contract script — passed via `node scripts/contracts/check-openapi.mjs`.
 - PostgreSQL baseline migration inspection — passed for `users`, `legal_source_fragments embedding vector(1536)`, `audit_logs`.
@@ -80,6 +80,9 @@
 - Full project check/build after active AI HTTP smoke — `npm run check`, `npm run build` passed.
 - Official legal source ingestion adapter checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 16 suites, 60 tests.
 - Full project check/build after official legal source ingestion adapter — `npm run check`, `npm run build` passed.
+- Final mobile RC rebuild — Android debug APK, Android release APK and iOS debug no-codesign build passed on 2026-09-04.
+- Docker check — `docker --version` failed: `command not found`.
+- Final RC acceptance matrix check/build — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
@@ -94,4 +97,5 @@
 
 ## Не запускалось
 
-- `pytest`, `ruff`, `mypy` — зависимости AI service еще не установлены.
+- Real PostgreSQL/Docker Compose health checks — Docker отсутствует.
+- App Store/TestFlight archive/export — нет Apple distribution credentials.
