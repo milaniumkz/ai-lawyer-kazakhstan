@@ -11,6 +11,7 @@
 - [x] Реализовать Legal RAG + anti-hallucination vertical slice.
 - [x] Реализовать legal workflows/document builder slice.
 - [x] Реализовать subscriptions/budget/admin operations slice.
+- [x] Реализовать security/compliance hardening slice.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.

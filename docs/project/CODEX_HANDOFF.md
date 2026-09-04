@@ -31,6 +31,7 @@
 - Добавлен Flutter pretrial claim builder screen.
 - Реализован P1-002 local subscriptions/budget slice: AI usage ledger without raw PII, budget thresholds, TTS disable flag, provider kill switch.
 - Добавлен Flutter subscription screen.
+- Реализован P1-003 security hardening: safe API error envelope, correlation ID, sensitive detail masking, secret/foreign-law scan.
 
 ## Дизайн-источник
 
@@ -48,4 +49,4 @@
 
 ## Следующая задача
 
-Начать P1-003: security/compliance hardening with error envelope, correlation ID middleware/filter, PII masking tests, secret/foreign-law scan scripts and docs.
+Начать P1-004: release candidate packaging with release docs, Android/iOS blocker notes, production runbooks, checksums/SBOM placeholders and final status.

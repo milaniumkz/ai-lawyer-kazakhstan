@@ -26,6 +26,8 @@
 - AI RAG unittest — passed, safe refusal without confirmed source.
 - Template API unit tests — passed, 2 tests for draft generation and required fields.
 - Billing API unit tests — passed, 2 tests for usage ledger and provider kill switch.
+- Safe error envelope unit test — passed, correlation ID and sensitive detail masking.
+- Security scan — passed for product source, packages, CI and env template.
 - Flutter widget tests — passed, 7 tests for home, login route, case intake, documents OCR, legal citation, pretrial claim and subscription screen.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

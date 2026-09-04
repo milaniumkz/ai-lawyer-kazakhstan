@@ -7,6 +7,8 @@
 - Admin/expert access requires least privilege, RBAC and immutable audit.
 - Files use allowlisted MIME/extensions, size limits, private storage and short-lived signed URLs.
 - Legal actions require preview, explicit confirmation, idempotency key and audit event.
+- API errors use the standard safe envelope with `correlationId`.
+- Product source is scanned for obvious hardcoded secrets and forbidden РФ legal tokens.
 
 ## Threat Model
 
