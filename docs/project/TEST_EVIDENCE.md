@@ -190,6 +190,7 @@
 - User-scoped API hardening — `npm test --workspace services/api -- app.smoke.spec.ts identity.service.spec.ts billing.service.spec.ts`, API/web typecheck, Flutter analyze and `npm run check && npm run build` passed after requiring `x-user-id` for sessions/profiles/logout/account/subscription endpoints and rejecting profile owner mismatch.
 - Voice transcript ownership — `npm test --workspace services/api -- cases.service.spec.ts postgres-cases.repository.spec.ts app.smoke.spec.ts`, service typecheck, Flutter analyze/test and `npm run check && npm run build` passed after requiring `x-user-id` on voice transcript create/upload/read and adding migration `0006_transcript_owner_user.sql`.
 - Case creation ownership — `npm test --workspace services/api -- app.smoke.spec.ts cases.service.spec.ts`, service/web typecheck, Flutter analyze/test and `npm run check && npm run build` passed after requiring `x-user-id` for `/cases` create and updating web/mobile/public smoke callers.
+- OpenAPI auth-header security gate — `npm run test:security`, `npm run test:contract` and `npm run check && npm run build` passed after adding OpenAPI header enforcement for protected user/admin endpoints.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

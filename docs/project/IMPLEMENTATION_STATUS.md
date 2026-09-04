@@ -109,6 +109,7 @@
 | User-scoped API hardening P1 | Sessions, profiles, logout-all, account export/delete and subscription reads now require `x-user-id`; profile creation rejects header/body user mismatch, with web/mobile clients sending owner headers | `npm run check`, `npm run build`, app/identity/billing smoke and web/mobile type checks passed | done |
 | Voice transcript ownership P1 | Voice transcript create/upload/read endpoints now require `x-user-id`, transcript jobs store `ownerUserId`, case-bound transcripts validate case ownership, and web/mobile upload real audio with owner headers | `npm run check`, `npm run build`, cases/app smoke, migration check and Flutter tests passed | done |
 | Case creation ownership P1 | Case creation now requires `x-user-id` and rejects header/body owner mismatch; web, Flutter and public server smoke create cases with explicit owner headers | `npm run check`, `npm run build`, API smoke, contract, web typecheck and Flutter tests passed | done |
+| OpenAPI auth-header security gate P1 | Security scan now parses OpenAPI and fails if non-public endpoints miss required `x-user-id` or admin endpoints miss `x-user-role` | `npm run test:security`, `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 
