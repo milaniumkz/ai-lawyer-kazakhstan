@@ -109,9 +109,9 @@
 - Final blocker-aware RC validation — `npm run release-check:local` passed after server ops hardening; Docker remains recorded as external blocker.
 - RC manifest — `docs/project/RC_RELEASE_MANIFEST.md` updated for `v0.1.0-rc.3`.
 - Public server release check — `npm run release-check:server` passed for web/admin/API/AI and closed internal ports.
-- Final RC source archive — `v0.1.0-rc.3` archive pending final checksum build/upload.
+- Final RC source archive — `v0.1.0-rc.3` archive uploaded to server and verified with SHA-256 `918ee41e7a5b1a22cf66c1717920700cf73e02871940f09f42b840a3d126b1d7`.
 - Production env gate — `npm run release-check:production-env` blocks placeholder/missing production secrets and non-HTTPS URLs as expected.
-- QA release bundle — `npm run release:bundle` pending for `v0.1.0-rc.3`.
+- QA release bundle — `npm run release:bundle -- v0.1.0-rc.3` produced bundle SHA-256 `1d3f815d5cecd6db5385c4cc7e91f83f1d0a6e902850bf6e3549473b24b29003`.
 
 ## Заблокировано
 

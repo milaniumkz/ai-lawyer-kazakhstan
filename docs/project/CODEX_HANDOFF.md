@@ -86,9 +86,10 @@
 - RC manifest prepared for `v0.1.0-rc.3`.
 - Public server release check added and passed.
 - Final RC source archive uploaded to server and checksum verified.
-- RC3 source archive pending final upload/checksum.
+- RC3 source archive uploaded to server and checksum verified.
 - Production env gate added; production launch remains blocked until real HTTPS/secrets/integrations exist.
 - QA release bundle script prepared for `v0.1.0-rc.3`.
+- QA release bundle built for `v0.1.0-rc.3`.
 
 ## Следующая задача
 
