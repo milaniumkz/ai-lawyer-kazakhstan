@@ -56,5 +56,6 @@
 - [x] Добавить воспроизводимые server deploy scripts.
 - [x] Закрыть внутренние app-порты и включить базовые backups/firewall на сервере.
 - [x] Подготовить RC release manifest.
+- [x] Добавить public server release check.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

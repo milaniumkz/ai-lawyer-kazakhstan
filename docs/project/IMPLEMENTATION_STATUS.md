@@ -51,6 +51,7 @@
 | Server release ops hardening P1 | Added localhost binds, UFW firewall script, PostgreSQL backup script and systemd timer | Server ports/firewall/backup/health verified | done |
 | Final blocker-aware RC validation P1 | Release status script allows documented external blockers for Docker, domain/TLS and external provider credentials | `npm run release-check:local` passed | done |
 | RC release manifest P1 | Release manifest records scope, URLs, gates and remaining production blockers | Manifest added for `v0.1.0-rc.1` | done |
+| Public server release check P1 | Added a local script that verifies public web/admin/API/AI URLs and rejects exposed internal app ports | `npm run release-check:server` passed | done |
 
 ## Блокеры окружения
 
