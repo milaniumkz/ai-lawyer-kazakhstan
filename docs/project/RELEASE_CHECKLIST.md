@@ -12,6 +12,10 @@
 - [x] Реализовать legal workflows/document builder slice.
 - [x] Реализовать subscriptions/budget/admin operations slice.
 - [x] Реализовать security/compliance hardening slice.
+- [x] Добавить Flutter Android/iOS platform scaffold.
+- [x] Собрать Android debug APK.
+- [x] Собрать Android release APK с temporary signing.
+- [x] Проверить iOS debug no-codesign build.
 - [ ] Реализовать case/chat/document vertical slice.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.

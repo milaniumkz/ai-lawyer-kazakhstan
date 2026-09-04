@@ -32,6 +32,7 @@
 - Реализован P1-002 local subscriptions/budget slice: AI usage ledger without raw PII, budget thresholds, TTS disable flag, provider kill switch.
 - Добавлен Flutter subscription screen.
 - Реализован P1-003 security hardening: safe API error envelope, correlation ID, sensitive detail masking, secret/foreign-law scan.
+- Реализован P1-004 release packaging: Flutter Android/iOS scaffold, `kz.ailawyer.mobile` package id, Android debug/release APK, iOS debug no-codesign build, release docs.
 
 ## Дизайн-источник
 
@@ -46,7 +47,9 @@
 - `npm run check`, `npm run build`, `python3 -m py_compile services/ai/app/main.py` прошли.
 - Docker отсутствует в окружении.
 - `npm install` сообщает 2 уязвимости; `npm audit --json` не вернул результат за 20 секунд.
+- Android debug/release APK builds прошли.
+- iOS debug no-codesign build прошел.
 
 ## Следующая задача
 
-Начать P1-004: release candidate packaging with release docs, Android/iOS blocker notes, production runbooks, checksums/SBOM placeholders and final status.
+Следующая задача: заменить local/in-memory storage на PostgreSQL migrations/repositories и добавить typed clients/codegen, затем расширять 25 экранов до полного one-to-one дизайна.

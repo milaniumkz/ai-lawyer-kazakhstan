@@ -29,6 +29,9 @@
 - Safe error envelope unit test — passed, correlation ID and sensitive detail masking.
 - Security scan — passed for product source, packages, CI and env template.
 - Flutter widget tests — passed, 7 tests for home, login route, case intake, documents OCR, legal citation, pretrial claim and subscription screen.
+- Android debug build — passed, `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`, sha256 `9b3a3a97d7a443d25a4fec0ac742dcc62a1da0700f7d90568f824d4b07efe878`.
+- Android release build — passed with temporary debug signing config, `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, sha256 `10506dbe4ac5f6acbcb4ac89444ae4586ba6b16de866ccbabfa5ee929b4b83fc`.
+- iOS debug no-codesign build — passed, `apps/mobile/build/ios/iphoneos/Runner.app`.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.
@@ -38,6 +41,8 @@
 
 - `docker --version` — `docker: command not found`.
 - `npm audit --json` — не вернул результат за 20 секунд; известно из `npm install`: 2 уязвимости.
+- Production Android signing — blocked, production keystore is not provided.
+- iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
 
 ## Не запускалось
 

@@ -19,6 +19,7 @@
 | Legal workflows/document builder P1 | OpenAPI templates/document generation, NestJS local versioned template engine, dосудебная претензия draft, required fields, unresolved placeholder guard, expert review flag, Flutter builder screen, admin visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 | Subscriptions/budget/admin P1 | OpenAPI subscriptions/AI usage/providers, NestJS local usage ledger, budget thresholds, TTS disable flag, provider kill switch, Flutter subscription screen, admin visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 | Security/compliance hardening P1 | NestJS safe error envelope with correlation ID, sensitive detail masking, security scan for secrets and forbidden РФ legal tokens, docs update | `npm run check`, `npm run build`, security scan passed | done |
+| Release candidate packaging P1 | Flutter Android/iOS platform scaffold, project package IDs, Android debug/release APK, iOS debug no-codesign build, release docs/checksums | Android debug/release build passed, iOS debug no-codesign build passed | done |
 
 ## Блокеры окружения
 

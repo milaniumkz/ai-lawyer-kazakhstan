@@ -5,6 +5,8 @@ dist/
 build/
 coverage/
 *.tsbuildinfo
+.idea/
+*.iml
 .dart_tool/
 .packages
 pubspec.lock
