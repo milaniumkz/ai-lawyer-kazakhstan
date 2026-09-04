@@ -93,6 +93,7 @@
 - QA release bundle script prepared for `v0.1.0-rc.3`.
 - QA release bundle built for `v0.1.0-rc.3`.
 - Final interactive-flow checks passed: Flutter analyze/test with 16 widget/golden tests, web lint/typecheck/build, `release-check:local` and `release-check:server`.
+- RC4 tag/source archive/bundle prepared; source archive uploaded to server and verified.
 
 ## Следующая задача
 

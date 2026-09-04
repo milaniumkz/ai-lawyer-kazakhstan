@@ -30,8 +30,10 @@ Date: 2026-09-04
 
 ## Source Archive
 
-- Server path: pending `v0.1.0-rc.4` archive upload
-- SHA-256: pending
+- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.4.tar.gz`
+- SHA-256: `ab72bb03d794a8863019fca24f77623133168893399fd1cedf20b9ac984f7e96`
+- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.4-release-bundle.tar.gz`
+- QA bundle SHA-256: `ed1e6f946c43d8f5f542dee82ca2eb5f7ac79a0c5f03e26a276bf27775cf33fc`
 
 ## Not Production Until
 
