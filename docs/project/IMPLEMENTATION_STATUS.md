@@ -15,6 +15,7 @@
 | Identity auth/profile P0 | OpenAPI auth/profile/sessions/audit, NestJS local OTP/session/profile service, Flutter login/OTP/profile screens, admin audit visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 | Case/chat/voice intake P0 | OpenAPI cases/messages/voice transcripts, NestJS local case/message/transcript service, FastAPI classifier stub, Flutter case/chat screens, admin visibility | `npm run check`, `npm run build`, AI unittest, OpenAPI YAML parse passed | done |
 | Documents/evidence/OCR P0 | OpenAPI upload/documents/evidence/OCR confirmation, NestJS local metadata service with allowlist/duplicate checks, FastAPI OCR stub, Flutter documents/OCR screen, admin visibility | `npm run check`, `npm run build`, AI unittest, OpenAPI YAML parse passed | done |
+| Legal RAG/anti-hallucination P0 | OpenAPI legal source manual import/search/citation validation/RAG answer, NestJS official-source guardrails, FastAPI safe answer stub, Flutter legal source screen, admin visibility | `npm run check`, `npm run build`, AI unittest, OpenAPI YAML parse passed | done |
 
 ## Блокеры окружения
 

@@ -22,7 +22,9 @@
 - AI classifier unittest — passed, 2 tests for alimony and low-confidence escalation.
 - Documents API unit tests — passed, 5 tests for upload session, OCR confirmation, unsafe file rejection, duplicate hash, evidence folder.
 - AI OCR unittest — passed, review-required OCR stub.
-- Flutter widget tests — passed, 4 tests for home, login route, case intake and documents OCR screen.
+- Legal RAG API unit tests — passed, 4 tests for official import, citation validation, safe refusal, stale/future edition rejection.
+- AI RAG unittest — passed, safe refusal without confirmed source.
+- Flutter widget tests — passed, 5 tests for home, login route, case intake, documents OCR and legal citation screen.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

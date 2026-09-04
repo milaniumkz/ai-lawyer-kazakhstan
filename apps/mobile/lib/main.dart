@@ -6,6 +6,7 @@ import 'src/features/auth/auth_screens.dart';
 import 'src/features/cases/case_screens.dart';
 import 'src/features/documents/document_screens.dart';
 import 'src/features/home/home_screen.dart';
+import 'src/features/legal/legal_screens.dart';
 import 'src/theme/app_theme.dart';
 
 void main() {
@@ -21,6 +22,7 @@ final _router = GoRouter(
     GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
     GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
     GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
+    GoRoute(path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
   ],
 );
 

@@ -2,6 +2,7 @@ import unittest
 
 from classifier import ClassificationRequest, classify_text
 from ocr import OcrRequest, ocr_stub
+from rag import safe_answer
 
 
 class AiClassifierTest(unittest.TestCase):
@@ -22,6 +23,12 @@ class AiClassifierTest(unittest.TestCase):
 
         self.assertEqual(result.status, "review_required")
         self.assertIn("documentTitle", result.low_confidence_fields)
+
+    def test_rag_safe_refusal_without_source(self) -> None:
+        result = safe_answer(False)
+
+        self.assertEqual(result.status, "insufficient_authoritative_sources")
+        self.assertEqual(result.required_action, "clarify_or_human_review")
 
 
 if __name__ == "__main__":

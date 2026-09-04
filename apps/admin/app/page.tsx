@@ -10,6 +10,7 @@ const cards = [
 const auditEvents = ['otp_requested', 'login', 'session_created', 'profile_created', 'logout_all_devices'];
 const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 'classifying', 'ready'];
 const documentStatuses = ['upload_pending', 'quarantined', 'ocr_review_required', 'ready', 'rejected'];
+const ragStatuses = ['confirmed', 'invalid', 'insufficient_authoritative_sources', 'clarify_or_human_review'];
 
 export default function AdminHome() {
   return (
@@ -53,6 +54,15 @@ export default function AdminHome() {
         <span>Файлы проходят allowlist, duplicate hash check и OCR-review. Antivirus/storage production adapters остаются external blockers.</span>
         <div className="pills">
           {documentStatuses.map((status) => (
+            <span key={status}>{status}</span>
+          ))}
+        </div>
+      </section>
+      <section className="notice">
+        <strong>Legal RAG</strong>
+        <span>Юридический ответ показывается только с подтвержденной официальной цитатой РК; иначе safe refusal.</span>
+        <div className="pills">
+          {ragStatuses.map((status) => (
             <span key={status}>{status}</span>
           ))}
         </div>

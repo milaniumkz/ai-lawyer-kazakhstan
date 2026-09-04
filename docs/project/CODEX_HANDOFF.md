@@ -25,6 +25,8 @@
 - Admin dashboard показывает case/chat/voice status classes.
 - Реализован P0-004 local/stub documents/evidence/OCR slice: upload sessions, document metadata, OCR confirmation, evidence folders, file allowlist, duplicate hash checks.
 - Добавлен FastAPI OCR stub и Flutter documents/OCR screen.
+- Реализован P0-005 local/manual Legal RAG slice: official KZ source allowlist, manual source import, search, citation validation, safe refusal and AI safe answer stub.
+- Добавлен Flutter legal sources/citation guardrails screen.
 
 ## Дизайн-источник
 
@@ -42,4 +44,4 @@
 
 ## Следующая задача
 
-Реализовать P0-005: Legal RAG + anti-hallucination с source model, manual ingestion, citation validator, safe refusal, Flutter/admin citation visibility и тестами.
+Начать P1-001: legal workflows/document builder с досудебной претензией, preview/edit status, expert review flag, OpenAPI, backend local template engine, Flutter/admin screens и тестами.

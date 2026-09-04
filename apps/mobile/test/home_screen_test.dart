@@ -1,6 +1,7 @@
 import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
 import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
+import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,5 +35,12 @@ void main() {
 
     expect(find.text('OCR-review'), findsOneWidget);
     expect(find.text('Подтвердить поля'), findsOneWidget);
+  });
+
+  testWidgets('shows legal citation guardrails screen', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: LegalSourcesScreen()));
+
+    expect(find.text('Официальные источники РК'), findsOneWidget);
+    expect(find.text('Citation Validator'), findsOneWidget);
   });
 }

@@ -435,6 +435,79 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EvidenceFolder"
+  /legal-sources/manual-import:
+    post:
+      operationId: manualImportLegalSource
+      summary: Manually import an official KZ legal source fragment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualLegalSourceImport"
+      responses:
+        "201":
+          description: Imported source fragment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalSourceFragment"
+  /legal-search:
+    get:
+      operationId: legalSearch
+      summary: Search imported official KZ legal fragments
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching active fragments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegalSourceFragment"
+  /citations/validate:
+    post:
+      operationId: validateCitation
+      summary: Validate citation against official KZ source fragment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CitationValidationRequest"
+      responses:
+        "201":
+          description: Citation validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitationValidationResult"
+  /rag/answer:
+    post:
+      operationId: ragAnswer
+      summary: Return confirmed answer or safe refusal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+      responses:
+        "201":
+          description: RAG answer guardrail result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitationValidationResult"
 components:
   schemas:
     HealthResponse:
@@ -816,3 +889,82 @@ components:
         createdAt:
           type: string
           format: date-time
+    ManualLegalSourceImport:
+      type: object
+      required: [officialId, title, sourceType, authority, language, text, sourceUrl, effectiveFrom, sourceVersion, status]
+      properties:
+        officialId:
+          type: string
+        title:
+          type: string
+        sourceType:
+          type: string
+        authority:
+          type: string
+        language:
+          type: string
+          enum: [ru, kk, en]
+        article:
+          type: string
+        point:
+          type: string
+        text:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: string
+          format: date-time
+        sourceVersion:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, expired, cancelled, blocked]
+    LegalSourceFragment:
+      allOf:
+        - $ref: "#/components/schemas/ManualLegalSourceImport"
+        - type: object
+          required: [id, retrievedAt, checksum, embeddingVersion]
+          properties:
+            id:
+              type: string
+              format: uuid
+            retrievedAt:
+              type: string
+              format: date-time
+            checksum:
+              type: string
+            embeddingVersion:
+              type: string
+    CitationValidationRequest:
+      type: object
+      properties:
+        fragmentId:
+          type: string
+        officialId:
+          type: string
+        article:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        quotedText:
+          type: string
+    CitationValidationResult:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, invalid, insufficient_authoritative_sources]
+        message:
+          type: string
+        requiredAction:
+          type: string
+          enum: [clarify_or_human_review]
+        fragment:
+          $ref: "#/components/schemas/LegalSourceFragment"

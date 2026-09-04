@@ -106,7 +106,7 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.calendar_month_outlined,
                   title: 'Сроки',
                   subtitle: 'Даты и напоминания',
-                  route: '/case/chat',
+                  route: '/legal',
                 ),
               ],
             ),
