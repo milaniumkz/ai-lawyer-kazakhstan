@@ -128,6 +128,8 @@
 - Final release gate after onboarding/web matrix — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Main screen route parity — Flutter analyze passed; Flutter test passed with 23 tests after wiring main microphone to case intake, “Сроки” card to deadlines and profile icon to profile route.
 - Final release gate after main route parity — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Full mobile screen render regression — `apps/mobile/test/design_golden_test.dart` now renders all implemented release screens across light/dark themes; Flutter analyze and Flutter test passed with 23 tests.
+- Final release gate after full mobile render regression — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

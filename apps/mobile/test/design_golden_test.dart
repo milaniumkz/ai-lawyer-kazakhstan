@@ -1,6 +1,8 @@
 import 'package:ai_lawyer_kz/main.dart';
+import 'package:ai_lawyer_kz/src/features/auth/auth_screens.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
 import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
+import 'package:ai_lawyer_kz/src/features/home/home_screen.dart';
 import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
 import 'package:ai_lawyer_kz/src/features/subscription/subscription_screen.dart';
 import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
@@ -33,11 +35,27 @@ void main() {
       (tester) async {
     for (final theme in [AppTheme.light, AppTheme.dark]) {
       for (final screen in const [
+        OnboardingScreen(),
+        HomeScreen(),
+        LoginScreen(),
+        RegisterScreen(),
+        OtpScreen(),
+        BiometricScreen(),
+        ProfileScreen(),
+        SettingsScreen(),
+        HelpScreen(),
+        CasesListScreen(),
+        CaseDetailsScreen(),
         NewCaseScreen(),
+        CategoryScreen(),
         CaseChatScreen(),
         DocumentsScreen(),
+        DocumentAnalysisScreen(),
         LegalSourcesScreen(),
+        DeadlinesScreen(),
         PretrialClaimScreen(),
+        ClaimDraftScreen(),
+        ClaimSendScreen(),
         SubscriptionScreen(),
       ]) {
         await tester.pumpWidget(MaterialApp(theme: theme, home: screen));
