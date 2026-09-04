@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: AI-Юрист Казахстан API
+  version: 0.1.0
+  description: REST contract for AI-Юрист Казахстан.
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: API health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, jurisdiction]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+        jurisdiction:
+          type: string
+          enum: [KZ]

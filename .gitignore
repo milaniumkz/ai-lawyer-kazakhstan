@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.dart_tool/
+.packages
+pubspec.lock
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+.env.*
+!.env.example

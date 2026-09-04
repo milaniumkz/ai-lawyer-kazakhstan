@@ -1,0 +1,91 @@
+:root {
+  --bg: #fbf7ef;
+  --surface: #ffffff;
+  --text: #20272c;
+  --muted: #687078;
+  --gold: #d8a13a;
+  --gold-dark: #9b6a16;
+  --line: rgba(216, 161, 58, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #071421;
+    --surface: #101d2a;
+    --text: #f8f4ec;
+    --muted: #aeb7c0;
+    --gold: #d8a13a;
+    --gold-dark: #f0c46a;
+    --line: rgba(216, 161, 58, 0.42);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.shell {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.hero h1 {
+  max-width: 760px;
+  margin: 8px 0 32px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 500;
+  color: var(--gold-dark);
+}
+
+.hero p,
+.card span,
+.notice span {
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card,
+.notice,
+.tokens {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 18px 42px rgba(32, 39, 44, 0.08);
+}
+
+.card {
+  padding: 24px;
+}
+
+.card strong {
+  display: block;
+  margin-top: 12px;
+  font-size: 32px;
+}
+
+.notice {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 24px;
+}
+
+.tokens {
+  overflow: auto;
+  margin-top: 16px;
+  padding: 16px;
+}
