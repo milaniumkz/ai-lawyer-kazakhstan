@@ -12,10 +12,38 @@ const flows = [
 ];
 
 const checks = ["OpenAPI", "PostgreSQL", "AI smoke", "Flutter golden", "Admin contract", "Security scan"];
+const screens = [
+  "Онбординг",
+  "Вход и регистрация",
+  "Регистрация пользователя",
+  "SMS подтверждение",
+  "Биометрия",
+  "Главный экран",
+  "Новое дело",
+  "Категория спора",
+  "Проверка документов",
+  "Загрузка документа",
+  "Анализ документов",
+  "Формирование претензии",
+  "Проект претензии",
+  "Отправка претензии",
+  "Мои дела",
+  "Карточка дела",
+  "Чат по делу",
+  "Календарь и сроки",
+  "Нормы права",
+  "Поиск нормы права",
+  "Документы и доказательства",
+  "Профиль",
+  "Настройки",
+  "Подписка",
+  "Помощь",
+];
 
 export default function WebHome() {
   const [activeFlow, setActiveFlow] = useState(flows[0]);
   const [flowState, setFlowState] = useState("Выберите сценарий");
+  const [activeScreen, setActiveScreen] = useState("Главный экран");
   const [log, setLog] = useState<string[]>(["Стенд готов к RC-тестированию"]);
   const [apiStatus, setApiStatus] = useState("не проверено");
   const [aiStatus, setAiStatus] = useState("не проверено");
@@ -41,6 +69,12 @@ export default function WebHome() {
   function runFlowAction(action: string) {
     setFlowState(action);
     setLog((items) => [`${activeFlow[1]}: ${action}`, ...items].slice(0, 5));
+  }
+
+  function openScreen(screen: string) {
+    setActiveScreen(screen);
+    setFlowState(`${screen}: экран открыт`);
+    setLog((items) => [`${screen}: экран открыт`, ...items].slice(0, 5));
   }
 
   return (
@@ -70,6 +104,7 @@ export default function WebHome() {
           <aside className="phone" aria-label="Mobile preview">
             <div className="phoneTop" />
             <h2>{activeFlow[1]}</h2>
+            <div className="screenBadge">{activeScreen}</div>
             <p>{activeFlow[2]}</p>
             <button onClick={() => runFlow(activeFlow)}>{activeFlow[3]}</button>
             <div className="activity">
@@ -119,6 +154,22 @@ export default function WebHome() {
               <span>{flow[0]}</span>
               <h3>{flow[1]}</h3>
               <p>{flow[2]}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <h2>Экраны приложения</h2>
+        <div className="screenGrid">
+          {screens.map((screen, index) => (
+            <button
+              key={screen}
+              className={screen === activeScreen ? "screen active" : "screen"}
+              onClick={() => openScreen(screen)}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {screen}
             </button>
           ))}
         </div>

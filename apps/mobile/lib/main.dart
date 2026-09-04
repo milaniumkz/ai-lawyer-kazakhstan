@@ -15,8 +15,11 @@ void main() {
   runApp(const ProviderScope(child: AiLawyerApp()));
 }
 
-GoRouter _buildRouter() => GoRouter(
+GoRouter _buildRouter(String initialLocation) => GoRouter(
+      initialLocation: initialLocation,
       routes: [
+        GoRoute(
+            path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
         GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
         GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
         GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
@@ -58,9 +61,14 @@ GoRouter _buildRouter() => GoRouter(
     );
 
 class AiLawyerApp extends StatelessWidget {
-  const AiLawyerApp({super.key, this.themeMode = ThemeMode.system});
+  const AiLawyerApp({
+    super.key,
+    this.themeMode = ThemeMode.system,
+    this.initialLocation = '/',
+  });
 
   final ThemeMode themeMode;
+  final String initialLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +77,7 @@ class AiLawyerApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      routerConfig: _buildRouter(),
+      routerConfig: _buildRouter(initialLocation),
       debugShowCheckedModeBanner: false,
     );
   }

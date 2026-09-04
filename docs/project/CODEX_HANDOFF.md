@@ -68,6 +68,7 @@
 - Web получил scenario workspace: выполнение сценария, ручная проверка, blocker state и кликабельный журнал.
 - Профиль, настройки, помощь, biometric local flag и Legal Citation Validator получили рабочие действия; пустых `onTap/onPressed` в mobile/web не осталось.
 - Добавлены недостающие routes из дизайн-листа: регистрация, биометрия, определение категории, анализ документов, draft/send претензии, поиск нормы права.
+- Добавлен onboarding route; web получил кликабельную матрицу 25 дизайн-экранов с active screen preview.
 
 ## Дизайн-источник
 
@@ -101,6 +102,7 @@
 - Latest mobile/web parity pass verified: Flutter analyze/test 18 tests, web lint/typecheck/build, server rebuild and public server check.
 - Latest profile/legal completion verified: Flutter analyze/test 19 tests, web build, `release-check:local`, `release-check:server`.
 - Latest 25-screen flow pass verified: Flutter analyze/test 21 tests, `release-check:local`, `release-check:server`.
+- Latest onboarding/web matrix pass verified: Flutter analyze/test 22 tests, web build, server rebuild, `release-check:local`, `release-check:server`.
 
 ## Следующая задача
 

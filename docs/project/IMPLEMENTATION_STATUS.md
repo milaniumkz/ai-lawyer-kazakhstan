@@ -59,6 +59,7 @@
 | Web functional scenario panel P1 | Added active scenario workspace, executable actions, manual-review/blocker states and clickable activity log for desktop/mobile web testing | Web lint/typecheck/build passed; public server check passed | done |
 | Mobile profile/legal action completion P1 | Profile type switcher, biometric local flag, settings toggles/save, help request state, subscription/help/settings routes and Legal Citation Validator tap are now functional | Flutter analyze passed; Flutter test passed with 19 widget/golden tests; no empty handlers found | done |
 | Mobile 25-screen flow coverage pass P1 | Added missing release routes for registration, biometric setup, dispute category detection, document analysis, claim draft/send and legal norm search state | Flutter analyze passed; Flutter test passed with 21 widget/golden tests; release-check local/server passed | done |
+| Onboarding and web screen matrix P1 | Added mobile onboarding route/actions and web matrix for all 25 design screens with clickable screen state preview | Flutter analyze passed; Flutter test passed with 22 widget/golden tests; web build and public server check passed | done |
 
 ## Блокеры окружения
 

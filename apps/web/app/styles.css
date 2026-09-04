@@ -194,6 +194,16 @@ h2 {
   font-size: 34px;
 }
 
+.screenBadge {
+  display: inline-flex;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--gold-dark);
+  font-weight: 800;
+}
+
 .phone button {
   width: 100%;
   margin-top: 160px;
@@ -285,6 +295,35 @@ h2 {
   text-align: left;
 }
 
+.screenGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.screen {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  min-height: 78px;
+  padding: 12px;
+  text-align: left;
+}
+
+.screen span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--gold-dark);
+  font-weight: 800;
+}
+
+.screen.active {
+  background: var(--gold);
+  color: #20272c;
+}
+
 .status {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -324,6 +363,10 @@ h2 {
 
   .cards {
     grid-template-columns: 1fr;
+  }
+
+  .screenGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

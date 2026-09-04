@@ -124,6 +124,8 @@
 - Final release gate after profile/legal completion — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Mobile 25-screen flow coverage pass — Flutter analyze passed; Flutter test passed with 21 tests after adding registration, biometric setup, category detection, document analysis, claim draft/send and legal norm search state.
 - Final release gate after 25-screen flow pass — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Onboarding and web screen matrix — Flutter analyze passed; Flutter test passed with 22 tests; web lint/typecheck/build passed; deployed web rebuilt on server and `npm run release-check:server` returned `public server ok: http://89.207.250.217`.
+- Final release gate after onboarding/web matrix — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 

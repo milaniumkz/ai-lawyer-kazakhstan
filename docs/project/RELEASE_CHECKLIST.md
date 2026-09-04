@@ -66,5 +66,6 @@
 - [x] Добавить web scenario workspace с рабочими действиями и состояниями.
 - [x] Закрыть пустые обработчики mobile/web и покрыть профиль/настройки/помощь/legal validator тестами.
 - [x] Добавить недостающие mobile routes из дизайн-листа: регистрация, биометрия, категория спора, анализ документов, проект/отправка претензии, поиск нормы.
+- [x] Добавить mobile onboarding route и web matrix всех 25 дизайн-экранов.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

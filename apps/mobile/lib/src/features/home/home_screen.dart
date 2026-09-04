@@ -4,6 +4,52 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              Icon(Icons.balance_outlined, size: 112, color: AppColors.gold),
+              const SizedBox(height: 24),
+              Text(
+                'AI Юрист Казахстан',
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .displaySmall
+                    ?.copyWith(color: AppColors.goldDark),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Юридический помощник с проверкой официальных источников РК.',
+                textAlign: TextAlign.center,
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () => context.go('/login'),
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Начать'),
+              ),
+              TextButton(
+                onPressed: () => context.go('/'),
+                child: const Text('Уже есть аккаунт'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
