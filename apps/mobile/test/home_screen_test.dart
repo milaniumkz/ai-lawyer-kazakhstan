@@ -7,6 +7,7 @@ import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
 import 'package:ai_lawyer_kz/src/api/api_contract.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   test('generated API contract exposes auth and case paths', () {
@@ -247,8 +248,8 @@ void main() {
 
   testWidgets('case intake voice button and create action work',
       (tester) async {
-    await tester
-        .pumpWidget(MaterialApp(home: NewCaseScreen(recorder: _FakeRecorder())));
+    await tester.pumpWidget(
+        MaterialApp(home: NewCaseScreen(recorder: _FakeRecorder())));
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
@@ -257,6 +258,38 @@ void main() {
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     expect(find.text('Голос готов к обработке'), findsOneWidget);
+  });
+
+  testWidgets('case intake uploads recorded audio before category route',
+      (tester) async {
+    final api = _FakeVoiceApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) =>
+                NewCaseScreen(recorder: _FakeRecorder(), voiceApi: api),
+          ),
+          GoRoute(
+            path: '/case/category',
+            builder: (_, __) => const Scaffold(body: Text('Категория готова')),
+          ),
+        ],
+      ),
+    ));
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.stop));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Подтвердить и создать дело'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.pumpAndSettle();
+
+    expect(api.uploadedPath, '/tmp/mobile-test-voice.m4a');
+    expect(find.text('Категория готова'), findsOneWidget);
   });
 
   testWidgets('chat send button adds user and assistant messages',
@@ -356,6 +389,22 @@ class _FakeRecorder implements VoiceRecorderPort {
 
   @override
   Future<String?> stop() async => '/tmp/mobile-test-voice.m4a';
+}
+
+class _FakeVoiceApi implements VoiceTranscriptPort {
+  String? uploadedPath;
+
+  @override
+  Future<VoiceTranscriptJob> uploadAudio({
+    required String path,
+    required String transcript,
+  }) async {
+    uploadedPath = path;
+    return const VoiceTranscriptJob(
+      id: '12345678-1234-1234-1234-123456789012',
+      transcript: 'Голос отправлен в API',
+    );
+  }
 }
 
 Future<void> setLargeViewport(WidgetTester tester) async {

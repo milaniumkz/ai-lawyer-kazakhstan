@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 
+import '../../api/api_contract.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 
@@ -146,9 +149,10 @@ class CaseDetailsScreen extends StatelessWidget {
 }
 
 class NewCaseScreen extends StatefulWidget {
-  const NewCaseScreen({super.key, this.recorder});
+  const NewCaseScreen({super.key, this.recorder, this.voiceApi});
 
   final VoiceRecorderPort? recorder;
+  final VoiceTranscriptPort? voiceApi;
 
   @override
   State<NewCaseScreen> createState() => _NewCaseScreenState();
@@ -350,9 +354,11 @@ const _caseItems = [
 class _NewCaseScreenState extends State<NewCaseScreen> {
   late final TextEditingController transcriptController;
   late final VoiceRecorderPort voiceRecorder;
+  late final VoiceTranscriptPort voiceApi;
   var isRecording = false;
   var isBusy = false;
   String? recordedPath;
+  String? transcriptJobId;
   var transcript =
       'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
 
@@ -360,6 +366,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
   void initState() {
     super.initState();
     voiceRecorder = widget.recorder ?? RecordVoiceRecorder();
+    voiceApi = widget.voiceApi ?? HttpVoiceTranscriptApi();
     transcriptController = TextEditingController(text: transcript);
   }
 
@@ -368,6 +375,35 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     transcriptController.dispose();
     voiceRecorder.dispose();
     super.dispose();
+  }
+
+  Future<void> submitCase() async {
+    if (isBusy) return;
+    if (recordedPath == null) {
+      context.go('/case/category');
+      return;
+    }
+    setState(() => isBusy = true);
+    try {
+      final job = await voiceApi.uploadAudio(
+        path: recordedPath!,
+        transcript: transcriptController.text.trim(),
+      );
+      setState(() {
+        transcriptJobId = job.id;
+        transcript = job.transcript;
+        transcriptController.text = job.transcript;
+      });
+      if (mounted) context.go('/case/category');
+    } catch (_) {
+      setState(() {
+        transcript =
+            'Аудио сохранено на устройстве. Проверьте сеть и повторите отправку.';
+        transcriptController.text = transcript;
+      });
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
   }
 
   Future<void> toggleRecording() async {
@@ -444,6 +480,14 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
+          if (transcriptJobId != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Transcript job: ${transcriptJobId!.substring(0, 8)}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 18),
           TextField(
             controller: transcriptController,
@@ -459,9 +503,10 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
           const _ProgressStrip(),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => context.go('/case/category'),
+            onPressed: isBusy ? null : submitCase,
             icon: const Icon(Icons.check_circle_outline),
-            label: const Text('Подтвердить и создать дело'),
+            label:
+                Text(isBusy ? 'Отправляю аудио' : 'Подтвердить и создать дело'),
           ),
         ],
       ),
@@ -476,6 +521,20 @@ abstract class VoiceRecorderPort {
   Future<void> dispose();
 }
 
+abstract class VoiceTranscriptPort {
+  Future<VoiceTranscriptJob> uploadAudio({
+    required String path,
+    required String transcript,
+  });
+}
+
+class VoiceTranscriptJob {
+  const VoiceTranscriptJob({required this.id, required this.transcript});
+
+  final String id;
+  final String transcript;
+}
+
 class RecordVoiceRecorder implements VoiceRecorderPort {
   final AudioRecorder _recorder = AudioRecorder();
 
@@ -483,14 +542,50 @@ class RecordVoiceRecorder implements VoiceRecorderPort {
   Future<bool> hasPermission() => _recorder.hasPermission();
 
   @override
-  Future<void> start(String path) =>
-      _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+  Future<void> start(String path) => _recorder
+      .start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
 
   @override
   Future<String?> stop() => _recorder.stop();
 
   @override
   Future<void> dispose() => _recorder.dispose();
+}
+
+class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
+  HttpVoiceTranscriptApi({
+    this.baseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://89-207-250-217.sslip.io',
+    ),
+  });
+
+  final String baseUrl;
+
+  @override
+  Future<VoiceTranscriptJob> uploadAudio({
+    required String path,
+    required String transcript,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl${ApiContract.basePath}${ApiContract.voiceTranscriptsAudio}',
+    );
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['language'] = 'ru'
+      ..fields['text'] = transcript
+      ..files.add(await http.MultipartFile.fromPath('audio', path));
+    request.headers['x-correlation-id'] = 'mobile-voice-upload';
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException('voice upload failed: ${response.statusCode}');
+    }
+    final parsed = jsonDecode(body) as Map<String, dynamic>;
+    return VoiceTranscriptJob(
+      id: parsed['id'] as String? ?? 'unknown',
+      transcript: parsed['transcript'] as String? ?? transcript,
+    );
+  }
 }
 
 class CategoryScreen extends StatefulWidget {
