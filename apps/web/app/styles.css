@@ -254,6 +254,12 @@ h3 { font-size: 28px; }
   font-size: 42px;
 }
 
+.activeIcon {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border-color: var(--gold);
+  color: var(--gold-strong);
+}
+
 .mic {
   display: grid;
   place-items: center;

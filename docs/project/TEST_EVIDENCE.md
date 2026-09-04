@@ -167,6 +167,7 @@
 - Web action realism pass — `npm run test:web-ui`, `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` and `npm run release-check:local` passed after replacing status-only actions with camera/file inputs, file SHA-256 upload metadata, `/profiles` save, OCR-gated analysis, persistent support request, explicit claim-send confirmation and persisted settings.
 - Web API flow polish — `npm run test:web-ui`, `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` and `npm run release-check:local` passed after fixing profile enum payload, readable API errors, allowed upload picker MIME/extensions and backend-driven RC OTP hint.
 - Deployed action-realism browser smoke — `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after deploy. Browser flow passed on HTTPS: OTP login via backend stub delivery, profile saved in API, case saved in API, unique PDF uploaded with SHA-256, OCR confirmed in API, document analysis saw 1 server document.
+- Web navigation/action correction — `npm run test:web-ui`, `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` and `npm run release-check:local` passed after fixing onboarding login route, empty intake continuation, notifications panel, legal tabs and active/archive source filter.
 
 ## Заблокировано
 

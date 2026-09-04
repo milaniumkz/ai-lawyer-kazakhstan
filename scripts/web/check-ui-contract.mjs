@@ -64,6 +64,12 @@ const requiredActions = [
   'createSupportRequest',
   'analyzeDocuments',
   'confirmClaimSent',
+  'toggleNotifications',
+  'continueCaseIntake',
+  'selectLegalTab',
+  'toggleLegalFilter',
+  'notificationOpen',
+  'legalActiveOnly',
   'finishRecording',
   'startRecording',
   'pauseRecording',
@@ -140,6 +146,11 @@ for (const forbidden of [
   'setSyncState("Настройки сохранены")',
   'setHelpStatus(`Обращение создано:',
   'setSent(true); updateActiveCase("Отправка претензии зафиксирована"',
+  'onClick={() => go("home")}>Уже есть аккаунт',
+  'onClick={() => go("category")}>{recording ?',
+  'onClick={() => setLegalTab(tab)}',
+  'onClick={() => setSyncState("Фильтр: действующие редакции")}',
+  'onClick={() => setSyncState("Новых уведомлений нет")}',
 ]) {
   if (page.includes(forbidden)) failures.push(`web page still has status-only action: ${forbidden}`);
 }

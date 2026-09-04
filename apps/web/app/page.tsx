@@ -145,6 +145,7 @@ export default function WebHome() {
   const [legalQuery, setLegalQuery] = useState("");
   const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
   const [legalTab, setLegalTab] = useState("Кодексы");
+  const [legalActiveOnly, setLegalActiveOnly] = useState(true);
   const [legalNorms, setLegalNorms] = useState<LegalNorm[]>([]);
   const [selectedNorm, setSelectedNorm] = useState<LegalNorm | null>(null);
   const [chatInput, setChatInput] = useState("");
@@ -164,6 +165,7 @@ export default function WebHome() {
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskItem[]>([
     { title: "Проверить расписку", due: "Сегодня", done: false },
     { title: "Подготовить претензию", due: "10 дней", done: false },
@@ -423,13 +425,14 @@ export default function WebHome() {
   }
 
   async function runLegalSearch() {
+    const query = `${legalQuery.trim()} ${legalTab} ${legalActiveOnly ? "действующая редакция" : "архив редакций"}`.trim();
     if (legalQuery.trim().length < 8) {
       setLegalAnswer("Введите вопрос подробнее.");
       return;
     }
     setLegalAnswer("Идет поиск по официальным источникам РК...");
     try {
-      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: legalQuery }) }) as ApiLegalAnswer;
+      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query }) }) as ApiLegalAnswer;
       if (answer.fragment) {
         const norm: LegalNorm = {
           title: answer.fragment.title,
@@ -553,6 +556,33 @@ export default function WebHome() {
   function saveSettings() {
     window.localStorage.setItem("ai-lawyer-web-settings", JSON.stringify({ maskPii, budgetAlerts, savedAt: new Date().toISOString() }));
     setSyncState("Настройки сохранены в браузере");
+  }
+
+  function toggleNotifications() {
+    setNotificationOpen((open) => !open);
+    setSyncState(notificationOpen ? "Уведомления скрыты" : `Уведомления открыты: ${tasks.filter((task) => !task.done).length} активных`);
+  }
+
+  function continueCaseIntake() {
+    if (caseText.trim().length < 12) {
+      setSyncState("Опишите ситуацию подробнее");
+      return;
+    }
+    go("category");
+  }
+
+  function selectLegalTab(tab: string) {
+    setLegalTab(tab);
+    setLegalNorms([]);
+    setSelectedNorm(null);
+    setLegalAnswer(`Раздел выбран: ${tab}. Запустите поиск по официальным источникам РК.`);
+  }
+
+  function toggleLegalFilter() {
+    setLegalActiveOnly((active) => !active);
+    setLegalNorms([]);
+    setSelectedNorm(null);
+    setLegalAnswer(legalActiveOnly ? "Фильтр: включая архивные редакции." : "Фильтр: только действующие редакции.");
   }
 
   async function createSupportRequest() {
@@ -797,7 +827,7 @@ export default function WebHome() {
           <div className="brandMark">⚖</div>
           <Header title="AI Юрист Казахстан" subtitle="Юридический помощник с проверкой официальных источников РК" />
           <button className="primary wide" onClick={() => go("login")}>Начать</button>
-          <button className="wide" onClick={() => go("home")}>Уже есть аккаунт</button>
+          <button className="wide" onClick={() => go("login")}>Уже есть аккаунт</button>
         </section>
       );
     }
@@ -861,7 +891,7 @@ export default function WebHome() {
             {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}
             <div className="wave" aria-hidden="true"></div>
           </div>
-          <button className="primary wide" onClick={recording ? finishRecording : () => go("category")}>{recording ? "■ Завершить запись" : "Продолжить"}</button>
+          <button className="primary wide" onClick={recording ? finishRecording : continueCaseIntake}>{recording ? "■ Завершить запись" : "Продолжить"}</button>
           <button className="wide" onClick={pauseRecording}>{paused ? "▶ Продолжить" : "Ⅱ Пауза"}</button>
         </section>
       );
@@ -986,9 +1016,9 @@ export default function WebHome() {
           <div className="legalSearch">
             <span>⌕</span>
             <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="Поиск по нормам права, статьям, законам..." />
-            <button aria-label="Фильтр" onClick={() => setSyncState("Фильтр: действующие редакции")}>☷</button>
+            <button aria-label="Фильтр" className={legalActiveOnly ? "activeIcon" : ""} onClick={toggleLegalFilter}>☷</button>
           </div>
-          <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => setLegalTab(tab)}>{tab}</button>)}</div>
+          <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => selectLegalTab(tab)}>{tab}</button>)}</div>
           <div className="list">
             {!legalNorms.length && <div className="normCard"><strong>Нет подтвержденной нормы</strong><span>Запустите поиск</span><small>Будет показан только ответ API из официального источника или честный статус “недостаточно источников”.</small><p>Фиктивные нормы не отображаются.</p></div>}
             {legalNorms.map((norm, index) => (
@@ -1084,8 +1114,9 @@ export default function WebHome() {
       <section className="homeScreen">
         <div className="topLine">
           <div><h1>Здравствуйте, Дмитрий</h1><p>Ваш умный юридический помощник</p></div>
-          <div className="topActions"><button className="bell" onClick={() => setSyncState("Новых уведомлений нет")} aria-label="Уведомления">♧</button><button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button></div>
+          <div className="topActions"><button className={notificationOpen ? "bell activeIcon" : "bell"} onClick={toggleNotifications} aria-label="Уведомления">♧</button><button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button></div>
         </div>
+        {notificationOpen && <div className="analysisBox"><strong>Уведомления</strong><p>{tasks.filter((task) => !task.done).map((task) => `${task.title}: ${task.due}`).join("; ") || "Активных уведомлений нет"}</p></div>}
         <button className={recording ? "mic active" : "mic"} onClick={() => { go("newCase"); setTimeout(() => void startRecording(), 0); }} aria-label="Рассказать проблему"><span>⌾</span></button>
         <h2>Рассказать проблему</h2>
         <p className="hint">{recording ? "Запись активна. Открылся экран описания дела." : "Нажмите и говорите голосом"}</p>
