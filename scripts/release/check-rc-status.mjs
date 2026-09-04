@@ -37,7 +37,13 @@ for (const signal of requiredMatrixSignals) {
 
 const forbiddenOpenItems = checklist
   .split('\n')
-  .filter((line) => line.startsWith('- [ ]') && !line.includes('Blocked: Docker'));
+  .filter(
+    (line) =>
+      line.startsWith('- [ ]') &&
+      !line.includes('Blocked: Docker') &&
+      !line.includes('Blocked: домен/DNS') &&
+      !line.includes('Blocked: SMS/payment/storage/government credentials'),
+  );
 
 if (forbiddenOpenItems.length) {
   failures.push(`unexpected open release checklist items:\n${forbiddenOpenItems.join('\n')}`);

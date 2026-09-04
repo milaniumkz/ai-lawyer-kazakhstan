@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-apt-get update
-apt-get install -y ufw
+if ! command -v ufw >/dev/null 2>&1; then
+  apt-get update
+  apt-get install -y ufw
+fi
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw --force enable

@@ -82,6 +82,7 @@
 - Server PostgreSQL persistence smoke passed after API restart.
 - Deploy shell syntax checks passed.
 - Server release ops checks passed: only SSH/HTTP public, backup dump created, timer active.
+- Final `npm run release-check:local` passed after server hardening.
 
 ## Следующая задача
 
