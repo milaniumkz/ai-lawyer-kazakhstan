@@ -50,3 +50,4 @@
 - [x] Подготовить production deployment runbook с documented blockers.
 - [x] Составить финальную RC acceptance matrix.
 - [x] Добавить blocker-aware local release check.
+- [x] Добавить responsive web app для ПК и телефона.

@@ -2,6 +2,7 @@
   "name": "ai-lawyer-kz",
   "private": true,
   "workspaces": [
+    "apps/web",
     "apps/admin",
     "services/api"
   ],

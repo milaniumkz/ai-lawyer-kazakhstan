@@ -57,6 +57,7 @@
 - Реализован P1-021 official legal source ingestion adapter: official KZ source list plus manual/admin fallback blockers, no fake production ingestion.
 - Реализован P1-022 final RC acceptance matrix: internal validation status, closed criteria and external blockers.
 - Реализован P1-023 blocker-aware release check: `release-check:local` passes without Docker while recording it as blocker; `release-check:production` keeps Docker gate.
+- Реализован P1-024 responsive web app: `apps/web` Next.js surface for desktop/mobile testing with light/dark design tokens.
 
 ## Дизайн-источник
 
@@ -76,4 +77,4 @@
 
 ## Следующая задача
 
-Следующая задача: Docker/PostgreSQL health checks after Docker install, production signing setup, или deeper pixel-perfect mobile/admin design parity.
+Следующая задача: deploy web/admin/api/ai to the provided Ubuntu server and verify public URLs.

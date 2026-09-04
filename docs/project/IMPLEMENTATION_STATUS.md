@@ -44,6 +44,7 @@
 | Official legal source ingestion adapter P1 | Adapter interface and manual/blocker implementation for `zan.gov.kz`, Әділет, courts and state bodies; no fake official API behavior | API lint/typecheck/test passed, 16 suites/60 tests | done |
 | Final RC acceptance matrix P1 | RC readiness matrix documents pass areas and explicit external blockers; mobile APK checksums refreshed after final rebuild | Android/iOS rebuild passed; Docker remains blocked | done |
 | Blocker-aware release check P1 | `release-check:local` validates check/build/RC status while recording Docker as blocker; `release-check:production` keeps Docker gate | `npm run release-check:local` passed | done |
+| Responsive web app P1 | Added `apps/web` Next.js user-facing adaptive RC web surface for desktop/mobile with light/dark tokens | `npm run check`, `npm run build` passed | done |
 
 ## Блокеры окружения
 

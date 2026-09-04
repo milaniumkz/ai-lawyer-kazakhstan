@@ -39,3 +39,4 @@
 - P1-021 Official legal source ingestion adapter — done.
 - P1-022 Final RC acceptance matrix — done.
 - P1-023 Blocker-aware release check — done.
+- P1-024 Responsive web app — done.

@@ -85,6 +85,8 @@
 - Final RC acceptance matrix check/build — `npm run check`, `npm run build` passed.
 - RC status script — `node scripts/release/check-rc-status.mjs` passed and recorded Docker as external blocker.
 - Local release check — `npm run release-check:local` passed.
+- Responsive web app — `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` passed.
+- Full project check/build after responsive web app — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
