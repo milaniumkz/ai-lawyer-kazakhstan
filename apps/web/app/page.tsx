@@ -16,7 +16,7 @@ export default function WebHome() {
         <nav className="nav">
           <strong>AI Юрист</strong>
           <div>
-            <a href="/api/health">API</a>
+            <a href="/api/v1/health">API</a>
             <a href="/admin">Admin</a>
           </div>
         </nav>
