@@ -77,6 +77,7 @@
 | Web dynamic state pass P1 | Added browser-persistent web state, controlled auth/profile/help forms, real file picker handoff, visible mobile status and improved case classification for labor/family/civil inputs | Web UI contract, web lint/typecheck/build and browser persistence smoke passed | done |
 | Web route/theme app pass P1 | Added hash-addressable app screens, explicit dark/light theme switch, dark design default and case progress/status updates from chat/documents/tasks/claim actions | `npm run release-check:local` passed | done |
 | Web mobile-design shell pass P1 | Removed public desktop sidebar/right workspace wrapper so desktop and phone render the same centered app screen; added home notification control and quick-action icons closer to dark mobile reference | Web UI contract, web lint/typecheck/build and browser single-shell smoke passed | done |
+| Web recording/navigation flow pass P1 | Added design-style recording card, pause/finish controls, back header navigation and fixed mobile status overlap on web app screens | Web UI contract, web lint/typecheck/build, local release-check and browser recording flow smoke passed | done |
 
 ## Блокеры окружения
 

@@ -276,6 +276,61 @@ h3 { font-size: 28px; }
 .homeScreen > h2,
 .hint { text-align: center; }
 
+.heroTitle {
+  margin: 42px 0 18px;
+  text-align: center;
+  font-size: 48px;
+}
+
+.recordCard {
+  border: 1px solid var(--gold);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel-soft) 78%, transparent);
+  padding: 18px;
+  margin: 26px 0;
+}
+
+.recordCard textarea {
+  min-height: 112px;
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1.35;
+  padding: 12px 0;
+}
+
+.recordLine {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--gold-strong);
+}
+
+.recordLine em {
+  font-style: normal;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.dot.live {
+  background: var(--gold);
+  box-shadow: 0 0 18px var(--gold);
+}
+
+.wave {
+  height: 28px;
+  border-radius: 99px;
+  background: repeating-linear-gradient(90deg, var(--gold) 0 4px, transparent 4px 12px);
+  mask-image: linear-gradient(180deg, transparent 0 15%, #000 15% 85%, transparent 85%);
+  opacity: 0.82;
+}
+
 .quickGrid,
 .tileGrid {
   display: grid;
@@ -352,6 +407,31 @@ h3 { font-size: 28px; }
 .largeIcon { width: 92px; height: 92px; font-size: 42px; }
 
 .panelHeader { margin-bottom: 22px; }
+
+.screenHeader {
+  position: relative;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.screenHeader button {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--gold-strong);
+  font-size: 48px;
+  line-height: 1;
+}
+
+.screenHeader h2,
+.screenHeader p {
+  margin-bottom: 8px;
+}
 
 progress {
   width: 100%;
@@ -494,6 +574,13 @@ button:disabled {
 @media (max-width: 620px) {
   .deviceFrame { overflow: visible; }
   .homeScreen, .contentPanel { min-height: 100vh; padding: 34px 18px 118px; }
+  .appStatus {
+    position: fixed;
+    z-index: 19;
+    top: auto;
+    bottom: 84px;
+    max-width: calc(100% - 24px);
+  }
   .chatPanel { padding-bottom: 136px; }
   h1 { font-size: 36px; }
   h2 { font-size: 30px; }

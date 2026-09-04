@@ -84,6 +84,7 @@ const initialCases: CaseItem[] = [
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>("home");
+  const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [cases, setCases] = useState<CaseItem[]>(initialCases);
   const [activeCaseId, setActiveCaseId] = useState(initialCases[0].id);
@@ -94,6 +95,7 @@ export default function WebHome() {
   const [claimReady, setClaimReady] = useState(false);
   const [sent, setSent] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("Как взыскать долг по расписке?");
   const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
@@ -127,17 +129,23 @@ export default function WebHome() {
   );
 
   useEffect(() => {
+    if (!hydrated) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (window.location.hash !== `#${view}`) window.history.replaceState(null, "", `#${view}`);
-  }, [view]);
+  }, [hydrated, view]);
 
   useEffect(() => {
+    const hashView = window.location.hash.replace("#", "") as View;
+    const hasHashView = screens.some((screen) => screen.view === hashView);
+    if (hasHashView) setView(hashView);
     const raw = window.localStorage.getItem("ai-lawyer-web-state");
-    if (!raw) return;
+    if (!raw) {
+      setHydrated(true);
+      return;
+    }
     try {
       const saved = JSON.parse(raw) as Partial<SavedState>;
-      const hashView = window.location.hash.replace("#", "") as View;
-      if (screens.some((screen) => screen.view === hashView)) setView(hashView);
+      if (hasHashView) setView(hashView);
       else if (saved.view) setView(saved.view);
       if (saved.theme === "light" || saved.theme === "dark") setTheme(saved.theme);
       if (saved.cases?.length) setCases(saved.cases);
@@ -158,12 +166,14 @@ export default function WebHome() {
     } catch {
       setSyncState("Не удалось восстановить локальные данные");
     }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
-  }, [view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
+  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks]);
 
   function go(nextView: View) {
     setView(nextView);
@@ -272,6 +282,23 @@ export default function WebHome() {
     setSyncState(`Профиль сохранен: ${profileType}`);
   }
 
+  function finishRecording() {
+    setRecording(false);
+    setPaused(false);
+    if (!caseText.trim()) setCaseText("Опишите проблему голосом или текстом.");
+    setSyncState("Запись завершена, текст готов к проверке");
+    go("category");
+  }
+
+  function AppHeader({ title, subtitle, back = "home" }: { title: string; subtitle: string; back?: View }) {
+    return (
+      <header className="screenHeader">
+        <button aria-label="Назад" onClick={() => go(back)}>‹</button>
+        <div><h2>{title}</h2><p>{subtitle}</p></div>
+      </header>
+    );
+  }
+
   function renderView() {
     if (view === "onboarding") {
       return (
@@ -287,7 +314,7 @@ export default function WebHome() {
     if (view === "login" || view === "register" || view === "otp" || view === "biometric") {
       return (
         <section className="contentPanel authPanel">
-          <Header
+          <AppHeader
             title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "SMS подтверждение" : "Биометрия"}
             subtitle="Безопасный вход, согласие v1 и локальная биометрия"
           />
@@ -329,11 +356,17 @@ export default function WebHome() {
     if (view === "newCase") {
       return (
         <section className="contentPanel">
-          <Header title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
-          <button className={recording ? "mic small active" : "mic small"} onClick={() => setRecording(!recording)} aria-label="Записать голос"><span>⌾</span></button>
-          <p className="hint">{recording ? "Запись активна" : "Нажмите и говорите голосом"}</p>
-          <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <button className="primary wide" onClick={() => go("category")}>Продолжить</button>
+          <AppHeader title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
+          <h1 className="heroTitle">Опишите проблему</h1>
+          <p className="hint">Расскажите о ситуации голосом, а мы поможем с решением</p>
+          <button className={recording ? "mic small active" : "mic small"} onClick={() => { setRecording(true); setPaused(false); }} aria-label="Записать голос"><span>⌾</span></button>
+          <div className="recordCard">
+            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{recording ? (paused ? "Пауза" : "Идет запись") : "Готов к записи"}</strong><em>{recording ? "00:47" : "00:00"}</em></div>
+            <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+            <div className="wave" aria-hidden="true"></div>
+          </div>
+          <button className="primary wide" onClick={recording ? finishRecording : () => go("category")}>{recording ? "■ Завершить запись" : "Продолжить"}</button>
+          <button className="wide" onClick={() => { setRecording(true); setPaused(!paused); }}>{paused ? "▶ Продолжить" : "Ⅱ Пауза"}</button>
         </section>
       );
     }
@@ -341,7 +374,7 @@ export default function WebHome() {
     if (view === "category") {
       return (
         <section className="contentPanel">
-          <Header title="Категория спора" subtitle="AI определил категорию по описанию" />
+          <AppHeader title="Категория обращения" subtitle="AI определил категорию по описанию" back="newCase" />
           <div className="chips">{["Гражданское право", "Трудовой спор", "Семейное право"].map((type) => <button className="chip" key={type} onClick={() => { setCaseText(`${caseText} ${type}`); }}>{type}</button>)}</div>
           <button className="primary wide" onClick={addCase}>Подтвердить и создать дело</button>
         </section>
@@ -351,7 +384,7 @@ export default function WebHome() {
     if (view === "cases") {
       return (
         <section className="contentPanel">
-          <Header title="Мои дела" subtitle="Фильтр, поиск и карточки дел" />
+          <AppHeader title="Мои дела" subtitle="Фильтр, поиск и карточки дел" />
           <div className="searchRow">
             <input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="Поиск дела" />
             <button onClick={() => setCaseSearch("")}>Очистить</button>
@@ -372,7 +405,7 @@ export default function WebHome() {
     if (view === "case") {
       return (
         <section className="contentPanel">
-          <Header title="Карточка дела" subtitle={`Дело №${activeCase.id} · ${activeCase.type}`} />
+          <AppHeader title="Карточка дела" subtitle={`Дело №${activeCase.id} · ${activeCase.type}`} back="cases" />
           <div className="caseHero">
             <span className="largeIcon">⚖</span>
             <div><h2>{activeCase.title}</h2><p>{activeCase.status}</p></div>
@@ -397,7 +430,7 @@ export default function WebHome() {
     if (view === "chat") {
       return (
         <section className="contentPanel chatPanel">
-          <Header title="Чат по делу" subtitle={activeCase.title} />
+          <AppHeader title="Чат по делу" subtitle={activeCase.title} back="case" />
           <div className="messages">
             {messages.map((message, index) => <div key={`${message.role}-${index}`} className={message.role}>{message.text}</div>)}
           </div>
@@ -412,7 +445,7 @@ export default function WebHome() {
     if (view === "documents" || view === "analysis" || view === "documentCheck" || view === "documentUpload") {
       return (
         <section className="contentPanel">
-          <Header
+          <AppHeader
             title={view === "analysis" ? "Анализ документов" : view === "documentUpload" ? "Загрузка документа" : view === "documentCheck" ? "Проверка документов" : "Документы и доказательства"}
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
@@ -438,7 +471,7 @@ export default function WebHome() {
     if (view === "deadlines") {
       return (
         <section className="contentPanel">
-          <Header title="Календарь и сроки" subtitle="Контроль процессуальных дат" />
+          <AppHeader title="Календарь и сроки" subtitle="Контроль процессуальных дат" />
           <div className="calendar"><strong>04</strong><span>Сентябрь 2026</span></div>
           <div className="list"><div className="docRow"><strong>Досудебная претензия</strong><span>10 дней</span></div><div className="docRow"><strong>Исковое заявление</strong><span>22 мая</span></div></div>
         </section>
@@ -448,7 +481,7 @@ export default function WebHome() {
     if (view === "legal" || view === "legalSearch") {
       return (
         <section className="contentPanel">
-          <Header title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
+          <AppHeader title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
           <div className="searchRow">
             <input value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} />
             <button className="primary" onClick={() => { setLegalAnswer(legalQuery.length > 8 ? "Нужна проверка юристом: ответ будет показан только при подтвержденной норме из официального источника РК." : "Введите вопрос подробнее."); go("legalSearch"); }}>Найти норму</button>
@@ -461,7 +494,7 @@ export default function WebHome() {
     if (view === "claim" || view === "claimDraft" || view === "claimSend") {
       return (
         <section className="contentPanel">
-          <Header title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" />
+          <AppHeader title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" back="case" />
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <div className="claimPreview">Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя.</div>
           <div className="actionBar">
@@ -475,7 +508,7 @@ export default function WebHome() {
     if (view === "profile") {
       return (
         <section className="contentPanel">
-          <Header title="Профиль" subtitle="Профиль пользователя и тип клиента" />
+          <AppHeader title="Профиль" subtitle="Профиль пользователя и тип клиента" />
           <div className="chips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
           <input placeholder="Ф.И.О. / название" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
           <input placeholder="ИИН/БИН" value={profileId} onChange={(event) => setProfileId(event.target.value)} />
@@ -492,7 +525,7 @@ export default function WebHome() {
     if (view === "settings") {
       return (
         <section className="contentPanel">
-          <Header title="Настройки" subtitle="Безопасность, уведомления и приватность" />
+          <AppHeader title="Настройки" subtitle="Безопасность, уведомления и приватность" back="profile" />
           <label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Скрывать ИИН/БИН в логах</label>
           <label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Предупреждать о бюджете AI</label>
           <div className="analysisBox"><strong>Статус</strong><p>{maskPii ? "PII masking включен" : "PII masking выключен"} · {budgetAlerts ? "Уведомления включены" : "Уведомления выключены"}</p></div>
@@ -504,7 +537,7 @@ export default function WebHome() {
     if (view === "subscription") {
       return (
         <section className="contentPanel">
-          <Header title="Подписка" subtitle="Лимиты, история и контроль расходов" />
+          <AppHeader title="Подписка" subtitle="Лимиты, история и контроль расходов" back="profile" />
           <div className="tileGrid">
             <Info label="Тариф" value="RC Internal" />
             <Info label="AI бюджет" value="70%" />
@@ -519,7 +552,7 @@ export default function WebHome() {
     if (view === "help") {
       return (
         <section className="contentPanel">
-          <Header title="Помощь" subtitle="Поддержка и ручная проверка юристом" />
+          <AppHeader title="Помощь" subtitle="Поддержка и ручная проверка юристом" back="profile" />
           <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <button className="primary wide" onClick={() => setHelpStatus(`Обращение создано: ${caseText.slice(0, 42)}`)}>Написать в поддержку</button>

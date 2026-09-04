@@ -84,5 +84,6 @@
 - [x] Добавить web persistence, управляемые формы, file picker, видимый mobile status и нормальную классификацию дел.
 - [x] Добавить hash routes, явный dark/light theme switch и обновление статуса/прогресса дела от действий.
 - [x] Убрать public desktop wrapper из web, чтобы ПК и телефон показывали один app-screen по мобильным макетам.
+- [x] Исправить web voice-intake: запись/пауза/завершение, переход в категорию и кнопка назад работают на мобильном web.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

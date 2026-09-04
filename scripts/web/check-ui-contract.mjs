@@ -56,8 +56,13 @@ const requiredActions = [
   'startAuth(',
   'verifyOtp',
   'saveProfile',
+  'finishRecording',
   'appStatus',
   'data-theme={theme}',
+  'aria-label="Назад"',
+  'Завершить запись',
+  'Пауза',
+  'recordCard',
   'Задержка зарплаты',
   'работодател',
   'зарплат',
@@ -96,6 +101,9 @@ const cssNeedles = [
   '.bottomNav',
   '.topActions',
   '.quickIcon',
+  '.screenHeader',
+  '.recordCard',
+  '.wave',
   'grid-template-columns: repeat(5, 1fr)',
 ];
 
