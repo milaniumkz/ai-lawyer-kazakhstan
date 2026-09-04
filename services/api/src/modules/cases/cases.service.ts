@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
+import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
+import { CasesRepository } from './repositories/cases.repository';
 
 const PROGRESS: ChatProgressStatus[] = ['transcribing', 'classifying', 'retrieving_sources', 'validating', 'generating', 'ready'];
 
@@ -11,9 +13,15 @@ export class CasesService {
   private readonly transcripts = new Map<string, TranscriptJob>();
   private readonly idempotency = new Map<string, LegalCaseRecord>();
 
-  createCase(input: { ownerUserId: string; profileId?: string; problemText: string }, idempotencyKey?: string) {
+  constructor(@Optional() @Inject(CASES_REPOSITORY) private readonly repository?: CasesRepository) {}
+
+  async createCase(input: { ownerUserId: string; profileId?: string; problemText: string }, idempotencyKey?: string) {
     if (!input.ownerUserId) throw new BadRequestException('OWNER_REQUIRED');
     if (!input.problemText || input.problemText.trim().length < 10) throw new BadRequestException('PROBLEM_TEXT_TOO_SHORT');
+    if (this.repository && idempotencyKey) {
+      const existing = await this.repository.findCaseByIdempotencyKey(idempotencyKey);
+      if (existing) return existing;
+    }
     if (idempotencyKey && this.idempotency.has(idempotencyKey)) {
       return this.idempotency.get(idempotencyKey)!;
     }
@@ -32,55 +40,64 @@ export class CasesService {
       readinessPercent: 17,
       createdAt: new Date().toISOString(),
     };
-    this.cases.set(record.id, record);
-    this.messages.set(record.id, [
-      {
-        id: randomUUID(),
-        caseId: record.id,
-        role: 'system',
-        text: 'AI может ошибаться. Юридически значимые действия требуют проверки и подтверждения.',
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    if (idempotencyKey) this.idempotency.set(idempotencyKey, record);
-    return record;
+    const stored = this.repository ? await this.repository.createCase(record) : record;
+    const systemMessage = {
+      id: randomUUID(),
+      caseId: stored.id,
+      role: 'system' as const,
+      text: 'AI может ошибаться. Юридически значимые действия требуют проверки и подтверждения.',
+      createdAt: new Date().toISOString(),
+    };
+    if (this.repository) await this.repository.createMessage(systemMessage);
+    else {
+      this.cases.set(stored.id, stored);
+      this.messages.set(stored.id, [systemMessage]);
+      if (idempotencyKey) this.idempotency.set(idempotencyKey, stored);
+    }
+    if (this.repository && idempotencyKey) await this.repository.rememberIdempotencyKey({ key: idempotencyKey, ownerUserId: input.ownerUserId, caseId: stored.id });
+    return stored;
   }
 
-  listCases(ownerUserId: string) {
+  async listCases(ownerUserId: string) {
+    if (this.repository) return this.repository.listCases(ownerUserId);
     return [...this.cases.values()].filter((item) => item.ownerUserId === ownerUserId);
   }
 
-  getCase(caseId: string) {
-    const record = this.cases.get(caseId);
+  async getCase(caseId: string) {
+    const record = this.repository ? await this.repository.findCaseById(caseId) : this.cases.get(caseId);
     if (!record) throw new NotFoundException('CASE_NOT_FOUND');
     return record;
   }
 
-  addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }) {
-    this.getCase(caseId);
+  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }) {
+    await this.getCase(caseId);
     if (!input.text) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
     const message: MessageRecord = { id: randomUUID(), caseId, role: input.role, text: input.text, createdAt: new Date().toISOString() };
+    if (this.repository) await this.repository.createMessage(message);
     const list = this.messages.get(caseId) ?? [];
-    list.push(message);
+    if (!this.repository) list.push(message);
     if (input.role === 'user') {
-      list.push({
+      const fallback = {
         id: randomUUID(),
         caseId,
         role: 'assistant',
         text: 'Принято. Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.',
         createdAt: new Date().toISOString(),
-      });
+      } as const;
+      if (this.repository) await this.repository.createMessage(fallback);
+      else list.push(fallback);
     }
-    this.messages.set(caseId, list);
+    if (!this.repository) this.messages.set(caseId, list);
     return message;
   }
 
-  listMessages(caseId: string) {
-    this.getCase(caseId);
+  async listMessages(caseId: string) {
+    await this.getCase(caseId);
+    if (this.repository) return this.repository.listMessages(caseId);
     return this.messages.get(caseId) ?? [];
   }
 
-  createTranscript(input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }) {
+  async createTranscript(input: { caseId?: string; language?: 'ru' | 'kk' | 'en'; audioRef?: string; text?: string }) {
     const transcript = input.text?.trim() || 'Пользователь описал юридическую проблему голосом. Требуется подтверждение текста.';
     const job: TranscriptJob = {
       id: randomUUID(),
@@ -91,12 +108,13 @@ export class CasesService {
       lowConfidenceFragments: transcript.includes('неразборчиво') ? ['неразборчиво'] : [],
       createdAt: new Date().toISOString(),
     };
-    this.transcripts.set(job.id, job);
-    return { ...job, progress: PROGRESS };
+    const stored = this.repository ? await this.repository.createTranscript(job) : job;
+    if (!this.repository) this.transcripts.set(job.id, job);
+    return { ...stored, progress: PROGRESS };
   }
 
-  getTranscript(id: string) {
-    const job = this.transcripts.get(id);
+  async getTranscript(id: string) {
+    const job = this.repository ? await this.repository.findTranscriptById(id) : this.transcripts.get(id);
     if (!job) throw new NotFoundException('TRANSCRIPT_NOT_FOUND');
     return job;
   }

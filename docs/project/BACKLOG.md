@@ -24,3 +24,4 @@
 - P1-007E Templates/generated documents PostgreSQL repository foundation — done.
 - P1-007F Billing/subscriptions PostgreSQL repository foundation — done.
 - P1-008 Identity repository runtime toggle — done.
+- P1-009 Cases/chat/transcripts repository runtime toggle — done.
