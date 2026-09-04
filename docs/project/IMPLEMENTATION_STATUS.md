@@ -69,6 +69,7 @@
 | Design source contract gate P1 | Added automated check for required dark/light design PNG references and expected mobile reference dimensions | `npm run test:design-source`, `npm run release-check:local && npm run release-check:server` passed | done |
 | Design screen route matrix P1 | Design gate now verifies all 25 dark reference screens are mapped to web labels, mobile routes and mobile render-test widgets; fixed web API demo phone format | `npm run test:design-source`, web lint/typecheck/build and release-check local/server passed | done |
 | Public web bundle smoke P1 | Server release check now fetches deployed Next.js HTML/assets and verifies required web labels, API demo action and API route strings are present in the public bundle | `npm run release-check:server`, `npm run release-check:local && npm run release-check:server` passed | done |
+| Mobile router release smoke P1 | Flutter tests now open every implemented release route through the app router and assert the expected screen content renders without exceptions | Flutter analyze passed; Flutter test passed with 24 widget/golden tests; release-check local/server passed | done |
 
 ## Блокеры окружения
 

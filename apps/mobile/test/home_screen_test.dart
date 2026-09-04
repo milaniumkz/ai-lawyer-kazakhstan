@@ -76,6 +76,41 @@ void main() {
     expect(find.text('Включено'), findsOneWidget);
   });
 
+  testWidgets('all release routes open through app router', (tester) async {
+    await setLargeViewport(tester);
+    const routes = [
+      ['/', 'Рассказать проблему'],
+      ['/onboarding', 'AI Юрист Казахстан'],
+      ['/login', 'Вход и регистрация'],
+      ['/register', 'Регистрация пользователя'],
+      ['/otp', 'Подтверждение SMS'],
+      ['/biometric', 'Быстрый вход по биометрии'],
+      ['/profile', 'Профиль пользователя'],
+      ['/settings', 'Настройки'],
+      ['/help', 'Помощь и поддержка'],
+      ['/cases', 'Мои дела'],
+      ['/case/details', 'Карточка дела'],
+      ['/case/new', 'Новое дело'],
+      ['/case/category', 'Определение категории спора'],
+      ['/case/chat', 'Чат по делу'],
+      ['/documents', 'Документы и доказательства'],
+      ['/documents/analysis', 'Анализ документов'],
+      ['/deadlines', 'Календарь и сроки'],
+      ['/legal', 'Официальные источники РК'],
+      ['/workflow/pretrial-claim', 'Конструктор документа'],
+      ['/workflow/pretrial-claim/draft', 'Проект досудебной претензии'],
+      ['/workflow/pretrial-claim/send', 'Отправка претензии'],
+      ['/subscription', 'Лимиты и расходы'],
+    ];
+
+    for (final route in routes) {
+      await tester.pumpWidget(AiLawyerApp(initialLocation: route[0]));
+      await tester.pumpAndSettle();
+      expect(find.text(route[1]), findsWidgets, reason: route[0]);
+      expect(tester.takeException(), isNull, reason: route[0]);
+    }
+  });
+
   testWidgets('shows case intake screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
 

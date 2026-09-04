@@ -144,6 +144,8 @@
 - Final release gate after design screen route matrix — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Public web bundle smoke — `npm run release-check:server` now fetches deployed Next.js HTML/assets and verifies required labels, `API demo`, `/auth/register`, `/documents/generate` and `/rag/answer` are present in the public bundle.
 - Final release gate after public web bundle smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Mobile router release smoke — `/Volumes/PD1000/job/flutter/bin/flutter test` passed with 24 tests; it now opens all implemented release routes through `AiLawyerApp`/`GoRouter` and verifies expected screen content.
+- Final release gate after mobile router smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 
