@@ -40,6 +40,7 @@
 - Реализован P1-007C documents repository foundation: PostgreSQL adapter for upload sessions/files/OCR fields/evidence folders and `upload_sessions` migration.
 - Реализован P1-007D legal RAG repository foundation: PostgreSQL adapter for official legal source fragments and bounded active search.
 - Реализован P1-007E templates repository foundation: PostgreSQL adapter for versioned templates and generated legal documents.
+- Реализован P1-007F billing repository foundation: PostgreSQL adapter for subscriptions, provider kill switch and AI usage ledger.
 
 ## Дизайн-источник
 
@@ -59,4 +60,4 @@
 
 ## Следующая задача
 
-Следующая задача: продолжить PostgreSQL adapter для billing или подключить готовые repositories к runtime services через config.
+Следующая задача: подключить готовые repositories к runtime services через config или добавить PostgreSQL integration smoke tests when Docker/Postgres available.

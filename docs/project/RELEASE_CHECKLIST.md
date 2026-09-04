@@ -24,6 +24,7 @@
 - [x] Добавить documents/evidence PostgreSQL repository foundation.
 - [x] Добавить Legal RAG PostgreSQL repository foundation.
 - [x] Добавить templates/generated documents PostgreSQL repository foundation.
+- [x] Добавить billing/subscriptions PostgreSQL repository foundation.
 - [x] Реализовать case/chat/document vertical slices в local/stub режиме.
 - [ ] Подключить PostgreSQL repository adapters к runtime services.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.

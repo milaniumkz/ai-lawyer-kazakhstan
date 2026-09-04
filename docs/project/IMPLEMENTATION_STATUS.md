@@ -27,6 +27,7 @@
 | Documents PostgreSQL repository P1 | Document repository interface, PostgreSQL adapter for upload sessions/files/OCR fields/evidence folders, upload session migration | API lint/typecheck/test passed, 38 tests | done |
 | Legal RAG PostgreSQL repository P1 | Legal repository interface and PostgreSQL adapter for official source fragments/search/citation storage metadata | API lint/typecheck/test passed, 41 tests | done |
 | Templates PostgreSQL repository P1 | Template repository interface and PostgreSQL adapter for templates/generated documents/expert review metadata | API lint/typecheck/test passed, 45 tests | done |
+| Billing PostgreSQL repository P1 | Billing repository interface, subscriptions/provider config migration, PostgreSQL adapter for AI usage ledger without raw PII | API lint/typecheck/test passed, 50 tests | done |
 
 ## Блокеры окружения
 
