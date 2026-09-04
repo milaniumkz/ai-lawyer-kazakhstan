@@ -37,6 +37,15 @@ describe('AppModule HTTP smoke', () => {
       .expect(201);
 
     const userId = tokens.body.user.id as string;
+    await request(app.getHttpServer())
+      .post('/api/v1/profiles')
+      .set('x-user-id', userId)
+      .send({ userId, type: 'person', displayName: 'Smoke User' })
+      .expect(201);
+    await request(app.getHttpServer()).get('/api/v1/sessions').set('x-user-id', userId).expect(200);
+    await request(app.getHttpServer()).get('/api/v1/profiles').set('x-user-id', userId).expect(200);
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/current').set('x-user-id', userId).expect(200);
+
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
       .set('idempotency-key', 'smoke-case-1')
@@ -215,5 +224,22 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-role', 'admin')
       .send({ provider: 'stub', enabled: true })
       .expect(201);
+  });
+
+  it('enforces current user header on identity and billing reads', async () => {
+    const auth = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ channel: 'email', email: 'scoped@example.kz', consentVersion: 'v1' })
+      .expect(201);
+    const tokens = await request(app.getHttpServer()).post('/api/v1/auth/otp/verify').send({ otpId: auth.body.otpId, code: '111111' }).expect(201);
+    const userId = tokens.body.user.id as string;
+
+    await request(app.getHttpServer()).get('/api/v1/sessions').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/profiles').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/current').expect(403);
+    await request(app.getHttpServer()).post('/api/v1/auth/logout-all').send({ userId }).expect(403);
+    await request(app.getHttpServer()).post('/api/v1/profiles').set('x-user-id', 'other-user').send({ userId, type: 'person', displayName: 'Mismatch' }).expect(403);
+
+    await request(app.getHttpServer()).post('/api/v1/profiles').set('x-user-id', userId).send({ userId, type: 'person', displayName: 'Scoped User' }).expect(201);
   });
 });

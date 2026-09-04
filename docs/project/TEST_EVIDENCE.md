@@ -187,6 +187,7 @@
 - Generated documents ownership enforcement — `npm test --workspace services/api -- templates.service.spec.ts app.smoke.spec.ts`, contract/web checks, Flutter analyze/test and `npm run check && npm run build` passed after enforcing `x-user-id` ownership on document generation/listing.
 - Legal source import RBAC — `npm test --workspace services/api -- app.smoke.spec.ts`, `npm run test:contract`, `npm run test:admin-ui`, admin lint/typecheck/build and `npm run check && npm run build` passed after protecting manual legal source import and wiring the admin import action.
 - AI usage ledger RBAC — `npm test --workspace services/api -- app.smoke.spec.ts billing.service.spec.ts`, contract/admin checks, admin build and `npm run check && npm run build` passed after requiring admin/superadmin role for `/usage/ai` writes and adding an admin ledger action.
+- User-scoped API hardening — `npm test --workspace services/api -- app.smoke.spec.ts identity.service.spec.ts billing.service.spec.ts`, API/web typecheck, Flutter analyze and `npm run check && npm run build` passed after requiring `x-user-id` for sessions/profiles/logout/account/subscription endpoints and rejecting profile owner mismatch.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Headers, Post } from '@nestjs/common';
 import { assertAdminRole } from '../../common/admin-rbac';
+import { assertSameUser, assertUserId } from '../../common/user-context';
 import { IdentityService } from './identity.service';
 import { AuthChannel, ProfileType } from './identity.types';
 
@@ -31,36 +32,39 @@ export class IdentityController {
   }
 
   @Post('auth/logout-all')
-  logoutAll(@Body() body: { userId: string }, @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.logoutAll(body.userId, correlationId);
+  logoutAll(@Body() body: { userId: string }, @Headers('x-user-id') headerUserId?: string | string[], @Headers('x-correlation-id') correlationId = 'local') {
+    const userId = assertSameUser(headerUserId, body.userId);
+    return this.identity.logoutAll(userId, correlationId);
   }
 
   @Get('sessions')
-  sessions(@Headers('x-user-id') userId = '') {
-    return this.identity.listSessions(userId);
+  sessions(@Headers('x-user-id') userId?: string | string[]) {
+    return this.identity.listSessions(assertUserId(userId));
   }
 
   @Post('profiles')
   createProfile(
     @Body() body: { userId: string; type: ProfileType; displayName: string; iinBin?: string; address?: string; bankAccount?: string },
+    @Headers('x-user-id') headerUserId?: string | string[],
     @Headers('x-correlation-id') correlationId = 'local',
   ) {
+    assertSameUser(headerUserId, body.userId);
     return this.identity.createProfile(body, correlationId);
   }
 
   @Get('profiles')
-  profiles(@Headers('x-user-id') userId = '') {
-    return this.identity.listProfiles(userId);
+  profiles(@Headers('x-user-id') userId?: string | string[]) {
+    return this.identity.listProfiles(assertUserId(userId));
   }
 
   @Get('account/export')
-  exportAccount(@Headers('x-user-id') userId = '', @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.exportAccount(userId, correlationId);
+  exportAccount(@Headers('x-user-id') userId?: string | string[], @Headers('x-correlation-id') correlationId = 'local') {
+    return this.identity.exportAccount(assertUserId(userId), correlationId);
   }
 
   @Delete('account')
-  deleteAccount(@Headers('x-user-id') userId = '', @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.deleteAccount(userId, correlationId);
+  deleteAccount(@Headers('x-user-id') userId?: string | string[], @Headers('x-correlation-id') correlationId = 'local') {
+    return this.identity.deleteAccount(assertUserId(userId), correlationId);
   }
 
   @Get('admin/audit-events')

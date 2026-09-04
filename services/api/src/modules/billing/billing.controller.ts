@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
 import { assertAdminRole } from '../../common/admin-rbac';
+import { assertUserId } from '../../common/user-context';
 import { BillingService } from './billing.service';
 import { AiUsageEvent, ProviderConfig } from './billing.types';
 
@@ -8,8 +9,8 @@ export class BillingController {
   constructor(private readonly billing: BillingService) {}
 
   @Get('subscriptions/current')
-  current(@Headers('x-user-id') userId = '') {
-    return this.billing.budgetStatus(userId);
+  current(@Headers('x-user-id') userId?: string | string[]) {
+    return this.billing.budgetStatus(assertUserId(userId));
   }
 
   @Post('usage/ai')

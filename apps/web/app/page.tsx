@@ -862,6 +862,7 @@ export default function WebHome() {
       const cleanIinBin = profileId.replace(/\D/g, "");
       await apiJson("/profiles", {
         method: "POST",
+        headers: { "x-user-id": userId },
         body: JSON.stringify({ userId, type: profileTypeMap[profileType] ?? "person", displayName: profileName, iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined }),
       });
       setSyncState(`Профиль сохранен в API: ${profileType}`);

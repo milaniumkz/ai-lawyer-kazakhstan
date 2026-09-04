@@ -848,9 +848,10 @@ class HttpProfileApi implements ProfileApiPort {
     if (userId.isEmpty) throw const FormatException('Сначала подтвердите OTP');
     final response = await http.post(
       Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.profiles}'),
-      headers: const {
+      headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-profile',
+        'x-user-id': userId,
       },
       body: jsonEncode({
         'userId': userId,

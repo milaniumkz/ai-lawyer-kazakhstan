@@ -93,6 +93,13 @@ paths:
     post:
       operationId: logoutAll
       summary: Revoke all user sessions
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -158,8 +165,10 @@ paths:
       parameters:
         - in: header
           name: x-user-id
+          required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Sessions without refresh token values
@@ -176,8 +185,10 @@ paths:
       parameters:
         - in: header
           name: x-user-id
+          required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: User profiles with masked IIN/BIN
@@ -190,6 +201,13 @@ paths:
     post:
       operationId: createProfile
       summary: Create person/IP/legal entity/representative profile
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -230,8 +248,10 @@ paths:
       parameters:
         - in: header
           name: x-user-id
+          required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Legal cases
