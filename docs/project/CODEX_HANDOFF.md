@@ -29,6 +29,8 @@
 - Добавлен Flutter legal sources/citation guardrails screen.
 - Реализован P1-001 local template/document builder slice: досудебная претензия, required fields, unresolved placeholder guard, user confirmation status, expert review flag.
 - Добавлен Flutter pretrial claim builder screen.
+- Реализован P1-002 local subscriptions/budget slice: AI usage ledger without raw PII, budget thresholds, TTS disable flag, provider kill switch.
+- Добавлен Flutter subscription screen.
 
 ## Дизайн-источник
 
@@ -46,4 +48,4 @@
 
 ## Следующая задача
 
-Начать P1-002: subscriptions, AI budget and admin operations with OpenAPI, backend local usage ledger, budget thresholds/kill switch, Flutter subscription screen, admin budget visibility and tests.
+Начать P1-003: security/compliance hardening with error envelope, correlation ID middleware/filter, PII masking tests, secret/foreign-law scan scripts and docs.

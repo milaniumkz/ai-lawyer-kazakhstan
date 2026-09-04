@@ -12,6 +12,7 @@ const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 
 const documentStatuses = ['upload_pending', 'quarantined', 'ocr_review_required', 'ready', 'rejected'];
 const ragStatuses = ['confirmed', 'invalid', 'insufficient_authoritative_sources', 'clarify_or_human_review'];
 const templateStatuses = ['draft', 'expert_review', 'approved', 'published', 'archived'];
+const budgetControls = ['70%', '85%', '100%', 'kill switch', 'TTS disable'];
 
 export default function AdminHome() {
   return (
@@ -74,6 +75,15 @@ export default function AdminHome() {
         <div className="pills">
           {templateStatuses.map((status) => (
             <span key={status}>{status}</span>
+          ))}
+        </div>
+      </section>
+      <section className="notice">
+        <strong>Budget operations</strong>
+        <span>Usage ledger хранит provider/model alias, units, cost, complexity, risk и correlation ID без raw PII.</span>
+        <div className="pills">
+          {budgetControls.map((item) => (
+            <span key={item}>{item}</span>
           ))}
         </div>
       </section>

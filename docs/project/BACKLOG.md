@@ -11,6 +11,6 @@
 ## P1
 
 - P1-001 Legal workflows and document builder — done.
-- P1-002 Subscriptions, budget and admin operations — planned.
+- P1-002 Subscriptions, budget and admin operations — done.
 - P1-003 Security/compliance hardening — planned.
 - P1-004 Release candidate packaging — planned.

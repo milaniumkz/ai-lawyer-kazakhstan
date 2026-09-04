@@ -7,6 +7,7 @@ import 'src/features/cases/case_screens.dart';
 import 'src/features/documents/document_screens.dart';
 import 'src/features/home/home_screen.dart';
 import 'src/features/legal/legal_screens.dart';
+import 'src/features/subscription/subscription_screen.dart';
 import 'src/features/workflows/workflow_screens.dart';
 import 'src/theme/app_theme.dart';
 
@@ -27,6 +28,8 @@ final _router = GoRouter(
     GoRoute(
         path: '/workflow/pretrial-claim',
         builder: (_, __) => const PretrialClaimScreen()),
+    GoRoute(
+        path: '/subscription', builder: (_, __) => const SubscriptionScreen()),
   ],
 );
 

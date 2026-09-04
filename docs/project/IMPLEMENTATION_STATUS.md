@@ -17,6 +17,7 @@
 | Documents/evidence/OCR P0 | OpenAPI upload/documents/evidence/OCR confirmation, NestJS local metadata service with allowlist/duplicate checks, FastAPI OCR stub, Flutter documents/OCR screen, admin visibility | `npm run check`, `npm run build`, AI unittest, OpenAPI YAML parse passed | done |
 | Legal RAG/anti-hallucination P0 | OpenAPI legal source manual import/search/citation validation/RAG answer, NestJS official-source guardrails, FastAPI safe answer stub, Flutter legal source screen, admin visibility | `npm run check`, `npm run build`, AI unittest, OpenAPI YAML parse passed | done |
 | Legal workflows/document builder P1 | OpenAPI templates/document generation, NestJS local versioned template engine, dосудебная претензия draft, required fields, unresolved placeholder guard, expert review flag, Flutter builder screen, admin visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
+| Subscriptions/budget/admin P1 | OpenAPI subscriptions/AI usage/providers, NestJS local usage ledger, budget thresholds, TTS disable flag, provider kill switch, Flutter subscription screen, admin visibility | `npm run check`, `npm run build`, OpenAPI YAML parse passed | done |
 
 ## Блокеры окружения
 

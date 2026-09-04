@@ -557,6 +557,74 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/GeneratedDocument"
+  /subscriptions/current:
+    get:
+      operationId: getCurrentSubscription
+      summary: Get current subscription and budget status
+      parameters:
+        - in: header
+          name: x-user-id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscription budget status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetStatus"
+  /usage/ai:
+    post:
+      operationId: recordAiUsage
+      summary: Record AI usage without raw PII
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiUsageInput"
+      responses:
+        "201":
+          description: Usage event and budget status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [event, budget]
+                properties:
+                  event:
+                    $ref: "#/components/schemas/AiUsageEvent"
+                  budget:
+                    $ref: "#/components/schemas/BudgetStatus"
+  /admin/providers:
+    get:
+      operationId: listProviders
+      summary: List AI providers and kill switches
+      responses:
+        "200":
+          description: Provider configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderConfig"
+    post:
+      operationId: setProvider
+      summary: Set provider kill switch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderConfig"
+      responses:
+        "201":
+          description: Provider config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
 components:
   schemas:
     HealthResponse:
@@ -1080,3 +1148,76 @@ components:
         createdAt:
           type: string
           format: date-time
+    BudgetStatus:
+      type: object
+      required: [userId, plan, monthlyLimitKzt, usedKzt, createdAt, percent, triggeredThresholds, ttsDisabled]
+      properties:
+        userId:
+          type: string
+        plan:
+          type: string
+          enum: [free, standard, expert]
+        monthlyLimitKzt:
+          type: number
+        usedKzt:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        percent:
+          type: integer
+        triggeredThresholds:
+          type: array
+          items:
+            type: integer
+            enum: [70, 85, 100]
+        ttsDisabled:
+          type: boolean
+    AiUsageInput:
+      type: object
+      required: [userId, provider, modelAlias, inputUnits, outputUnits, durationMs, estimatedCostKzt, complexity, risk, correlationId]
+      properties:
+        userId:
+          type: string
+        caseId:
+          type: string
+        provider:
+          type: string
+        modelAlias:
+          type: string
+        inputUnits:
+          type: integer
+        outputUnits:
+          type: integer
+        durationMs:
+          type: integer
+        estimatedCostKzt:
+          type: number
+        complexity:
+          type: string
+        risk:
+          type: string
+        correlationId:
+          type: string
+    AiUsageEvent:
+      allOf:
+        - $ref: "#/components/schemas/AiUsageInput"
+        - type: object
+          required: [id, createdAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+    ProviderConfig:
+      type: object
+      required: [provider, enabled]
+      properties:
+        provider:
+          type: string
+        enabled:
+          type: boolean
+        killSwitchReason:
+          type: string
