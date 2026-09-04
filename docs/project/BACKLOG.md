@@ -27,3 +27,4 @@
 - P1-009 Cases/chat/transcripts repository runtime toggle — done.
 - P1-010 Documents/evidence repository runtime toggle — done.
 - P1-011 Legal RAG repository runtime toggle — done.
+- P1-012 Templates/generated documents repository runtime toggle — done.

@@ -29,6 +29,7 @@
 - [x] Подключить cases/chat/transcripts PostgreSQL repository к runtime через explicit config toggle.
 - [x] Подключить documents/evidence PostgreSQL repository к runtime через explicit config toggle.
 - [x] Подключить Legal RAG PostgreSQL repository к runtime через explicit config toggle.
+- [x] Подключить templates/generated documents PostgreSQL repository к runtime через explicit config toggle.
 - [x] Реализовать case/chat/document vertical slices в local/stub режиме.
 - [ ] Подключить PostgreSQL repository adapters к runtime services.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.

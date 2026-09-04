@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { GeneratedDocument, TemplateRecord } from './templates.types';
+import { TEMPLATES_REPOSITORY } from './repositories/templates-repository.provider';
+import { TemplatesRepository } from './repositories/templates.repository';
 
 const PRETRIAL_CLAIM_TEMPLATE: TemplateRecord = {
   id: 'tpl-pretrial-claim-ru-v1',
@@ -24,12 +26,15 @@ export class TemplatesService {
   private readonly templates = new Map<string, TemplateRecord>([[PRETRIAL_CLAIM_TEMPLATE.id, PRETRIAL_CLAIM_TEMPLATE]]);
   private readonly generatedDocuments = new Map<string, GeneratedDocument>();
 
-  listTemplates() {
+  constructor(@Optional() @Inject(TEMPLATES_REPOSITORY) private readonly repository?: TemplatesRepository) {}
+
+  async listTemplates() {
+    if (this.repository) return this.repository.listTemplates();
     return [...this.templates.values()];
   }
 
-  generate(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }) {
-    const template = this.templates.get(input.templateId);
+  async generate(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }) {
+    const template = this.repository ? await this.repository.findTemplateById(input.templateId) : this.templates.get(input.templateId);
     if (!template) throw new NotFoundException('TEMPLATE_NOT_FOUND');
     const missing = template.requiredFields.filter((field) => !input.fields[field]);
     if (missing.length) throw new BadRequestException({ code: 'REQUIRED_FIELDS_MISSING', missing });
@@ -50,11 +55,13 @@ export class TemplatesService {
       expertReviewRequired: template.status !== 'published' || !(input.confirmedCitationIds?.length),
       createdAt: new Date().toISOString(),
     };
+    if (this.repository) return this.repository.createGeneratedDocument(document);
     this.generatedDocuments.set(document.id, document);
     return document;
   }
 
-  listGenerated(caseId: string) {
+  async listGenerated(caseId: string) {
+    if (this.repository) return this.repository.listGenerated(caseId);
     return [...this.generatedDocuments.values()].filter((document) => document.caseId === caseId);
   }
 }
