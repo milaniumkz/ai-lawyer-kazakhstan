@@ -74,5 +74,6 @@
 - [x] Подключить web scenario action к реальным `/api/v1` demo вызовам в local/stub mode.
 - [x] Добавить public API demo smoke в server release-check.
 - [x] Добавить design source contract gate в общий release-check.
+- [x] Добавить design screen route matrix для 25 экранов mobile/web.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

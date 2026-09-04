@@ -93,7 +93,7 @@ export default function WebHome() {
   }
 
   async function createDemoUser() {
-    const suffix = Date.now().toString().slice(-8);
+    const suffix = Date.now().toString().slice(-7).padStart(7, "0");
     const registered = await apiJson("/auth/register", {
       method: "POST",
       body: JSON.stringify({

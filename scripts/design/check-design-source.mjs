@@ -3,10 +3,40 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const failures = [];
+const mobileApp = readFileSync('apps/mobile/lib/main.dart', 'utf8');
+const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
+const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const darkDir = 'дизайн/темная';
 const lightDir = 'дизайн/светлая ';
 const compactMobileSize = { width: 941, height: 1672 };
 const fullHdMobileSize = { width: 1080, height: 1920 };
+const designScreens = [
+  ['01', 'Онбординг', '/onboarding', 'OnboardingScreen'],
+  ['02', 'Вход и регистрация', '/login', 'LoginScreen'],
+  ['03', 'Регистрация пользователя', '/register', 'RegisterScreen'],
+  ['04', 'SMS подтверждение', '/otp', 'OtpScreen'],
+  ['05', 'Биометрия', '/biometric', 'BiometricScreen'],
+  ['06', 'Главный экран', '/', 'HomeScreen'],
+  ['07', 'Новое дело', '/case/new', 'NewCaseScreen'],
+  ['08', 'Категория спора', '/case/category', 'CategoryScreen'],
+  ['09', 'Проверка документов', '/documents', 'DocumentsScreen'],
+  ['10', 'Загрузка документа', '/documents', 'DocumentsScreen'],
+  ['11', 'Анализ документов', '/documents/analysis', 'DocumentAnalysisScreen'],
+  ['12', 'Формирование претензии', '/workflow/pretrial-claim', 'PretrialClaimScreen'],
+  ['13', 'Проект претензии', '/workflow/pretrial-claim/draft', 'ClaimDraftScreen'],
+  ['14', 'Отправка претензии', '/workflow/pretrial-claim/send', 'ClaimSendScreen'],
+  ['15', 'Мои дела', '/cases', 'CasesListScreen'],
+  ['16', 'Карточка дела', '/case/details', 'CaseDetailsScreen'],
+  ['17', 'Чат по делу', '/case/chat', 'CaseChatScreen'],
+  ['18', 'Календарь и сроки', '/deadlines', 'DeadlinesScreen'],
+  ['19', 'Нормы права', '/legal', 'LegalSourcesScreen'],
+  ['20', 'Поиск нормы права', '/legal', 'LegalSourcesScreen'],
+  ['21', 'Документы и доказательства', '/documents', 'DocumentsScreen'],
+  ['22', 'Профиль', '/profile', 'ProfileScreen'],
+  ['23', 'Настройки', '/settings', 'SettingsScreen'],
+  ['24', 'Подписка', '/subscription', 'SubscriptionScreen'],
+  ['25', 'Помощь', '/help', 'HelpScreen'],
+];
 
 function pngFiles(dir) {
   if (!existsSync(dir)) {
@@ -65,6 +95,15 @@ if (!existsSync(screenListPath)) {
     .split('\n')
     .filter((line) => /^\d{2}_/.test(line));
   if (listedScreens.length < 20) failures.push(`screen list has ${listedScreens.length} entries, expected at least 20`);
+}
+
+for (const [prefix, label, route, widgetClass] of designScreens) {
+  if (!darkFiles.some((file) => (file.split('/').at(-1) ?? '').startsWith(`${prefix}_`))) {
+    failures.push(`dark theme missing design reference for ${prefix} ${label}`);
+  }
+  if (!webPage.includes(label)) failures.push(`web screen matrix missing label: ${label}`);
+  if (!mobileApp.includes(`path: '${route}'`)) failures.push(`mobile routes missing ${route} for ${label}`);
+  if (!mobileDesignTest.includes(`${widgetClass}()`)) failures.push(`mobile design render test missing ${widgetClass} for ${label}`);
 }
 
 if (failures.length) {

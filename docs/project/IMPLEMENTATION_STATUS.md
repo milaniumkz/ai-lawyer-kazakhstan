@@ -67,6 +67,7 @@
 | Web dynamic API demo P1 | Web scenario panel now runs real `/api/v1` demo calls for auth OTP, case creation, upload/OCR confirmation, document generation and RAG answer in local/stub mode | Web lint/typecheck/build passed; web UI contract passed; release-check local/server passed | done |
 | Public API demo smoke P1 | Public server release check now executes real `/api/v1` auth OTP, case, upload/OCR, document generation and RAG demo calls against the deployed server | `npm run release-check:server`, `npm run release-check:local && npm run release-check:server` passed | done |
 | Design source contract gate P1 | Added automated check for required dark/light design PNG references and expected mobile reference dimensions | `npm run test:design-source`, `npm run release-check:local && npm run release-check:server` passed | done |
+| Design screen route matrix P1 | Design gate now verifies all 25 dark reference screens are mapped to web labels, mobile routes and mobile render-test widgets; fixed web API demo phone format | `npm run test:design-source`, web lint/typecheck/build and release-check local/server passed | done |
 
 ## Блокеры окружения
 

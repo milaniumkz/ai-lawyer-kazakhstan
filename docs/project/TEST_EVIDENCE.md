@@ -140,6 +140,8 @@
 - Final release gate after public API demo smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Design source contract gate — `npm run test:design-source` passed; it verifies 25 dark PNG references, 20 light PNG references, numbered dark screens 01-25 and expected mobile reference dimensions.
 - Final release gate after design source contract — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
+- Design screen route matrix — `npm run test:design-source` now verifies all 25 dark design screens map to web labels, mobile routes and mobile render-test widgets; web API demo phone format fixed to valid `+7` length.
+- Final release gate after design screen route matrix — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 
