@@ -42,6 +42,8 @@
 - Full Node workspace build after identity repository foundation — `npm run build` passed.
 - Cases PostgreSQL repository API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 10 suites, 33 tests.
 - Full project check/build after cases repository foundation — `npm run check`, `npm run build` passed.
+- Documents PostgreSQL repository API checks — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 11 suites, 38 tests.
+- Full project check/build after documents repository foundation — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

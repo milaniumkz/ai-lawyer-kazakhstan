@@ -19,3 +19,4 @@
 - P1-007 Repository interfaces and PostgreSQL-backed services — in_progress.
 - P1-007A Identity PostgreSQL repository foundation — done.
 - P1-007B Cases/chat/transcripts PostgreSQL repository foundation — done.
+- P1-007C Documents/evidence PostgreSQL repository foundation — done.

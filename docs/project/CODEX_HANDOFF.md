@@ -37,6 +37,7 @@
 - Реализован P1-006 typed clients/codegen foundation: generated TS/Dart API path contracts and freshness checks.
 - Реализован P1-007 identity repository foundation: `DatabaseService`, repository interface, PostgreSQL adapter for users/sessions/profiles, hash-only persistence tests for refresh tokens and IIN/BIN.
 - Реализован P1-007B cases repository foundation: PostgreSQL adapter for cases/messages/transcripts and `case_idempotency_keys` migration.
+- Реализован P1-007C documents repository foundation: PostgreSQL adapter for upload sessions/files/OCR fields/evidence folders and `upload_sessions` migration.
 
 ## Дизайн-источник
 
@@ -56,4 +57,4 @@
 
 ## Следующая задача
 
-Следующая задача: продолжить PostgreSQL adapters для documents/RAG или подключить готовые identity/cases repositories к runtime services через config.
+Следующая задача: продолжить PostgreSQL adapters для RAG/templates/billing или подключить готовые repositories к runtime services через config.
