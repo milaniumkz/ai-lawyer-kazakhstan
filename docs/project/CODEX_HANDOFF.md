@@ -80,6 +80,8 @@
 - Public server release check now verifies deployed Next.js HTML/assets contain required web app labels, sync action and API route strings.
 - Flutter tests now include a router-smoke that opens every implemented release route through `AiLawyerApp`/`GoRouter`.
 - Public web stand UI was replaced with a stateful web application: home, cases, case card, chat, documents/OCR, deadlines, legal search, claim builder, profile/settings/subscription/help and API sync.
+- Every web design screen 01-25 now maps to an exact state/view; the right screen list no longer uses grouped approximate navigation.
+- Web view changes scroll to top so selected screens open from the expected header area.
 
 ## Дизайн-источник
 
@@ -125,6 +127,7 @@
 - Latest public web bundle smoke verified: `release-check:server` and full `release-check:local && release-check:server`.
 - Latest mobile router-smoke verified: Flutter analyze/test with 24 tests and full release-check local/server.
 - Latest real web app pass verified with web UI contract, web lint/typecheck/build, local release-check, public server refresh and server release-check.
+- Latest web 25-screen functional mapping verified with web UI contract, web lint/typecheck/build and local release-check.
 
 ## Следующая задача
 

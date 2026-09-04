@@ -78,5 +78,6 @@
 - [x] Добавить public web bundle smoke в server release-check.
 - [x] Добавить mobile router-smoke для всех release routes.
 - [x] Заменить web-стенд на реальное stateful web-приложение.
+- [x] Привязать все 25 web design screens к точным функциональным состояниям.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

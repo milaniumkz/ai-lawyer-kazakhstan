@@ -71,6 +71,7 @@
 | Public web bundle smoke P1 | Server release check now fetches deployed Next.js HTML/assets and verifies required web app labels, sync action and API route strings are present in the public bundle | `npm run release-check:server`, `npm run release-check:local && npm run release-check:server` passed | done |
 | Mobile router release smoke P1 | Flutter tests now open every implemented release route through the app router and assert the expected screen content renders without exceptions | Flutter analyze passed; Flutter test passed with 24 widget/golden tests; release-check local/server passed | done |
 | Real web application pass P1 | Replaced the public web stand with a stateful app: design-style home, bottom/side navigation, cases, case card, chat, documents/OCR, deadlines, legal search, claim builder, profile/settings/subscription/help and API sync | Web UI contract, web lint/typecheck/build and local release-check passed; public server refreshed and server smoke passed | done |
+| Web 25-screen functional mapping P1 | Added concrete web app states for every design screen 01-25, including onboarding/auth/OTP/biometric, new case/category, document check/upload/analysis, claim draft/send and legal search; right screen list now opens exact views | Web UI contract and `npm run release-check:local` passed | done |
 
 ## Блокеры окружения
 

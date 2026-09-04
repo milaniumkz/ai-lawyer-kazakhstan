@@ -139,6 +139,27 @@ button { cursor: pointer; }
   padding: 42px 30px 112px;
 }
 
+.centerPanel,
+.authPanel {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 18px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe49a, var(--gold));
+  color: #14202b;
+  font-size: 58px;
+  box-shadow: 0 0 0 28px rgba(216, 161, 58, 0.08);
+}
+
 .topLine {
   display: flex;
   align-items: flex-start;
@@ -186,6 +207,8 @@ h3 { font-size: 28px; }
 
 .mic.active { transform: scale(0.97); box-shadow: 0 0 0 34px rgba(216, 60, 60, 0.12), 0 0 0 72px rgba(216, 161, 58, 0.04); }
 .mic span { font-size: 110px; line-height: 1; }
+.mic.small { width: 168px; margin-top: 18px; }
+.mic.small span { font-size: 68px; }
 
 .homeScreen > h2,
 .hint { text-align: center; }
@@ -284,6 +307,10 @@ progress {
   display: flex;
   justify-content: space-between;
   gap: 16px;
+}
+
+.wide {
+  width: 100%;
 }
 
 input,

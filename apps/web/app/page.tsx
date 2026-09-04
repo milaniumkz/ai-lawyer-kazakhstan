@@ -1,38 +1,63 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type View = "home" | "cases" | "case" | "chat" | "documents" | "analysis" | "deadlines" | "legal" | "claim" | "profile" | "settings" | "subscription" | "help";
+type View =
+  | "onboarding"
+  | "login"
+  | "register"
+  | "otp"
+  | "biometric"
+  | "home"
+  | "newCase"
+  | "category"
+  | "documentCheck"
+  | "documentUpload"
+  | "analysis"
+  | "claim"
+  | "claimDraft"
+  | "claimSend"
+  | "cases"
+  | "case"
+  | "chat"
+  | "deadlines"
+  | "legal"
+  | "legalSearch"
+  | "documents"
+  | "profile"
+  | "settings"
+  | "subscription"
+  | "help";
 type CaseItem = { id: string; title: string; type: string; status: string; date: string; progress: number };
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 
-const screenLabels = [
-  "Онбординг",
-  "Вход и регистрация",
-  "Регистрация пользователя",
-  "SMS подтверждение",
-  "Биометрия",
-  "Главный экран",
-  "Новое дело",
-  "Категория спора",
-  "Проверка документов",
-  "Загрузка документа",
-  "Анализ документов",
-  "Формирование претензии",
-  "Проект претензии",
-  "Отправка претензии",
-  "Мои дела",
-  "Карточка дела",
-  "Чат по делу",
-  "Календарь и сроки",
-  "Нормы права",
-  "Поиск нормы права",
-  "Документы и доказательства",
-  "Профиль",
-  "Настройки",
-  "Подписка",
-  "Помощь",
+const screens: { label: string; view: View }[] = [
+  { label: "Онбординг", view: "onboarding" },
+  { label: "Вход и регистрация", view: "login" },
+  { label: "Регистрация пользователя", view: "register" },
+  { label: "SMS подтверждение", view: "otp" },
+  { label: "Биометрия", view: "biometric" },
+  { label: "Главный экран", view: "home" },
+  { label: "Новое дело", view: "newCase" },
+  { label: "Категория спора", view: "category" },
+  { label: "Проверка документов", view: "documentCheck" },
+  { label: "Загрузка документа", view: "documentUpload" },
+  { label: "Анализ документов", view: "analysis" },
+  { label: "Формирование претензии", view: "claim" },
+  { label: "Проект претензии", view: "claimDraft" },
+  { label: "Отправка претензии", view: "claimSend" },
+  { label: "Мои дела", view: "cases" },
+  { label: "Карточка дела", view: "case" },
+  { label: "Чат по делу", view: "chat" },
+  { label: "Календарь и сроки", view: "deadlines" },
+  { label: "Нормы права", view: "legal" },
+  { label: "Поиск нормы права", view: "legalSearch" },
+  { label: "Документы и доказательства", view: "documents" },
+  { label: "Профиль", view: "profile" },
+  { label: "Настройки", view: "settings" },
+  { label: "Подписка", view: "subscription" },
+  { label: "Помощь", view: "help" },
 ];
 
 const initialCases: CaseItem[] = [
@@ -66,6 +91,10 @@ export default function WebHome() {
     () => cases.filter((item) => item.title.toLowerCase().includes(caseSearch.toLowerCase()) || caseSearch.length < 3),
     [cases, caseSearch],
   );
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [view]);
 
   function addCase() {
     const next: CaseItem = {
@@ -127,6 +156,81 @@ export default function WebHome() {
   }
 
   function renderView() {
+    if (view === "onboarding") {
+      return (
+        <section className="contentPanel centerPanel">
+          <div className="brandMark">⚖</div>
+          <Header title="AI Юрист Казахстан" subtitle="Юридический помощник с проверкой официальных источников РК" />
+          <button className="primary wide" onClick={() => setView("login")}>Начать</button>
+          <button className="wide" onClick={() => setView("home")}>Уже есть аккаунт</button>
+        </section>
+      );
+    }
+
+    if (view === "login" || view === "register" || view === "otp" || view === "biometric") {
+      return (
+        <section className="contentPanel authPanel">
+          <Header
+            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "SMS подтверждение" : "Биометрия"}
+            subtitle="Безопасный вход, согласие v1 и локальная биометрия"
+          />
+          {view === "login" && (
+            <>
+              <input placeholder="+7 номер телефона" />
+              <input placeholder="Пароль или PIN" type="password" />
+              <button className="primary wide" onClick={() => setView("otp")}>Получить код</button>
+              <button className="wide" onClick={() => setView("register")}>Зарегистрироваться</button>
+            </>
+          )}
+          {view === "register" && (
+            <>
+              <input placeholder="Ф.И.О." />
+              <input placeholder="+7 номер телефона" />
+              <input placeholder="E-mail" />
+              <label className="toggle"><input type="checkbox" defaultChecked /> Согласие с обработкой данных v1</label>
+              <button className="primary wide" onClick={() => setView("otp")}>Создать аккаунт</button>
+            </>
+          )}
+          {view === "otp" && (
+            <>
+              <input placeholder="Код из SMS" defaultValue="111111" />
+              <button className="primary wide" onClick={() => setView("biometric")}>Подтвердить</button>
+              <button className="wide" onClick={() => setSyncState("Код повторно отправлен")}>Отправить код повторно</button>
+            </>
+          )}
+          {view === "biometric" && (
+            <>
+              <div className="brandMark">◎</div>
+              <button className="primary wide" onClick={() => setSyncState("Биометрия включена")}>Включить биометрию</button>
+              <button className="wide" onClick={() => setView("profile")}>Продолжить</button>
+            </>
+          )}
+        </section>
+      );
+    }
+
+    if (view === "newCase") {
+      return (
+        <section className="contentPanel">
+          <Header title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
+          <button className={recording ? "mic small active" : "mic small"} onClick={() => setRecording(!recording)} aria-label="Записать голос"><span>⌾</span></button>
+          <p className="hint">{recording ? "Запись активна" : "Нажмите и говорите голосом"}</p>
+          <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+          <button className="primary wide" onClick={() => setView("category")}>Продолжить</button>
+        </section>
+      );
+    }
+
+    if (view === "category") {
+      return (
+        <section className="contentPanel">
+          <Header title="Категория спора" subtitle="AI определил категорию по описанию" />
+          <div className="chips">{["Гражданское право", "Трудовой спор", "Семейное право"].map((type) => <button className="chip" key={type} onClick={() => { setCaseText(`${caseText} ${type}`); }}>{type}</button>)}</div>
+          <button className="primary wide" onClick={addCase}>Подтвердить и создать дело</button>
+        </section>
+      );
+    }
+
     if (view === "cases") {
       return (
         <section className="contentPanel">
@@ -188,13 +292,16 @@ export default function WebHome() {
       );
     }
 
-    if (view === "documents" || view === "analysis") {
+    if (view === "documents" || view === "analysis" || view === "documentCheck" || view === "documentUpload") {
       return (
         <section className="contentPanel">
-          <Header title={view === "documents" ? "Документы и доказательства" : "Анализ документов"} subtitle="Загрузка документа, OCR и проверка фактов" />
+          <Header
+            title={view === "analysis" ? "Анализ документов" : view === "documentUpload" ? "Загрузка документа" : view === "documentCheck" ? "Проверка документов" : "Документы и доказательства"}
+            subtitle="Загрузка документа, OCR и проверка фактов"
+          />
           <div className="actionBar">
-            <button className="primary" onClick={() => addDocument("Договор займа.pdf")}>Загрузить файл</button>
-            <button onClick={() => addDocument("Скан документа.jpg")}>Сканировать документ</button>
+            <button className="primary" onClick={() => { addDocument("Договор займа.pdf"); setView("documentUpload"); }}>Загрузить файл</button>
+            <button onClick={() => { addDocument("Скан документа.jpg"); setView("documentUpload"); }}>Сканировать документ</button>
             <button onClick={() => setOcrConfirmed(true)}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
           </div>
           <div className="list">
@@ -220,28 +327,28 @@ export default function WebHome() {
       );
     }
 
-    if (view === "legal") {
+    if (view === "legal" || view === "legalSearch") {
       return (
         <section className="contentPanel">
-          <Header title="Нормы права" subtitle="Поиск нормы права только по официальным источникам РК" />
+          <Header title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Поиск нормы права только по официальным источникам РК" />
           <div className="searchRow">
             <input value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} />
-            <button className="primary" onClick={() => setLegalAnswer("В официальных источниках не найдено достаточного подтверждения. Требуется проверка юристом.")}>Найти норму</button>
+            <button className="primary" onClick={() => { setLegalAnswer("В официальных источниках не найдено достаточного подтверждения. Требуется проверка юристом."); setView("legalSearch"); }}>Найти норму</button>
           </div>
           <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
         </section>
       );
     }
 
-    if (view === "claim") {
+    if (view === "claim" || view === "claimDraft" || view === "claimSend") {
       return (
         <section className="contentPanel">
-          <Header title={sent ? "Отправка претензии" : claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" />
+          <Header title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" />
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <div className="claimPreview">Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя.</div>
           <div className="actionBar">
-            <button className="primary" onClick={() => setClaimReady(true)}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
-            <button disabled={!claimReady} onClick={() => setSent(true)}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
+            <button className="primary" onClick={() => { setClaimReady(true); setView("claimDraft"); }}>{claimReady ? "Проект сформирован" : "Сформировать проект"}</button>
+            <button disabled={!claimReady} onClick={() => { setSent(true); setView("claimSend"); }}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
           </div>
         </section>
       );
@@ -318,7 +425,14 @@ export default function WebHome() {
         <Header title="Новое дело" subtitle="Голосовое описание и категория спора" />
         <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
         <div className="actionBar"><button className="primary" onClick={addCase}>Подтвердить и создать дело</button><button onClick={() => setView("legal")}>Поиск нормы права</button></div>
-        <div className="screenList">{screenLabels.map((label, index) => <button key={label} onClick={() => setView(index > 20 ? "profile" : index > 17 ? "legal" : index > 14 ? "cases" : index > 8 ? "documents" : "home")}><span>{String(index + 1).padStart(2, "0")}</span>{label}</button>)}</div>
+        <div className="screenList">
+          {screens.map((screen, index) => (
+            <button key={screen.label} onClick={() => setView(screen.view)}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {screen.label}
+            </button>
+          ))}
+        </div>
       </aside>
     </main>
   );

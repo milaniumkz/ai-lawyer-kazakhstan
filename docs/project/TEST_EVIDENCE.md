@@ -148,6 +148,8 @@
 - Final release gate after mobile router smoke — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - Real web application pass — `npm run test:web-ui`, `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` passed after replacing stand UI with stateful application UI and adding favicon.
 - Final release gate after real web application pass — `npm run release-check:local` passed; public server was refreshed and `npm run release-check:server` passed.
+- Web 25-screen functional mapping — `npm run test:web-ui`, web lint/typecheck/build and `npm run release-check:local` passed after mapping every design screen 01-25 to an exact web state instead of grouped/approximate navigation.
+- Web app navigation polish — `npm run release-check:local` passed after adding scroll-to-top on view changes so each selected web screen opens from its header.
 
 ## Заблокировано
 
