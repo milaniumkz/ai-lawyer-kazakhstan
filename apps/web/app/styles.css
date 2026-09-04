@@ -217,6 +217,50 @@ h2 {
   padding: 24px 0 64px;
 }
 
+.workspace {
+  display: grid;
+  width: min(1120px, calc(100% - 32px));
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 18px 42px rgba(32, 39, 44, 0.08);
+  padding: 24px;
+}
+
+.state {
+  margin: 16px 0 0;
+  border-left: 3px solid var(--gold);
+  padding: 12px 14px;
+  background: rgba(216, 161, 58, 0.12);
+  color: var(--text);
+}
+
+.compact {
+  margin-top: 16px;
+}
+
+.timeline {
+  display: grid;
+  gap: 10px;
+}
+
+.timeline button {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: transparent;
+  padding: 12px 14px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -257,7 +301,8 @@ h2 {
 
 @media (max-width: 860px) {
   .heroGrid,
-  .status {
+  .status,
+  .workspace {
     grid-template-columns: 1fr;
   }
 
@@ -285,7 +330,8 @@ h2 {
 @media (max-width: 520px) {
   .hero,
   .section,
-  .status {
+  .status,
+  .workspace {
     width: min(100% - 20px, 1120px);
   }
 

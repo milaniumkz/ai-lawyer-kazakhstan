@@ -61,5 +61,8 @@
 - [x] Добавить QA release bundle script.
 - [x] Закрыть placeholder-кнопки в mobile/web RC flows.
 - [x] Обновить публичный web стенд после интерактивных flow.
+- [x] Подключить рабочую нижнюю навигацию mobile по основным разделам.
+- [x] Добавить mobile screens “Мои дела”, “Карточка дела”, “Сроки” по дизайн-референсам.
+- [x] Добавить web scenario workspace с рабочими действиями и состояниями.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

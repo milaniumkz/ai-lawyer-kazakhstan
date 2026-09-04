@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -118,6 +119,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthScaffold(
       title: 'Профиль пользователя',
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -202,16 +204,23 @@ class _SecurityNotice extends StatelessWidget {
 }
 
 class AuthScaffold extends StatelessWidget {
-  const AuthScaffold({required this.title, required this.child, super.key});
+  const AuthScaffold({
+    required this.title,
+    required this.child,
+    this.bottomNavigationBar,
+    super.key,
+  });
 
   final String title;
   final Widget child;
+  final Widget? bottomNavigationBar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(title)),
+      bottomNavigationBar: bottomNavigationBar,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),

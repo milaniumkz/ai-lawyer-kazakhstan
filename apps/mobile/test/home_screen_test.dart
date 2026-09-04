@@ -38,6 +38,56 @@ void main() {
     expect(find.text('Подтвердить и создать дело'), findsOneWidget);
   });
 
+  testWidgets('bottom navigation opens cases documents deadlines and profile',
+      (tester) async {
+    await setLargeViewport(tester);
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('nav-cases')));
+    await tester.pumpAndSettle();
+    expect(find.text('Мои дела'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('nav-documents')));
+    await tester.pumpAndSettle();
+    expect(find.text('Документы и доказательства'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('nav-deadlines')));
+    await tester.pumpAndSettle();
+    expect(find.text('Календарь и сроки'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    expect(find.text('Профиль пользователя'), findsWidgets);
+  });
+
+  testWidgets('cases list filters search and opens case details',
+      (tester) async {
+    await setLargeViewport(tester);
+    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Все дела'));
+    await tester.tap(find.text('Все дела'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('В работе'));
+    await tester.pumpAndSettle();
+    expect(find.text('Взыскание долга'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Поиск дела'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Алименты');
+    await tester.pumpAndSettle();
+    expect(find.text('Алименты'), findsWidgets);
+    await tester.tap(find.byTooltip('Назад'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Взыскание долга').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Карточка дела'), findsOneWidget);
+    expect(find.text('Продолжить работу'), findsOneWidget);
+  });
+
   testWidgets('shows documents OCR review screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
 
@@ -89,6 +139,7 @@ void main() {
 
   testWidgets('document upload scan and OCR confirmation buttons work',
       (tester) async {
+    await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
 
     await tester.tap(find.text('Загрузить файл'));
@@ -99,7 +150,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Скан готов'), findsOneWidget);
 
-    await tester.tap(find.text('Подтвердить поля'));
+    await tester.ensureVisible(find.text('Подтвердить поля'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Подтвердить поля'));
     await tester.pumpAndSettle();
     expect(find.text('Поля подтверждены'), findsOneWidget);
   });
@@ -131,5 +183,14 @@ void main() {
 
     expect(find.text('Оплата недоступна'), findsOneWidget);
     expect(find.textContaining('Payment provider'), findsOneWidget);
+  });
+}
+
+Future<void> setLargeViewport(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(941, 1672);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
   });
 }

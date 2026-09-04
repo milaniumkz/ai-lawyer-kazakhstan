@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,31 +11,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Главная',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.business_center_outlined),
-            label: 'Дела',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            label: 'Документы',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            label: 'Сроки',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Профиль',
-          ),
-        ],
-      ),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -43,11 +20,18 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Здравствуйте',
+                    'Здравствуйте, Дмитрий',
                     style: theme.textTheme.displaySmall?.copyWith(
                       color: AppColors.goldDark,
                     ),
                   ),
+                ),
+                IconButton(
+                  tooltip: 'Уведомления',
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Новых уведомлений нет')),
+                  ),
+                  icon: const Icon(Icons.notifications_none),
                 ),
                 IconButton(
                   tooltip: 'Профиль',
@@ -117,16 +101,26 @@ class HomeScreen extends StatelessWidget {
                 color: AppColors.goldDark,
               ),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => context.go('/cases'),
+                icon: const Icon(Icons.chevron_right),
+                label: const Text('Все дела'),
+              ),
+            ),
             const SizedBox(height: 12),
             const _CaseCard(
               title: 'Взыскание долга',
               subtitle: 'Дело №2024-0015 · Гражданское право',
               status: 'В работе',
+              route: '/case/details',
             ),
             const _CaseCard(
               title: 'Алименты',
               subtitle: 'Дело №2024-0012 · Семейное право',
               status: 'Подготовка документов',
+              route: '/case/details',
             ),
           ],
         ),
@@ -190,17 +184,20 @@ class _CaseCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.status,
+    required this.route,
   });
 
   final String title;
   final String subtitle;
   final String status;
+  final String route;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
+        onTap: () => context.go(route),
         leading: const CircleAvatar(child: Icon(Icons.balance_outlined)),
         title: Text(title),
         subtitle: Text('$subtitle\n$status'),

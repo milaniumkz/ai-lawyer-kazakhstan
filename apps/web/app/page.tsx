@@ -15,6 +15,7 @@ const checks = ["OpenAPI", "PostgreSQL", "AI smoke", "Flutter golden", "Admin co
 
 export default function WebHome() {
   const [activeFlow, setActiveFlow] = useState(flows[0]);
+  const [flowState, setFlowState] = useState("Выберите сценарий");
   const [log, setLog] = useState<string[]>(["Стенд готов к RC-тестированию"]);
   const [apiStatus, setApiStatus] = useState("не проверено");
   const [aiStatus, setAiStatus] = useState("не проверено");
@@ -33,7 +34,13 @@ export default function WebHome() {
 
   function runFlow(flow: string[]) {
     setActiveFlow(flow);
+    setFlowState(flow[3]);
     setLog((items) => [`${flow[1]}: ${flow[3]}`, ...items].slice(0, 5));
+  }
+
+  function runFlowAction(action: string) {
+    setFlowState(action);
+    setLog((items) => [`${activeFlow[1]}: ${action}`, ...items].slice(0, 5));
   }
 
   return (
@@ -71,6 +78,36 @@ export default function WebHome() {
               ))}
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section className="workspace">
+        <div className="panel">
+          <p className="eyebrow">Активный сценарий</p>
+          <h2>{activeFlow[1]}</h2>
+          <p>{activeFlow[2]}</p>
+          <div className="state">{flowState}</div>
+          <div className="actions compact">
+            <button className="primary" onClick={() => runFlowAction(`${activeFlow[3]} выполнено`)}>
+              Выполнить
+            </button>
+            <button className="secondary" onClick={() => runFlowAction("Требуется ручная проверка юристом")}>
+              На проверку
+            </button>
+            <button className="secondary" onClick={() => runFlowAction("Внешняя интеграция заблокирована без ключей")}>
+              Blocker
+            </button>
+          </div>
+        </div>
+        <div className="panel">
+          <p className="eyebrow">Журнал действий</p>
+          <div className="timeline">
+            {log.map((item) => (
+              <button key={item} onClick={() => setFlowState(item)}>
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 

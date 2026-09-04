@@ -55,6 +55,8 @@
 | Production env gate P1 | Added explicit production blocker check for HTTPS URLs, PostgreSQL, real secrets and non-stub integrations | `npm run release-check:production-env` correctly blocks placeholder env | done |
 | QA release bundle P1 | Added reproducible release bundle script with docs, OpenAPI, Android APK, source archive and SHA256SUMS | `npm run release:bundle` passed | done |
 | Mobile/web interactive RC flows P1 | Closed placeholder buttons for auth recovery/OTP resend, voice intake, chat send, documents scan/upload/OCR confirmation, evidence tap, pretrial draft generation, subscription payment blocker, and web health/flow actions | Flutter analyze/test passed with 16 widget/golden tests; web lint/typecheck/build passed; server health passed | done |
+| Mobile design/navigation parity pass P1 | Added reusable bottom navigation, cases list with filters/search, case details screen, deadlines screen, clickable home case cards and working case detail actions aligned to dark design references | Flutter analyze passed; Flutter test passed with 18 widget/golden tests | done |
+| Web functional scenario panel P1 | Added active scenario workspace, executable actions, manual-review/blocker states and clickable activity log for desktop/mobile web testing | Web lint/typecheck/build passed; public server check passed | done |
 
 ## Блокеры окружения
 

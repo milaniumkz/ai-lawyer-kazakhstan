@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 class LegalSourcesScreen extends StatelessWidget {
   const LegalSourcesScreen({super.key});
@@ -32,6 +33,74 @@ class LegalSourcesScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const _CitationCard(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class DeadlinesScreen extends StatefulWidget {
+  const DeadlinesScreen({super.key});
+
+  @override
+  State<DeadlinesScreen> createState() => _DeadlinesScreenState();
+}
+
+class _DeadlinesScreenState extends State<DeadlinesScreen> {
+  var reminderEnabled = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Сроки')),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(
+              'Календарь и сроки',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(color: AppColors.goldDark),
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              value: reminderEnabled,
+              onChanged: (value) => setState(() => reminderEnabled = value),
+              title: const Text('Напоминания'),
+              subtitle: Text(reminderEnabled ? 'Включены' : 'Выключены'),
+            ),
+            const _DeadlineCard('Претензия', '18 апр 2024', 'Ожидает'),
+            const _DeadlineCard('Подача в суд', '22 мая 2024', '12 дней'),
+            const _DeadlineCard(
+                'Судебное заседание', '05 июн 2024', 'Запланировано'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DeadlineCard extends StatelessWidget {
+  const _DeadlineCard(this.title, this.date, this.status);
+
+  final String title;
+  final String date;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading:
+            const Icon(Icons.event_available_outlined, color: AppColors.gold),
+        title: Text(title),
+        subtitle: Text(status),
+        trailing: Text(date),
+        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$title: $date')),
         ),
       ),
     );

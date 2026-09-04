@@ -118,6 +118,8 @@
 - Final blocker-aware validation after interactive flows — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 - RC4 source archive — `dist/release/v0.1.0-rc.4/source/ai-lawyer-kz-v0.1.0-rc.4-source.tar.gz` uploaded to `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.4.tar.gz` and verified with SHA-256 `ab72bb03d794a8863019fca24f77623133168893399fd1cedf20b9ac984f7e96`.
 - RC4 QA release bundle — `npm run release:bundle -- v0.1.0-rc.4` produced bundle SHA-256 `ed1e6f946c43d8f5f542dee82ca2eb5f7ac79a0c5f03e26a276bf27775cf33fc`.
+- Mobile design/navigation parity pass — `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed; `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 18 tests after adding bottom navigation routes, cases list filters/search, case detail actions and deadlines screen.
+- Web functional scenario panel — `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` passed; deployed web rebuilt on server and `npm run release-check:server` returned `public server ok: http://89.207.250.217`.
 
 ## Заблокировано
 

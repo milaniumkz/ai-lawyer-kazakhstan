@@ -64,6 +64,8 @@
 - Добавлены release ops scripts: firewall, PostgreSQL backup, daily backup timer, localhost binds.
 - Закрыты placeholder-кнопки в Flutter и web: восстановление доступа, повтор OTP, запись голоса, отправка чата, загрузка/скан документов, OCR confirmation, evidence tap, генерация претензии, payment blocker и web health/actions.
 - Публичный web стенд обновлен после интерактивных flow; `server-health-check.sh` прошел.
+- Добавлены reusable bottom navigation, “Мои дела”, “Карточка дела”, “Сроки”, фильтры/поиск по делам и рабочие действия карточки дела.
+- Web получил scenario workspace: выполнение сценария, ручная проверка, blocker state и кликабельный журнал.
 
 ## Дизайн-источник
 
@@ -94,6 +96,7 @@
 - QA release bundle built for `v0.1.0-rc.3`.
 - Final interactive-flow checks passed: Flutter analyze/test with 16 widget/golden tests, web lint/typecheck/build, `release-check:local` and `release-check:server`.
 - RC4 tag/source archive/bundle prepared; source archive uploaded to server and verified.
+- Latest mobile/web parity pass verified: Flutter analyze/test 18 tests, web lint/typecheck/build, server rebuild and public server check.
 
 ## Следующая задача
 

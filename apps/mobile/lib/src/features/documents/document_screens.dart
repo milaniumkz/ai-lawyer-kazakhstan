@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -18,6 +19,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Документы и доказательства')),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 2),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),

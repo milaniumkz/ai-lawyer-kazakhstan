@@ -15,23 +15,31 @@ void main() {
   runApp(const ProviderScope(child: AiLawyerApp()));
 }
 
-final _router = GoRouter(
-  routes: [
-    GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
-    GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-    GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
-    GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
-    GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
-    GoRoute(path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
-    GoRoute(
-        path: '/workflow/pretrial-claim',
-        builder: (_, __) => const PretrialClaimScreen()),
-    GoRoute(
-        path: '/subscription', builder: (_, __) => const SubscriptionScreen()),
-  ],
-);
+GoRouter _buildRouter() => GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
+        GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+        GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
+        GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/cases', builder: (_, __) => const CasesListScreen()),
+        GoRoute(
+            path: '/case/details',
+            builder: (_, __) => const CaseDetailsScreen()),
+        GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
+        GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
+        GoRoute(
+            path: '/documents', builder: (_, __) => const DocumentsScreen()),
+        GoRoute(
+            path: '/deadlines', builder: (_, __) => const DeadlinesScreen()),
+        GoRoute(path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
+        GoRoute(
+            path: '/workflow/pretrial-claim',
+            builder: (_, __) => const PretrialClaimScreen()),
+        GoRoute(
+            path: '/subscription',
+            builder: (_, __) => const SubscriptionScreen()),
+      ],
+    );
 
 class AiLawyerApp extends StatelessWidget {
   const AiLawyerApp({super.key, this.themeMode = ThemeMode.system});
@@ -45,7 +53,7 @@ class AiLawyerApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      routerConfig: _router,
+      routerConfig: _buildRouter(),
       debugShowCheckedModeBanner: false,
     );
   }
