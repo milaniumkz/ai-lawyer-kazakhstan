@@ -565,6 +565,11 @@ progress {
   width: 100%;
 }
 
+.dangerAction {
+  border-color: rgba(214, 80, 80, 0.5);
+  color: #ffb4a8;
+}
+
 input,
 textarea {
   width: 100%;

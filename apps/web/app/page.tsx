@@ -861,6 +861,35 @@ export default function WebHome() {
     }
   }
 
+  async function exportAccount() {
+    try {
+      const userId = await ensureUser();
+      const exported = await apiJson("/account/export", { headers: { "x-user-id": userId } }) as { profiles?: unknown[]; sessions?: unknown[]; exportedAt?: string };
+      const profileCount = exported.profiles?.length ?? 0;
+      const sessionCount = exported.sessions?.length ?? 0;
+      setSyncState(`Экспорт готов: ${profileCount} профилей, ${sessionCount} сессий`);
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Экспорт API ошибка: ${error.message}` : "Экспорт API ошибка");
+    }
+  }
+
+  async function deleteAccount() {
+    if (!window.confirm("Удалить аккаунт и отозвать все сессии?")) return;
+    try {
+      const userId = await ensureUser();
+      await apiJson("/account", { method: "DELETE", headers: { "x-user-id": userId } });
+      setAuthUserId("");
+      setOtpId("");
+      setOtp("");
+      setRemoteCaseId("");
+      setRemoteDocumentId("");
+      setSyncState("Аккаунт удален, сессии отозваны");
+      go("login");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Удаление API ошибка: ${error.message}` : "Удаление API ошибка");
+    }
+  }
+
   function AppHeader({ title, subtitle, back = "home" }: { title: string; subtitle: string; back?: View }) {
     return (
       <header className="screenHeader">
@@ -1130,6 +1159,8 @@ export default function WebHome() {
           <label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Предупреждать о бюджете AI</label>
           <div className="analysisBox"><strong>Статус</strong><p>{maskPii ? "PII masking включен" : "PII masking выключен"} · {budgetAlerts ? "Уведомления включены" : "Уведомления выключены"}</p></div>
           <button className="primary wide" onClick={saveSettings}>Сохранить настройки</button>
+          <button className="wide" onClick={() => { void exportAccount(); }}>Экспортировать данные</button>
+          <button className="wide dangerAction" onClick={() => { void deleteAccount(); }}>Удалить аккаунт</button>
         </section>
       );
     }
