@@ -53,6 +53,7 @@
 - Реализован P1-017 OpenAPI/controller route drift check: all NestJS controller routes are compared against OpenAPI and generated clients.
 - Реализован P1-018 API HTTP smoke tests: in-process Nest app with `/api/v1` prefix covers health, identity, cases, documents, RAG, templates and billing.
 - Реализован P1-019 AI service test pipeline: root/CI run AI unittest discovery; FastAPI endpoint smoke tests skip until runtime deps are installed.
+- Реализован P1-020 AI runtime dependency setup: `services/ai[dev]` installs in CI, `httpx2` added, AI HTTP smoke now runs locally with 0 skipped tests.
 
 ## Дизайн-источник
 
@@ -72,4 +73,4 @@
 
 ## Следующая задача
 
-Следующая задача: install AI runtime deps for active HTTP smoke, continue remaining mobile/admin UI, или PostgreSQL smoke tests when Docker/Postgres available.
+Следующая задача: continue remaining mobile/admin UI hardening или PostgreSQL smoke tests when Docker/Postgres available.

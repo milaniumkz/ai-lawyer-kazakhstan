@@ -29,3 +29,4 @@ P1-016,P1,Admin UI contract check,done
 P1-017,P1,OpenAPI controller route drift check,done
 P1-018,P1,API HTTP smoke tests,done
 P1-019,P1,AI service test pipeline,done
+P1-020,P1,AI runtime dependency setup,done

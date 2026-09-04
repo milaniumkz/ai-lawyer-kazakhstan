@@ -39,6 +39,7 @@
 - [x] Добавить OpenAPI/controller route drift check.
 - [x] Добавить API HTTP smoke tests для основных vertical routes.
 - [x] Добавить AI service unit/HTTP smoke test pipeline.
+- [x] Активировать AI HTTP smoke tests через documented dev dependency setup.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.
 - [ ] Покрыть unit/integration/E2E тестами.
 - [ ] Выполнить Flutter analyze/test/build.

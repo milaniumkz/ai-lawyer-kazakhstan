@@ -73,8 +73,11 @@
 - Full project check/build after route drift check — `npm run check`, `npm run build` passed.
 - API HTTP smoke tests — `npm run lint --workspace services/api`, `npm run typecheck --workspace services/api`, `npm test --workspace services/api` passed; 15 suites, 58 tests.
 - Full project check/build after API HTTP smoke tests — `npm run check`, `npm run build` passed.
-- AI service tests — `npm run test:ai` passed; 6 tests, 2 skipped because FastAPI/TestClient is not installed in local Python environment.
+- AI service tests — `npm run test:ai` passed; 6 tests, 2 skipped before installing FastAPI/TestClient dependencies.
 - Full project check/build after AI test pipeline — `npm run check`, `npm run build` passed.
+- AI dependency setup — `python3 -m pip install -e "services/ai[dev]"` passed.
+- Active AI HTTP smoke tests — `npm run test:ai` passed; 6 tests, 0 skipped.
+- Full project check/build after active AI HTTP smoke — `npm run check`, `npm run build` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
