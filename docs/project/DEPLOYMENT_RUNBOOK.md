@@ -15,6 +15,7 @@ Default API persistence is `PERSISTENCE_MODE=local`. Set `PERSISTENCE_MODE=postg
 Production deployment requires approved Kazakhstan data residency infrastructure, runtime secrets, TLS/DNS, object storage, database backups, monitoring and legal approval of workflows. Do not deploy with `.env.example` values.
 
 `PERSISTENCE_MODE=postgres` enables persistent identity sessions/profiles, cases/chat/transcripts, document/evidence metadata, legal source fragments, generated legal documents and billing ledger/provider settings. PostgreSQL smoke tests still require Docker/Postgres availability.
+Before production launch, run `npm run release-check:production-env` with the real runtime environment loaded. It must fail while any required secret, HTTPS URL or production integration is missing.
 
 ## Cloud Server Scripts
 
