@@ -83,6 +83,8 @@
 - Final mobile RC rebuild — Android debug APK, Android release APK and iOS debug no-codesign build passed on 2026-09-04.
 - Docker check — `docker --version` failed: `command not found`.
 - Final RC acceptance matrix check/build — `npm run check`, `npm run build` passed.
+- RC status script — `node scripts/release/check-rc-status.mjs` passed and recorded Docker as external blocker.
+- Local release check — `npm run release-check:local` passed.
 - Flutter API contract test — passed.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.

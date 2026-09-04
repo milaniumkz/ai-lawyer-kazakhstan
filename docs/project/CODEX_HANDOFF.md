@@ -56,6 +56,7 @@
 - Реализован P1-020 AI runtime dependency setup: `services/ai[dev]` installs in CI, `httpx2` added, AI HTTP smoke now runs locally with 0 skipped tests.
 - Реализован P1-021 official legal source ingestion adapter: official KZ source list plus manual/admin fallback blockers, no fake production ingestion.
 - Реализован P1-022 final RC acceptance matrix: internal validation status, closed criteria and external blockers.
+- Реализован P1-023 blocker-aware release check: `release-check:local` passes without Docker while recording it as blocker; `release-check:production` keeps Docker gate.
 
 ## Дизайн-источник
 

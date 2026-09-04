@@ -22,7 +22,9 @@
     "build": "npm run build --workspaces --if-present",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:contract && npm run test:migrations && npm run test:admin-ui && npm run test:security && npm run analyze:flutter && npm run test:flutter && npm run test:ai",
     "docker:config": "docker compose -f infra/docker-compose.yml config",
-    "release-check": "npm run check && npm run build && npm run docker:config"
+    "release-check:local": "npm run check && npm run build && node scripts/release/check-rc-status.mjs",
+    "release-check:production": "npm run release-check:local && npm run docker:config",
+    "release-check": "npm run release-check:local"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

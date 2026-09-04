@@ -22,6 +22,7 @@
 | Security | Safe error envelope, correlation ID, secret/foreign-law scan, no raw PII in AI ledger tests | pass |
 | Legal guardrails | Official KZ source allowlist, citation validation, no-source fallback, manual ingestion blockers | pass |
 | Docs | Architecture, integrations, security, deployment runbook, store guide, blockers, release notes | pass |
+| Local release validation | `npm run release-check:local` passes check/build/RC status and records Docker as external blocker | pass |
 
 ## Blocked Criteria
 

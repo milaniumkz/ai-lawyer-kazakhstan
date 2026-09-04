@@ -38,3 +38,4 @@
 - P1-020 AI runtime dependency setup — done.
 - P1-021 Official legal source ingestion adapter — done.
 - P1-022 Final RC acceptance matrix — done.
+- P1-023 Blocker-aware release check — done.

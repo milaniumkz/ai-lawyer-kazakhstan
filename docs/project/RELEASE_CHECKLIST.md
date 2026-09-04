@@ -49,3 +49,4 @@
 - [x] Подготовить Android/iOS release candidate для internal validation: Android debug/release APK, iOS debug no-codesign build.
 - [x] Подготовить production deployment runbook с documented blockers.
 - [x] Составить финальную RC acceptance matrix.
+- [x] Добавить blocker-aware local release check.
