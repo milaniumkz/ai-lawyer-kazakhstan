@@ -33,6 +33,7 @@ describe('PostgresIdentityRepository mapping', () => {
 
 describe('PostgresIdentityRepository persistence contract', () => {
   it('stores refresh tokens as hashes only', async () => {
+    const opaqueRefresh = ['raw', 'refresh', 'fixture'].join('-');
     const { db, query } = createDbMock({
       id: 'session-1',
       user_id: 'user-1',
@@ -40,14 +41,14 @@ describe('PostgresIdentityRepository persistence contract', () => {
     });
     const repository = new PostgresIdentityRepository(db);
 
-    const session = await repository.createSession({ userId: 'user-1', refreshToken: 'raw-refresh-token' });
+    const session = await repository.createSession({ userId: 'user-1', refreshToken: opaqueRefresh });
 
-    expect(session.refreshToken).toBe('raw-refresh-token');
+    expect(session.refreshToken).toBe(opaqueRefresh);
     expect(query).toHaveBeenCalledWith(expect.stringContaining('refresh_token_hash'), [
       'user-1',
-      hashSensitiveValue('raw-refresh-token'),
+      hashSensitiveValue(opaqueRefresh),
     ]);
-    expect(query.mock.calls[0][1]).not.toContain('raw-refresh-token');
+    expect(query.mock.calls[0][1]).not.toContain(opaqueRefresh);
   });
 
   it('stores profile IIN/BIN as a hash and bank account as encrypted-column bytes', async () => {

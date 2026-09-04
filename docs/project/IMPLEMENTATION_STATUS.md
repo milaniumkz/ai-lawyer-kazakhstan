@@ -23,6 +23,7 @@
 | PostgreSQL migration baseline P1 | Initial SQL schema for identity, cases, chat, documents, evidence, legal source fragments with pgvector, templates, generated documents, AI usage, audit logs; template seed; contract check script | `npm run check`, `node scripts/contracts/check-openapi.mjs`, migration text inspection passed | done |
 | Typed clients/codegen foundation P1 | OpenAPI path generator, generated TypeScript and Dart API path contracts, contract freshness check, admin/mobile usage | `npm run check`, `npm run build` passed | done |
 | Identity PostgreSQL repository P1 | `DatabaseService`, identity repository interface and PostgreSQL adapter for users/sessions/profiles; refresh token and IIN/BIN hashing before persistence | API lint/typecheck/test passed, 28 tests | done |
+| Cases PostgreSQL repository P1 | Case repository interface, PostgreSQL adapter for cases/messages/transcripts, idempotency key migration | API lint/typecheck/test passed, 33 tests | done |
 
 ## Блокеры окружения
 

@@ -20,6 +20,7 @@
 - [x] Добавить OpenAPI contract check script.
 - [x] Добавить typed clients/codegen foundation.
 - [x] Добавить identity PostgreSQL repository foundation.
+- [x] Добавить cases/chat/transcripts PostgreSQL repository foundation.
 - [x] Реализовать case/chat/document vertical slices в local/stub режиме.
 - [ ] Подключить PostgreSQL repository adapters к runtime services.
 - [ ] Реализовать RAG ingestion adapters с официальными источниками РК или documented blockers.

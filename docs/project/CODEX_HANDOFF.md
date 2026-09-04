@@ -36,6 +36,7 @@
 - Реализован P1-005 PostgreSQL migration baseline: identity/cases/documents/RAG/templates/usage/audit schema, pgvector column, template seed, OpenAPI contract check script.
 - Реализован P1-006 typed clients/codegen foundation: generated TS/Dart API path contracts and freshness checks.
 - Реализован P1-007 identity repository foundation: `DatabaseService`, repository interface, PostgreSQL adapter for users/sessions/profiles, hash-only persistence tests for refresh tokens and IIN/BIN.
+- Реализован P1-007B cases repository foundation: PostgreSQL adapter for cases/messages/transcripts and `case_idempotency_keys` migration.
 
 ## Дизайн-источник
 
@@ -55,4 +56,4 @@
 
 ## Следующая задача
 
-Следующая задача: подключить repository interface к identity service через runtime config или продолжить PostgreSQL adapters для cases/documents/RAG.
+Следующая задача: продолжить PostgreSQL adapters для documents/RAG или подключить готовые identity/cases repositories к runtime services через config.
