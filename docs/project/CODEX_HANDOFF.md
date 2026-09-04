@@ -140,8 +140,8 @@
 - Latest web real-data voice pass verified: prefilled fake cases/legal norms were removed, OTP uses `/api/v1/auth/register`, voice uses browser MediaRecorder with playback and transcript job handoff.
 - Latest server HTTPS mic-test pass verified: deploy runtime now creates a self-signed certificate and serves the app on 443 so MediaRecorder can be tested before production DNS/TLS.
 - Latest trusted HTTPS voice endpoint verified: Let’s Encrypt certificate issued for `89-207-250-217.sslip.io`; browser mic smoke passed without ignoring certificate errors.
-- Latest web real-user data pass verified: random auto-registration/sync and hardcoded web OTP acceptance were removed; voice intake now shows live browser speech-recognition status on top of real MediaRecorder capture.
+- Latest web real-user data pass verified and deployed: random auto-registration/sync and hardcoded web OTP acceptance were removed; voice intake now shows live browser speech-recognition status on top of real MediaRecorder capture.
 
 ## Следующая задача
 
-Следующая задача: deploy latest web real-user data pass to `https://89-207-250-217.sslip.io`, then connect custom production domain and production secrets when access is provided.
+Следующая задача: connect custom production domain and production secrets when access is provided.
