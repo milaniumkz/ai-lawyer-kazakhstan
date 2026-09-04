@@ -100,7 +100,7 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.description_outlined,
                   title: 'Мои документы',
                   subtitle: 'Просмотр и загрузка',
-                  route: '/case/chat',
+                  route: '/documents',
                 ),
                 _ActionCard(
                   icon: Icons.calendar_month_outlined,

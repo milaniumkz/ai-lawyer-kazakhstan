@@ -1,5 +1,6 @@
 import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
+import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,5 +27,12 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
 
     expect(find.text('Подтвердить и создать дело'), findsOneWidget);
+  });
+
+  testWidgets('shows documents OCR review screen', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
+
+    expect(find.text('OCR-review'), findsOneWidget);
+    expect(find.text('Подтвердить поля'), findsOneWidget);
   });
 }

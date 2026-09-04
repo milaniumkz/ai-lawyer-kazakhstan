@@ -9,6 +9,7 @@ const cards = [
 
 const auditEvents = ['otp_requested', 'login', 'session_created', 'profile_created', 'logout_all_devices'];
 const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 'classifying', 'ready'];
+const documentStatuses = ['upload_pending', 'quarantined', 'ocr_review_required', 'ready', 'rejected'];
 
 export default function AdminHome() {
   return (
@@ -43,6 +44,15 @@ export default function AdminHome() {
         <span>Создание дела идемпотентно, голосовой intake работает в stub mode, статусы совместимы с SSE/WebSocket контрактом.</span>
         <div className="pills">
           {caseStatuses.map((status) => (
+            <span key={status}>{status}</span>
+          ))}
+        </div>
+      </section>
+      <section className="notice">
+        <strong>Documents/evidence</strong>
+        <span>Файлы проходят allowlist, duplicate hash check и OCR-review. Antivirus/storage production adapters остаются external blockers.</span>
+        <div className="pills">
+          {documentStatuses.map((status) => (
             <span key={status}>{status}</span>
           ))}
         </div>

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'src/features/auth/auth_screens.dart';
 import 'src/features/cases/case_screens.dart';
+import 'src/features/documents/document_screens.dart';
 import 'src/features/home/home_screen.dart';
 import 'src/theme/app_theme.dart';
 
@@ -19,6 +20,7 @@ final _router = GoRouter(
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
     GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
+    GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
   ],
 );
 

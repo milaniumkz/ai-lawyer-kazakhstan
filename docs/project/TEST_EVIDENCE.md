@@ -20,7 +20,9 @@
 - Identity API unit tests — passed, 5 tests for OTP, refresh rotation, masking, rate limit, invalid input.
 - Case/chat API unit tests — passed, 4 tests for classification, idempotency, safe assistant fallback, transcript states.
 - AI classifier unittest — passed, 2 tests for alimony and low-confidence escalation.
-- Flutter widget tests — passed, 3 tests for home, login route and case intake screen.
+- Documents API unit tests — passed, 5 tests for upload session, OCR confirmation, unsafe file rejection, duplicate hash, evidence folder.
+- AI OCR unittest — passed, review-required OCR stub.
+- Flutter widget tests — passed, 4 tests for home, login route, case intake and documents OCR screen.
 - `npm test` — passed, 1 API test.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze` — passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter test` — passed, 1 widget test.

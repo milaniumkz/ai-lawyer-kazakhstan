@@ -23,6 +23,8 @@
 - Реализован P0-003 local/stub case/chat/voice intake slice: cases, messages, idempotency, transcript jobs, progress statuses, AI classifier stub.
 - Добавлены Flutter экраны нового дела и чата по делу.
 - Admin dashboard показывает case/chat/voice status classes.
+- Реализован P0-004 local/stub documents/evidence/OCR slice: upload sessions, document metadata, OCR confirmation, evidence folders, file allowlist, duplicate hash checks.
+- Добавлен FastAPI OCR stub и Flutter documents/OCR screen.
 
 ## Дизайн-источник
 
@@ -40,4 +42,4 @@
 
 ## Следующая задача
 
-Реализовать P0-004: documents/evidence/OCR vertical slice с OpenAPI, NestJS upload/evidence metadata, AI OCR stub, Flutter documents/evidence screens, admin failed processing visibility и тестами.
+Реализовать P0-005: Legal RAG + anti-hallucination с source model, manual ingestion, citation validator, safe refusal, Flutter/admin citation visibility и тестами.

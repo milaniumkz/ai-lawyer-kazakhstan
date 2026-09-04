@@ -311,6 +311,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TranscriptJob"
+  /files/upload-sessions:
+    post:
+      operationId: createUploadSession
+      summary: Create secure upload session metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUploadSessionRequest"
+      responses:
+        "201":
+          description: Upload session with short-lived stub URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSession"
+  /files/complete:
+    post:
+      operationId: completeUpload
+      summary: Complete upload and create document metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uploadSessionId]
+              properties:
+                uploadSessionId:
+                  type: string
+                sha256:
+                  type: string
+      responses:
+        "201":
+          description: Document requiring OCR review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+  /cases/{caseId}/documents:
+    get:
+      operationId: listDocuments
+      summary: List case documents
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Case documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+  /documents/{documentId}/ocr-confirm:
+    post:
+      operationId: confirmOcr
+      summary: Confirm user-reviewed OCR fields
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fields]
+              properties:
+                fields:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        "201":
+          description: Ready document metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+  /evidence:
+    post:
+      operationId: createEvidenceFolder
+      summary: Create evidence folder with preliminary assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvidenceFolderRequest"
+      responses:
+        "201":
+          description: Evidence folder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceFolder"
+  /cases/{caseId}/evidence:
+    get:
+      operationId: listEvidence
+      summary: List case evidence folders
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Evidence folders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvidenceFolder"
 components:
   schemas:
     HealthResponse:
@@ -590,6 +714,102 @@ components:
           items:
             type: string
         progress:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateUploadSessionRequest:
+      type: object
+      required: [caseId, fileName, mimeType, sizeBytes]
+      properties:
+        caseId:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          minimum: 1
+    UploadSession:
+      type: object
+      required: [id, caseId, fileName, mimeType, sizeBytes, status, uploadUrl, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        status:
+          type: string
+          enum: [upload_pending, quarantined, ocr_review_required, ready, rejected]
+        uploadUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Document:
+      type: object
+      required: [id, caseId, fileName, mimeType, sizeBytes, sha256, status, extractedFields, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        sha256:
+          type: string
+        status:
+          type: string
+          enum: [upload_pending, quarantined, ocr_review_required, ready, rejected]
+        extractedFields:
+          type: object
+          additionalProperties:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateEvidenceFolderRequest:
+      type: object
+      required: [caseId, title]
+      properties:
+        caseId:
+          type: string
+        title:
+          type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+    EvidenceFolder:
+      type: object
+      required: [id, caseId, title, assessment, documentIds, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        title:
+          type: string
+        assessment:
+          type: string
+          enum: [relevant, possibly_admissible, insufficient, contradictory, unknown]
+        documentIds:
           type: array
           items:
             type: string
