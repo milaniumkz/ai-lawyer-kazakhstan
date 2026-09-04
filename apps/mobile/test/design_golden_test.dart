@@ -9,23 +9,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('home screen matches light design regression golden', (tester) async {
+  testWidgets('home screen matches light design regression golden',
+      (tester) async {
     await setReferenceViewport(tester);
     await tester.pumpWidget(const AiLawyerApp(themeMode: ThemeMode.light));
     await tester.pumpAndSettle();
 
-    await expectLater(find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_light.png'));
+    await expectLater(
+        find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_light.png'));
   });
 
-  testWidgets('home screen matches dark design regression golden', (tester) async {
+  testWidgets('home screen matches dark design regression golden',
+      (tester) async {
     await setReferenceViewport(tester);
     await tester.pumpWidget(const AiLawyerApp(themeMode: ThemeMode.dark));
     await tester.pumpAndSettle();
 
-    await expectLater(find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_dark.png'));
+    await expectLater(
+        find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_dark.png'));
   });
 
-  testWidgets('core release screens render in light and dark themes', (tester) async {
+  testWidgets('core release screens render in light and dark themes',
+      (tester) async {
     for (final theme in [AppTheme.light, AppTheme.dark]) {
       for (final screen in const [
         NewCaseScreen(),

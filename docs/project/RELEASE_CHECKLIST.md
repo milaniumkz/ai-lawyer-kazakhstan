@@ -59,5 +59,7 @@
 - [x] Добавить public server release check.
 - [x] Добавить production env gate.
 - [x] Добавить QA release bundle script.
+- [x] Закрыть placeholder-кнопки в mobile/web RC flows.
+- [x] Обновить публичный web стенд после интерактивных flow.
 - [ ] Подключить домен и TLS. Blocked: домен/DNS не предоставлены.
 - [ ] Подключить production external secrets. Blocked: SMS/payment/storage/government credentials не предоставлены.

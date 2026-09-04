@@ -1,18 +1,18 @@
 # Release Notes Draft
 
-Release candidate: `v0.1.0-rc.3`.
+Release candidate: `v0.1.0-rc.4`.
 
 ## RU
 
-AI-Юрист Казахстан RC foundation включает локальные проверяемые сценарии регистрации, профиля, дела, чата, документов, OCR-review, безопасного поиска норм права, досудебной претензии и контроля AI-бюджета.
+AI-Юрист Казахстан RC foundation включает локальные проверяемые сценарии регистрации, профиля, дела, чата, документов, OCR-review, безопасного поиска норм права, досудебной претензии и контроля AI-бюджета. В RC4 закрыты placeholder-кнопки в mobile/web и обновлен публичный тестовый web стенд.
 
 ## KK
 
-AI-Юрист Қазақстан RC foundation тіркеу, профиль, іс, чат, құжаттар, OCR тексеру, құқық нормаларын қауіпсіз тексеру, сотқа дейінгі талап және AI бюджет бақылауы үшін жергілікті тексерілетін сценарийлерді қамтиды.
+AI-Юрист Қазақстан RC foundation тіркеу, профиль, іс, чат, құжаттар, OCR тексеру, құқық нормаларын қауіпсіз тексеру, сотқа дейінгі талап және AI бюджет бақылауы үшін жергілікті тексерілетін сценарийлерді қамтиды. RC4 mobile/web placeholder батырмаларын жауып, public web стендті жаңартты.
 
 ## EN
 
-AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls.
+AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls. RC4 closes placeholder buttons in mobile/web and refreshes the public test web deployment.
 
 ## Limitations
 

@@ -1,6 +1,6 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.3`
+Release: `v0.1.0-rc.4`
 
 Date: 2026-09-04
 
@@ -12,6 +12,7 @@ Date: 2026-09-04
 - FastAPI AI service in local/stub provider mode.
 - Flutter Android debug/release APKs and iOS no-codesign build evidence.
 - Cloud server test deployment with Nginx, systemd, UFW and PostgreSQL backups.
+- Interactive mobile/web RC flows with covered button actions in local/stub mode.
 
 ## Public Test URLs
 
@@ -29,8 +30,8 @@ Date: 2026-09-04
 
 ## Source Archive
 
-- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.3.tar.gz`
-- SHA-256: `918ee41e7a5b1a22cf66c1717920700cf73e02871940f09f42b840a3d126b1d7`
+- Server path: pending `v0.1.0-rc.4` archive upload
+- SHA-256: pending
 
 ## Not Production Until
 

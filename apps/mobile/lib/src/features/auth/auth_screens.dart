@@ -50,7 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 12),
           CheckboxListTile(
             value: true,
-            onChanged: (_) {},
+            onChanged: (_) => _showAction(
+                context, 'Согласие обязательно для RC-тестирования'),
             contentPadding: EdgeInsets.zero,
             title: const Text('Согласие с политикой обработки данных v1'),
           ),
@@ -61,7 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
             label: const Text('Получить код'),
           ),
           TextButton(
-              onPressed: () {}, child: const Text('Восстановить доступ')),
+            onPressed: () => _showAction(
+                context, 'Ссылка восстановления будет отправлена в stub mode'),
+            child: const Text('Восстановить доступ'),
+          ),
         ],
       ),
     );
@@ -93,11 +97,18 @@ class OtpScreen extends StatelessWidget {
             label: const Text('Подтвердить'),
           ),
           TextButton(
-              onPressed: () {}, child: const Text('Отправить код повторно')),
+            onPressed: () =>
+                _showAction(context, 'Код повторно отправлен: 111111'),
+            child: const Text('Отправить код повторно'),
+          ),
         ],
       ),
     );
   }
+}
+
+void _showAction(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class ProfileScreen extends StatelessWidget {

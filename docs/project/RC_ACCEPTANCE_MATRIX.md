@@ -17,12 +17,14 @@
 | Contracts | OpenAPI parse, generated TS/Dart clients, controller route drift check | pass |
 | API runtime | In-process Nest HTTP smoke across `/api/v1` key routes | pass |
 | AI service | Classifier/OCR/RAG unit tests and active FastAPI HTTP smoke tests | pass |
-| Mobile | Android debug/release APK builds, iOS debug no-codesign build, Flutter analyze/test/goldens | pass |
+| Mobile | Android debug/release APK builds, iOS debug no-codesign build, Flutter analyze/test/goldens, interactive button coverage for core RC flows | pass |
 | Admin | Next build plus static UI contract check for sections, API paths and light/dark tokens | pass |
 | Security | Safe error envelope, correlation ID, secret/foreign-law scan, no raw PII in AI ledger tests | pass |
 | Legal guardrails | Official KZ source allowlist, citation validation, no-source fallback, manual ingestion blockers | pass |
 | Docs | Architecture, integrations, security, deployment runbook, store guide, blockers, release notes | pass |
+| Web | Responsive desktop/mobile app deployed on public server with working flow buttons and health actions | pass |
 | Local release validation | `npm run release-check:local` passes check/build/RC status and records Docker as external blocker | pass |
+| Public server validation | `npm run release-check:server` passes web/admin/API/AI public checks and rejects internal app ports | pass |
 
 ## Blocked Criteria
 

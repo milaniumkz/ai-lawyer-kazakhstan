@@ -3,8 +3,30 @@ import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
 
-class NewCaseScreen extends StatelessWidget {
+class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
+
+  @override
+  State<NewCaseScreen> createState() => _NewCaseScreenState();
+}
+
+class _NewCaseScreenState extends State<NewCaseScreen> {
+  late final TextEditingController transcriptController;
+  var isRecording = false;
+  var transcript =
+      'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
+
+  @override
+  void initState() {
+    super.initState();
+    transcriptController = TextEditingController(text: transcript);
+  }
+
+  @override
+  void dispose() {
+    transcriptController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,14 +37,26 @@ class NewCaseScreen extends StatelessWidget {
         children: [
           Center(
             child: FilledButton(
-              onPressed: () {},
+              onPressed: () => setState(() {
+                isRecording = !isRecording;
+                transcript = isRecording
+                    ? 'Идет запись голосового описания...'
+                    : 'Нужно взыскать долг по договору займа. Есть расписка и переписка.';
+                transcriptController.text = transcript;
+              }),
               style: FilledButton.styleFrom(
                   shape: const CircleBorder(), fixedSize: const Size(148, 148)),
-              child: const Icon(Icons.mic_none, size: 58),
+              child: Icon(isRecording ? Icons.stop : Icons.mic_none, size: 58),
             ),
           ),
+          const SizedBox(height: 12),
+          Text(
+            isRecording ? 'Запись активна' : 'Голос готов к обработке',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 18),
-          const TextField(
+          TextField(
+            controller: transcriptController,
             minLines: 5,
             maxLines: 8,
             decoration: InputDecoration(
@@ -45,8 +79,29 @@ class NewCaseScreen extends StatelessWidget {
   }
 }
 
-class CaseChatScreen extends StatelessWidget {
+class CaseChatScreen extends StatefulWidget {
   const CaseChatScreen({super.key});
+
+  @override
+  State<CaseChatScreen> createState() => _CaseChatScreenState();
+}
+
+class _CaseChatScreenState extends State<CaseChatScreen> {
+  final controller = TextEditingController();
+  final messages = <({String text, bool assistant})>[
+    (
+      text:
+          'AI может ошибаться. Нужны подтвержденные официальные источники РК.',
+      assistant: true
+    ),
+    (text: 'Нужно взыскать долг по договору займа.', assistant: false),
+  ];
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,22 +112,30 @@ class CaseChatScreen extends StatelessWidget {
         children: [
           const _CaseSummaryCard(),
           const SizedBox(height: 16),
-          const _MessageBubble(
-            text:
-                'AI может ошибаться. Нужны подтвержденные официальные источники РК.',
-            assistant: true,
-          ),
-          const _MessageBubble(
-              text: 'Нужно взыскать долг по договору займа.', assistant: false),
+          for (final message in messages)
+            _MessageBubble(text: message.text, assistant: message.assistant),
           const SizedBox(height: 16),
           TextField(
+            controller: controller,
             minLines: 2,
             maxLines: 4,
             decoration: InputDecoration(
               labelText: 'Сообщение',
               suffixIcon: IconButton(
                 tooltip: 'Отправить',
-                onPressed: () {},
+                onPressed: () {
+                  final text = controller.text.trim();
+                  if (text.isEmpty) return;
+                  setState(() {
+                    messages.add((text: text, assistant: false));
+                    messages.add((
+                      text:
+                          'Принято. Для ответа потребуется подтвержденная норма РК или ручная проверка юриста.',
+                      assistant: true
+                    ));
+                    controller.clear();
+                  });
+                },
                 icon: const Icon(Icons.send_outlined),
               ),
             ),

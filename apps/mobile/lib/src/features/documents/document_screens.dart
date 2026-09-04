@@ -2,8 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 
-class DocumentsScreen extends StatelessWidget {
+class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
+
+  @override
+  State<DocumentsScreen> createState() => _DocumentsScreenState();
+}
+
+class _DocumentsScreenState extends State<DocumentsScreen> {
+  var uploaded = false;
+  var scanned = false;
+  var confirmed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,20 +31,27 @@ class DocumentsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () {},
+              onPressed: () => setState(() => uploaded = true),
               icon: const Icon(Icons.upload_file_outlined),
-              label: const Text('Загрузить файл'),
+              label: Text(uploaded ? 'Файл добавлен' : 'Загрузить файл'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => setState(() => scanned = true),
               icon: const Icon(Icons.document_scanner_outlined),
-              label: const Text('Сканировать документ'),
+              label: Text(scanned ? 'Скан готов' : 'Сканировать документ'),
             ),
             const SizedBox(height: 16),
-            const _OcrReviewCard(),
+            _OcrReviewCard(
+              confirmed: confirmed,
+              onConfirm: () => setState(() => confirmed = true),
+            ),
             const SizedBox(height: 12),
-            const _EvidenceCard(),
+            _EvidenceCard(
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Открыта папка доказательств')),
+              ),
+            ),
           ],
         ),
       ),
@@ -44,7 +60,10 @@ class DocumentsScreen extends StatelessWidget {
 }
 
 class _OcrReviewCard extends StatelessWidget {
-  const _OcrReviewCard();
+  const _OcrReviewCard({required this.confirmed, required this.onConfirm});
+
+  final bool confirmed;
+  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +84,10 @@ class _OcrReviewCard extends StatelessWidget {
                 decoration: InputDecoration(labelText: 'Сумма / реквизиты')),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.check_outlined),
-              label: const Text('Подтвердить поля'),
+              onPressed: onConfirm,
+              icon: Icon(
+                  confirmed ? Icons.verified_outlined : Icons.check_outlined),
+              label: Text(confirmed ? 'Поля подтверждены' : 'Подтвердить поля'),
             ),
           ],
         ),
@@ -77,7 +97,9 @@ class _OcrReviewCard extends StatelessWidget {
 }
 
 class _EvidenceCard extends StatelessWidget {
-  const _EvidenceCard();
+  const _EvidenceCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +110,7 @@ class _EvidenceCard extends StatelessWidget {
         subtitle: const Text(
             'Предварительная оценка: возможная допустимость. Не оценка суда.'),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

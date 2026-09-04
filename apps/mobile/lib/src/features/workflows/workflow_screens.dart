@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 
-class PretrialClaimScreen extends StatelessWidget {
+class PretrialClaimScreen extends StatefulWidget {
   const PretrialClaimScreen({super.key});
+
+  @override
+  State<PretrialClaimScreen> createState() => _PretrialClaimScreenState();
+}
+
+class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
+  var generated = false;
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +45,20 @@ class PretrialClaimScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () {},
+              onPressed: () => setState(() => generated = true),
               icon: const Icon(Icons.article_outlined),
-              label: const Text('Сформировать проект'),
+              label: Text(
+                  generated ? 'Проект сформирован' : 'Сформировать проект'),
             ),
             const SizedBox(height: 16),
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                    'Проект документа. Требует проверки и подтверждения пользователем.'),
+                  generated
+                      ? 'Проект досудебной претензии сформирован. Перед отправкой требуется проверка юристом и подтверждение пользователя.'
+                      : 'Проект документа. Требует проверки и подтверждения пользователем.',
+                ),
               ),
             ),
           ],

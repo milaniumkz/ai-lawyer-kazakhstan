@@ -38,7 +38,20 @@ class SubscriptionScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: null,
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Оплата недоступна'),
+                  content: const Text(
+                      'Payment provider не подключен. Для production нужен официальный платежный провайдер и ключи.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Понятно'),
+                    ),
+                  ],
+                ),
+              ),
               icon: const Icon(Icons.payment_outlined),
               label: const Text('Управление оплатой недоступно в stub mode'),
             ),

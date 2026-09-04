@@ -62,6 +62,8 @@
 - На cloud server включен PostgreSQL 16 + pgvector, API переключен на `PERSISTENCE_MODE=postgres`.
 - Добавлены воспроизводимые deploy scripts: package, server install, runtime, PostgreSQL setup, health check.
 - Добавлены release ops scripts: firewall, PostgreSQL backup, daily backup timer, localhost binds.
+- Закрыты placeholder-кнопки в Flutter и web: восстановление доступа, повтор OTP, запись голоса, отправка чата, загрузка/скан документов, OCR confirmation, evidence tap, генерация претензии, payment blocker и web health/actions.
+- Публичный web стенд обновлен после интерактивных flow; `server-health-check.sh` прошел.
 
 ## Дизайн-источник
 
@@ -90,7 +92,8 @@
 - Production env gate added; production launch remains blocked until real HTTPS/secrets/integrations exist.
 - QA release bundle script prepared for `v0.1.0-rc.3`.
 - QA release bundle built for `v0.1.0-rc.3`.
+- Final interactive-flow checks passed: Flutter analyze/test with 16 widget/golden tests, web lint/typecheck/build, `release-check:local` and `release-check:server`.
 
 ## Следующая задача
 
-Следующая задача: подключить домен/TLS и production persistence/secrets, когда будут предоставлены доступы.
+Следующая задача: собрать и зафиксировать `v0.1.0-rc.4`, затем подключить домен/TLS и production secrets, когда будут предоставлены доступы.

@@ -40,6 +40,10 @@ a {
   text-decoration: none;
 }
 
+button {
+  font: inherit;
+}
+
 .page {
   min-height: 100vh;
 }
@@ -149,6 +153,12 @@ h2 {
 }
 
 .primary,
+.secondary,
+.phone button {
+  cursor: pointer;
+}
+
+.primary,
 .phone button {
   border: 0;
   border-radius: 18px;
@@ -189,6 +199,20 @@ h2 {
   margin-top: 160px;
 }
 
+.activity {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.activity span {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .section {
   padding: 24px 0 64px;
 }
@@ -210,6 +234,11 @@ h2 {
 
 .card h3 {
   margin: 16px 0 8px;
+}
+
+.cardButton {
+  cursor: pointer;
+  text-align: left;
 }
 
 .status {

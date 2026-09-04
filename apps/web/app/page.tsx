@@ -1,15 +1,41 @@
+"use client";
+
+import { useState } from "react";
+
 const flows = [
-  ['01', 'Вход и профиль', 'Телефон/email, OTP, согласие, профили физлица/ИП/юрлица.'],
-  ['02', 'Новое дело', 'Текстовый или голосовой intake, категория спора и готовность дела.'],
-  ['03', 'Документы', 'Upload session, OCR-review, доказательства и проверка дублей.'],
-  ['04', 'Нормы права', 'Ответ только с официальной цитатой РК или безопасный отказ.'],
-  ['05', 'Претензия', 'Проект досудебной претензии с обязательным подтверждением.'],
-  ['06', 'Подписка', 'Лимиты, AI usage ledger и provider kill switch без raw PII.'],
+  ["01", "Вход и профиль", "OTP 111111, согласие, профиль физлица/ИП/юрлица.", "Профиль создан"],
+  ["02", "Новое дело", "Текстовый или голосовой intake, категория спора и готовность дела.", "Дело создано"],
+  ["03", "Документы", "Upload session, OCR-review, доказательства и проверка дублей.", "Поля OCR подтверждены"],
+  ["04", "Нормы права", "Ответ только с официальной цитатой РК или безопасный отказ.", "Цитата проверена"],
+  ["05", "Претензия", "Проект досудебной претензии с обязательным подтверждением.", "Проект сформирован"],
+  ["06", "Подписка", "Лимиты, AI usage ledger и provider kill switch без raw PII.", "Stub blocker показан"],
 ];
 
-const checks = ['OpenAPI', 'PostgreSQL adapters', 'AI smoke', 'Flutter golden', 'Admin contract', 'Security scan'];
+const checks = ["OpenAPI", "PostgreSQL", "AI smoke", "Flutter golden", "Admin contract", "Security scan"];
 
 export default function WebHome() {
+  const [activeFlow, setActiveFlow] = useState(flows[0]);
+  const [log, setLog] = useState<string[]>(["Стенд готов к RC-тестированию"]);
+  const [apiStatus, setApiStatus] = useState("не проверено");
+  const [aiStatus, setAiStatus] = useState("не проверено");
+
+  async function checkHealth(path: string, setter: (value: string) => void) {
+    try {
+      const response = await fetch(path);
+      const body = await response.json();
+      setter(`${body.service}: ${body.status}`);
+      setLog((items) => [`${path} OK`, ...items].slice(0, 5));
+    } catch {
+      setter("ошибка");
+      setLog((items) => [`${path} ошибка`, ...items].slice(0, 5));
+    }
+  }
+
+  function runFlow(flow: string[]) {
+    setActiveFlow(flow);
+    setLog((items) => [`${flow[1]}: ${flow[3]}`, ...items].slice(0, 5));
+  }
+
   return (
     <main className="page">
       <section className="hero">
@@ -25,19 +51,25 @@ export default function WebHome() {
             <p className="eyebrow">Казахстан · RC internal validation</p>
             <h1>Юридический помощник с проверкой официальных источников РК</h1>
             <p className="lead">
-              Веб-версия для ПК и телефона повторяет ключевые mobile-сценарии: дело, чат, документы, нормы права,
-              досудебная претензия и контроль бюджета.
+              Веб-версия для ПК и телефона покрывает ключевые сценарии: дело, чат, документы,
+              нормы права, досудебная претензия и контроль бюджета.
             </p>
             <div className="actions">
-              <a className="primary" href="#flows">Открыть сценарии</a>
-              <a className="secondary" href="#status">Статус RC</a>
+              <button className="primary" onClick={() => runFlow(flows[1])}>Начать дело</button>
+              <button className="secondary" onClick={() => checkHealth("/api/v1/health", setApiStatus)}>API: {apiStatus}</button>
+              <button className="secondary" onClick={() => checkHealth("/ai/health", setAiStatus)}>AI: {aiStatus}</button>
             </div>
           </div>
           <aside className="phone" aria-label="Mobile preview">
             <div className="phoneTop" />
-            <h2>Расскажите проблему</h2>
-            <p>AI подготовит дело, но юридически значимые действия требуют подтверждения источниками РК.</p>
-            <button>Начать</button>
+            <h2>{activeFlow[1]}</h2>
+            <p>{activeFlow[2]}</p>
+            <button onClick={() => runFlow(activeFlow)}>{activeFlow[3]}</button>
+            <div className="activity">
+              {log.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
           </aside>
         </div>
       </section>
@@ -45,12 +77,12 @@ export default function WebHome() {
       <section id="flows" className="section">
         <h2>Основные сценарии</h2>
         <div className="cards">
-          {flows.map(([number, title, text]) => (
-            <article key={title} className="card">
-              <span>{number}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
+          {flows.map((flow) => (
+            <button key={flow[1]} className="card cardButton" onClick={() => runFlow(flow)}>
+              <span>{flow[0]}</span>
+              <h3>{flow[1]}</h3>
+              <p>{flow[2]}</p>
+            </button>
           ))}
         </div>
       </section>
@@ -58,7 +90,7 @@ export default function WebHome() {
       <section id="status" className="status">
         <div>
           <p className="eyebrow">Release Candidate</p>
-          <h2>Готово для локального и внутреннего тестирования</h2>
+          <h2>Готово для внутреннего тестирования</h2>
           <p>Production launch зависит от внешних доступов: госинтеграции, платежи/SMS/storage, signing и legal approval.</p>
         </div>
         <div className="checks">

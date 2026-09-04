@@ -54,6 +54,7 @@
 | Public server release check P1 | Added a local script that verifies public web/admin/API/AI URLs and rejects exposed internal app ports | `npm run release-check:server` passed | done |
 | Production env gate P1 | Added explicit production blocker check for HTTPS URLs, PostgreSQL, real secrets and non-stub integrations | `npm run release-check:production-env` correctly blocks placeholder env | done |
 | QA release bundle P1 | Added reproducible release bundle script with docs, OpenAPI, Android APK, source archive and SHA256SUMS | `npm run release:bundle` passed | done |
+| Mobile/web interactive RC flows P1 | Closed placeholder buttons for auth recovery/OTP resend, voice intake, chat send, documents scan/upload/OCR confirmation, evidence tap, pretrial draft generation, subscription payment blocker, and web health/flow actions | Flutter analyze/test passed with 16 widget/golden tests; web lint/typecheck/build passed; server health passed | done |
 
 ## Блокеры окружения
 

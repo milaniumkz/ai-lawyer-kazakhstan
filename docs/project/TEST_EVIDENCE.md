@@ -112,6 +112,10 @@
 - Final RC source archive — `v0.1.0-rc.3` archive uploaded to server and verified with SHA-256 `918ee41e7a5b1a22cf66c1717920700cf73e02871940f09f42b840a3d126b1d7`.
 - Production env gate — `npm run release-check:production-env` blocks placeholder/missing production secrets and non-HTTPS URLs as expected.
 - QA release bundle — `npm run release:bundle -- v0.1.0-rc.3` produced bundle SHA-256 `1d3f815d5cecd6db5385c4cc7e91f83f1d0a6e902850bf6e3549473b24b29003`.
+- Mobile interactive RC flows — `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed; `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 16 widget/golden tests covering auth recovery/OTP resend, voice intake, chat send, documents scan/upload/OCR confirmation, pretrial draft generation and subscription payment blocker.
+- Web interactive RC flows — `npm run lint --workspace apps/web`, `npm run typecheck --workspace apps/web`, `npm run build --workspace apps/web` passed after adding desktop/mobile flow actions and public health checks.
+- Server web refresh — updated deployed web app on `http://89.207.250.217/`; remote `server-health-check.sh` returned `server health ok`.
+- Final blocker-aware validation after interactive flows — `npm run release-check:local && npm run release-check:server` passed; Docker remains recorded as external blocker.
 
 ## Заблокировано
 
