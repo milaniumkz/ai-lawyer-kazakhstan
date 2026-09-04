@@ -81,6 +81,7 @@
 | Web API-backed application flow pass P1 | Converted critical web actions from status-only changes into API-backed/stateful flows for auth, case creation, chat, upload/OCR, RAG search, claim generation, subscription limits, task toggles and selected categories/documents | Web UI contract and local release-check passed | done |
 | Web hash routing and legal entry pass P1 | Added live `hashchange` routing and a direct home entry to legal norms so functional screens remain reachable from URL and UI navigation | Web UI contract and local release-check passed | done |
 | Web legal design parity pass P1 | Restored the home quick-action count to match the reference and rebuilt legal norms as a functional native screen with search, tabs, selectable source cards and document/source actions | Web UI contract, web lint/typecheck/build and local release-check passed | done |
+| Web real-data voice pass P1 | Removed fake prefilled cases/legal norms, added real browser MediaRecorder voice capture with playback and transcript job API handoff, and made auth OTP call API before user data appears | Web UI contract, web lint/typecheck/build and local release-check passed | done |
 
 ## Блокеры окружения
 

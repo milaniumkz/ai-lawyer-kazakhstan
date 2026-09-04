@@ -32,10 +32,12 @@ type CaseItem = { id: string; title: string; type: string; status: string; date:
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = { name: string; status: string };
 type TaskItem = { title: string; due: string; done: boolean };
-type LegalNorm = { title: string; article: string; source: string; date: string; text: string };
+type LegalNorm = { title: string; article: string; source: string; date: string; text: string; url: string };
 type ApiLegalCase = { id: string; title: string; category: string; status: string; readinessPercent: number; createdAt: string };
 type ApiDocument = { id: string; fileName: string; status: string; extractedFields?: Record<string, string> };
 type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
+type ApiLegalAnswer = { status: string; message: string; fragment?: { title: string; article?: string; sourceUrl: string; text: string; retrievedAt?: string } };
+type TranscriptJob = { id: string; status: string; transcript: string; progress: string[] };
 type SavedState = {
   view: View;
   theme: "dark" | "light";
@@ -85,53 +87,50 @@ const screens: { label: string; view: View }[] = [
   { label: "Помощь", view: "help" },
 ];
 
-const initialCases: CaseItem[] = [
-  { id: "2024-0015", title: "Взыскание долга", type: "Гражданское право", status: "В работе", date: "15 мая 2024", progress: 65 },
-  { id: "2024-0014", title: "Задержка зарплаты", type: "Трудовой спор", status: "Нужно проверить работодателя", date: "12 мая 2024", progress: 48 },
-  { id: "2024-0012", title: "Алименты", type: "Семейное право", status: "Подготовка документов", date: "10 мая 2024", progress: 42 },
-];
-
-const legalNorms: LegalNorm[] = [
-  { title: "Гражданский кодекс РК", article: "Статья 272. Надлежащее исполнение обязательства", source: "adilet.zan.kz", date: "04.09.2026", text: "Обязательство должно исполняться надлежащим образом в соответствии с условиями обязательства и требованиями законодательства." },
-  { title: "Гражданский кодекс РК", article: "Статья 353. Ответственность за неправомерное пользование чужими деньгами", source: "adilet.zan.kz", date: "04.09.2026", text: "При денежном обязательстве применимость нормы требует проверки суммы, срока и основания требования." },
-  { title: "Трудовой кодекс РК", article: "Статья 113. Порядок и сроки выплаты заработной платы", source: "adilet.zan.kz", date: "04.09.2026", text: "Заработная плата выплачивается в сроки, установленные трудовым договором и актами работодателя." },
-];
+const emptyCase: CaseItem = { id: "new", title: "Новое дело", type: "Не выбрано", status: "Создайте дело", date: "Сегодня", progress: 0 };
 
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [view, setView] = useState<View>("home");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [cases, setCases] = useState<CaseItem[]>(initialCases);
-  const [activeCaseId, setActiveCaseId] = useState(initialCases[0].id);
-  const [caseText, setCaseText] = useState("Нужно взыскать долг по договору займа. Есть расписка и переписка.");
-  const [documents, setDocuments] = useState<DocumentItem[]>([{ name: "Расписка.pdf", status: "OCR-review" }]);
+  const [cases, setCases] = useState<CaseItem[]>([]);
+  const [activeCaseId, setActiveCaseId] = useState("");
+  const [caseText, setCaseText] = useState("");
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [ocrConfirmed, setOcrConfirmed] = useState(false);
   const [analysisDone, setAnalysisDone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
   const [sent, setSent] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioUrl, setAudioUrl] = useState("");
+  const [transcriptJobId, setTranscriptJobId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Гражданское право");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [remoteCaseId, setRemoteCaseId] = useState("");
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState("Расписка.pdf");
+  const [selectedDocument, setSelectedDocument] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
   const [deadlineStatus, setDeadlineStatus] = useState("Ближайший срок: досудебная претензия за 10 дней");
   const [subscriptionStatus, setSubscriptionStatus] = useState("Лимиты обновятся после входа");
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [caseSearch, setCaseSearch] = useState("");
-  const [legalQuery, setLegalQuery] = useState("Как взыскать долг по расписке?");
+  const [legalQuery, setLegalQuery] = useState("");
   const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
   const [legalTab, setLegalTab] = useState("Кодексы");
-  const [selectedNorm, setSelectedNorm] = useState(legalNorms[0]);
+  const [legalNorms, setLegalNorms] = useState<LegalNorm[]>([]);
+  const [selectedNorm, setSelectedNorm] = useState<LegalNorm | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК." },
   ]);
-  const [phone, setPhone] = useState("+77010000000");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("Дмитрий");
   const [email, setEmail] = useState("client@example.kz");
@@ -150,7 +149,7 @@ export default function WebHome() {
     { title: "Сверить срок исковой давности", due: "До подачи", done: true },
   ]);
 
-  const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0];
+  const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? emptyCase;
   const filteredCases = useMemo(
     () => cases.filter((item) => item.title.toLowerCase().includes(caseSearch.toLowerCase()) || caseSearch.length < 3),
     [cases, caseSearch],
@@ -216,6 +215,17 @@ export default function WebHome() {
     const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
   }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody]);
+
+  useEffect(() => {
+    if (!recording || paused) return undefined;
+    const timer = window.setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [paused, recording]);
+
+  useEffect(() => () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+  }, [audioUrl]);
 
   function go(nextView: View) {
     setView(nextView);
@@ -393,16 +403,38 @@ export default function WebHome() {
     }
     setLegalAnswer("Идет поиск по официальным источникам РК...");
     try {
-      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: legalQuery }) });
-      setLegalAnswer(`${answer.message}${answer.fragment ? ` Источник: ${answer.fragment.sourceUrl}` : " Нужна ручная проверка юристом."}`);
+      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: legalQuery }) }) as ApiLegalAnswer;
+      if (answer.fragment) {
+        const norm: LegalNorm = {
+          title: answer.fragment.title,
+          article: answer.fragment.article ?? "Официальный фрагмент",
+          source: new URL(answer.fragment.sourceUrl).hostname,
+          date: answer.fragment.retrievedAt ? new Date(answer.fragment.retrievedAt).toLocaleDateString("ru-KZ") : "проверено API",
+          text: answer.fragment.text,
+          url: answer.fragment.sourceUrl,
+        };
+        setLegalNorms([norm]);
+        setSelectedNorm(norm);
+        setLegalAnswer(`${answer.message} Источник: ${answer.fragment.sourceUrl}`);
+      } else {
+        setLegalNorms([]);
+        setSelectedNorm(null);
+        setLegalAnswer(`${answer.message} Нет подтвержденной нормы из официального источника. Нужна ручная проверка.`);
+      }
       setSyncState(`RAG статус: ${answer.status}`);
     } catch (error) {
+      setLegalNorms([]);
+      setSelectedNorm(null);
       setLegalAnswer("Нет подтвержденной нормы. Требуется ручная проверка.");
       setSyncState(error instanceof Error ? `RAG ошибка: ${error.message}` : "RAG ошибка");
     }
   }
 
   function addNormToDocument() {
+    if (!selectedNorm) {
+      setSyncState("Нет подтвержденной нормы для добавления");
+      return;
+    }
     const citation = `${selectedNorm.title}, ${selectedNorm.article}, источник: ${selectedNorm.source}`;
     setGeneratedClaimBody((body) => `${body || "Проект документа"}\n\nПодтвержденная норма: ${citation}`);
     setSyncState(`Норма добавлена в документ: ${selectedNorm.article}`);
@@ -410,7 +442,13 @@ export default function WebHome() {
   }
 
   function openOfficialSource() {
-    setLegalAnswer(`Официальный источник подготовлен к открытию: ${selectedNorm.source}. В RC режиме внешний переход фиксируется как assisted flow.`);
+    if (!selectedNorm) {
+      setSyncState("Нет подтвержденного источника для открытия");
+      return;
+    }
+    const url = selectedNorm.url;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setLegalAnswer(`Официальный источник открыт: ${url}. Если браузер заблокировал новую вкладку, используйте этот адрес вручную.`);
     setSyncState(`Источник выбран: ${selectedNorm.source}`);
   }
 
@@ -464,11 +502,87 @@ export default function WebHome() {
     setDeadlineStatus(`Срок обновлен: ${title}`);
   }
 
+  function formatDuration(seconds: number) {
+    const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+    return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setSyncState("Браузер не поддерживает запись голоса");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      mediaStreamRef.current = stream;
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioUrl(URL.createObjectURL(blob));
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      };
+      setRecordingSeconds(0);
+      setPaused(false);
+      setRecording(true);
+      recorder.start();
+      setSyncState("Идет реальная запись с микрофона");
+    } catch {
+      setSyncState("Микрофон недоступен: разрешите доступ в браузере");
+    }
+  }
+
+  function pauseRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder) {
+      void startRecording();
+      return;
+    }
+    if (recorder.state === "recording") {
+      recorder.pause();
+      setPaused(true);
+      setSyncState("Запись на паузе");
+      return;
+    }
+    if (recorder.state === "paused") {
+      recorder.resume();
+      setPaused(false);
+      setSyncState("Запись продолжена");
+    }
+  }
+
+  async function finishRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    setRecording(false);
+    setPaused(false);
+    setSyncState("Запись завершена, отправляю transcript job...");
+    try {
+      const job = await apiJson("/voice/transcripts", {
+        method: "POST",
+        body: JSON.stringify({ caseId: remoteCaseId || undefined, language: "ru", audioRef: audioUrl || "browser-mediarecorder", text: caseText }),
+      }) as TranscriptJob;
+      setTranscriptJobId(job.id);
+      if (job.transcript) setCaseText(job.transcript);
+      setSyncState(`Transcript job готов: ${job.id.slice(0, 8)}`);
+      go("category");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Запись сохранена, API transcript ошибка: ${error.message}` : "Запись сохранена локально");
+      go("category");
+    }
+  }
+
   function updateActiveCase(status: string, progress: number) {
     setCases((items) => items.map((item) => (item.id === activeCaseId ? { ...item, status, progress: Math.max(item.progress, progress) } : item)));
   }
 
-  function startAuth(target: "login" | "register") {
+  async function startAuth(target: "login" | "register") {
     if (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11) {
       setSyncState("Введите корректный номер +7");
       return;
@@ -477,31 +591,43 @@ export default function WebHome() {
       setSyncState("Заполните имя, email и согласие");
       return;
     }
-    setSyncState(target === "register" ? "Аккаунт подготовлен, код отправлен" : "Код отправлен");
-    go("otp");
+    setSyncState("Отправляю OTP через API...");
+    try {
+      const registered = await apiJson("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ channel: "phone", phone, email: target === "register" ? email : undefined, password: password || "Demo12345", consentVersion: "v1" }),
+      });
+      setOtpId(registered.otpId);
+      setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
+      go("otp");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Auth API ошибка: ${error.message}` : "Auth API ошибка");
+    }
   }
 
-  function verifyOtp() {
+  async function verifyOtp() {
     if (otp.trim() !== "111111") {
       setSyncState("Неверный SMS код");
       return;
     }
-    setProfileName(name.trim() || profileName);
-    setSyncState("Вход подтвержден");
-    go("biometric");
+    if (!otpId) {
+      setSyncState("Сначала запросите OTP");
+      return;
+    }
+    try {
+      const verified = await apiJson("/auth/otp/verify", { method: "POST", body: JSON.stringify({ otpId, code: otp }) });
+      setAuthUserId(verified.user.id);
+      setProfileName(name.trim() || profileName);
+      setSyncState(`Вход подтвержден API: ${verified.user.id.slice(0, 8)}`);
+      go("biometric");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `OTP API ошибка: ${error.message}` : "OTP API ошибка");
+    }
   }
 
   function saveProfile() {
     setName(profileName);
     setSyncState(`Профиль сохранен: ${profileType}`);
-  }
-
-  function finishRecording() {
-    setRecording(false);
-    setPaused(false);
-    if (!caseText.trim()) setCaseText("Опишите проблему голосом или текстом.");
-    setSyncState("Запись завершена, текст готов к проверке");
-    go("category");
   }
 
   function AppHeader({ title, subtitle, back = "home" }: { title: string; subtitle: string; back?: View }) {
@@ -536,7 +662,7 @@ export default function WebHome() {
             <>
               <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
               <input placeholder="Пароль или PIN" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-              <button className="primary wide" onClick={() => startAuth("login")}>Получить код</button>
+              <button className="primary wide" onClick={() => { void startAuth("login"); }}>Получить код</button>
               <button className="wide" onClick={() => go("register")}>Зарегистрироваться</button>
             </>
           )}
@@ -546,15 +672,15 @@ export default function WebHome() {
               <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
               <input placeholder="E-mail" value={email} onChange={(event) => setEmail(event.target.value)} />
               <label className="toggle"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Согласие с обработкой данных v1</label>
-              <button className="primary wide" onClick={() => startAuth("register")}>Создать аккаунт</button>
+              <button className="primary wide" onClick={() => { void startAuth("register"); }}>Создать аккаунт</button>
             </>
           )}
           {view === "otp" && (
             <>
               <div className="analysisBox"><strong>OTP</strong><p>{otpId ? `Код отправлен: ${otpId.slice(0, 8)}` : "Введите код из SMS"}</p></div>
               <input placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
-              <button className="primary wide" onClick={verifyOtp}>Подтвердить</button>
-              <button className="wide" onClick={() => setSyncState("Код повторно отправлен")}>Отправить код повторно</button>
+              <button className="primary wide" onClick={() => { void verifyOtp(); }}>Подтвердить</button>
+              <button className="wide" onClick={() => { void startAuth("login"); }}>Отправить код повторно</button>
             </>
           )}
           {view === "biometric" && (
@@ -574,14 +700,16 @@ export default function WebHome() {
           <AppHeader title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
           <h1 className="heroTitle">Опишите проблему</h1>
           <p className="hint">Расскажите о ситуации голосом, а мы поможем с решением</p>
-          <button className={recording ? "mic small active" : "mic small"} onClick={() => { setRecording(true); setPaused(false); }} aria-label="Записать голос"><span>⌾</span></button>
+          <button className={recording ? "mic small active" : "mic small"} onClick={() => { void startRecording(); }} aria-label="Записать голос"><span>⌾</span></button>
           <div className="recordCard">
-            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{recording ? (paused ? "Пауза" : "Идет запись") : "Готов к записи"}</strong><em>{recording ? "00:47" : "00:00"}</em></div>
+            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
             <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+            {audioUrl && <audio className="voicePlayback" controls src={audioUrl}>Запись голоса</audio>}
+            {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}
             <div className="wave" aria-hidden="true"></div>
           </div>
           <button className="primary wide" onClick={recording ? finishRecording : () => go("category")}>{recording ? "■ Завершить запись" : "Продолжить"}</button>
-          <button className="wide" onClick={() => { setRecording(true); setPaused(!paused); }}>{paused ? "▶ Продолжить" : "Ⅱ Пауза"}</button>
+          <button className="wide" onClick={pauseRecording}>{paused ? "▶ Продолжить" : "Ⅱ Пауза"}</button>
         </section>
       );
     }
@@ -606,6 +734,7 @@ export default function WebHome() {
             <button onClick={() => setCaseSearch("")}>Очистить</button>
           </div>
           <div className="list">
+            {!filteredCases.length && <button className="caseRow" onClick={() => go("newCase")}><span className="roundIcon">+</span><span><strong>Нет дел</strong><small>Создайте первое дело через голос или текст</small><small className="goldDot">● Данные появятся после сохранения в API</small></span><em>Сейчас</em></button>}
             {filteredCases.map((item) => (
               <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
                 <span className="roundIcon">⚖</span>
@@ -672,6 +801,7 @@ export default function WebHome() {
             <button onClick={confirmOcr}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
           </div>
           <div className="list">
+            {!documents.length && <button className="docRow" onClick={() => fileInputRef.current?.click()}><strong>Документов нет</strong><span>Загрузить файл</span></button>}
             {documents.map((doc) => <button className={selectedDocument === doc.name ? "docRow active" : "docRow"} key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{selectedDocument === doc.name && ocrConfirmed ? "Готов" : doc.status}</span></button>)}
           </div>
           <div className="analysisBox">
@@ -706,8 +836,9 @@ export default function WebHome() {
           </div>
           <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => setLegalTab(tab)}>{tab}</button>)}</div>
           <div className="list">
+            {!legalNorms.length && <div className="normCard"><strong>Нет подтвержденной нормы</strong><span>Запустите поиск</span><small>Будет показан только ответ API из официального источника или честный статус “недостаточно источников”.</small><p>Фиктивные нормы не отображаются.</p></div>}
             {legalNorms.map((norm, index) => (
-              <button className={selectedNorm.article === norm.article ? "normCard active" : "normCard"} key={`${norm.title}-${norm.article}`} onClick={() => { setSelectedNorm(norm); setLegalAnswer(norm.text); }}>
+              <button className={selectedNorm?.article === norm.article ? "normCard active" : "normCard"} key={`${norm.title}-${norm.article}`} onClick={() => { setSelectedNorm(norm); setLegalAnswer(norm.text); }}>
                 {index === 0 && <em>Рекомендованная норма</em>}
                 <strong>{norm.title}</strong>
                 <span>{norm.article}</span>
@@ -719,8 +850,8 @@ export default function WebHome() {
           <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
           <div className="actionBar stickyActions">
             <button className="primary" onClick={() => { go("legalSearch"); void runLegalSearch(); }}>Найти норму</button>
-            <button className="primary" onClick={addNormToDocument}>Добавить в документ</button>
-            <button onClick={openOfficialSource}>Открыть источник</button>
+            <button className="primary" disabled={!selectedNorm} onClick={addNormToDocument}>Добавить в документ</button>
+            <button disabled={!selectedNorm} onClick={openOfficialSource}>Открыть источник</button>
           </div>
         </section>
       );
@@ -801,7 +932,7 @@ export default function WebHome() {
           <div><h1>Здравствуйте, Дмитрий</h1><p>Ваш умный юридический помощник</p></div>
           <div className="topActions"><button className="bell" onClick={() => setSyncState("Новых уведомлений нет")} aria-label="Уведомления">♧</button><button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button></div>
         </div>
-        <button className={recording ? "mic active" : "mic"} onClick={() => { setRecording(true); go("newCase"); }} aria-label="Рассказать проблему"><span>⌾</span></button>
+        <button className={recording ? "mic active" : "mic"} onClick={() => { go("newCase"); setTimeout(() => void startRecording(), 0); }} aria-label="Рассказать проблему"><span>⌾</span></button>
         <h2>Рассказать проблему</h2>
         <p className="hint">{recording ? "Запись активна. Открылся экран описания дела." : "Нажмите и говорите голосом"}</p>
         <div className="quickGrid">
@@ -811,6 +942,7 @@ export default function WebHome() {
         </div>
         <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
         <div className="list">
+          {!cases.length && <button className="caseRow" onClick={() => go("newCase")}><span className="roundIcon">+</span><span><strong>Нет дел</strong><small>Создайте первое дело</small><small className="goldDot">● Только реальные сохраненные данные</small></span><em>Сейчас</em></button>}
           {cases.slice(0, 2).map((item) => (
             <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
               <span className="roundIcon">⚖</span><span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span><em>{item.date}</em>

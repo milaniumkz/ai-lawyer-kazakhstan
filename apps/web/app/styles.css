@@ -300,6 +300,18 @@ h3 { font-size: 28px; }
   padding: 12px 0;
 }
 
+.voicePlayback {
+  width: 100%;
+  margin: 6px 0 10px;
+  accent-color: var(--gold);
+}
+
+.recordMeta {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--muted);
+}
+
 .recordLine {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

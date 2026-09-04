@@ -159,6 +159,7 @@
 - Web API-backed application flow pass — `npm run release-check:local` passed after wiring auth/session, case creation, chat messages, document upload/OCR, RAG search, claim generation, subscription limits, task toggles and selected categories/documents to explicit state/API actions.
 - Web hash routing and legal entry pass — `npm run release-check:local` passed after adding `hashchange` route handling and home quick entry for legal norms.
 - Web legal design parity pass — `npm run test:web-ui`, web lint/typecheck/build and `npm run release-check:local` passed after restoring 3 home quick cards and adding functional legal norm search/tabs/cards/document actions.
+- Web real-data voice pass — `npm run release-check:local` passed after replacing fake voice timer with MediaRecorder, removing prefilled fake cases/legal norms, adding audio playback/transcript job handoff and API-backed OTP.
 
 ## Заблокировано
 

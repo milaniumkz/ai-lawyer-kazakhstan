@@ -57,6 +57,12 @@ const requiredActions = [
   'verifyOtp',
   'saveProfile',
   'finishRecording',
+  'startRecording',
+  'pauseRecording',
+  'MediaRecorder',
+  'navigator.mediaDevices.getUserMedia',
+  'voicePlayback',
+  'Transcript job',
   'ensureUser',
   'confirmOcr',
   'runLegalSearch',
@@ -72,9 +78,9 @@ const requiredActions = [
   'Завершить запись',
   'Пауза',
   'recordCard',
-  'Задержка зарплаты',
-  'работодател',
-  'зарплат',
+  'Только реальные сохраненные данные',
+  'Фиктивные нормы не отображаются',
+  'Нет подтвержденной нормы',
   'view: "onboarding"',
   'view: "login"',
   'view: "register"',
@@ -122,6 +128,7 @@ for (const needle of cssNeedles) {
 
 if (/onClick=\{\(\) => \{\}\}/.test(page)) failures.push('web page contains empty onClick handler');
 if (/defaultValue=/.test(page)) failures.push('web page still uses static defaultValue form fields');
+if (page.includes('00:47')) failures.push('web page still uses fake recording timer');
 for (const forbidden of ['Стенд готов', 'RC internal validation', 'Release Candidate', 'API demo не запускался']) {
   if (page.includes(forbidden)) failures.push(`web app still contains stand marker: ${forbidden}`);
 }

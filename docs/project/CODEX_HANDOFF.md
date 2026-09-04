@@ -137,6 +137,7 @@
 - Latest web API-backed application pass verified: critical web buttons now update explicit app state and call `/api/v1` for auth, cases, chat, documents/OCR, RAG, claim generation and subscription limits.
 - Latest web hash routing pass verified: `hashchange` now updates the visible screen, and legal norms are reachable directly from the home quick actions.
 - Latest web legal design parity pass verified: home quick actions match the 3-card reference again, and legal norms now have search, category tabs, selectable cards, add-to-document and source actions.
+- Latest web real-data voice pass verified: prefilled fake cases/legal norms were removed, OTP uses `/api/v1/auth/register`, voice uses browser MediaRecorder with playback and transcript job handoff.
 
 ## Следующая задача
 
