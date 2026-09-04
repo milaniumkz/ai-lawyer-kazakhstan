@@ -13,3 +13,4 @@ Generated on 2026-09-04.
 | `dist/release/ai-lawyer-kz-v0.1.0-rc.3-release-bundle.tar.gz` | `1d3f815d5cecd6db5385c4cc7e91f83f1d0a6e902850bf6e3549473b24b29003` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.4.tar.gz` | `ab72bb03d794a8863019fca24f77623133168893399fd1cedf20b9ac984f7e96` |
 | `dist/release/ai-lawyer-kz-v0.1.0-rc.4-release-bundle.tar.gz` | `ed1e6f946c43d8f5f542dee82ca2eb5f7ac79a0c5f03e26a276bf27775cf33fc` |
+| `dist/release/ai-lawyer-kz-v0.1.0-rc.5-release-bundle.tar.gz` | `23f8072ed5d92c532a01bb84c7d55b128739a36376a88b83b53dbcdfefb1bcb4` |
