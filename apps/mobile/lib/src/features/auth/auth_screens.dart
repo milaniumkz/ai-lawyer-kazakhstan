@@ -73,13 +73,21 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           SegmentedButton<bool>(
             segments: const [
-              ButtonSegment(value: true, label: Text('Телефон')),
-              ButtonSegment(value: false, label: Text('E-mail')),
+              ButtonSegment(
+                  value: true,
+                  label: Text('Телефон'),
+                  icon: Icon(Icons.phone_outlined)),
+              ButtonSegment(
+                  value: false,
+                  label: Text('E-mail'),
+                  icon: Icon(Icons.mail_outline)),
             ],
             selected: {usePhone},
             onSelectionChanged: (value) =>
                 setState(() => usePhone = value.first),
           ),
+          const SizedBox(height: 14),
+          const _AuthDivider(),
           const SizedBox(height: 16),
           TextField(
             controller: loginController,
@@ -113,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: isBusy ? null : requestOtp,
-            icon: const Icon(Icons.sms_outlined),
+            icon: const Icon(Icons.auto_awesome),
             label: Text(isBusy ? 'Отправляю' : 'Получить код'),
           ),
           TextButton(
@@ -197,33 +205,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Ф.И.О.')),
-          const SizedBox(height: 12),
-          TextField(
-            controller: phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: '+7 номер телефона'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-mail'),
-          ),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: consent,
-            onChanged: (value) => setState(() => consent = value ?? false),
-            title: const Text('Согласие с обработкой данных v1'),
+          const _AuthEmblem(icon: Icons.balance_outlined),
+          const SizedBox(height: 16),
+          _AuthPanelCard(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ф.И.О.',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: '+7 номер телефона',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail',
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: consent,
+                  onChanged: (value) =>
+                      setState(() => consent = value ?? false),
+                  title: const Text('Согласие с обработкой данных v1'),
+                ),
+              ],
+            ),
           ),
           Text(status),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: consent && !isBusy ? createAccount : null,
-            icon: const Icon(Icons.person_add_alt_outlined),
+            icon: const Icon(Icons.auto_awesome),
             label: Text(isBusy ? 'Создаю' : 'Создать аккаунт'),
+          ),
+          TextButton(
+            onPressed: () => context.go('/login'),
+            child: const Text('Уже есть аккаунт? Войти'),
           ),
         ],
       ),
@@ -246,6 +277,17 @@ class OtpScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _AuthEmblem(icon: Icons.balance_outlined),
+          const SizedBox(height: 16),
+          Text(
+            'Введите код из SMS',
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(color: AppColors.goldDark, fontFamily: 'Georgia'),
+          ),
+          const SizedBox(height: 12),
           if (AuthRuntime.otpCodeHint != null)
             Text('RC local SMS: ${AuthRuntime.otpCodeHint}'),
           TextField(
@@ -273,9 +315,11 @@ class OtpScreen extends StatelessWidget {
                 }
               }
             },
-            icon: const Icon(Icons.verified_user_outlined),
+            icon: const Icon(Icons.auto_awesome),
             label: const Text('Подтвердить'),
           ),
+          const SizedBox(height: 12),
+          const _AuthDivider(),
           TextButton(
             onPressed: () => _showAction(
                 context,
@@ -307,25 +351,109 @@ class _BiometricScreenState extends State<BiometricScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.fingerprint, size: 96, color: AppColors.gold),
-          const SizedBox(height: 16),
+          const _AuthEmblem(icon: Icons.face_outlined),
+          const SizedBox(height: 28),
           Text(
             enabled
                 ? 'Биометрия включена локально для тестирования'
                 : 'Включите локальный secure flag для быстрого входа',
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 18),
+          const _AuthDivider(),
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: () => setState(() => enabled = true),
-            icon: const Icon(Icons.fingerprint),
+            icon: const Icon(Icons.auto_awesome),
             label: Text(enabled ? 'Включено' : 'Включить биометрию'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => context.go('/profile'),
-            child: const Text('Продолжить'),
+            child: const Text('Позже'),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Биометрические данные хранятся только на устройстве',
+            textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AuthEmblem extends StatelessWidget {
+  const _AuthEmblem({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 178,
+        height: 178,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.gold),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x22D8A13A), blurRadius: 36, spreadRadius: 16),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            width: 104,
+            height: 104,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFE49A), AppColors.gold],
+              ),
+            ),
+            child: Icon(icon, size: 58, color: AppColors.graphite),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthDivider extends StatelessWidget {
+  const _AuthDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(child: Divider(color: AppColors.gold)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Text('◇', style: TextStyle(color: AppColors.gold)),
+        ),
+        Expanded(child: Divider(color: AppColors.gold)),
+      ],
+    );
+  }
+}
+
+class _AuthPanelCard extends StatelessWidget {
+  const _AuthPanelCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(26),
+        side: const BorderSide(color: AppColors.gold),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: child,
       ),
     );
   }

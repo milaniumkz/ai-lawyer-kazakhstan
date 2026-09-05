@@ -920,14 +920,27 @@ export default function WebHome() {
     );
   }
 
+  function AuthMark({ icon = "⚖" }: { icon?: string }) {
+    return <div className="authMark"><span>{icon}</span></div>;
+  }
+
+  function AuthDivider() {
+    return <div className="goldDivider"><span></span><i>◇</i><span></span></div>;
+  }
+
+  function AuthActionRow({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+    return <button className="authActionRow" onClick={onClick}><span>{icon}</span><strong>{label}</strong><em>›</em></button>;
+  }
+
   function renderView() {
     if (view === "onboarding") {
       return (
         <section className="contentPanel centerPanel">
-          <div className="brandMark">⚖</div>
-          <Header title="AI Юрист Казахстан" subtitle="Юридический помощник с проверкой официальных источников РК" />
-          <button className="primary wide" onClick={() => go("login")}>Начать</button>
-          <button className="wide" onClick={() => go("login")}>Уже есть аккаунт</button>
+          <AuthMark />
+          <Header title="AI Юрист" subtitle="Ваш умный юридический помощник" />
+          <AuthDivider />
+          <button className="primary wide heroCta" onClick={() => go("login")}>✧ Начать работу</button>
+          <button className="linkAction" onClick={() => go("login")}>♙ Войти в аккаунт</button>
         </section>
       );
     }
@@ -941,35 +954,55 @@ export default function WebHome() {
           />
           {view === "login" && (
             <>
+              <div className="languageTabs"><button className="active">RU</button><button>KZ</button><button>EN</button></div>
+              <AuthDivider />
+              <div className="authTabs"><button className="active">Вход</button><button onClick={() => go("register")}>Регистрация</button></div>
               <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
               <input placeholder="Пароль или PIN" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-              <button className="primary wide" onClick={() => { void startAuth("login"); }}>Получить код</button>
-              <button className="wide" onClick={() => go("register")}>Зарегистрироваться</button>
+              <AuthActionRow icon="☎" label="Войти по номеру телефона" onClick={() => { void startAuth("login"); }} />
+              <AuthActionRow icon="✉" label="Войти по e-mail" onClick={() => { setPhone(email); void startAuth("login"); }} />
+              <AuthDivider />
+              <AuthActionRow icon="⌗" label="Войти по Face ID / Touch ID" onClick={() => go("biometric")} />
+              <button className="linkAction" onClick={() => go("register")}>Нет аккаунта? Зарегистрироваться</button>
             </>
           )}
           {view === "register" && (
             <>
-              <input placeholder="Ф.И.О." value={name} onChange={(event) => setName(event.target.value)} />
-              <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
-              <input placeholder="E-mail" value={email} onChange={(event) => setEmail(event.target.value)} />
-              <label className="toggle"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Согласие с обработкой данных v1</label>
-              <button className="primary wide" onClick={() => { void startAuth("register"); }}>Создать аккаунт</button>
+              <AuthMark />
+              <div className="authFormCard">
+                <input placeholder="Имя" value={name} onChange={(event) => setName(event.target.value)} />
+                <input placeholder="Фамилия" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
+                <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
+                <input placeholder="E-mail" value={email} onChange={(event) => setEmail(event.target.value)} />
+                <input placeholder="Пароль" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+                <div className="chips profileChips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
+                <label className="toggle"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Я принимаю условия и согласен на обработку данных</label>
+                <button className="primary wide heroCta" onClick={() => { void startAuth("register"); }}>✧ Создать аккаунт</button>
+              </div>
+              <button className="linkAction" onClick={() => go("login")}>Уже есть аккаунт? Войти</button>
             </>
           )}
           {view === "otp" && (
             <>
-              <div className="analysisBox"><strong>OTP</strong><p>{otpId ? `Код отправлен: ${otpId.slice(0, 8)}` : "Введите код из SMS"}</p></div>
+              <AuthMark />
+              <Header title="Введите код из SMS" subtitle={phone ? `Мы отправили код на номер ${phone}` : "Мы отправили код на указанный номер"} />
               {otpHint && <small className="recordMeta">{otpHint}</small>}
-              <input placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
-              <button className="primary wide" onClick={() => { void verifyOtp(); }}>Подтвердить</button>
-              <button className="wide" onClick={() => { void startAuth("login"); }}>Отправить код повторно</button>
+              <input className="otpInput" placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
+              <div className="otpBoxes">{Array.from({ length: 6 }).map((_, index) => <span key={index}>{otp[index] ?? ""}</span>)}</div>
+              <p className="hint">Отправить код повторно через <strong>00:42</strong></p>
+              <button className="primary wide heroCta" onClick={() => { void verifyOtp(); }}>✧ Подтвердить</button>
+              <AuthDivider />
+              <button className="linkAction" onClick={() => { void startAuth("login"); }}>Изменить номер</button>
             </>
           )}
           {view === "biometric" && (
             <>
-              <div className="brandMark">◎</div>
-              <button className="primary wide" onClick={() => { setBiometricEnabled(true); setSyncState("Биометрия включена локально"); }}>{biometricEnabled ? "Биометрия включена" : "Включить биометрию"}</button>
-              <button className="wide" onClick={() => go("profile")}>Продолжить</button>
+              <AuthMark icon="⌗" />
+              <Header title="Включить биометрию" subtitle="Входите в приложение быстрее и безопаснее с помощью Face ID / Touch ID" />
+              <AuthDivider />
+              <button className="primary wide heroCta" onClick={() => { setBiometricEnabled(true); setSyncState("Биометрия включена локально"); }}>{biometricEnabled ? "✓ Биометрия включена" : "✧ Включить"}</button>
+              <button className="wide outlineGold" onClick={() => go("profile")}>Позже</button>
+              <p className="hint secureHint">▣ Биометрические данные хранятся только на устройстве</p>
             </>
           )}
         </section>

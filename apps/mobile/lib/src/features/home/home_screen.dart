@@ -17,35 +17,95 @@ class OnboardingScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Icon(Icons.balance_outlined, size: 112, color: AppColors.gold),
-              const SizedBox(height: 24),
+              const _OnboardingEmblem(),
+              const SizedBox(height: 28),
               Text(
                 'AI Юрист Казахстан',
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .displaySmall
-                    ?.copyWith(color: AppColors.goldDark),
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: AppColors.goldDark,
+                      fontFamily: 'Georgia',
+                      letterSpacing: 0,
+                    ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
+              const _GoldDivider(),
+              const SizedBox(height: 18),
               const Text(
-                'Юридический помощник с проверкой официальных источников РК.',
+                'Ваш умный юридический помощник',
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
               FilledButton.icon(
                 onPressed: () => context.go('/login'),
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Начать'),
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text('Начать работу'),
               ),
               TextButton(
-                onPressed: () => context.go('/'),
-                child: const Text('Уже есть аккаунт'),
+                onPressed: () => context.go('/login'),
+                child: const Text('Войти в аккаунт'),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OnboardingEmblem extends StatelessWidget {
+  const _OnboardingEmblem();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 210,
+      height: 210,
+      margin: const EdgeInsets.symmetric(horizontal: 42),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.gold, width: 1.4),
+        boxShadow: const [
+          BoxShadow(color: Color(0x22D8A13A), blurRadius: 42, spreadRadius: 18),
+        ],
+      ),
+      child: Center(
+        child: Container(
+          width: 124,
+          height: 124,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFE49A), AppColors.gold],
+            ),
+          ),
+          child: const Icon(
+            Icons.balance_outlined,
+            size: 76,
+            color: AppColors.graphite,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoldDivider extends StatelessWidget {
+  const _GoldDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(child: Divider(color: AppColors.gold)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Text('◇', style: TextStyle(color: AppColors.gold)),
+        ),
+        Expanded(child: Divider(color: AppColors.gold)),
+      ],
     );
   }
 }

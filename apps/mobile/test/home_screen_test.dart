@@ -58,15 +58,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('AI Юрист Казахстан'), findsOneWidget);
-    await tester.tap(find.text('Начать'));
+    await tester.tap(find.text('Начать работу'));
     await tester.pumpAndSettle();
     expect(find.text('Вход и регистрация'), findsWidgets);
 
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/onboarding'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Уже есть аккаунт'));
+    await tester.tap(find.text('Войти в аккаунт'));
     await tester.pumpAndSettle();
-    expect(find.text('Рассказать проблему'), findsOneWidget);
+    expect(find.text('Вход и регистрация'), findsWidgets);
   });
 
   testWidgets('registration otp and biometric flow works', (tester) async {

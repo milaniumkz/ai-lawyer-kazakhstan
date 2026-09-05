@@ -5,6 +5,7 @@ import { join } from 'node:path';
 const failures = [];
 const mobileApp = readFileSync('apps/mobile/lib/main.dart', 'utf8');
 const mobileTheme = readFileSync('apps/mobile/lib/src/theme/app_theme.dart', 'utf8');
+const mobileAuth = readFileSync('apps/mobile/lib/src/features/auth/auth_screens.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -134,6 +135,12 @@ const tokenNeedles = [
   ['admin token dark', adminTokens, "background: '#071421'"],
   ['matrix action contract', parityMatrix, '## Action Contract'],
   ['matrix no fake government', parityMatrix, 'fake government/payment/SMS production behavior'],
+  ['web auth emblem', webCss, '.authMark'],
+  ['web auth divider', webCss, '.goldDivider'],
+  ['web auth action row', webCss, '.authActionRow'],
+  ['web otp boxes', webCss, '.otpBoxes'],
+  ['mobile auth emblem', mobileAuth, '_AuthEmblem'],
+  ['mobile auth divider', mobileAuth, '_AuthDivider'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {
