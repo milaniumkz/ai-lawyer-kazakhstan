@@ -654,7 +654,7 @@ textarea { min-height: 132px; resize: vertical; }
   gap: 6px;
   border-top: 1px solid var(--line);
   background: color-mix(in srgb, var(--panel) 92%, transparent);
-  padding: 12px;
+  padding: 12px 12px max(12px, env(safe-area-inset-bottom));
 }
 
 .bottomNav button {

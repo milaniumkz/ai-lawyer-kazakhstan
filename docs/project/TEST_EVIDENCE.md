@@ -194,6 +194,7 @@
 - Mobile/web speech recognition — Flutter `speech_to_text` integration added with widget coverage for recognized microphone text; web mobile stores browser-recognized text before upload. `npm run check`, `npm run build`, web typecheck/UI contract and `flutter build apk --release` passed.
 - Voice recognition no-login fallback — `npm run check`, `npm run build`, web typecheck/UI contract, Flutter targeted/full tests and Android `:app:assembleRelease` passed after preserving locally recognized text when the user has not authenticated yet.
 - Design parity matrix and token gate — `npm run test:design-source`, `npm run test:web-ui` and `npm run test:admin-ui` passed after adding `docs/project/DESIGN_PARITY_MATRIX.md` and checking shared web/Flutter/admin design tokens plus action-contract wording.
+- Web visual layout contract — `npm run test:web-visual`, `npm run test:web-ui` and `npm run typecheck --workspace apps/web` passed after adding desktop/mobile/theme CSS assertions and safe-area bottom navigation padding.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
