@@ -783,17 +783,21 @@ export default function WebHome() {
     setSyncState("Запись завершена, сохраняю аудио...");
     try {
       const blob = await stopRecordingAndGetBlob();
-      const userId = await ensureUser();
       if (!blob || blob.size === 0) throw new Error("Пустая запись: попробуйте еще раз");
       const extension = blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
       const recognizedText = speechDraftRef.current.trim() || caseText.trim();
       if (recognizedText) setCaseText(recognizedText);
+      if (!authUserId) {
+        setSyncState(recognizedText ? "Текст распознан локально. Войдите для синхронизации аудио" : "Аудио записано локально. Войдите для синхронизации");
+        go("category");
+        return;
+      }
       const formData = new FormData();
       formData.append("audio", blob, `voice-${Date.now()}.${extension}`);
       formData.append("language", "ru");
       if (remoteCaseId) formData.append("caseId", remoteCaseId);
       if (recognizedText) formData.append("text", recognizedText);
-      const job = await apiForm("/voice/transcripts/audio", formData, userId) as TranscriptJob;
+      const job = await apiForm("/voice/transcripts/audio", formData, authUserId) as TranscriptJob;
       setTranscriptJobId(job.id);
       if (job.transcript) setCaseText(job.transcript);
       setSyncState(job.audioFileId ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}` : `Transcript job готов: ${job.id.slice(0, 8)}`);

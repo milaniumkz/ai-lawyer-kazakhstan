@@ -377,6 +377,41 @@ void main() {
     expect(find.text('Категория готова'), findsOneWidget);
   });
 
+  testWidgets('case intake keeps recognized text locally without login',
+      (tester) async {
+    final api = _FakeVoiceApi();
+    AuthRuntime.userId = '';
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => NewCaseScreen(
+                recorder: _FakeRecorder(),
+                speechRecognizer: _FakeSpeechRecognizer(),
+                voiceApi: api),
+          ),
+          GoRoute(
+            path: '/case/category',
+            builder: (_, __) => const Scaffold(body: Text('Категория готова')),
+          ),
+        ],
+      ),
+    ));
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.stop));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Подтвердить и создать дело'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.pumpAndSettle();
+
+    expect(api.uploadedPath, isNull);
+    expect(find.text('Категория готова'), findsOneWidget);
+  });
+
   testWidgets('chat sends messages through case API when case exists',
       (tester) async {
     final cases = _FakeCaseApi();

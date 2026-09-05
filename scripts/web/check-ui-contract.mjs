@@ -81,6 +81,7 @@ const requiredActions = [
   'navigator.mediaDevices.getUserMedia',
   'speechDraftRef',
   'recognizedText',
+  'Текст распознан локально. Войдите для синхронизации аудио',
   'voicePlayback',
   'Transcript job',
   'ensureUser',

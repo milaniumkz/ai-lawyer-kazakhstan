@@ -447,6 +447,13 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         if (mounted) context.go('/case/category');
         return;
       }
+      if (AuthRuntime.userId.isEmpty) {
+        setState(() {
+          speechStatus = 'Текст распознан локально. Войдите для синхронизации';
+        });
+        if (mounted) context.go('/case/category');
+        return;
+      }
       final job = await voiceApi.uploadAudio(
         userId: AuthRuntime.userId,
         path: recordedPath!,
@@ -467,9 +474,15 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       if (mounted) context.go('/case/category');
     } catch (_) {
       setState(() {
-        transcript =
-            'Аудио сохранено на устройстве. Проверьте сеть и повторите отправку.';
-        transcriptController.text = transcript;
+        final currentText = transcriptController.text.trim();
+        if (currentText.isEmpty ||
+            currentText == 'Говорите, текст появится здесь автоматически...') {
+          transcript =
+              'Аудио сохранено на устройстве. Проверьте сеть и повторите отправку.';
+          transcriptController.text = transcript;
+        }
+        speechStatus =
+            'Текст сохранен локально, API синхронизация не выполнена';
       });
     } finally {
       if (mounted) setState(() => isBusy = false);
@@ -551,9 +564,14 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       setState(() {
         isRecording = false;
         recordedPath ??= 'local-test-recorder.m4a';
-        transcript =
-            'Голос готов к обработке. Для устройства требуется разрешение микрофона.';
-        transcriptController.text = transcript;
+        if (recognizedSpeech.isNotEmpty) {
+          transcript = recognizedSpeech;
+          transcriptController.text = recognizedSpeech;
+        } else {
+          transcript =
+              'Голос готов к обработке. Для устройства требуется разрешение микрофона.';
+          transcriptController.text = transcript;
+        }
         speechStatus = 'Ошибка распознавания';
       });
     } finally {
