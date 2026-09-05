@@ -4,8 +4,14 @@ import { join } from 'node:path';
 
 const failures = [];
 const mobileApp = readFileSync('apps/mobile/lib/main.dart', 'utf8');
+const mobileTheme = readFileSync('apps/mobile/lib/src/theme/app_theme.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
+const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
+const adminCss = readFileSync('apps/admin/app/styles.css', 'utf8');
+const adminTokens = readFileSync('apps/admin/src/design-system/tokens.ts', 'utf8');
+const parityMatrixPath = 'docs/project/DESIGN_PARITY_MATRIX.md';
+const parityMatrix = existsSync(parityMatrixPath) ? readFileSync(parityMatrixPath, 'utf8') : '';
 const darkDir = 'дизайн/темная';
 const lightDir = 'дизайн/светлая ';
 const compactMobileSize = { width: 941, height: 1672 };
@@ -104,6 +110,39 @@ for (const [prefix, label, route, widgetClass] of designScreens) {
   if (!webPage.includes(label)) failures.push(`web screen matrix missing label: ${label}`);
   if (!mobileApp.includes(`path: '${route}'`)) failures.push(`mobile routes missing ${route} for ${label}`);
   if (!mobileDesignTest.includes(`${widgetClass}()`)) failures.push(`mobile design render test missing ${widgetClass} for ${label}`);
+  if (!parityMatrix.includes(`| ${prefix} |`) || !parityMatrix.includes(label)) {
+    failures.push(`design parity matrix missing ${prefix} ${label}`);
+  }
+}
+
+const tokenNeedles = [
+  ['web dark background', webCss, '--bg: #06111d'],
+  ['web dark panel', webCss, '--panel: #0d1a28'],
+  ['web light background', webCss, '--bg: #fbf7ef'],
+  ['web light panel', webCss, '--panel: #ffffff'],
+  ['web gold', webCss, '--gold: #d8a13a'],
+  ['web mobile breakpoint', webCss, '@media (max-width: 620px)'],
+  ['mobile light background', mobileTheme, '0xFFFBF7EF'],
+  ['mobile dark background', mobileTheme, '0xFF071421'],
+  ['mobile gold', mobileTheme, '0xFFD8A13A'],
+  ['mobile card radius', mobileTheme, 'Radius.circular(20)'],
+  ['mobile control radius', mobileTheme, 'Radius.circular(18)'],
+  ['admin light background', adminCss, '--bg: #fbf7ef'],
+  ['admin dark background', adminCss, '--bg: #071421'],
+  ['admin dark media', adminCss, '@media (prefers-color-scheme: dark)'],
+  ['admin token light', adminTokens, "background: '#fbf7ef'"],
+  ['admin token dark', adminTokens, "background: '#071421'"],
+  ['matrix action contract', parityMatrix, '## Action Contract'],
+  ['matrix no fake government', parityMatrix, 'fake government/payment/SMS production behavior'],
+];
+
+for (const [label, haystack, needle] of tokenNeedles) {
+  if (!haystack.includes(needle)) failures.push(`design token gate missing ${label}: ${needle}`);
+}
+
+const actionTypes = ['API call', 'Route transition', 'Local persisted state', 'File picker/upload', 'Microphone recording/STT', 'Dialog/blocker'];
+for (const actionType of actionTypes) {
+  if (!parityMatrix.includes(actionType)) failures.push(`design action contract missing type: ${actionType}`);
 }
 
 if (failures.length) {
