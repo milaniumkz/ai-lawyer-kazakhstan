@@ -140,6 +140,7 @@
 | RC10 release manifest P1 | Release manifest moved to `v0.1.0-rc.10` so the next QA bundle includes the unresolved-marker security gate | RC status, security scan and public server smoke passed before tagging | done |
 | RC10 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.10`, including unresolved-marker security gate evidence | `npm run release:bundle -- v0.1.0-rc.10`, bundle SHA-256 `cf16619d84d0fc9ef5553608dc7bb4fb0c8e1a0290ba0447631c815fbe9fb642` | done |
 | Server archive security scan P1 | Security scan now falls back to filesystem traversal when `.git` is absent, so deployed release archives can run `npm run test:security` | `npm run test:security`, `npm run check`, `npm run build` passed | done |
+| Server security scan stderr cleanup P1 | Security scan fallback suppresses git stderr when running from deploy archives without `.git`, keeping server security gate output clean | server install health passed; server `npm run test:security` and `npm run test:audit` passed; public smoke passed | done |
 
 ## Блокеры окружения
 
