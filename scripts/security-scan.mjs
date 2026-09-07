@@ -21,6 +21,7 @@ const secretPatterns = [
 ];
 
 const forbiddenForeignLaw = [/\bГК РФ\b/i, /\bГПК РФ\b/i, /\bУК РФ\b/i, /\bТК РФ\b/i, /\bИНН\b/i, /\bОГРН\b/i, /\bрубл/i];
+const forbiddenWorkMarkers = [/\bTODO\b/i, /\bFIXME\b/i, /\bHACK\b/i];
 
 const failures = [];
 for (const file of files) {
@@ -30,6 +31,9 @@ for (const file of files) {
   }
   for (const pattern of forbiddenForeignLaw) {
     if (pattern.test(text)) failures.push(`${file}: forbidden foreign-law token ${pattern}`);
+  }
+  for (const pattern of forbiddenWorkMarkers) {
+    if (pattern.test(text)) failures.push(`${file}: unresolved work marker ${pattern}`);
   }
 }
 

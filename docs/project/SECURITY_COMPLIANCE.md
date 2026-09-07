@@ -8,7 +8,7 @@
 - Files use allowlisted MIME/extensions, size limits, private storage and short-lived signed URLs.
 - Legal actions require preview, explicit confirmation, idempotency key and audit event.
 - API errors use the standard safe envelope with `correlationId`.
-- Product source is scanned for obvious hardcoded secrets and forbidden РФ legal tokens.
+- Product source is scanned for obvious hardcoded secrets, unresolved TODO/FIXME/HACK markers and forbidden РФ legal tokens.
 - Production release is blocked unless `scripts/release/check-production-env.mjs` confirms HTTPS public URLs, PostgreSQL persistence, real secrets and non-stub integration modes.
 
 ## Threat Model
