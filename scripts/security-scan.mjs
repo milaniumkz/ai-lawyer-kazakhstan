@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
 
 let yaml;
 try {
@@ -8,11 +9,42 @@ try {
   yaml = await import('js-yaml');
 }
 
-const files = execFileSync('git', ['ls-files', 'apps', 'services', 'packages', '.github', '.env.example'], {
-  encoding: 'utf8',
-})
-  .split('\n')
-  .filter(Boolean);
+function collectFiles(dir) {
+  const found = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (['node_modules', '.next', 'dist', 'build', '.git'].includes(entry.name)) continue;
+      found.push(...collectFiles(path));
+    } else if (entry.isFile() && /\.(ts|tsx|js|mjs|json|ya?ml|md|env|example)$/.test(entry.name)) {
+      found.push(path);
+    }
+  }
+  return found;
+}
+
+function scanFiles() {
+  try {
+    return execFileSync('git', ['ls-files', 'apps', 'services', 'packages', '.github', '.env.example'], {
+      encoding: 'utf8',
+    })
+      .split('\n')
+      .filter(Boolean);
+  } catch {
+    return ['apps', 'services', 'packages', '.github', '.env.example']
+      .filter((path) => {
+        try {
+          statSync(path);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .flatMap((path) => (statSync(path).isDirectory() ? collectFiles(path) : [path]));
+  }
+}
+
+const files = scanFiles();
 
 const secretPatterns = [
   /AKIA[0-9A-Z]{16}/,
