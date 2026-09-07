@@ -143,6 +143,7 @@
 | Server security scan stderr cleanup P1 | Security scan fallback suppresses git stderr when running from deploy archives without `.git`, keeping server security gate output clean | server install health passed; server `npm run test:security` and `npm run test:audit` passed; public smoke passed | done |
 | Web full screenshot matrix P1 | Web screenshot runner now covers 25 dark screens and 20 light screens across 390x844, 430x932 and 1440x900 viewports, with strict mode for release visual baselines | `WEB_BASE_URL=https://89-207-250-217.sslip.io npm run test:web-screenshots:strict` captured 135 screenshots; `npm run check` passed | done |
 | Web mobile home pixel fix P1 | Mobile home no longer clips top actions or overlays the quick action card with the service status bar; bottom navigation tabs have stable widths and text overflow rules | local and public `npm run test:web-screenshots:strict` captured 135 screenshots; server health, public smoke, `npm run check` and `npm run build` passed | done |
+| Web pixel diff measurement P1 | Added reference-ratio `390x693` web baselines and a dark-reference pixel diff report so the next design fixes are ordered by measured mismatch instead of manual inspection | `WEB_BASE_URL=http://127.0.0.1:3010 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff` passed | done |
 
 ## Блокеры окружения
 

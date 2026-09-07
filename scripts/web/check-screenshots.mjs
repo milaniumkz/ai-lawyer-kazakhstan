@@ -4,6 +4,7 @@ import { join } from 'node:path';
 const outDir = 'docs/project/web-visual-baselines';
 const strict = process.env.WEB_SCREENSHOT_STRICT === '1';
 const viewports = [
+  { name: 'mobile-ref-390', width: 390, height: 693 },
   { name: 'mobile-390', width: 390, height: 844 },
   { name: 'mobile-430', width: 430, height: 932 },
   { name: 'desktop-1440', width: 1440, height: 900 },

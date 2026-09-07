@@ -64,6 +64,7 @@ Acceptance для mobile/web center frame:
 - emblem/mic/card size: <= 5%;
 - no overlapped text/buttons;
 - desktop side panels must not distort the central mobile frame.
+- `npm run test:web-pixel-diff` writes `docs/project/WEB_PIXEL_DIFF.md` from dark PNG references and `mobile-ref-390` web baselines.
 
 ## Priority gaps
 
