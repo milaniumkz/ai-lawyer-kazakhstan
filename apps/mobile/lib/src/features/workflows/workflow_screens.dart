@@ -89,12 +89,20 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Конструктор документа',
+              'Формирование претензии',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(color: AppColors.goldDark),
             ),
+            const SizedBox(height: 16),
+            const _ClaimBuildHero(),
+            const SizedBox(height: 12),
+            _ClaimSteps(onGenerate: generateDraft),
+            const SizedBox(height: 12),
+            const _ClaimBasisCard(),
+            const SizedBox(height: 12),
+            _ClaimProgressCard(progress: generated ? 1 : 0.74),
             const SizedBox(height: 16),
             TextField(
                 controller: claimantController,
@@ -128,7 +136,7 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
                   ? 'Формирую'
                   : generated
                       ? 'Проект сформирован'
-                      : 'Сформировать проект'),
+                      : 'Открыть проект'),
             ),
             const SizedBox(height: 16),
             Card(
@@ -166,13 +174,49 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            const _ClaimStatusChips(),
+            const SizedBox(height: 16),
             Card(
+              color: const Color(0xFFFBF7EF),
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  WorkflowRuntime.generatedBody.isEmpty
-                      ? 'Прошу погасить задолженность по договору займа. Перед отправкой документ требует проверки юристом.'
-                      : WorkflowRuntime.generatedBody,
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: Icon(Icons.balance_outlined,
+                          color: Color(0xFFAD7B25), size: 46),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        'Досудебная претензия',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(color: const Color(0xFF101827)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _PaperSection(
+                        title: 'От кого',
+                        body:
+                            '${AuthRuntime.displayName.isEmpty ? 'Заявитель' : AuthRuntime.displayName}\nКонтактные данные из профиля'),
+                    const _PaperSection(
+                        title: 'Кому',
+                        body: 'Ответчик\nРеквизиты уточняются пользователем'),
+                    _PaperSection(
+                      title: 'Суть требования',
+                      body: WorkflowRuntime.generatedBody.isEmpty
+                          ? 'Прошу урегулировать спор в досудебном порядке. Перед отправкой документ требует проверки пользователя.'
+                          : WorkflowRuntime.generatedBody,
+                    ),
+                    const _PaperSection(
+                      title: 'Норма права',
+                      body:
+                          'Нет подтвержденной нормы. Требуется ручная проверка официального источника РК.',
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -298,22 +342,270 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            Text(
+              'Выберите способ отправки',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(color: AppColors.goldDark),
+            ),
+            const SizedBox(height: 16),
+            const _SendMethodGrid(),
+            const SizedBox(height: 12),
+            const _RecipientCard(),
+            const SizedBox(height: 12),
+            const _AttachmentCard(),
+            const SizedBox(height: 12),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Контакт получателя'),
+              controller: null,
+            ),
+            const SizedBox(height: 12),
+            const Card(
+                child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                  'Здравствуйте!\nНаправляю Вам претензию по делу. Прошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист'),
+            )),
+            const SizedBox(height: 12),
             const Card(
               child: ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text('Assisted submission'),
-                subtitle: Text(
-                    'Официальная интеграция не подключена. Отправка фиксируется как ручной шаг.'),
+                leading:
+                    Icon(Icons.verified_user_outlined, color: AppColors.gold),
+                title: Text(
+                    'Доставка сообщения зависит от внешнего сервиса. Статус отправки фиксируется вручную или через официальный adapter.'),
               ),
             ),
+            const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: () => setState(() => sent = true),
               icon: const Icon(Icons.mark_email_read_outlined),
-              label: Text(
-                  sent ? 'Отправка зафиксирована' : 'Зафиксировать отправку'),
+              label: Text(sent ? 'Отправка зафиксирована' : 'Отправить'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => setState(() => sent = false),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('Сохранить как черновик'),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ClaimBuildHero extends StatelessWidget {
+  const _ClaimBuildHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            const Icon(Icons.edit_document, color: AppColors.gold, size: 72),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Подготовка досудебной претензии',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text(
+                      'AI юрист анализирует данные дела и формирует текст претензии по подтвержденным источникам РК.'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClaimSteps extends StatelessWidget {
+  const _ClaimSteps({required this.onGenerate});
+
+  final VoidCallback onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      ('Категория спора определена', true),
+      ('Нормы права подобраны', true),
+      ('Недостающие документы проверены', true),
+      ('Текст претензии формируется', false),
+    ];
+    return Card(
+      child: Column(
+        children: [
+          for (final step in steps)
+            ListTile(
+              leading: Icon(
+                step.$2
+                    ? Icons.check_circle_outline
+                    : Icons.radio_button_checked,
+                color: AppColors.gold,
+              ),
+              title: Text(step.$1),
+              onTap: step.$2 ? null : onGenerate,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClaimBasisCard extends StatelessWidget {
+  const _ClaimBasisCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+            'Основания: подтвержденные нормы РК добавляются только после поиска в официальных источниках. Если источник не подтвержден, документ уходит на ручную проверку.'),
+      ),
+    );
+  }
+}
+
+class _ClaimProgressCard extends StatelessWidget {
+  const _ClaimProgressCard({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Прогресс подготовки'),
+                Text('${(progress * 100).round()}%'),
+              ],
+            ),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(value: progress),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClaimStatusChips extends StatelessWidget {
+  const _ClaimStatusChips();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: const [
+        Chip(label: Text('Черновик')),
+        Chip(label: Text('Проверено AI')),
+        Chip(label: Text('Требует подтверждения')),
+      ],
+    );
+  }
+}
+
+class _PaperSection extends StatelessWidget {
+  const _PaperSection({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(top: 14, bottom: 14),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0x33AD7B25))),
+      ),
+      child: Text('$title\n$body',
+          style: const TextStyle(color: Color(0xFF101827), height: 1.45)),
+    );
+  }
+}
+
+class _SendMethodGrid extends StatelessWidget {
+  const _SendMethodGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final methods = [
+      ('E-mail', Icons.mail_outline, false),
+      ('WhatsApp', Icons.phone_in_talk_outlined, true),
+      ('SMS', Icons.chat_bubble_outline, false),
+      ('Почтовая отправка', Icons.local_post_office_outlined, false),
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.35,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      children: [
+        for (final method in methods)
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                  color: method.$3 ? AppColors.gold : Colors.transparent),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(method.$2, color: AppColors.gold),
+                const SizedBox(height: 8),
+                Text(method.$1, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RecipientCard extends StatelessWidget {
+  const _RecipientCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: ListTile(
+        leading: Icon(Icons.phone_in_talk_outlined, color: AppColors.gold),
+        title: Text('Получатель'),
+        subtitle: Text('Иванов Иван Иванович\n+7 905 123-45-67'),
+      ),
+    );
+  }
+}
+
+class _AttachmentCard extends StatelessWidget {
+  const _AttachmentCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: ListTile(
+        leading: Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
+        title: Text('Претензия.pdf'),
+        subtitle: Text('245 КБ'),
+        trailing: Icon(Icons.download_outlined),
       ),
     );
   }

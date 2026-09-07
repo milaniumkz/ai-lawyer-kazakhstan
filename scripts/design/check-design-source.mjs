@@ -8,6 +8,7 @@ const mobileTheme = readFileSync('apps/mobile/lib/src/theme/app_theme.dart', 'ut
 const mobileAuth = readFileSync('apps/mobile/lib/src/features/auth/auth_screens.dart', 'utf8');
 const mobileCases = readFileSync('apps/mobile/lib/src/features/cases/case_screens.dart', 'utf8');
 const mobileDocuments = readFileSync('apps/mobile/lib/src/features/documents/document_screens.dart', 'utf8');
+const mobileWorkflows = readFileSync('apps/mobile/lib/src/features/workflows/workflow_screens.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -156,6 +157,14 @@ const tokenNeedles = [
   ['mobile analysis timeline', mobileDocuments, '_AnalysisTimeline'],
   ['mobile document 68 percent', mobileDocuments, 'Готовность дела: 68%'],
   ['mobile document 82 percent', mobileDocuments, '82%'],
+  ['web claim build hero', webCss, '.claimBuildHero'],
+  ['web claim paper', webCss, '.claimPaper'],
+  ['web send methods', webCss, '.sendMethods'],
+  ['mobile claim build hero', mobileWorkflows, '_ClaimBuildHero'],
+  ['mobile claim steps', mobileWorkflows, '_ClaimSteps'],
+  ['mobile claim status chips', mobileWorkflows, '_ClaimStatusChips'],
+  ['mobile send method grid', mobileWorkflows, '_SendMethodGrid'],
+  ['mobile claim progress', mobileWorkflows, 'Прогресс подготовки'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {

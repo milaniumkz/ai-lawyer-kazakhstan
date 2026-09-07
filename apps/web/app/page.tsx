@@ -1221,15 +1221,57 @@ export default function WebHome() {
     }
 
     if (view === "claim" || view === "claimDraft" || view === "claimSend") {
+      const claimBody = generatedClaimBody || "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ в установленный срок. Перед отправкой документ требует проверки пользователя.";
       return (
         <section className="contentPanel">
           <AppHeader title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" back="case" />
-          <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <div className="claimPreview">{generatedClaimBody || "Прошу погасить задолженность по договору займа. Сумма требования: 1 250 000 ₸. Перед отправкой нужна проверка пользователя."}</div>
-          <div className="actionBar">
-            <button className="primary" onClick={generateClaim}>{claimReady ? "Пересформировать проект" : "Сформировать проект"}</button>
-            <button disabled={!claimReady} onClick={confirmClaimSent}>{sent ? "Отправка зафиксирована" : "Зафиксировать отправку"}</button>
-          </div>
+          {view === "claim" && (
+            <>
+              <div className="claimBuildHero">
+                <AuthMark icon="▤" />
+                <div><h1>Подготовка досудебной претензии</h1><p>AI юрист анализирует данные дела и формирует текст претензии по подтвержденным источникам РК.</p></div>
+              </div>
+              <div className="claimSteps">
+                {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : undefined}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
+              </div>
+              <div className="claimBasis">
+                <strong>Основания</strong>
+                <p>Подтвержденные нормы РК добавляются только после поиска в официальных источниках. Если источник не подтвержден, документ уходит на ручную проверку.</p>
+              </div>
+              <div className="claimProgress"><span>Прогресс подготовки</span><b>{claimReady ? "100%" : "74%"}</b><progress value={claimReady ? 100 : 74} max="100" /></div>
+              <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+              <button className="primary wide heroCta" onClick={generateClaim}>{claimReady ? "Открыть проект" : "✧ Открыть проект"}</button>
+              <button className="wide outlineGold" onClick={() => go("case")}>Отменить</button>
+            </>
+          )}
+          {view === "claimDraft" && (
+            <>
+              <div className="claimStatusRow"><span>✎ Черновик</span><span>🛡 Проверено AI</span><span>⚠ Требует подтверждения</span></div>
+              <article className="claimPaper">
+                <div className="paperMark">⚖</div>
+                <h1>Досудебная претензия</h1>
+                <section><b>От кого</b><p>{profileName || "Заявитель"}<br />Контактные данные из профиля</p></section>
+                <section><b>Кому</b><p>Ответчик<br />Реквизиты уточняются пользователем</p></section>
+                <section><b>Суть требования</b><p>{claimBody}</p></section>
+                <section><b>Норма права</b><p>{selectedNorm ? `${selectedNorm.title}, ${selectedNorm.article}, ${selectedNorm.source}` : "Нет подтвержденной нормы. Требуется ручная проверка официального источника РК."}</p></section>
+              </article>
+              <div className="claimDraftActions"><button onClick={() => go("claim")}>✎ Редактировать</button><button onClick={() => setSyncState("PDF будет сформирован через documents adapter после подтверждения")}>▣ Скачать PDF</button></div>
+              <button className="primary wide heroCta" onClick={confirmClaimSent}>✧ Перейти к отправке</button>
+            </>
+          )}
+          {view === "claimSend" && (
+            <>
+              <h3 className="goldSection">Выберите способ отправки</h3>
+              <div className="sendMethods">{["E-mail", "WhatsApp", "SMS", "Почтовая отправка"].map((method) => <button className={method === "WhatsApp" ? "active" : ""} key={method} onClick={() => setSyncState(`${method}: внешний канал, требуется ручная отправка или provider adapter`)}><span>{method === "E-mail" ? "✉" : method === "WhatsApp" ? "☎" : method === "SMS" ? "…" : "▤"}</span><strong>{method}</strong></button>)}</div>
+              <div className="recipientCard"><span>☎</span><p><small>Получатель</small><br /><b>Иванов Иван Иванович</b><br />+7 905 123-45-67</p></div>
+              <div className="attachmentRow"><span>PDF</span><p><b>Претензия.pdf</b><br />245 КБ</p><button onClick={() => setSyncState("Файл доступен после генерации PDF adapter")}>⇩</button></div>
+              <input value="+7 905 123-45-67" onChange={() => setSyncState("Контакт получателя редактируется в профиле дела")} />
+              <textarea value={"Здравствуйте!\nНаправляю Вам претензию по делу. Прошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист"} onChange={(event) => setSyncState(`Текст сообщения обновлен: ${event.currentTarget.value.length} символов`)} />
+              <div className="docHint"><span>🛡</span><p>Доставка сообщения зависит от внешнего сервиса. Статус отправки фиксируется вручную или через официальный adapter.</p></div>
+              <button className="primary wide heroCta" onClick={confirmClaimSent}>{sent ? "Отправка зафиксирована" : "✧ Отправить"}</button>
+              <button className="wide outlineGold" onClick={() => { setClaimReady(true); setSyncState("Черновик отправки сохранен локально"); }}>▤ Сохранить как черновик</button>
+            </>
+          )}
         </section>
       );
     }

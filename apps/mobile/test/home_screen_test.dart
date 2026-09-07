@@ -128,7 +128,7 @@ void main() {
       ['/documents/analysis', 'Анализ документов'],
       ['/deadlines', 'Календарь и сроки'],
       ['/legal', 'Официальные источники РК'],
-      ['/workflow/pretrial-claim', 'Конструктор документа'],
+      ['/workflow/pretrial-claim', 'Формирование претензии'],
       ['/workflow/pretrial-claim/draft', 'Проект досудебной претензии'],
       ['/workflow/pretrial-claim/send', 'Отправка претензии'],
       ['/subscription', 'Лимиты и расходы'],
@@ -288,14 +288,17 @@ void main() {
   });
 
   testWidgets('shows pretrial claim builder', (tester) async {
+    await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
 
-    expect(find.text('Конструктор документа'), findsOneWidget);
-    expect(find.text('Сформировать проект'), findsOneWidget);
+    expect(find.text('Формирование претензии'), findsOneWidget);
+    await tester.ensureVisible(find.text('Открыть проект'));
+    expect(find.text('Открыть проект'), findsOneWidget);
   });
 
   testWidgets('pretrial claim builder generates draft through API',
       (tester) async {
+    await setLargeViewport(tester);
     MobileCaseRuntime.activeCaseId = 'case-1';
     final api = _FakeWorkflowApi();
     await tester.pumpWidget(MaterialApp.router(
@@ -313,7 +316,8 @@ void main() {
       ),
     ));
 
-    await tester.tap(find.text('Сформировать проект'));
+    await tester.ensureVisible(find.text('Открыть проект'));
+    await tester.tap(find.text('Открыть проект'));
     await tester.pumpAndSettle();
 
     expect(api.generatedCaseId, 'case-1');
@@ -501,18 +505,24 @@ void main() {
   });
 
   testWidgets('pretrial claim draft and send flow works', (tester) async {
+    await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: ClaimDraftScreen()));
     await tester.pumpAndSettle();
 
     expect(find.text('Проект досудебной претензии'), findsWidgets);
+    await tester.ensureVisible(find.text('Проверено пользователем'));
     await tester.tap(find.text('Проверено пользователем'));
     await tester.pumpAndSettle();
+    await tester
+        .ensureVisible(find.widgetWithText(FilledButton, 'Перейти к отправке'));
     expect(find.widgetWithText(FilledButton, 'Перейти к отправке'),
         findsOneWidget);
 
     await tester.pumpWidget(const MaterialApp(home: ClaimSendScreen()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Зафиксировать отправку'));
+    expect(find.text('Выберите способ отправки'), findsOneWidget);
+    await tester.ensureVisible(find.text('Отправить'));
+    await tester.tap(find.text('Отправить'));
     await tester.pumpAndSettle();
     expect(find.text('Отправка зафиксирована'), findsOneWidget);
   });

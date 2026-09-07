@@ -898,6 +898,195 @@ progress {
   text-align: center;
 }
 
+.claimBuildHero,
+.claimBasis,
+.claimProgress,
+.claimPaper,
+.recipientCard,
+.attachmentRow {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--panel-soft);
+  box-shadow: var(--shadow);
+}
+
+.claimBuildHero {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+}
+
+.claimBuildHero .authMark {
+  width: 104px;
+  height: 104px;
+  margin: 0;
+}
+
+.claimBuildHero h1,
+.claimBuildHero p,
+.claimBasis p,
+.claimProgress span,
+.recipientCard p,
+.attachmentRow p {
+  margin: 0;
+}
+
+.claimBuildHero h1,
+.claimPaper h1,
+.claimBasis strong,
+.claimProgress b {
+  color: var(--gold-strong);
+}
+
+.claimBuildHero p,
+.claimBasis p,
+.recipientCard small,
+.attachmentRow p {
+  color: var(--muted);
+}
+
+.claimSteps {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.claimSteps button {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  color: var(--text);
+  text-align: left;
+}
+
+.claimSteps span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--gold-strong);
+}
+
+.claimBasis,
+.claimProgress {
+  margin-bottom: 16px;
+  padding: 18px;
+}
+
+.claimProgress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.claimProgress progress {
+  grid-column: 1 / -1;
+}
+
+.claimStatusRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.claimStatusRow span {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  padding: 12px;
+  text-align: center;
+}
+
+.claimPaper {
+  display: grid;
+  gap: 18px;
+  background: #fbf7ef;
+  color: #101827;
+  padding: 28px 22px;
+}
+
+.claimPaper .paperMark {
+  color: #ad7b25;
+  font-size: 48px;
+  text-align: center;
+}
+
+.claimPaper h1 {
+  margin: 0;
+  color: #101827;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  text-align: center;
+}
+
+.claimPaper section {
+  border-top: 1px solid rgba(173, 123, 37, 0.28);
+  padding-top: 14px;
+}
+
+.claimPaper b {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.claimDraftActions,
+.sendMethods {
+  display: grid;
+  gap: 12px;
+}
+
+.claimDraftActions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 18px 0;
+}
+
+.sendMethods {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.sendMethods button {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 116px;
+  color: var(--text);
+}
+
+.sendMethods button.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 70%, transparent), var(--shadow);
+}
+
+.sendMethods span {
+  color: var(--gold-strong);
+  font-size: 34px;
+}
+
+.recipientCard,
+.attachmentRow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.recipientCard span,
+.attachmentRow span {
+  color: var(--gold-strong);
+  font-size: 34px;
+}
+
 .docRow.active {
   border-color: var(--gold);
   background: color-mix(in srgb, var(--gold) 14%, var(--panel));
