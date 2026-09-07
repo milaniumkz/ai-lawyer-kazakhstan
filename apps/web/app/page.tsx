@@ -1272,7 +1272,7 @@ export default function WebHome() {
                 <div><h1>Подготовка досудебной претензии</h1><p>AI юрист анализирует данные дела и формирует текст претензии по подтвержденным источникам РК.</p></div>
               </div>
               <div className="claimSteps">
-                {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : undefined}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
+                {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : () => setSyncState(step)}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
               </div>
               <div className="claimBasis">
                 <strong>Основания</strong>
