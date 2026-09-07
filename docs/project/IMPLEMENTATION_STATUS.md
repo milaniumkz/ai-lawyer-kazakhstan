@@ -122,6 +122,7 @@
 | Design parity screens 15-18 P1 | Cases list, case details, case chat and deadlines now follow the reference structure in web and Flutter: filter chips, case cards, metrics, progress rail, chat case header, document CTA, calendar grid and deadline rows | Design gates, web typecheck, Flutter analyze and targeted cases test passed | done |
 | Design parity screens 19-25 P1 | Legal/search, documents overview, profile, settings, subscription and help now follow the reference structure in web and Flutter: popular norm queries, profile hero/completion, settings groups, usage/plan cards and support sections; РФ examples from PNG were not used as legal truth | `npm run check`, `npm run build`, Flutter analyze/test, design/web visual gates passed; Docker unavailable | done |
 | RC6 APK refresh P1 | Android release APK rebuilt after final design parity pass and release manifest/checksums moved to `v0.1.0-rc.6` with trusted HTTPS test URLs | `flutter build apk --release`, APK SHA-256 `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec` | done |
+| RC6 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.6` with docs, OpenAPI, source archive and Android APK | `npm run release:bundle -- v0.1.0-rc.6`, bundle SHA-256 `85fb8ca7c2126cbb9bbee4f5e8d919fc5f7dad781a9aa758a5fe0eddec47a9e7` | done |
 
 ## Блокеры окружения
 

@@ -203,6 +203,7 @@
 - Design parity screens 15-18 — design gates, web typecheck, Flutter analyze and targeted cases test passed after aligning cases list, case details, chat and deadlines to the reference structure with KZ-safe legal text.
 - Design parity screens 19-25 — `npm run check`, `npm run build`, Flutter analyze/test, design-source and web-visual gates passed after aligning legal/search, documents overview, profile, settings, subscription and help reference structures in web and Flutter while preserving KZ-only legal scope.
 - RC6 Android APK refresh — `/Volumes/PD1000/job/flutter/bin/flutter build apk --release` passed on 2026-09-07; `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` SHA-256 `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec`.
+- RC6 QA release bundle — `npm run release:bundle -- v0.1.0-rc.6` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.6-release-bundle.tar.gz` SHA-256 `85fb8ca7c2126cbb9bbee4f5e8d919fc5f7dad781a9aa758a5fe0eddec47a9e7`.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
