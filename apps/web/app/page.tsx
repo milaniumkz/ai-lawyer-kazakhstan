@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
+
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type View =
@@ -115,6 +117,7 @@ export default function WebHome() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
   const speechDraftRef = useRef("");
+  const clientSequenceRef = useRef(0);
   const [view, setView] = useState<View>("home");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -258,6 +261,11 @@ export default function WebHome() {
     setView(nextView);
   }
 
+  function nextClientId(prefix: string) {
+    clientSequenceRef.current += 1;
+    return `${prefix}-${clientSequenceRef.current}`;
+  }
+
   async function ensureUser() {
     if (authUserId) return authUserId;
     go("login");
@@ -292,7 +300,7 @@ export default function WebHome() {
       const ownerUserId = await ensureUser();
       const legalCase = await apiJson("/cases", {
         method: "POST",
-        headers: { "idempotency-key": `web-case-${Date.now()}`, "x-user-id": ownerUserId },
+        headers: { "idempotency-key": nextClientId("web-case"), "x-user-id": ownerUserId },
         body: JSON.stringify({ ownerUserId, problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}` }),
       }) as ApiLegalCase;
       const next = mapCase(legalCase);
@@ -618,7 +626,7 @@ export default function WebHome() {
       setSyncState("Опишите обращение подробнее");
       return;
     }
-    const ticketId = `SUP-${Date.now().toString().slice(-6)}`;
+    const ticketId = nextClientId("SUP");
     if (remoteCaseId) {
       try {
         const userId = await ensureUser();
@@ -793,7 +801,7 @@ export default function WebHome() {
         return;
       }
       const formData = new FormData();
-      formData.append("audio", blob, `voice-${Date.now()}.${extension}`);
+      formData.append("audio", blob, `${nextClientId("voice")}.${extension}`);
       formData.append("language", "ru");
       if (remoteCaseId) formData.append("caseId", remoteCaseId);
       if (recognizedText) formData.append("text", recognizedText);
