@@ -156,6 +156,7 @@
 | Web claim send pixel pass P1 | Claim send mobile screen now matches the reference structure more closely: bottom nav hidden, send method cards/recipient/attachment/message blocks tightened and aligned | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict`, `npm run test:web-pixel-diff`, `npm run check`, `npm run build`; Docker unavailable locally; screen 14 diff moved from 13.65% to 5.90% | done |
 | Web claim send pixel deploy P1 | Public server refreshed with the claim send pixel pass | `/tmp/ai-lawyer-kz-claim-send-pixel.tar.gz` SHA-256 `ab9117be81ead440be929149fd02d4ac35762289c59102fb43b3dd8504880943`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 | Web case card pixel pass P1 | Case card mobile screen now matches the reference structure more closely: populated fallback case, bottom nav hidden, compact metric cards, progress rail and action block aligned | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict`, `npm run test:web-pixel-diff`, `npm run check`, `npm run build`; Docker unavailable locally; screen 16 diff moved from 13.49% to 5.30% | done |
+| Web case card pixel deploy P1 | Public server refreshed with the case card pixel pass | `/tmp/ai-lawyer-kz-case-card-pixel.tar.gz` SHA-256 `b600bb34e5caf791b37f58f2a906935d8c49096d5cb64b523ba5b5181bb73ac1`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 
 ## Блокеры окружения
 
