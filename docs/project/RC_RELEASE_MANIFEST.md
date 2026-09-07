@@ -1,8 +1,8 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.4`
+Release: `v0.1.0-rc.6`
 
-Date: 2026-09-04
+Date: 2026-09-07
 
 ## Scope
 
@@ -16,10 +16,10 @@ Date: 2026-09-04
 
 ## Public Test URLs
 
-- Web: `http://89.207.250.217/`
-- Admin: `http://89.207.250.217/admin`
-- API health: `http://89.207.250.217/api/v1/health`
-- AI health: `http://89.207.250.217/ai/health`
+- Web: `https://89-207-250-217.sslip.io/`
+- Admin: `https://89-207-250-217.sslip.io/admin`
+- API health: `https://89-207-250-217.sslip.io/api/v1/health`
+- AI health: `https://89-207-250-217.sslip.io/ai/health`
 
 ## Release Gates
 
@@ -30,10 +30,9 @@ Date: 2026-09-04
 
 ## Source Archive
 
-- Server path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.4.tar.gz`
-- SHA-256: `ab72bb03d794a8863019fca24f77623133168893399fd1cedf20b9ac984f7e96`
-- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.4-release-bundle.tar.gz`
-- QA bundle SHA-256: `ed1e6f946c43d8f5f542dee82ca2eb5f7ac79a0c5f03e26a276bf27775cf33fc`
+- Source tag: `v0.1.0-rc.6`
+- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.6-release-bundle.tar.gz`
+- Android APK SHA-256: `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec`
 
 ## Not Production Until
 
