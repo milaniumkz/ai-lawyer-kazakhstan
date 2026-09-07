@@ -115,6 +115,8 @@
 | Design parity matrix and token gate P1 | Added a 25-screen design parity matrix with required actions and expanded design-source checks for web, Flutter and admin token alignment | `npm run test:design-source`, `npm run test:web-ui`, `npm run test:admin-ui` passed | done |
 | Web visual layout contract P1 | Added a lightweight web visual contract for dark/light tokens, desktop side panels, mobile bottom navigation and safe-area spacing | `npm run test:web-visual`, `npm run test:web-ui`, web typecheck passed | done |
 | Design parity screens 01-05 P1 | Onboarding, login/register, OTP and biometric screens now use reference-style emblem, gold dividers, auth action rows, form card, OTP boxes and biometric device-only copy in web and Flutter | `npm run check`, `npm run build`, targeted Flutter auth tests and web design gates passed; Docker unavailable | done |
+| Design pixel audit baseline P1 | Added PNG-derived pixel audit for all 45 dark/light references and optional web screenshot baseline script for mobile/desktop theme captures | `npm run test:design-pixel`, `npm run test:design-source`, `npm run test:web-visual` passed | done |
+| Design parity screens 06-08 P1 | Category dispute screen now follows the reference result-card layout with emblem, divider, confidence, alternatives and continue/manual actions in web and Flutter | Design gates, web typecheck, Flutter analyze and targeted category flow test passed | done |
 
 ## Блокеры окружения
 

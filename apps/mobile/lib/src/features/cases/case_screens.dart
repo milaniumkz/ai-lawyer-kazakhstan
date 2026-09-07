@@ -927,44 +927,128 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return _CaseScaffold(
-      title: 'Определение категории спора',
+      title: 'Категория спора',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final item in const [
-                'Гражданское право',
-                'Семейное право',
-                'Защита прав потребителя',
-                'Трудовой спор',
-              ])
-                ChoiceChip(
-                  label: Text(item),
-                  selected: category == item,
-                  onSelected: (_) => setState(() => category = item),
-                ),
-            ],
+          _CategoryResultCard(
+            category: category,
+            onSelected: (value) => setState(() => category = value),
           ),
-          const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.auto_awesome_outlined),
-              title: Text('Категория: $category'),
-              subtitle:
-                  const Text('Риск: средний · требуется проверка документов'),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: () => context.go('/documents'),
-            icon: const Icon(Icons.folder_open_outlined),
-            label: const Text('Продолжить к документам'),
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('Продолжить'),
+          ),
+          TextButton(
+            onPressed: () => setState(() => category = 'Трудовой спор'),
+            child: const Text('Изменить вручную'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CategoryResultCard extends StatelessWidget {
+  const _CategoryResultCard({
+    required this.category,
+    required this.onSelected,
+  });
+
+  final String category;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final title =
+        category == 'Семейное право' ? 'Брачно-семейные отношения' : category;
+    return Column(
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(color: AppColors.gold),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              children: [
+                const Icon(Icons.balance_outlined,
+                    size: 92, color: AppColors.gold),
+                const SizedBox(height: 14),
+                const Text('Категория определена'),
+                const SizedBox(height: 8),
+                const _CaseGoldDivider(),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: AppColors.goldDark,
+                        fontFamily: 'Georgia',
+                      ),
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton.icon(
+                  onPressed: () => onSelected('Семейное право'),
+                  icon: const Icon(Icons.family_restroom_outlined),
+                  label: const Text('Взыскание алиментов'),
+                ),
+                const SizedBox(height: 16),
+                RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.titleMedium,
+                    children: const [
+                      TextSpan(text: 'Уверенность: '),
+                      TextSpan(
+                        text: '92%',
+                        style: TextStyle(color: AppColors.gold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text('Возможные альтернативы'),
+        const SizedBox(height: 12),
+        for (final item in const ['Расторжение брака', 'Содержание супруги'])
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: OutlinedButton.icon(
+              onPressed: () => onSelected('Семейное право'),
+              icon: const Icon(Icons.timer_outlined),
+              label: Text(item),
+            ),
+          ),
+        const SizedBox(height: 8),
+        const Text(
+          'На основании вашего описания система определила наиболее подходящую категорию спора.',
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _CaseGoldDivider extends StatelessWidget {
+  const _CaseGoldDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(child: Divider(color: AppColors.gold)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Text('◇', style: TextStyle(color: AppColors.gold)),
+        ),
+        Expanded(child: Divider(color: AppColors.gold)),
+      ],
     );
   }
 }

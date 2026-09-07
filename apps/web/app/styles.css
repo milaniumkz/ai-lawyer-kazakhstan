@@ -615,6 +615,62 @@ h3 { font-size: 28px; }
 .roundIcon { width: 64px; height: 64px; font-size: 28px; }
 .largeIcon { width: 92px; height: 92px; font-size: 42px; }
 
+.categoryHero {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 44px 0 30px;
+  border: 1px solid var(--gold);
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--panel-soft) 82%, transparent);
+  padding: 26px 22px;
+  text-align: center;
+}
+
+.categoryHero .authMark {
+  width: 150px;
+  margin-bottom: 4px;
+}
+
+.categoryHero .authMark span {
+  font-size: 62px;
+}
+
+.categoryHero strong,
+.categoryHero b {
+  color: var(--gold-strong);
+  font-size: 22px;
+}
+
+.categoryHero h1 {
+  margin: 0;
+  max-width: 420px;
+  font-size: clamp(40px, 10vw, 58px);
+}
+
+.categoryPill,
+.categoryAlternatives button {
+  min-height: 66px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--gold-strong);
+  padding: 14px 26px;
+  font-size: 22px;
+}
+
+.categoryAlternatives {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 34px;
+}
+
+.categoryAlternatives button {
+  width: 100%;
+  border-radius: 14px;
+  text-align: left;
+}
+
 .panelHeader { margin-bottom: 22px; }
 
 .screenHeader {

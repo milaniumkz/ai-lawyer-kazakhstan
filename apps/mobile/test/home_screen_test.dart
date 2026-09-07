@@ -122,7 +122,7 @@ void main() {
       ['/cases', 'Мои дела'],
       ['/case/details', 'Карточка дела'],
       ['/case/new', 'Новое дело'],
-      ['/case/category', 'Определение категории спора'],
+      ['/case/category', 'Категория спора'],
       ['/case/chat', 'Чат по делу'],
       ['/documents', 'Документы и доказательства'],
       ['/documents/analysis', 'Анализ документов'],
@@ -156,11 +156,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Подтвердить и создать дело'));
     await tester.pumpAndSettle();
-    expect(find.text('Определение категории спора'), findsWidgets);
+    expect(find.text('Категория спора'), findsWidgets);
 
-    await tester.tap(find.text('Трудовой спор'));
+    await tester.tap(find.text('Содержание супруги'));
     await tester.pumpAndSettle();
-    expect(find.text('Категория: Трудовой спор'), findsOneWidget);
+    expect(find.text('Брачно-семейные отношения'), findsOneWidget);
   });
 
   testWidgets('bottom navigation opens cases documents deadlines and profile',

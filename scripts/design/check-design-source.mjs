@@ -6,6 +6,7 @@ const failures = [];
 const mobileApp = readFileSync('apps/mobile/lib/main.dart', 'utf8');
 const mobileTheme = readFileSync('apps/mobile/lib/src/theme/app_theme.dart', 'utf8');
 const mobileAuth = readFileSync('apps/mobile/lib/src/features/auth/auth_screens.dart', 'utf8');
+const mobileCases = readFileSync('apps/mobile/lib/src/features/cases/case_screens.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -141,6 +142,10 @@ const tokenNeedles = [
   ['web otp boxes', webCss, '.otpBoxes'],
   ['mobile auth emblem', mobileAuth, '_AuthEmblem'],
   ['mobile auth divider', mobileAuth, '_AuthDivider'],
+  ['web category hero', webCss, '.categoryHero'],
+  ['web category alternatives', webCss, '.categoryAlternatives'],
+  ['mobile category card', mobileCases, '_CategoryResultCard'],
+  ['mobile category confidence', mobileCases, 'Уверенность:'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {

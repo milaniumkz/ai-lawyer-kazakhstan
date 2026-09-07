@@ -1033,10 +1033,21 @@ export default function WebHome() {
     if (view === "category") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Категория обращения" subtitle="AI определил категорию по описанию" back="newCase" />
-          <div className="chips">{["Гражданское право", "Трудовой спор", "Семейное право", "Административное право"].map((type) => <button className={selectedCategory === type ? "chip active" : "chip"} key={type} onClick={() => { setSelectedCategory(type); setSyncState(`Категория выбрана: ${type}`); }}>{type}</button>)}</div>
-          <div className="analysisBox"><strong>{selectedCategory}</strong><p>Категория будет сохранена вместе с описанием дела и дополнительно проверена AI-классификатором.</p></div>
-          <button className="primary wide" onClick={addCase}>Подтвердить и создать дело</button>
+          <AppHeader title="Категория спора" subtitle="AI определил категорию по описанию" back="newCase" />
+          <div className="categoryHero">
+            <AuthMark />
+            <strong>Категория определена</strong>
+            <AuthDivider />
+            <h1>{selectedCategory === "Семейное право" ? "Брачно-семейные отношения" : selectedCategory}</h1>
+            <button className="categoryPill" onClick={() => setSelectedCategory("Семейное право")}>♙ Взыскание алиментов</button>
+            <p>Уверенность: <b>92%</b></p>
+          </div>
+          <AuthDivider />
+          <p className="hint">Возможные альтернативы</p>
+          <div className="categoryAlternatives">{["Расторжение брака", "Содержание супруги"].map((type) => <button key={type} onClick={() => { setSelectedCategory("Семейное право"); setSyncState(`Категория выбрана: ${type}`); }}>◴ {type}</button>)}</div>
+          <p className="hint">✦ На основании вашего описания система определила наиболее подходящую категорию спора.</p>
+          <button className="primary wide heroCta" onClick={addCase}>✧ Продолжить</button>
+          <button className="linkAction" onClick={() => setSyncState("Откройте список альтернатив и выберите категорию")}>Изменить вручную</button>
         </section>
       );
     }
