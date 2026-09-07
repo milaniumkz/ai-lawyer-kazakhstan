@@ -157,16 +157,54 @@ class _DeadlinesScreenState extends State<DeadlinesScreen> {
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
-            SwitchListTile(
-              value: reminderEnabled,
-              onChanged: (value) => setState(() => reminderEnabled = value),
-              title: const Text('Напоминания'),
-              subtitle: Text(reminderEnabled ? 'Включены' : 'Выключены'),
+            const _ReferenceCalendar(),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                    selected: true,
+                    label: const Text('Все'),
+                    onSelected: (_) {}),
+                ChoiceChip(
+                    selected: false,
+                    label: const Text('Срочно'),
+                    onSelected: (_) {}),
+                ChoiceChip(
+                    selected: false,
+                    label: const Text('Суд'),
+                    onSelected: (_) {}),
+                FilterChip(
+                  selected: reminderEnabled,
+                  label: const Text('Напоминания'),
+                  onSelected: (value) =>
+                      setState(() => reminderEnabled = value),
+                ),
+              ],
             ),
-            const _DeadlineCard('Претензия', '18 апр 2024', 'Ожидает'),
-            const _DeadlineCard('Подача в суд', '22 мая 2024', '12 дней'),
+            const SizedBox(height: 12),
+            const _DeadlineCard('Подать иск', '15 мая 2024 до 18:00',
+                'Срочно · осталось 2 дня', Icons.balance_outlined),
             const _DeadlineCard(
-                'Судебное заседание', '05 июн 2024', 'Запланировано'),
+                'Ответить на уведомление',
+                '17 мая 2024 до 12:00',
+                'Важно · осталось 4 дня',
+                Icons.description_outlined),
+            const _DeadlineCard('Проверить претензию', '22 мая 2024',
+                'Напоминание · осталось 9 дней', Icons.fact_check_outlined),
+            const _DeadlineCard('Судебное заседание', '30 мая 2024 10:00',
+                'Суд · осталось 17 дней', Icons.gavel_outlined),
+            const Card(
+              child: ListTile(
+                leading:
+                    Icon(Icons.auto_awesome_outlined, color: AppColors.gold),
+                title: Text('Сроки рассчитываются автоматически'),
+                subtitle: Text(
+                    'Мы учитываем нормы РК и особенности ваших дел, чтобы вы ничего не пропустили.'),
+                trailing: Icon(Icons.chevron_right),
+              ),
+            ),
           ],
         ),
       ),
@@ -175,23 +213,126 @@ class _DeadlinesScreenState extends State<DeadlinesScreen> {
 }
 
 class _DeadlineCard extends StatelessWidget {
-  const _DeadlineCard(this.title, this.date, this.status);
+  const _DeadlineCard(this.title, this.date, this.status, this.icon);
 
   final String title;
   final String date;
   final String status;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading:
-            const Icon(Icons.event_available_outlined, color: AppColors.gold),
+        leading: Icon(icon, color: AppColors.gold),
         title: Text(title),
         subtitle: Text(status),
         trailing: Text(date),
         onTap: () => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$title: $date')),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReferenceCalendar extends StatelessWidget {
+  const _ReferenceCalendar();
+
+  @override
+  Widget build(BuildContext context) {
+    const days = [
+      'Пн',
+      'Вт',
+      'Ср',
+      'Чт',
+      'Пт',
+      'Сб',
+      'Вс',
+      '29',
+      '30',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      '12',
+      '13',
+      '14',
+      '15',
+      '16',
+      '17',
+      '18',
+      '19',
+      '20',
+      '21',
+      '22',
+      '23',
+      '24',
+      '25',
+      '26',
+      '27',
+      '28',
+      '29',
+      '30',
+      '31',
+      '1',
+      '2',
+    ];
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                    onPressed: () {},
+                    icon:
+                        const Icon(Icons.chevron_left, color: AppColors.gold)),
+                Expanded(
+                  child: Text('Май 2024',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge),
+                ),
+                IconButton(
+                    onPressed: () {},
+                    icon:
+                        const Icon(Icons.chevron_right, color: AppColors.gold)),
+              ],
+            ),
+            GridView.count(
+              crossAxisCount: 7,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                for (final day in days)
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: day == '9'
+                            ? AppColors.gold.withValues(alpha: 0.9)
+                            : Colors.transparent,
+                        border: ['16', '22'].contains(day)
+                            ? Border.all(color: AppColors.gold)
+                            : null,
+                      ),
+                      child: Text(day),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

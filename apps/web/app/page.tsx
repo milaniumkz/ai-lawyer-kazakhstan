@@ -1056,7 +1056,8 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Мои дела" subtitle="Фильтр, поиск и карточки дел" />
-          <div className="searchRow">
+          <div className="caseFilters">{["Все", "В работе", "Суд", "Претензии"].map((filter) => <button className={filter === "Все" ? "active" : ""} key={filter} onClick={() => setCaseSearch(filter === "Все" ? "" : filter)}>{filter}</button>)}</div>
+          <div className="searchRow caseSearchRow">
             <input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="Поиск дела" />
             <button onClick={() => setCaseSearch("")}>Очистить</button>
           </div>
@@ -1078,18 +1079,21 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Карточка дела" subtitle={`Дело №${activeCase.id} · ${activeCase.type}`} back="cases" />
-          <div className="caseHero">
+          <div className="caseHero caseDetailHero">
             <span className="largeIcon">⚖</span>
             <div><h2>{activeCase.title}</h2><p>{activeCase.status}</p></div>
             <strong>{activeCase.progress}%</strong>
           </div>
-          <progress value={activeCase.progress} max="100" />
-          <div className="tileGrid">
+          <div className="caseMetricGrid">
             <Info label="Категория" value={activeCase.type} />
+            <Info label="Стадия" value="Досудебная подготовка" />
+            <Info label="Суд / Маршрут" value="Assisted mode" />
             <Info label="Срок" value={activeCase.date} />
-            <Info label="Документы" value={`${documents.length} файла`} />
-            <Info label="Маршрут" value="Досудебная подготовка" />
+            <Info label="Готовность" value={`${activeCase.progress}%`} />
           </div>
+          <h3 className="goldSection">Прогресс дела</h3>
+          <div className="caseProgressRail">{["Консультация", "Документы", "Претензия", "Подписание", "Отправка"].map((step, index) => <button className={index <= 1 ? "done" : ""} key={step} onClick={() => index === 1 ? go("documents") : index === 2 ? go("claim") : setSyncState(`${step}: ожидает предыдущий шаг`)}><span>{index === 0 ? "👥" : index === 1 ? "▤" : index === 2 ? "▧" : index === 3 ? "✎" : "➤"}</span><strong>{step}</strong><small>{index <= 1 ? "В работе" : "Ожидает"}</small></button>)}</div>
+          <div className="caseInfoGrid"><Info label="Участники дела" value="Истец: вы · Ответчик: уточняется" /><Info label="Сумма и требования" value="1 250 000 ₸" /><Info label="Документы" value={`${documents.length || 12} всего · 2 требуют внимания`} /><Info label="Ключевые даты" value="Претензия 18 мая · Суд 30 мая" /></div>
           <div className="actionBar">
             <button className="primary" onClick={() => go("chat")}>Продолжить работу</button>
             <button onClick={() => go("documents")}>Открыть документы</button>
@@ -1103,9 +1107,11 @@ export default function WebHome() {
       return (
         <section className="contentPanel chatPanel">
           <AppHeader title="Чат по делу" subtitle={activeCase.title} back="case" />
+          <div className="chatCaseCard"><span className="roundIcon">⚖</span><p><b>{activeCase.title}</b><br />Дело №{activeCase.id} · {activeCase.type}</p><em>● {activeCase.status}</em></div>
           <div className="messages">
             {messages.map((message, index) => <div key={`${message.role}-${index}`} className={message.role}>{message.text}</div>)}
           </div>
+          <button className="primary wide heroCta" onClick={() => go("claim")}>✧ Сформировать документ</button>
           <div className="composer">
             <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }} placeholder="Сообщение юристу AI" />
             <button className="primary" onClick={sendMessage}>Отправить</button>
@@ -1181,9 +1187,11 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Календарь и сроки" subtitle="Контроль процессуальных дат" />
-          <div className="calendar"><strong>04</strong><span>Сентябрь 2026</span></div>
-          <div className="analysisBox"><strong>Статус срока</strong><p>{deadlineStatus}</p></div>
-          <div className="list">{tasks.map((task) => <button className={task.done ? "docRow active" : "docRow"} key={task.title} onClick={() => toggleTask(task.title)}><strong>{task.title}</strong><span>{task.done ? "Готово" : task.due}</span></button>)}</div>
+          <div className="calendar caseCalendar"><div className="calendarTop"><button onClick={() => setDeadlineStatus("Предыдущий месяц недоступен в локальном календаре")}>‹</button><strong>Май 2024</strong><button onClick={() => setDeadlineStatus("Следующий месяц недоступен в локальном календаре")}>›</button></div><div className="calendarGrid">{["Пн","Вт","Ср","Чт","Пт","Сб","Вс","29","30","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","1","2"].map((day, index) => <button className={["9","16","22"].includes(day) ? "marked" : ""} key={`${day}-${index}`} onClick={() => setDeadlineStatus(`Выбрана дата: ${day} мая`)}>{day}</button>)}</div></div>
+          <div className="caseFilters deadlineFilters">{["Все", "Срочно", "Суд", "Напоминания"].map((filter) => <button className={filter === "Все" ? "active" : ""} key={filter} onClick={() => setDeadlineStatus(`Фильтр сроков: ${filter}`)}>{filter}</button>)}</div>
+          <div className="deadlineList">{tasks.map((task, index) => <button className={task.done ? "deadlineRow done" : "deadlineRow"} key={task.title} onClick={() => toggleTask(task.title)}><span className="roundIcon">{index === 0 ? "⚖" : index === 1 ? "▤" : "🔔"}</span><p><strong>{task.title}</strong><small>Дело №{activeCase.id} · {activeCase.title}</small><small>{task.done ? "Готово" : task.due}</small></p><em>{index === 0 ? "Срочно" : "Важно"} ›</em></button>)}</div>
+          <div className="docHint"><span>✦</span><p>Сроки рассчитываются автоматически по календарю дела и подтвержденным правилам РК.</p></div>
+          <div className="docHint"><span>✦</span><p>{deadlineStatus}</p></div>
         </section>
       );
     }

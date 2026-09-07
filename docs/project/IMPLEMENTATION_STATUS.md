@@ -119,6 +119,7 @@
 | Design parity screens 06-08 P1 | Category dispute screen now follows the reference result-card layout with emblem, divider, confidence, alternatives and continue/manual actions in web and Flutter | Design gates, web typecheck, Flutter analyze and targeted category flow test passed | done |
 | Design parity screens 09-11 P1 | Document check/upload/analysis now follow the reference structure: readiness progress, missing-document checklist, upload hero/options/recent files, OCR timeline and analysis progress in web and Flutter | Design gates, web typecheck, Flutter analyze and targeted document flow test passed | done |
 | Design parity screens 12-14 P1 | Pretrial claim build/draft/send now follow the reference structure in web and Flutter: preparation steps, KZ-safe legal basis blocker, document paper preview, send-method grid, attachment card and manual/external send status | Design gates, web typecheck, Flutter analyze and targeted workflow tests passed | done |
+| Design parity screens 15-18 P1 | Cases list, case details, case chat and deadlines now follow the reference structure in web and Flutter: filter chips, case cards, metrics, progress rail, chat case header, document CTA, calendar grid and deadline rows | Design gates, web typecheck, Flutter analyze and targeted cases test passed | done |
 
 ## Блокеры окружения
 

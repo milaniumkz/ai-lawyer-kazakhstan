@@ -93,10 +93,9 @@ class _CasesListScreenState extends State<CasesListScreen> {
               ],
             ),
             Text(status),
-            const SizedBox(height: 12),
             const SizedBox(height: 18),
             for (final item in cases)
-              _CaseListTile(
+              _ReferenceCaseListTile(
                 item: item,
                 onTap: () => context.go('/case/details'),
               ),
@@ -136,27 +135,7 @@ class CaseDetailsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 44,
-                  child: Icon(Icons.balance_outlined, size: 42),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Взыскание долга',
-                          style: Theme.of(context).textTheme.headlineMedium),
-                      const SizedBox(height: 4),
-                      const Text('Дело №2024-0015 · Гражданское право'),
-                      const Text('● В работе'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            const _CaseDetailHero(),
             const SizedBox(height: 18),
             const _CaseMetrics(),
             const SizedBox(height: 18),
@@ -243,8 +222,8 @@ class _CaseSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-class _CaseListTile extends StatelessWidget {
-  const _CaseListTile({required this.item, required this.onTap});
+class _ReferenceCaseListTile extends StatelessWidget {
+  const _ReferenceCaseListTile({required this.item, required this.onTap});
 
   final CaseListItem item;
   final VoidCallback onTap;
@@ -252,15 +231,51 @@ class _CaseListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       child: ListTile(
+        minVerticalPadding: 18,
         onTap: onTap,
-        leading: CircleAvatar(child: Icon(item.icon)),
-        title: Text(item.title),
+        leading: CircleAvatar(
+          radius: 34,
+          backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+          child: Icon(item.icon, color: AppColors.gold, size: 34),
+        ),
+        title: Text(item.title, style: Theme.of(context).textTheme.titleLarge),
         subtitle: Text('${item.subtitle}\n${item.status}'),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.gold),
         isThreeLine: true,
       ),
+    );
+  }
+}
+
+class _CaseDetailHero extends StatelessWidget {
+  const _CaseDetailHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 48,
+          backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+          child: const Icon(Icons.balance_outlined,
+              size: 48, color: AppColors.gold),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Взыскание долга',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 4),
+              const Text('Дело №2024-0015 · Гражданское право РК'),
+              const Text('● В работе'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -273,7 +288,7 @@ class _CaseMetrics extends StatelessWidget {
     const metrics = [
       (Icons.menu_book_outlined, 'Категория', 'Гражданское право'),
       (Icons.gavel_outlined, 'Стадия', 'Досудебная подготовка'),
-      (Icons.account_balance_outlined, 'Маршрут', 'Арбитражный суд'),
+      (Icons.account_balance_outlined, 'Маршрут', 'Assisted mode'),
       (Icons.calendar_month_outlined, 'Срок', '15 мая 2024'),
       (Icons.donut_large_outlined, 'Готовность', '65%'),
     ];
@@ -1098,6 +1113,12 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
           for (final message in messages)
             _MessageBubble(text: message.text, assistant: message.assistant),
           const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () => context.go('/workflow/pretrial-claim'),
+            icon: const Icon(Icons.auto_awesome_outlined),
+            label: const Text('Сформировать документ'),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: controller,
             minLines: 2,

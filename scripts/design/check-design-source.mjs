@@ -9,6 +9,7 @@ const mobileAuth = readFileSync('apps/mobile/lib/src/features/auth/auth_screens.
 const mobileCases = readFileSync('apps/mobile/lib/src/features/cases/case_screens.dart', 'utf8');
 const mobileDocuments = readFileSync('apps/mobile/lib/src/features/documents/document_screens.dart', 'utf8');
 const mobileWorkflows = readFileSync('apps/mobile/lib/src/features/workflows/workflow_screens.dart', 'utf8');
+const mobileLegal = readFileSync('apps/mobile/lib/src/features/legal/legal_screens.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -165,6 +166,16 @@ const tokenNeedles = [
   ['mobile claim status chips', mobileWorkflows, '_ClaimStatusChips'],
   ['mobile send method grid', mobileWorkflows, '_SendMethodGrid'],
   ['mobile claim progress', mobileWorkflows, 'Прогресс подготовки'],
+  ['web case filters', webCss, '.caseFilters'],
+  ['web case detail hero', webCss, '.caseDetailHero'],
+  ['web case progress rail', webCss, '.caseProgressRail'],
+  ['web chat case card', webCss, '.chatCaseCard'],
+  ['web case calendar', webCss, '.caseCalendar'],
+  ['mobile reference case list', mobileCases, '_ReferenceCaseListTile'],
+  ['mobile case detail hero', mobileCases, '_CaseDetailHero'],
+  ['mobile chat document button', mobileCases, 'Сформировать документ'],
+  ['mobile reference calendar', mobileLegal, '_ReferenceCalendar'],
+  ['mobile deadlines auto card', mobileLegal, 'Сроки рассчитываются автоматически'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {

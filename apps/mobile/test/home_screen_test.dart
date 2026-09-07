@@ -419,6 +419,7 @@ void main() {
 
   testWidgets('chat sends messages through case API when case exists',
       (tester) async {
+    await setLargeViewport(tester);
     final cases = _FakeCaseApi();
     MobileCaseRuntime.activeCaseId = 'case-1';
     await tester.pumpWidget(MaterialApp(home: CaseChatScreen(caseApi: cases)));
@@ -434,6 +435,7 @@ void main() {
 
   testWidgets('chat send button adds user and assistant messages',
       (tester) async {
+    await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: CaseChatScreen()));
 
     await tester.enterText(find.byType(TextField), 'Какие документы нужны?');

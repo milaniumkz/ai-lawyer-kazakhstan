@@ -602,6 +602,28 @@ h3 { font-size: 28px; }
 .caseRow em { color: var(--muted); font-style: normal; }
 .goldDot { color: var(--gold-strong) !important; }
 
+.caseFilters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.caseFilters button {
+  min-height: 54px;
+  color: var(--muted);
+}
+
+.caseFilters button.active {
+  border-color: var(--gold);
+  color: var(--gold-strong);
+  box-shadow: var(--shadow);
+}
+
+.caseSearchRow {
+  margin-bottom: 14px;
+}
+
 .roundIcon,
 .largeIcon {
   display: grid;
@@ -614,6 +636,61 @@ h3 { font-size: 28px; }
 
 .roundIcon { width: 64px; height: 64px; font-size: 28px; }
 .largeIcon { width: 92px; height: 92px; font-size: 42px; }
+
+.caseDetailHero {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.caseDetailHero h2 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.caseMetricGrid,
+.caseInfoGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.caseMetricGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.caseProgressRail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.caseProgressRail button {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 118px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.caseProgressRail button.done {
+  border-color: var(--gold);
+  color: var(--gold-strong);
+}
+
+.caseProgressRail span {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+}
+
+.caseInfoGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
 
 .categoryHero {
   display: grid;
@@ -1201,6 +1278,29 @@ textarea { min-height: 132px; resize: vertical; }
 .composer { align-items: stretch; }
 .composer input { flex: 1; }
 
+.chatCaseCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel-soft);
+  padding: 14px;
+}
+
+.chatCaseCard p {
+  margin: 0;
+}
+
+.chatCaseCard em {
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  color: var(--gold-strong);
+  font-style: normal;
+  padding: 8px 12px;
+}
+
 .calendar {
   display: grid;
   place-items: center;
@@ -1211,6 +1311,88 @@ textarea { min-height: 132px; resize: vertical; }
 }
 
 .calendar strong { color: var(--gold-strong); font-size: 82px; }
+
+.caseCalendar {
+  display: grid;
+  place-items: stretch;
+  min-height: auto;
+  padding: 18px;
+}
+
+.calendarTop {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendarTop strong {
+  font-size: 24px;
+  text-align: center;
+}
+
+.calendarTop button {
+  border: 0;
+  background: transparent;
+  color: var(--gold-strong);
+  font-size: 36px;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendarGrid button {
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.calendarGrid button.marked {
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  color: var(--gold-strong);
+}
+
+.deadlineFilters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.deadlineList {
+  display: grid;
+  gap: 12px;
+}
+
+.deadlineRow {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  color: var(--text);
+  text-align: left;
+}
+
+.deadlineRow p {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.deadlineRow small,
+.deadlineRow em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.deadlineRow.done strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
 
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .toggle { display: flex; gap: 10px; align-items: center; margin: 14px 0; color: var(--muted); }
