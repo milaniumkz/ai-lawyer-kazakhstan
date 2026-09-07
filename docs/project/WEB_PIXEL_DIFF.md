@@ -12,7 +12,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 06 | `home` | 10.10 |
 | 07 | `newCase` | 7.49 |
 | 08 | `category` | 6.06 |
-| 09 | `documentCheck` | 14.96 |
+| 09 | `documentCheck` | 6.41 |
 | 10 | `documentUpload` | 14.64 |
 | 11 | `analysis` | 12.47 |
 | 12 | `claim` | 14.28 |
@@ -33,12 +33,12 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 ## Worst Screens
 
 - 13 `claimDraft`: 18.18%
-- 09 `documentCheck`: 14.96%
 - 10 `documentUpload`: 14.64%
 - 12 `claim`: 14.28%
 - 14 `claimSend`: 13.65%
 - 16 `case`: 13.49%
 - 11 `analysis`: 12.47%
 - 20 `legalSearch`: 10.77%
+- 06 `home`: 10.10%
 
 Note: this is a measurement gate, not yet a pass/fail pixel-perfect threshold.

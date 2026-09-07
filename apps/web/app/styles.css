@@ -1003,6 +1003,14 @@ progress {
   gap: 12px;
 }
 
+.docChecklist {
+  overflow: hidden;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel-soft);
+}
+
 .docChecklist button,
 .uploadActions button,
 .analysisTimeline button {
@@ -1013,6 +1021,17 @@ progress {
   min-height: 64px;
   color: var(--text);
   text-align: left;
+}
+
+.docChecklist button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 18px;
+}
+
+.docChecklist button + button {
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 .docChecklist span,
@@ -1874,5 +1893,26 @@ button:disabled {
   }
   .appShell[data-view="claimDraft"] .claimPaper section {
     padding-top: 10px;
+  }
+  .appShell[data-view="documentCheck"] .contentPanel {
+    padding-bottom: 34px;
+  }
+  .appShell[data-view="documentCheck"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="documentCheck"] .docReadinessCard {
+    grid-template-columns: 86px minmax(0, 1fr);
+    min-height: 152px;
+    margin-top: 14px;
+  }
+  .appShell[data-view="documentCheck"] .docReadinessCard h3 {
+    font-size: 30px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist button {
+    min-height: 58px;
+  }
+  .appShell[data-view="documentCheck"] .docHint {
+    margin-top: 22px;
   }
 }
