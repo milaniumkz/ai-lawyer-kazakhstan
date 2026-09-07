@@ -208,6 +208,7 @@
 - Next.js security update — upgraded web/admin `next` and `eslint-config-next` to 16.3.4; `npm audit --audit-level=moderate`, `npm run check` and `npm run build` passed with 0 reported npm vulnerabilities locally.
 - Next.js server security refresh — uploaded `/tmp/ai-lawyer-kz-next16.tar.gz` to `/opt/ai-lawyer-kz/ai-lawyer-kz-next16.tar.gz` SHA-256 `4147b51ab62a76ea992f0678c40807cd9f4c3bc37fc15c1f7dd7526d7698a8ee`; server install health passed, server `npm audit --audit-level=moderate` found 0 vulnerabilities and `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
 - RC7 release manifest — `docs/project/RC_RELEASE_MANIFEST.md` moved to `v0.1.0-rc.7` after Next.js 16 local/server audit cleanup; Android APK remains SHA-256 `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec`.
+- RC7 QA release bundle — `npm run release:bundle -- v0.1.0-rc.7` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.7-release-bundle.tar.gz` SHA-256 `d84478f508e10329f8df9fe427602809a4da43086ec9eaaa913b9ac3bc8ebdf7`.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
