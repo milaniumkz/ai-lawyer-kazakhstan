@@ -2089,6 +2089,89 @@ button:disabled {
   .appShell[data-view="claim"] .heroCta {
     min-height: 72px;
   }
+  .appShell[data-view="claimSend"] .contentPanel {
+    padding: 34px 20px 34px;
+  }
+  .appShell[data-view="claimSend"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="claimSend"] .screenHeader {
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .appShell[data-view="claimSend"] .screenHeader button {
+    width: 40px;
+    height: 40px;
+    font-size: 42px;
+  }
+  .appShell[data-view="claimSend"] .screenHeader div {
+    text-align: center;
+  }
+  .appShell[data-view="claimSend"] .screenHeader h2 {
+    font-size: 31px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="claimSend"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="claimSend"] .goldSection {
+    margin: 0 0 14px;
+    font-size: 24px;
+  }
+  .appShell[data-view="claimSend"] .sendMethods {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .appShell[data-view="claimSend"] .sendMethods button {
+    min-height: 96px;
+    border-color: var(--gold);
+    border-radius: 16px;
+    background: var(--panel-soft);
+    padding: 10px 6px;
+    font-size: 14px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+  }
+  .appShell[data-view="claimSend"] .sendMethods span {
+    font-size: 28px;
+  }
+  .appShell[data-view="claimSend"] .recipientCard,
+  .appShell[data-view="claimSend"] .attachmentRow,
+  .appShell[data-view="claimSend"] .docHint,
+  .appShell[data-view="claimSend"] input,
+  .appShell[data-view="claimSend"] textarea {
+    border-color: var(--gold);
+    border-radius: 18px;
+    background: var(--panel-soft);
+  }
+  .appShell[data-view="claimSend"] .recipientCard {
+    min-height: 86px;
+    margin-bottom: 14px;
+  }
+  .appShell[data-view="claimSend"] .attachmentRow {
+    min-height: 76px;
+  }
+  .appShell[data-view="claimSend"] input {
+    min-height: 58px;
+    margin-bottom: 16px;
+  }
+  .appShell[data-view="claimSend"] textarea {
+    min-height: 126px;
+  }
+  .appShell[data-view="claimSend"] .docHint {
+    grid-template-columns: 48px minmax(0, 1fr);
+    margin: 16px 0;
+    padding: 16px;
+  }
+  .appShell[data-view="claimSend"] .docHint span {
+    font-size: 32px;
+  }
+  .appShell[data-view="claimSend"] .heroCta {
+    min-height: 72px;
+  }
   .appShell[data-view="documentCheck"] .contentPanel {
     padding-bottom: 34px;
   }
