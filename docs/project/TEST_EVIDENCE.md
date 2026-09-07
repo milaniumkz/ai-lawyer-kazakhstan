@@ -211,6 +211,7 @@
 - RC7 QA release bundle — `npm run release:bundle -- v0.1.0-rc.7` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.7-release-bundle.tar.gz` SHA-256 `d84478f508e10329f8df9fe427602809a4da43086ec9eaaa913b9ac3bc8ebdf7`.
 - npm audit release gate — `npm run test:audit`, `npm run check` and `npm run build` passed after adding `npm audit --audit-level=moderate` to the default RC check path.
 - RC8 release manifest — `docs/project/RC_RELEASE_MANIFEST.md` moved to `v0.1.0-rc.8` after adding npm audit to the default release gate; `npm run test:audit`, `npm run build`, RC status and public server smoke passed before tagging.
+- RC8 QA release bundle — `npm run release:bundle -- v0.1.0-rc.8` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.8-release-bundle.tar.gz` SHA-256 `13ad4e2679de2b0c1da0d5566a5fbb8631e332037ad6670f3f7b23854eb199b2`.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

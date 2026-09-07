@@ -130,6 +130,7 @@
 | RC7 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.7`, including Next.js 16 security update evidence and unchanged Android APK | `npm run release:bundle -- v0.1.0-rc.7`, bundle SHA-256 `d84478f508e10329f8df9fe427602809a4da43086ec9eaaa913b9ac3bc8ebdf7` | done |
 | npm audit release gate P1 | `npm audit --audit-level=moderate` added to the default `npm run check` so future RC checks fail on moderate/high dependency vulnerabilities | `npm run test:audit`, `npm run check`, `npm run build` passed; Docker unavailable | done |
 | RC8 release manifest P1 | Release manifest moved to `v0.1.0-rc.8` so the next QA bundle includes the npm audit release gate commit | `npm run test:audit`, `npm run build`, RC status and public server smoke passed before tagging | done |
+| RC8 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.8`, including the npm audit release gate | `npm run release:bundle -- v0.1.0-rc.8`, bundle SHA-256 `13ad4e2679de2b0c1da0d5566a5fbb8631e332037ad6670f3f7b23854eb199b2` | done |
 
 ## Блокеры окружения
 
