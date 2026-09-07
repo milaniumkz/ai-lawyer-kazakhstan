@@ -125,6 +125,7 @@
 | RC6 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.6` with docs, OpenAPI, source archive and Android APK | `npm run release:bundle -- v0.1.0-rc.6`, bundle SHA-256 `85fb8ca7c2126cbb9bbee4f5e8d919fc5f7dad781a9aa758a5fe0eddec47a9e7` | done |
 | RC6 public server refresh P1 | Public HTTPS server refreshed from current RC6 archive, services rebuilt/restarted and public smoke updated to match current case-intake UI text | server install health passed; `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed | done |
 | Next.js security update P1 | Web and admin upgraded to Next.js 16.3.4 to remove vulnerable PostCSS chain; ESLint flat config and Next TypeScript defaults updated for the new major | `npm audit --audit-level=moderate`, `npm run check`, `npm run build` passed; Docker unavailable | done |
+| Next.js server security refresh P1 | Public server refreshed with Next.js 16.3.4 build so deployed `npm audit` no longer reports the PostCSS vulnerability chain | server install health passed; server `npm audit --audit-level=moderate` found 0 vulnerabilities; public smoke passed | done |
 
 ## Блокеры окружения
 
