@@ -128,6 +128,7 @@
 | Next.js server security refresh P1 | Public server refreshed with Next.js 16.3.4 build so deployed `npm audit` no longer reports the PostCSS vulnerability chain | server install health passed; server `npm audit --audit-level=moderate` found 0 vulnerabilities; public smoke passed | done |
 | RC7 release manifest P1 | Release manifest moved to `v0.1.0-rc.7` so the next QA bundle includes the Next.js 16 security update and server audit evidence | `npm run release-check:local` and public server smoke passed before tagging | done |
 | RC7 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.7`, including Next.js 16 security update evidence and unchanged Android APK | `npm run release:bundle -- v0.1.0-rc.7`, bundle SHA-256 `d84478f508e10329f8df9fe427602809a4da43086ec9eaaa913b9ac3bc8ebdf7` | done |
+| npm audit release gate P1 | `npm audit --audit-level=moderate` added to the default `npm run check` so future RC checks fail on moderate/high dependency vulnerabilities | `npm run test:audit`, `npm run check`, `npm run build` passed; Docker unavailable | done |
 
 ## Блокеры окружения
 

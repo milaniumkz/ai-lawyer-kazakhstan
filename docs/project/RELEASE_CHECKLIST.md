@@ -71,6 +71,7 @@
 - [x] Расширить mobile render regression на все реализованные release screens в light/dark themes.
 - [x] Закрыть mobile flow документы/анализ → формирование досудебной претензии.
 - [x] Добавить web UI contract gate в общий release-check.
+- [x] Добавить npm audit gate в общий release-check.
 - [x] Подключить web scenario action к реальным `/api/v1` demo вызовам в local/stub mode.
 - [x] Добавить public API demo smoke в server release-check.
 - [x] Добавить design source contract gate в общий release-check.
