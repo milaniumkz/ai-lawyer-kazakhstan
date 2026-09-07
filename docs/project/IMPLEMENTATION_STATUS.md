@@ -154,6 +154,7 @@
 | Web claim builder pixel pass P1 | Claim builder mobile screen now matches the reference structure more closely: bottom nav hidden, hero/card sizing tightened, step rail styled vertically, and empty step handlers replaced with real state feedback | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict`, `npm run test:web-pixel-diff`, `npm run check`, `npm run build`; Docker unavailable locally; screen 12 diff moved from 14.28% to 6.29% | done |
 | Web claim builder pixel deploy P1 | Public server refreshed with the claim builder pixel pass | `/tmp/ai-lawyer-kz-claim-builder-pixel.tar.gz` SHA-256 `4fa645fb9396a50363d52efe2da249576b244daa6e7ba159a98b18e4adbd850d`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 | Web claim send pixel pass P1 | Claim send mobile screen now matches the reference structure more closely: bottom nav hidden, send method cards/recipient/attachment/message blocks tightened and aligned | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict`, `npm run test:web-pixel-diff`, `npm run check`, `npm run build`; Docker unavailable locally; screen 14 diff moved from 13.65% to 5.90% | done |
+| Web claim send pixel deploy P1 | Public server refreshed with the claim send pixel pass | `/tmp/ai-lawyer-kz-claim-send-pixel.tar.gz` SHA-256 `ab9117be81ead440be929149fd02d4ac35762289c59102fb43b3dd8504880943`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 
 ## Блокеры окружения
 
