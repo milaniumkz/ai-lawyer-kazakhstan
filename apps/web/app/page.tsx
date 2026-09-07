@@ -106,7 +106,7 @@ const screens: { label: string; view: View }[] = [
   { label: "Помощь", view: "help" },
 ];
 
-const emptyCase: CaseItem = { id: "new", title: "Новое дело", type: "Не выбрано", status: "Создайте дело", date: "Сегодня", progress: 0 };
+const emptyCase: CaseItem = { id: "2024-0015", title: "Взыскание долга", type: "Гражданское право", status: "В работе", date: "15 мая 2024", progress: 65 };
 
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
