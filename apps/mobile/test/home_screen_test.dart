@@ -131,7 +131,7 @@ void main() {
       ['/workflow/pretrial-claim', 'Формирование претензии'],
       ['/workflow/pretrial-claim/draft', 'Проект досудебной претензии'],
       ['/workflow/pretrial-claim/send', 'Отправка претензии'],
-      ['/subscription', 'Лимиты и расходы'],
+      ['/subscription', 'Подписка'],
     ];
 
     for (final route in routes) {
@@ -234,6 +234,8 @@ void main() {
     expect(find.text('Норма найдена'), findsOneWidget);
     expect(api.answeredQuery, 'взыскание долга по расписке');
 
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Citation Validator'));
     await tester.pumpAndSettle();
     expect(find.text('Цитата проверена API'), findsOneWidget);
@@ -248,24 +250,29 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ИП'));
+    await tester.ensureVisible(find.text('Индивидуальный предприниматель'));
+    await tester.tap(find.text('Индивидуальный предприниматель'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(ChoiceChip, 'ИП'), findsOneWidget);
+    expect(find.text('Индивидуальный предприниматель'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Быстрый вход по биометрии'));
     await tester.tap(find.text('Быстрый вход по биометрии'));
     await tester.pumpAndSettle();
     expect(find.text('Локальный secure flag включен'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Настройки'));
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    expect(find.text('Скрывать ИИН/БИН в логах'), findsOneWidget);
+    expect(find.text('Конфиденциальность'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Сохранить настройки'));
     await tester.tap(find.text('Сохранить настройки'));
     await tester.pumpAndSettle();
     expect(find.text('Настройки сохранены'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Помощь и поддержка'));
     await tester.tap(find.text('Помощь и поддержка'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Написать в поддержку'));
@@ -277,10 +284,17 @@ void main() {
   testWidgets('profile save calls API with confirmed user', (tester) async {
     AuthRuntime.userId = 'user-1';
     final api = _FakeProfileApi();
+    await setLargeViewport(tester);
     await tester.pumpWidget(MaterialApp(home: ProfileScreen(profileApi: api)));
 
-    await tester.ensureVisible(find.text('Сохранить профиль'));
-    await tester.tap(find.text('Сохранить профиль'));
+    final saveProfileButton =
+        find.widgetWithText(FilledButton, 'Сохранить профиль').first;
+    await tester.scrollUntilVisible(
+      saveProfileButton,
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(saveProfileButton);
     await tester.pumpAndSettle();
 
     expect(api.savedUserId, 'user-1');
@@ -532,7 +546,9 @@ void main() {
   testWidgets('shows subscription budget screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SubscriptionScreen()));
 
-    expect(find.text('Лимиты и расходы'), findsOneWidget);
+    expect(find.text('Подписка'), findsWidgets);
+    await tester.scrollUntilVisible(
+        find.text('AI расходы считаются без персональных данных.'), 220);
     expect(find.text('AI расходы считаются без персональных данных.'),
         findsOneWidget);
   });
@@ -543,6 +559,8 @@ void main() {
         MaterialApp(home: SubscriptionScreen(billingApi: _FakeBillingApi())));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+        find.text('Текущий план: RC Internal'), 220);
     expect(find.text('Текущий план: RC Internal'), findsOneWidget);
     expect(find.textContaining('AI расходы: 72%'), findsOneWidget);
   });
@@ -551,6 +569,8 @@ void main() {
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SubscriptionScreen()));
 
+    await tester.scrollUntilVisible(
+        find.text('Управление оплатой недоступно в stub mode'), 220);
     await tester.tap(find.text('Управление оплатой недоступно в stub mode'));
     await tester.pumpAndSettle();
 

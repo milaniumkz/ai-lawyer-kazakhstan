@@ -10,6 +10,7 @@ const mobileCases = readFileSync('apps/mobile/lib/src/features/cases/case_screen
 const mobileDocuments = readFileSync('apps/mobile/lib/src/features/documents/document_screens.dart', 'utf8');
 const mobileWorkflows = readFileSync('apps/mobile/lib/src/features/workflows/workflow_screens.dart', 'utf8');
 const mobileLegal = readFileSync('apps/mobile/lib/src/features/legal/legal_screens.dart', 'utf8');
+const mobileSubscription = readFileSync('apps/mobile/lib/src/features/subscription/subscription_screen.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -176,6 +177,18 @@ const tokenNeedles = [
   ['mobile chat document button', mobileCases, 'Сформировать документ'],
   ['mobile reference calendar', mobileLegal, '_ReferenceCalendar'],
   ['mobile deadlines auto card', mobileLegal, 'Сроки рассчитываются автоматически'],
+  ['web popular queries', webCss, '.popularQueries'],
+  ['web profile hero', webCss, '.profileHero'],
+  ['web settings group', webCss, '.settingsGroup'],
+  ['web subscription hero', webCss, '.subscriptionHero'],
+  ['web help grid', webCss, '.helpGrid'],
+  ['mobile legal popular query', mobileLegal, 'взыскание алиментов'],
+  ['mobile profile hero', mobileAuth, '_ProfileHero'],
+  ['mobile profile completion', mobileAuth, '_ProfileCompletionCard'],
+  ['mobile settings group', mobileAuth, '_SettingsGroup'],
+  ['mobile help quick grid', mobileAuth, '_HelpQuickGrid'],
+  ['mobile subscription plan card', mobileSubscription, '_PlanCard'],
+  ['mobile subscription usage', mobileSubscription, '_UsageCard'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {

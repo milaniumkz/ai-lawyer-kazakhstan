@@ -1228,6 +1228,205 @@ progress {
   color: var(--muted);
 }
 
+.popularQueries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.popularQueries span {
+  width: 100%;
+  color: var(--muted);
+}
+
+.popularQueries button {
+  color: var(--muted);
+  padding: 10px 14px;
+}
+
+.profileHero {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.profileAvatar {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: var(--panel-soft);
+  color: var(--gold-strong);
+  font-size: 42px;
+  font-weight: 900;
+}
+
+.profileHero h2,
+.profileHero p {
+  margin: 0;
+}
+
+.profileHero p {
+  color: #62d983;
+}
+
+.profileCards,
+.settingsGroup,
+.usageBars,
+.planCards,
+.helpGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.profileCards button,
+.settingsGroup button,
+.settingsGroup label,
+.usageBars div,
+.planCards button,
+.helpGrid button,
+.supportOnline {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel-soft);
+  color: var(--text);
+  padding: 16px;
+}
+
+.profileCards button {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.profileCards button > span,
+.helpGrid span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--gold-strong);
+}
+
+.profileCards p,
+.profileCards small,
+.settingsGroup em,
+.usageBars em,
+.planCards small,
+.helpGrid small,
+.supportOnline p {
+  margin: 0;
+  color: var(--muted);
+  font-style: normal;
+}
+
+.profileCards p {
+  display: grid;
+  gap: 4px;
+}
+
+.settingsGroup button,
+.settingsGroup label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 62px;
+}
+
+.subscriptionHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  border: 1px solid var(--gold);
+  border-radius: 22px;
+  background: var(--panel-soft);
+  padding: 20px;
+}
+
+.subscriptionHero p,
+.subscriptionHero h2,
+.subscriptionHero small {
+  margin: 0;
+}
+
+.subscriptionHero h2 {
+  color: var(--gold-strong);
+}
+
+.subscriptionHero span {
+  grid-row: span 2;
+  align-self: center;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  color: var(--gold-strong);
+  padding: 12px 20px;
+  font-weight: 900;
+}
+
+.usageBars div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.usageBars progress {
+  grid-column: 1 / -1;
+}
+
+.planCards button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  text-align: left;
+}
+
+.planCards button.active {
+  border-color: var(--gold);
+}
+
+.planCards small {
+  grid-column: 1 / -1;
+}
+
+.helpGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.helpGrid button {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  text-align: left;
+}
+
+.helpGrid small {
+  grid-column: 2;
+}
+
+.supportOnline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.supportOnline span {
+  color: #62d983;
+}
+
+.supportOnline button {
+  grid-column: 1 / -1;
+}
+
 .stickyActions {
   position: sticky;
   bottom: 88px;

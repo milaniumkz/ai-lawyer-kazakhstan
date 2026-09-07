@@ -103,6 +103,32 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final query in const [
+                  'взыскание алиментов',
+                  'алименты на ребенка',
+                  'размер алиментов',
+                  'индексация алиментов'
+                ])
+                  ActionChip(
+                    label: Text(query),
+                    onPressed: () => queryController.text = query,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              children: const [
+                ChoiceChip(label: Text('Кодексы'), selected: true),
+                ChoiceChip(label: Text('Законы'), selected: false),
+                ChoiceChip(label: Text('Судебная практика'), selected: false),
+              ],
+            ),
+            const SizedBox(height: 16),
             Text(answer),
             const SizedBox(height: 12),
             if (searched) ...[

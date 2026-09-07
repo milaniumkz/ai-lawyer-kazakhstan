@@ -529,10 +529,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _ProfileHero(name: nameController.text),
+          const SizedBox(height: 16),
+          const _ProfileCompletionCard(),
+          const SizedBox(height: 16),
+          Text('Мои профили',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: AppColors.goldDark)),
+          const SizedBox(height: 10),
           _ProfileTypeSelector(
             selected: profileType,
             onSelected: (value) => setState(() => profileType = value),
           ),
+          const SizedBox(height: 16),
+          Text('Данные и безопасность',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: AppColors.goldDark)),
           const SizedBox(height: 16),
           TextField(
             controller: nameController,
@@ -611,18 +627,99 @@ class _ProfileTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const types = ['Физлицо', 'ИП', 'Юрлицо', 'Представитель'];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    const types = [
+      ('Физлицо', 'Активный профиль', 'Основной'),
+      ('ИП', 'ИП MILANIUM', '›'),
+      ('Юрлицо', 'Добавить организацию', '›'),
+      ('Представитель', 'Представители и контакты', '›'),
+    ];
+    return Column(
       children: [
         for (final type in types)
-          ChoiceChip(
-            label: Text(type),
-            selected: selected == type,
-            onSelected: (_) => onSelected(type),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                  color: selected == type.$1
+                      ? AppColors.gold
+                      : Colors.transparent),
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+                child: Text(type.$1 == 'Юрлицо' ? '+' : type.$1.substring(0, 1),
+                    style: const TextStyle(color: AppColors.gold)),
+              ),
+              title: Text(type.$1 == 'Физлицо'
+                  ? 'Физическое лицо'
+                  : type.$1 == 'ИП'
+                      ? 'Индивидуальный предприниматель'
+                      : type.$1 == 'Юрлицо'
+                          ? 'Юридическое лицо'
+                          : 'Доверенные лица'),
+              subtitle: Text(type.$2),
+              trailing: Text(type.$3),
+              onTap: () => onSelected(type.$1),
+            ),
           ),
       ],
+    );
+  }
+}
+
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = (name.isEmpty ? 'АС' : name)
+        .trim()
+        .split(RegExp(r'\s+'))
+        .take(2)
+        .map((part) => part.characters.first)
+        .join()
+        .toUpperCase();
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 54,
+          backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+          child: Text(initials,
+              style: const TextStyle(color: AppColors.gold, fontSize: 34)),
+        ),
+        const SizedBox(height: 14),
+        Text(name.isEmpty ? 'Асем Серикбосыновна' : name,
+            style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 4),
+        const Text('Физическое лицо · профиль подтверждён',
+            style: TextStyle(color: Color(0xFF62D983))),
+      ],
+    );
+  }
+}
+
+class _ProfileCompletionCard extends StatelessWidget {
+  const _ProfileCompletionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [Text('Заполненность профиля'), Text('86%')],
+            ),
+            SizedBox(height: 10),
+            LinearProgressIndicator(value: 0.86),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -725,21 +822,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
       bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
       child: Column(
         children: [
-          SwitchListTile(
-            value: darkMode,
-            onChanged: (value) => setState(() => darkMode = value),
-            title: const Text('Темная тема'),
-          ),
-          SwitchListTile(
-            value: notifications,
-            onChanged: (value) => setState(() => notifications = value),
-            title: const Text('Уведомления'),
-          ),
-          SwitchListTile(
-            value: piiMasking,
-            onChanged: (value) => setState(() => piiMasking = value),
-            title: const Text('Скрывать ИИН/БИН в логах'),
-          ),
+          _SettingsGroup(title: 'Основные', children: [
+            ListTile(
+                title: const Text('Язык приложения'),
+                trailing: const Text('Русский ›'),
+                onTap: () {}),
+            SwitchListTile(
+                value: darkMode,
+                onChanged: (value) => setState(() => darkMode = value),
+                title: const Text('Темная тема')),
+            const ListTile(
+                title: Text('Размер текста'), trailing: Text('Средний ›')),
+          ]),
+          _SettingsGroup(title: 'Голосовой помощник', children: [
+            SwitchListTile(
+                value: notifications,
+                onChanged: (value) => setState(() => notifications = value),
+                title: const Text('Голосовые ответы')),
+            const SwitchListTile(
+                value: false,
+                onChanged: null,
+                title: Text('Автовоспроизведение')),
+            const ListTile(
+                title: Text('Скорость речи'), trailing: Text('1.0x ›')),
+          ]),
+          _SettingsGroup(title: 'Конфиденциальность', children: [
+            SwitchListTile(
+                value: piiMasking,
+                onChanged: (value) => setState(() => piiMasking = value),
+                title: const Text('Обезличивать данные перед AI')),
+            const SwitchListTile(
+                value: false,
+                onChanged: null,
+                title: Text('Сохранять голосовые записи')),
+            const SwitchListTile(
+                value: false,
+                onChanged: null,
+                title: Text('Аналитика использования')),
+          ]),
           Text(status),
           const SizedBox(height: 12),
           FilledButton.icon(
@@ -770,6 +890,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: AppColors.goldDark)),
+          const SizedBox(height: 8),
+          Card(child: Column(children: children)),
+        ],
+      ),
+    );
+  }
+}
+
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
 
@@ -789,9 +935,22 @@ class _HelpScreenState extends State<HelpScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ListTile(
-            leading: Icon(Icons.support_agent_outlined),
-            title: Text('Чат поддержки'),
-            subtitle: Text('Ответ в local mode имитируется для тестирования'),
+            leading: Icon(Icons.search_outlined),
+            title: Text('Найдите ответ на вопрос'),
+            subtitle: Text('Аккаунт, дела, документы, подписка'),
+          ),
+          const _HelpQuickGrid(),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.support_agent_outlined,
+                  color: AppColors.gold),
+              title: const Text('Служба поддержки онлайн'),
+              subtitle: const Text('Среднее время ответа — до 15 минут'),
+              trailing: const Text('В сети',
+                  style: TextStyle(color: Color(0xFF62D983))),
+              onTap: () => setState(() => requestCreated = true),
+            ),
           ),
           const ListTile(
             leading: Icon(Icons.privacy_tip_outlined),
@@ -806,6 +965,53 @@ class _HelpScreenState extends State<HelpScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HelpQuickGrid extends StatelessWidget {
+  const _HelpQuickGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      ('1', 'Частые вопросы', 'Ответы на популярные темы'),
+      ('2', 'Инструкции', 'Пошаговые руководства'),
+      ('3', 'Написать в WhatsApp', 'Внешний канал через adapter'),
+      ('4', 'Сообщить о проблеме', 'Ошибка или предложение'),
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.6,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      children: [
+        for (final item in items)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+                    child: Text(item.$1,
+                        style: const TextStyle(color: AppColors.gold)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(item.$3,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -58,13 +58,38 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Лимиты и расходы',
+              'Подписка',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
+            _CurrentPlanCard(plan: plan),
+            const SizedBox(height: 18),
+            Text('Использование в августе',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: AppColors.goldDark)),
+            const SizedBox(height: 10),
+            const _UsageCard('Консультации', '34 из 100', 0.34),
+            const _UsageCard('Документы', '12 из 30', 0.40),
+            const _UsageCard('Голосовые минуты', '68 из 180', 0.38),
+            const SizedBox(height: 18),
+            Text('Выберите план',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: AppColors.goldDark)),
+            const SizedBox(height: 10),
+            const _PlanCard('Базовый', '0 ₸', '5 консультаций · 2 документа'),
+            const _PlanCard('Профессиональный', '7 990 ₸ / мес',
+                '100 консультаций · 30 документов · доступ к эксперту',
+                selected: true),
+            const _PlanCard('Годовой', '79 900 ₸ / год',
+                'Все функции Professional · приоритетная поддержка'),
+            const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -112,6 +137,92 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CurrentPlanCard extends StatelessWidget {
+  const _CurrentPlanCard({required this.plan});
+
+  final String plan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.gold)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Текущий план'),
+                  Text(plan == 'Free' ? 'Профессиональный' : plan,
+                      style: Theme.of(context).textTheme.headlineSmall),
+                  const Text('действует до 15 сентября 2026'),
+                ],
+              ),
+            ),
+            const Chip(label: Text('Активен')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageCard extends StatelessWidget {
+  const _UsageCard(this.title, this.value, this.progress);
+
+  final String title;
+  final String value;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [Text(title), Text(value)],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard(this.title, this.price, this.description,
+      {this.selected = false});
+
+  final String title;
+  final String price;
+  final String description;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: selected ? AppColors.gold : Colors.transparent),
+      ),
+      child: ListTile(
+        title: Text(title),
+        subtitle: Text(description),
+        trailing: Text(price),
       ),
     );
   }

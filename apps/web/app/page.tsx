@@ -1205,6 +1205,7 @@ export default function WebHome() {
             <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="Поиск по нормам права, статьям, законам..." />
             <button aria-label="Фильтр" className={legalActiveOnly ? "activeIcon" : ""} onClick={toggleLegalFilter}>☷</button>
           </div>
+          {view === "legalSearch" && <div className="popularQueries"><span>Популярные запросы</span>{["взыскание алиментов", "алименты на ребенка", "размер алиментов", "индексация алиментов"].map((query) => <button key={query} onClick={() => setLegalQuery(query)}>⌕ {query}</button>)}<button onClick={() => setLegalQuery("")}>Очистить</button></div>}
           <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => selectLegalTab(tab)}>{tab}</button>)}</div>
           <div className="list">
             {!legalNorms.length && <div className="normCard"><strong>Нет подтвержденной нормы</strong><span>Запустите поиск</span><small>Будет показан только ответ API из официального источника или честный статус “недостаточно источников”.</small><p>Фиктивные нормы не отображаются.</p></div>}
@@ -1287,8 +1288,12 @@ export default function WebHome() {
     if (view === "profile") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Профиль" subtitle="Профиль пользователя и тип клиента" />
-          <div className="chips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
+          <AppHeader title="Профиль" subtitle="Физическое лицо · профиль подтверждён" />
+          <div className="profileHero"><div className="profileAvatar">{(profileName || "АС").slice(0, 2).toUpperCase()}</div><h2>{profileName || "Асем Серикбосыновна"}</h2><p>Физическое лицо · профиль подтверждён</p></div>
+          <div className="claimProgress"><span>Заполненность профиля</span><b>86%</b><progress value={86} max="100" /></div>
+          <h3 className="goldSection">Мои профили</h3>
+          <div className="profileCards">{["Физическое лицо|Активный профиль|Основной", "Индивидуальный предприниматель|ИП MILANIUM|›", "Юридическое лицо|Добавить организацию|›"].map((row) => { const [title, sub, tail] = row.split("|"); return <button key={title} onClick={() => setProfileType(title.includes("предприниматель") ? "ИП" : title.includes("Юридическое") ? "Юрлицо" : "Физлицо")}><span>{title === "Юридическое лицо" ? "+" : title.slice(0, 2).toUpperCase()}</span><p><b>{title}</b><small>{sub}</small></p><em>{tail}</em></button>; })}</div>
+          <h3 className="goldSection">Данные и безопасность</h3>
           <input placeholder="Ф.И.О. / название" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
           <input placeholder="ИИН/БИН" value={profileId} onChange={(event) => setProfileId(event.target.value)} />
           <div className="actionBar">
@@ -1305,9 +1310,12 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Настройки" subtitle="Безопасность, уведомления и приватность" back="profile" />
-          <label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Скрывать ИИН/БИН в логах</label>
-          <label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Предупреждать о бюджете AI</label>
-          <div className="analysisBox"><strong>Статус</strong><p>{maskPii ? "PII masking включен" : "PII masking выключен"} · {budgetAlerts ? "Уведомления включены" : "Уведомления выключены"}</p></div>
+          <h3 className="goldSection">Основные</h3>
+          <div className="settingsGroup"><button onClick={() => setSyncState("Язык: русский")}>Язык приложения <em>Русский ›</em></button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>Тема приложения <em>{theme === "dark" ? "Тёмная" : "Светлая"} ›</em></button><button onClick={() => setSyncState("Размер текста: средний")}>Размер текста <em>Средний ›</em></button></div>
+          <h3 className="goldSection">Голосовой помощник</h3>
+          <div className="settingsGroup"><label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Голосовые ответы</label><label className="toggle"><input type="checkbox" /> Автовоспроизведение</label><button onClick={() => setSyncState("Скорость речи: 1.0x")}>Скорость речи <em>1.0x ›</em></button></div>
+          <h3 className="goldSection">Конфиденциальность</h3>
+          <div className="settingsGroup"><label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Обезличивать данные перед AI</label><label className="toggle"><input type="checkbox" /> Сохранять голосовые записи</label><label className="toggle"><input type="checkbox" /> Аналитика использования</label></div>
           <button className="primary wide" onClick={saveSettings}>Сохранить настройки</button>
           <button className="wide" onClick={() => { void exportAccount(); }}>Экспортировать данные</button>
           <button className="wide dangerAction" onClick={() => { void deleteAccount(); }}>Удалить аккаунт</button>
@@ -1319,13 +1327,13 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Подписка" subtitle="Лимиты, история и контроль расходов" back="profile" />
-          <div className="tileGrid">
-            <Info label="Тариф" value="RC Internal" />
-            <Info label="AI бюджет" value="70%" />
-            <Info label="Запросы" value="148 / 250" />
-          </div>
+          <div className="subscriptionHero"><p>Текущий план</p><h2>Профессиональный</h2><span>Активен</span><small>действует до 15 сентября 2026</small></div>
+          <h3 className="goldSection">Использование в августе</h3>
+          <div className="usageBars">{["Консультации|34 из 100|34", "Документы|12 из 30|40", "Голосовые минуты|68 из 180|38"].map((row) => { const [label, value, progress] = row.split("|"); return <div key={label}><b>{label}</b><em>{value}</em><progress value={Number(progress)} max="100" /></div>; })}</div>
+          <h3 className="goldSection">Выберите план</h3>
+          <div className="planCards">{["Базовый|0 ₸|5 консультаций · 2 документа", "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту", "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка"].map((row, index) => { const [title, price, desc] = row.split("|"); return <button className={index === 1 ? "active" : ""} key={title} onClick={loadSubscription}><b>{title}</b><em>{price}</em><small>{desc}</small></button>; })}</div>
           <div className="analysisBox"><strong>Подписка</strong><p>{subscriptionStatus}</p></div>
-          <button className="primary wide" onClick={loadSubscription}>Обновить лимиты</button>
+          <button className="primary wide" onClick={loadSubscription}>Управление подпиской</button>
         </section>
       );
     }
@@ -1334,6 +1342,12 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Помощь" subtitle="Поддержка и ручная проверка юристом" back="profile" />
+          <div className="legalSearch"><span>⌕</span><input value={caseText} onChange={(event) => setCaseText(event.target.value)} placeholder="Найдите ответ на вопрос" /><button onClick={() => setCaseText("")}>×</button></div>
+          <h3 className="goldSection">Быстрые действия</h3>
+          <div className="helpGrid">{["Частые вопросы|Ответы на популярные темы", "Инструкции|Пошаговые руководства", "Написать в WhatsApp|Обычно отвечаем за 5 минут", "Сообщить о проблеме|Ошибка или предложение"].map((row, index) => { const [title, sub] = row.split("|"); return <button key={title} onClick={() => setHelpStatus(`${title}: создан локальный запрос`)}><span>{index + 1}</span><b>{title}</b><small>{sub}</small></button>; })}</div>
+          <div className="supportOnline"><strong>Служба поддержки онлайн</strong><span>В сети</span><p>Среднее время ответа — до 15 минут</p><button className="primary" onClick={() => { void createSupportRequest(); }}>Открыть чат</button></div>
+          <h3 className="goldSection">Разделы помощи</h3>
+          <div className="profileCards">{["Аккаунт и вход|Регистрация, SMS, биометрия|›", "Дела и документы|Загрузка, анализ, шаблоны|›", "Судебный кабинет и eGov|Подписание и отправка|›", "Оплата и подписка|Тарифы, платежи, возвраты|›", "Безопасность данных|Конфиденциальность и доступы|›", "О приложении|AI Юрист v1.0.0 · лицензии и документы|›"].map((row) => { const [title, sub, tail] = row.split("|"); return <button key={title} onClick={() => setHelpStatus(`${title}: открыт раздел помощи`)}><p><b>{title}</b><small>{sub}</small></p><em>{tail}</em></button>; })}</div>
           <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
           <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
           <button className="primary wide" onClick={() => { void createSupportRequest(); }}>Написать в поддержку</button>
