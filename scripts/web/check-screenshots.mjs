@@ -77,7 +77,10 @@ async function main() {
   try {
     for (const target of targets) {
       const page = await browser.newPage({ viewport: { width: target.width, height: target.height } });
-      await page.addInitScript(() => window.localStorage.clear());
+      await page.addInitScript((theme) => {
+        window.localStorage.clear();
+        window.localStorage.setItem('ai-lawyer-web-state', JSON.stringify({ theme }));
+      }, target.theme);
       await page.goto(`${baseUrl.replace(/\/$/, '')}${target.hash}`, { waitUntil: 'networkidle' });
       await page.locator('.appShell').waitFor({ state: 'visible' });
       const currentTheme = await page.locator('.appShell').getAttribute('data-theme');

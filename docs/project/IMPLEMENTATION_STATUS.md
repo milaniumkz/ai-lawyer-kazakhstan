@@ -141,11 +141,11 @@
 | RC10 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.10`, including unresolved-marker security gate evidence | `npm run release:bundle -- v0.1.0-rc.10`, bundle SHA-256 `cf16619d84d0fc9ef5553608dc7bb4fb0c8e1a0290ba0447631c815fbe9fb642` | done |
 | Server archive security scan P1 | Security scan now falls back to filesystem traversal when `.git` is absent, so deployed release archives can run `npm run test:security` | `npm run test:security`, `npm run check`, `npm run build` passed | done |
 | Server security scan stderr cleanup P1 | Security scan fallback suppresses git stderr when running from deploy archives without `.git`, keeping server security gate output clean | server install health passed; server `npm run test:security` and `npm run test:audit` passed; public smoke passed | done |
-| Web full screenshot matrix P1 | Web screenshot runner now covers 25 dark screens and 20 light screens across 390x844, 430x932 and 1440x900 viewports, with strict mode for release visual baselines | `npm run test:web-screenshots`, `npm run test:web-visual` and `npm run test:design-pixel` passed; screenshot capture skipped until Playwright is installed | done |
+| Web full screenshot matrix P1 | Web screenshot runner now covers 25 dark screens and 20 light screens across 390x844, 430x932 and 1440x900 viewports, with strict mode for release visual baselines | `WEB_BASE_URL=https://89-207-250-217.sslip.io npm run test:web-screenshots:strict` captured 135 screenshots; `npm run check` passed | done |
+| Web mobile home pixel fix P1 | Mobile home no longer clips top actions or overlays the quick action card with the service status bar; bottom navigation tabs have stable widths and text overflow rules | local `WEB_BASE_URL=http://127.0.0.1:3010 npm run test:web-screenshots:strict` captured 135 screenshots; `npm run check` and `npm run build` passed | done |
 
 ## Блокеры окружения
 
 - `docker` не установлен.
-- `playwright` не установлен; strict web screenshot capture requires `WEB_BASE_URL=<url> npm run test:web-screenshots:strict` after installing Playwright.
 - Production government/payment/SMS/storage provider credentials are not provided; all related integrations stay in official adapter + local/manual mode.
 - Custom production domain/DNS is not provided; trusted test HTTPS is available at `89-207-250-217.sslip.io`.
