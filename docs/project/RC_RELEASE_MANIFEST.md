@@ -1,6 +1,6 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.9`
+Release: `v0.1.0-rc.10`
 
 Date: 2026-09-07
 
@@ -30,8 +30,8 @@ Date: 2026-09-07
 
 ## Source Archive
 
-- Source tag: `v0.1.0-rc.9`
-- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.9-release-bundle.tar.gz`
+- Source tag: `v0.1.0-rc.10`
+- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.10-release-bundle.tar.gz`
 - Android APK SHA-256: `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec`
 
 ## Not Production Until

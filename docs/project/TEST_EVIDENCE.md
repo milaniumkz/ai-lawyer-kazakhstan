@@ -218,6 +218,7 @@
 - RC9 QA release bundle — `npm run release:bundle -- v0.1.0-rc.9` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.9-release-bundle.tar.gz` SHA-256 `3dd869daec968a2fe62e9ea1797d52ba61b350990cfd6d5d50d52282f186b4e4`.
 - RC9 public server refresh — uploaded `/tmp/ai-lawyer-kz-rc9-current.tar.gz` to `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.9-current.tar.gz` SHA-256 `1e75444c201eb954eced16d6fdd73e9ce89c158af7e78a932a6a8cafb1d32272`; server install health passed, server `npm run test:audit` found 0 vulnerabilities and public server smoke passed.
 - Unresolved marker security gate — `npm run test:security`, `npm run check` and `npm run build` passed after extending `scripts/security-scan.mjs` to fail on unresolved `TODO`, `FIXME` and `HACK` markers in product source.
+- RC10 release manifest — `docs/project/RC_RELEASE_MANIFEST.md` moved to `v0.1.0-rc.10` after unresolved-marker security gate; RC status, security scan and public server smoke passed before tagging.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
