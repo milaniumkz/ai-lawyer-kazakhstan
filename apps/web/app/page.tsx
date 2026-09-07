@@ -1392,7 +1392,7 @@ export default function WebHome() {
   }
 
   return (
-    <main className="appShell" data-theme={theme} data-design-screen-count={screens.length}>
+    <main className="appShell" data-theme={theme} data-view={view} data-design-screen-count={screens.length}>
       <aside className="sidebar" aria-label="Навигация ПК">
         <strong>AI Юрист</strong>
         <small>Казахстан · RC</small>
