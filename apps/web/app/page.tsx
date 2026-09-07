@@ -1188,7 +1188,7 @@ export default function WebHome() {
                 <button onClick={() => scanInputRef.current?.click()}>▣ Сделать фото</button>
               </div>
               <div className="sectionTitle"><h3>Недавние загрузки</h3><button onClick={() => go("documents")}>Все ›</button></div>
-              <div className="list">{recentDocs.map((doc) => <button className="docRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{doc.status}</span><em>⋮</em></button>)}</div>
+              <div className="list">{recentDocs.map((doc) => <button className="docRow uploadDocRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><span className="fileBadge">{doc.name.endsWith(".jpg") ? "IMG" : "PDF"}</span><p><strong>{doc.name}</strong><small>{doc.status}</small></p><em>⋮</em></button>)}</div>
               <p className="hint">▣ Поддерживаются PDF, DOCX, JPG, PNG</p>
               <button className="primary wide heroCta" onClick={() => go("documentCheck")}>✧ Продолжить</button>
             </>

@@ -13,7 +13,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 07 | `newCase` | 7.49 |
 | 08 | `category` | 6.06 |
 | 09 | `documentCheck` | 6.41 |
-| 10 | `documentUpload` | 14.64 |
+| 10 | `documentUpload` | 12.07 |
 | 11 | `analysis` | 12.47 |
 | 12 | `claim` | 14.28 |
 | 13 | `claimDraft` | 15.43 |
@@ -33,11 +33,11 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 ## Worst Screens
 
 - 13 `claimDraft`: 15.43%
-- 10 `documentUpload`: 14.64%
 - 12 `claim`: 14.28%
 - 14 `claimSend`: 13.65%
 - 16 `case`: 13.49%
 - 11 `analysis`: 12.47%
+- 10 `documentUpload`: 12.07%
 - 20 `legalSearch`: 10.77%
 - 06 `home`: 10.10%
 
