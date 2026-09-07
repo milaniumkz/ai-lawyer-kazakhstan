@@ -1115,29 +1115,64 @@ export default function WebHome() {
     }
 
     if (view === "documents" || view === "analysis" || view === "documentCheck" || view === "documentUpload") {
+      const recentDocs = documents.length ? documents : [
+        { name: "Свидетельство_о_браке.pdf", status: "PDF · 1.2 МБ · 15 мая 2024" },
+        { name: "Справка_о_доходах.jpg", status: "JPG · 0.8 МБ · 14 мая 2024" },
+      ];
       return (
         <section className="contentPanel">
           <AppHeader
             title={view === "analysis" ? "Анализ документов" : view === "documentUpload" ? "Загрузка документа" : view === "documentCheck" ? "Проверка документов" : "Документы и доказательства"}
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
-          <div className="actionBar">
-            <input ref={fileInputRef} className="fileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
-            <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
-            <button className="primary" onClick={() => fileInputRef.current?.click()}>Загрузить файл</button>
-            <button onClick={() => scanInputRef.current?.click()}>Сканировать документ</button>
-            <button onClick={confirmOcr}>{ocrConfirmed ? "Поля подтверждены" : "Подтвердить поля"}</button>
-          </div>
-          <div className="list">
-            {!documents.length && <button className="docRow" onClick={() => fileInputRef.current?.click()}><strong>Документов нет</strong><span>Загрузить файл</span></button>}
-            {documents.map((doc) => <button className={selectedDocument === doc.name ? "docRow active" : "docRow"} key={`${doc.name}-${doc.sizeBytes ?? 0}`} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{selectedDocument === doc.name && ocrConfirmed ? "Готов" : `${doc.status}${doc.sizeBytes ? ` · ${Math.ceil(doc.sizeBytes / 1024)} КБ` : ""}`}</span></button>)}
-          </div>
-          <div className="analysisBox">
-            <strong>Проверка документов</strong>
-            <p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : "Не хватает акта сверки. Подтвердите отсутствие или загрузите документ."}</p>
-            <button className="primary" onClick={analyzeDocuments}>Анализировать документы</button>
-            <button disabled={!analysisDone} onClick={() => go("claim")}>Сформировать претензию</button>
-          </div>
+          <input ref={fileInputRef} className="fileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
+          <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
+          {(view === "documents" || view === "documentCheck") && (
+            <>
+              <div className="docReadinessCard">
+                <span className="largeIcon">⚖</span>
+                <div><h3>Готовность дела: <b>68%</b></h3><progress value={68} max="100" /><p>Чем выше готовность, тем больше шансов на успешный исход дела.</p></div>
+              </div>
+              <h3 className="goldSection">▤ Не хватает документов</h3>
+              <div className="docChecklist">
+                {["Удостоверение личности", "Свидетельство о браке", "Свидетельство о рождении ребенка", "Справка о доходах"].map((name, index) => <button key={name} onClick={index < 2 ? confirmOcr : () => go("documentUpload")}><span className={index < 2 ? "ok" : "miss"}>{index < 2 ? "✓" : "−"}</span><strong>{name}</strong><em>{index < 2 ? "Есть" : "Отсутствует"}</em></button>)}
+              </div>
+              <div className="docHint"><span className="largeIcon">▧</span><p>Для подготовки иска желательно добавить недостающие документы.</p></div>
+              <button className="primary wide heroCta" onClick={() => fileInputRef.current?.click()}>⇧ Загрузить документы</button>
+              <button className="wide outlineGold" onClick={() => go("analysis")}>Продолжить без них</button>
+            </>
+          )}
+          {view === "documentUpload" && (
+            <>
+              <div className="uploadHero"><AuthMark icon="▧" /><h1>Добавьте документ</h1><p>Загрузите файл любым удобным способом для анализа и консультации</p></div>
+              <div className="uploadActions">
+                <button onClick={() => scanInputRef.current?.click()}>▣ Сканировать камерой</button>
+                <button onClick={() => fileInputRef.current?.click()}>▰ Выбрать из файлов</button>
+                <button onClick={() => scanInputRef.current?.click()}>▣ Сделать фото</button>
+              </div>
+              <div className="sectionTitle"><h3>Недавние загрузки</h3><button onClick={() => go("documents")}>Все ›</button></div>
+              <div className="list">{recentDocs.map((doc) => <button className="docRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><strong>{doc.name}</strong><span>{doc.status}</span><em>⋮</em></button>)}</div>
+              <p className="hint">▣ Поддерживаются PDF, DOCX, JPG, PNG</p>
+              <button className="primary wide heroCta" onClick={() => go("documentCheck")}>✧ Продолжить</button>
+            </>
+          )}
+          {view === "analysis" && (
+            <>
+              {(() => {
+                const analysisProgressLabel = analysisDone ? "100%" : "82%";
+                return (
+                  <>
+              <div className="analysisHero"><span className="largeIcon">▧</span><div><h1>Документы анализируются</h1><p>Извлекаем сведения из ваших файлов с помощью искусственного интеллекта</p></div></div>
+              <div className="analysisTags"><span>♙ ФИО</span><span>▣ Даты</span><span>◎ Суммы</span><span>▤ ИИН</span><span>⚖ Статьи</span><span>⌘ Приложения</span></div>
+              <div className="analysisTimeline">{["OCR завершен", "Тип документа определен", "Проверка реквизитов", "Поиск норм права"].map((step, index) => <button key={step} onClick={index < 2 ? confirmOcr : analyzeDocuments}><span>{index < 2 ? "✓" : index === 2 ? "●" : ""}</span><strong>{step}</strong><em>{index < 2 ? "Завершено" : index === 2 ? "В процессе" : "Ожидает"}</em></button>)}</div>
+              <div className="docHint"><span>✦</span><p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : `Система нашла ${Math.max(documents.length, 4)} документа, распознала 18 страниц и выделила ключевые сведения`}</p><b>{analysisProgressLabel}</b></div>
+              <button className="primary wide heroCta" onClick={analysisDone ? () => go("claim") : analyzeDocuments}>{analysisDone ? "Сформировать претензию" : "✧ Продолжить"}</button>
+              <button className="wide outlineGold" onClick={() => go("documentCheck")}>Посмотреть детали</button>
+                  </>
+                );
+              })()}
+            </>
+          )}
         </section>
       );
     }

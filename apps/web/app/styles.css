@@ -721,10 +721,181 @@ progress {
 .docRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
   width: 100%;
   color: var(--text);
   text-align: left;
+}
+
+.docReadinessCard,
+.uploadHero,
+.analysisHero,
+.docHint {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel-soft) 92%, var(--gold)), var(--panel));
+  box-shadow: var(--shadow);
+}
+
+.docReadinessCard {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+}
+
+.docReadinessCard h3,
+.docReadinessCard p,
+.uploadHero h1,
+.uploadHero p,
+.analysisHero h1,
+.analysisHero p {
+  margin: 0;
+}
+
+.docReadinessCard b,
+.goldSection,
+.analysisHero h1 {
+  color: var(--gold-strong);
+}
+
+.docReadinessCard p,
+.uploadHero p,
+.analysisHero p,
+.docHint p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.goldSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 22px 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+}
+
+.docChecklist,
+.uploadActions,
+.analysisTimeline {
+  display: grid;
+  gap: 12px;
+}
+
+.docChecklist button,
+.uploadActions button,
+.analysisTimeline button {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  color: var(--text);
+  text-align: left;
+}
+
+.docChecklist span,
+.analysisTimeline span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+
+.docChecklist .ok,
+.analysisTimeline span {
+  border-color: color-mix(in srgb, var(--gold) 70%, var(--line));
+  color: var(--gold-strong);
+}
+
+.docChecklist .miss {
+  color: var(--muted);
+}
+
+.docChecklist em,
+.analysisTimeline em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.docHint {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+  padding: 16px;
+}
+
+.docHint b {
+  color: var(--gold-strong);
+  font-size: 26px;
+}
+
+.uploadHero {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 260px;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.uploadHero .authMark {
+  margin: 0;
+  width: 108px;
+  height: 108px;
+}
+
+.uploadActions {
+  margin-top: 18px;
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 10px;
+}
+
+.sectionTitle h3 {
+  margin: 0;
+}
+
+.sectionTitle button {
+  border: 0;
+  background: transparent;
+  color: var(--gold-strong);
+  padding: 0;
+}
+
+.analysisHero {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+}
+
+.analysisTags {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.analysisTags span {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  padding: 12px 8px;
+  text-align: center;
 }
 
 .docRow.active {

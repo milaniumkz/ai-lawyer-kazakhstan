@@ -124,23 +124,34 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Загрузка документов',
+              'Проверка документов',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
-            Text(status),
+            const _ReadinessCard(),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: busy ? null : uploadDocument,
-              icon: const Icon(Icons.upload_file_outlined),
-              label: Text(busy
-                  ? 'Обработка'
-                  : uploaded
-                      ? 'Файл добавлен'
-                      : 'Загрузить файл'),
+            _MissingDocsCard(onConfirmPresent: confirmOcr),
+            const SizedBox(height: 12),
+            _DocumentHint(
+              text:
+                  'Для подготовки иска желательно добавить недостающие документы.',
+              trailing: status,
+            ),
+            const SizedBox(height: 16),
+            const _UploadHero(),
+            const SizedBox(height: 12),
+            _UploadOptionGrid(
+              busy: busy,
+              uploaded: uploaded,
+              onUpload: uploadDocument,
+              onScan: () => setState(() {
+                scanned = true;
+                status =
+                    'Сканирование камеры требует camera adapter; используйте загрузку файла';
+              }),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -153,6 +164,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               label: Text(scanned ? 'Скан готов' : 'Сканировать документ'),
             ),
             const SizedBox(height: 16),
+            Text('Недавние загрузки',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const _RecentDocumentTile(
+                title: 'Свидетельство_о_браке.pdf',
+                subtitle: 'PDF · 1.2 МБ · 15 мая 2024'),
+            const _RecentDocumentTile(
+                title: 'Справка_о_доходах.jpg',
+                subtitle: 'JPG · 0.8 МБ · 14 мая 2024'),
+            const SizedBox(height: 12),
             _OcrReviewCard(
               confirmed: confirmed,
               onConfirm: confirmOcr,
@@ -344,6 +365,7 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final progress = checked ? 1.0 : 0.82;
     return Scaffold(
       appBar: AppBar(title: const Text('Анализ документов')),
       body: SafeArea(
@@ -358,15 +380,20 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
-            LinearProgressIndicator(value: checked ? 1 : 0.62),
+            const _AnalysisHero(),
             const SizedBox(height: 16),
-            const Card(
-              child: ListTile(
-                leading:
-                    Icon(Icons.warning_amber_outlined, color: AppColors.gold),
-                title: Text('Не хватает акта сверки'),
-                subtitle: Text('Добавьте документ или подтвердите отсутствие.'),
-              ),
+            const _AnalysisTags(),
+            const SizedBox(height: 16),
+            const _AnalysisTimeline(),
+            const SizedBox(height: 16),
+            LinearProgressIndicator(value: progress),
+            const SizedBox(height: 10),
+            Text('Готовность анализа: ${(progress * 100).round()}%'),
+            const SizedBox(height: 16),
+            const _DocumentHint(
+              text:
+                  'Система нашла 4 документа, распознала 18 страниц и выделила ключевые сведения',
+              trailing: '82%',
             ),
             FilledButton.icon(
               onPressed: () => setState(() => checked = true),
@@ -383,6 +410,312 @@ class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ReadinessCard extends StatelessWidget {
+  const _ReadinessCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            const _RoundGoldIcon(Icons.balance_outlined),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Готовность дела: 68%',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 10),
+                  const LinearProgressIndicator(value: 0.68),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Чем выше готовность, тем больше шансов на успешный исход дела.',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MissingDocsCard extends StatelessWidget {
+  const _MissingDocsCard({required this.onConfirmPresent});
+
+  final VoidCallback onConfirmPresent;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('Удостоверение личности', true),
+      ('Свидетельство о браке', true),
+      ('Свидетельство о рождении ребенка', false),
+      ('Справка о доходах', false),
+    ];
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Не хватает документов',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: AppColors.goldDark)),
+            const SizedBox(height: 10),
+            for (final item in items)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  item.$2
+                      ? Icons.check_circle_outline
+                      : Icons.radio_button_unchecked,
+                  color: item.$2 ? AppColors.gold : Theme.of(context).hintColor,
+                ),
+                title: Text(item.$1),
+                trailing: Text(item.$2 ? 'Есть' : 'Отсутствует'),
+                onTap: item.$2 ? onConfirmPresent : null,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UploadHero extends StatelessWidget {
+  const _UploadHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
+        child: Column(
+          children: [
+            const _RoundGoldIcon(Icons.description_outlined, size: 76),
+            const SizedBox(height: 14),
+            Text('Добавьте документ',
+                style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            const Text(
+              'Загрузите файл любым удобным способом для анализа и консультации',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UploadOptionGrid extends StatelessWidget {
+  const _UploadOptionGrid({
+    required this.busy,
+    required this.uploaded,
+    required this.onUpload,
+    required this.onScan,
+  });
+
+  final bool busy;
+  final bool uploaded;
+  final VoidCallback onUpload;
+  final VoidCallback onScan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        FilledButton.icon(
+          onPressed: busy ? null : onUpload,
+          icon: const Icon(Icons.upload_file_outlined),
+          label: Text(busy
+              ? 'Обработка'
+              : uploaded
+                  ? 'Файл добавлен'
+                  : 'Загрузить файл'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: onScan,
+          icon: const Icon(Icons.camera_alt_outlined),
+          label: const Text('Сканировать камерой'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: onScan,
+          icon: const Icon(Icons.photo_camera_outlined),
+          label: const Text('Сделать фото'),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentDocumentTile extends StatelessWidget {
+  const _RecentDocumentTile({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading:
+            const Icon(Icons.insert_drive_file_outlined, color: AppColors.gold),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.more_vert),
+      ),
+    );
+  }
+}
+
+class _AnalysisHero extends StatelessWidget {
+  const _AnalysisHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            const _RoundGoldIcon(Icons.auto_awesome_outlined),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Документы анализируются',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text(
+                      'Извлекаем сведения из ваших файлов с помощью искусственного интеллекта'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalysisTags extends StatelessWidget {
+  const _AnalysisTags();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: const [
+        Chip(label: Text('ФИО')),
+        Chip(label: Text('Даты')),
+        Chip(label: Text('Суммы')),
+        Chip(label: Text('ИИН')),
+        Chip(label: Text('Статьи')),
+        Chip(label: Text('Приложения')),
+      ],
+    );
+  }
+}
+
+class _AnalysisTimeline extends StatelessWidget {
+  const _AnalysisTimeline();
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      ('OCR завершен', 'Завершено', Icons.check_circle_outline),
+      ('Тип документа определен', 'Завершено', Icons.check_circle_outline),
+      ('Проверка реквизитов', 'В процессе', Icons.radio_button_checked),
+      ('Поиск норм права', 'Ожидает', Icons.radio_button_unchecked),
+    ];
+    return Card(
+      child: Column(
+        children: [
+          for (final step in steps)
+            ListTile(
+              leading: Icon(step.$3, color: AppColors.gold),
+              title: Text(step.$1),
+              trailing: Text(step.$2),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DocumentHint extends StatelessWidget {
+  const _DocumentHint({required this.text, required this.trailing});
+
+  final String text;
+  final String trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.gold),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(text),
+                  const SizedBox(height: 8),
+                  Text(
+                    trailing,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: AppColors.goldDark),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundGoldIcon extends StatelessWidget {
+  const _RoundGoldIcon(this.icon, {this.size = 56});
+
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.gold.withValues(alpha: 0.14),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+      ),
+      child: Icon(icon, color: AppColors.gold, size: size * 0.46),
     );
   }
 }

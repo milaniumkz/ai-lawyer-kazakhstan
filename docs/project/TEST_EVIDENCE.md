@@ -198,6 +198,7 @@
 - Design parity screens 01-05 — `npm run check`, `npm run build`, `npm run test:web-ui`, `npm run test:web-visual`, `npm run test:design-source`, Flutter analyze and targeted onboarding/auth flow tests passed after aligning onboarding/login/register/OTP/biometric UI to the dark references.
 - Design pixel audit baseline — `npm run test:design-pixel`, `npm run test:design-source`, `npm run test:web-visual` passed after adding PNG-derived size/color audit and optional Playwright screenshot capture script.
 - Design parity screens 06-08 — design gates, web typecheck, Flutter analyze and targeted category flow test passed after aligning the dispute-category result screen to the reference card structure.
+- Design parity screens 09-11 — design gates, web typecheck, Flutter analyze and targeted document flow test passed after aligning document readiness, upload and analysis screens to the reference structure while preserving upload/OCR/evidence actions.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано

@@ -7,6 +7,7 @@ const mobileApp = readFileSync('apps/mobile/lib/main.dart', 'utf8');
 const mobileTheme = readFileSync('apps/mobile/lib/src/theme/app_theme.dart', 'utf8');
 const mobileAuth = readFileSync('apps/mobile/lib/src/features/auth/auth_screens.dart', 'utf8');
 const mobileCases = readFileSync('apps/mobile/lib/src/features/cases/case_screens.dart', 'utf8');
+const mobileDocuments = readFileSync('apps/mobile/lib/src/features/documents/document_screens.dart', 'utf8');
 const mobileDesignTest = readFileSync('apps/mobile/test/design_golden_test.dart', 'utf8');
 const webPage = readFileSync('apps/web/app/page.tsx', 'utf8');
 const webCss = readFileSync('apps/web/app/styles.css', 'utf8');
@@ -146,6 +147,15 @@ const tokenNeedles = [
   ['web category alternatives', webCss, '.categoryAlternatives'],
   ['mobile category card', mobileCases, '_CategoryResultCard'],
   ['mobile category confidence', mobileCases, 'Уверенность:'],
+  ['web document readiness', webCss, '.docReadinessCard'],
+  ['web document checklist', webCss, '.docChecklist'],
+  ['web upload hero', webCss, '.uploadHero'],
+  ['web analysis timeline', webCss, '.analysisTimeline'],
+  ['mobile document readiness', mobileDocuments, '_ReadinessCard'],
+  ['mobile upload options', mobileDocuments, '_UploadOptionGrid'],
+  ['mobile analysis timeline', mobileDocuments, '_AnalysisTimeline'],
+  ['mobile document 68 percent', mobileDocuments, 'Готовность дела: 68%'],
+  ['mobile document 82 percent', mobileDocuments, '82%'],
 ];
 
 for (const [label, haystack, needle] of tokenNeedles) {
