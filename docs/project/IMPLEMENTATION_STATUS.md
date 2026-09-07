@@ -134,6 +134,7 @@
 | RC8 public server refresh P1 | Public HTTPS server refreshed from current RC8 archive so deployed package includes the default npm audit gate | server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 | Dependency cleanup P1 | Removed unused direct `@eslint/eslintrc` dev dependency after Next16 flat config migration | `npm run test:audit`, `npm run lint`, `npm run typecheck`, `npm run build` passed | done |
 | RC9 release manifest P1 | Release manifest moved to `v0.1.0-rc.9` so the next QA bundle includes dependency cleanup after Next16 | `npm run test:audit`, RC status and public server smoke passed before tagging | done |
+| RC9 QA bundle P1 | QA release bundle rebuilt from tag `v0.1.0-rc.9`, including dependency cleanup after Next16 | `npm run release:bundle -- v0.1.0-rc.9`, bundle SHA-256 `3dd869daec968a2fe62e9ea1797d52ba61b350990cfd6d5d50d52282f186b4e4` | done |
 
 ## Блокеры окружения
 
