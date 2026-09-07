@@ -27,6 +27,7 @@ function scanFiles() {
   try {
     return execFileSync('git', ['ls-files', 'apps', 'services', 'packages', '.github', '.env.example'], {
       encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
     })
       .split('\n')
       .filter(Boolean);
