@@ -84,10 +84,16 @@ async function main() {
       }, target.theme);
       await page.goto(`${baseUrl.replace(/\/$/, '')}${target.hash}`, { waitUntil: 'networkidle' });
       await page.locator('.appShell').waitFor({ state: 'visible' });
+      await page.waitForFunction((theme) => document.querySelector('.appShell')?.getAttribute('data-theme') === theme, target.theme, { timeout: 5000 }).catch(() => {});
       const currentTheme = await page.locator('.appShell').getAttribute('data-theme');
       if (currentTheme !== target.theme) {
-        await page.locator('.appStatus button').last().click();
-        await page.locator(`.appShell[data-theme="${target.theme}"]`).waitFor({ state: 'visible' });
+        const switcher = page.locator('.appStatus button').last();
+        if (await switcher.isVisible()) {
+          await switcher.click();
+          await page.locator(`.appShell[data-theme="${target.theme}"]`).waitFor({ state: 'visible' });
+        } else {
+          throw new Error(`theme ${target.theme} was not applied for ${target.name}`);
+        }
       }
       await page.screenshot({ path: join(outDir, `${target.name}.png`), fullPage: false });
       await page.close();

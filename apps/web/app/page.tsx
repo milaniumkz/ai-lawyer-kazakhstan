@@ -1134,14 +1134,37 @@ export default function WebHome() {
         { name: "Справка_о_доходах.jpg", status: "JPG · 0.8 МБ · 14 мая 2024" },
       ];
       return (
-        <section className="contentPanel">
+        <section className={view === "documents" ? "contentPanel documentsOverview" : "contentPanel"}>
           <AppHeader
             title={view === "analysis" ? "Анализ документов" : view === "documentUpload" ? "Загрузка документа" : view === "documentCheck" ? "Проверка документов" : "Документы и доказательства"}
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <input ref={fileInputRef} className="fileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
           <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
-          {(view === "documents" || view === "documentCheck") && (
+          {view === "documents" && (
+            <>
+              <div className="docSearch"><span>⌕</span><input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="Поиск по документам и делам" /></div>
+              <div className="docTabs"><button className="active" onClick={() => setSyncState("Раздел документов открыт")}>Документы</button><button onClick={() => setSyncState("Раздел доказательств открыт")}>Доказательства</button><button onClick={() => setSyncState("Недавние файлы открыты")}>Недавние</button></div>
+              <h3 className="goldSection">Папки</h3>
+              <div className="folderList">
+                {[
+                  ["Личные документы", "Паспорт, ИИН, доверенности", "5 файлов"],
+                  ["Договоры и переписка", "Договоры, письма, сообщения", "12 файлов"],
+                  ["Судебные документы", "Иски, определения, решения", "8 файлов"],
+                ].map(([title, sub, count]) => <button key={title} onClick={() => setSyncState(`Открыта папка: ${title}`)}><span className="folderIcon"></span><p><strong>{title}</strong><small>{sub}</small></p><em>{count}</em><b>›</b></button>)}
+              </div>
+              <h3 className="goldSection">Последние файлы</h3>
+              <div className="recentFileList">
+                {[
+                  ["Исковое заявление.pdf", "PDF · 482 КБ · сегодня", "Проверено"],
+                  ["Договор займа.pdf", "PDF · 1,2 МБ · вчера", "Нужна проверка"],
+                  ["Переписка WhatsApp.zip", "ZIP · 3,4 МБ · 15 мая", "Доказательство"],
+                ].map(([name, meta, status]) => <button key={name} onClick={() => { setSelectedDocument(name); setSyncState(`Открыт файл: ${name}`); }}><span className="fileBadge">DOC</span><p><strong>{name}</strong><small>{meta}</small></p><em>{status}</em><b>›</b></button>)}
+              </div>
+              <button className="primary wide heroCta fixedDocCta" onClick={() => fileInputRef.current?.click()}>Добавить документ</button>
+            </>
+          )}
+          {view === "documentCheck" && (
             <>
               <div className="docReadinessCard">
                 <span className="largeIcon">⚖</span>

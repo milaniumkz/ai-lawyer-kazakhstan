@@ -809,6 +809,143 @@ progress {
   text-align: left;
 }
 
+.documentsOverview .screenHeader {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 18px;
+}
+
+.documentsOverview .screenHeader button {
+  grid-column: 2;
+  grid-row: 1;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  font-size: 30px;
+}
+
+.documentsOverview .screenHeader div {
+  grid-column: 1;
+  grid-row: 1;
+  text-align: center;
+}
+
+.documentsOverview .screenHeader p {
+  display: none;
+}
+
+.docSearch,
+.docTabs,
+.folderList,
+.recentFileList {
+  display: grid;
+  gap: 12px;
+}
+
+.docSearch {
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  min-height: 70px;
+  margin: 18px 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-soft);
+  padding: 0 18px;
+}
+
+.docSearch span {
+  color: var(--gold-strong);
+  font-size: 36px;
+}
+
+.docSearch input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 18px;
+}
+
+.docTabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 24px;
+}
+
+.docTabs button {
+  min-height: 58px;
+  border-radius: 18px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.docTabs button.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  color: var(--gold-strong);
+}
+
+.folderList button,
+.recentFileList button {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto 14px;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-soft);
+  color: var(--text);
+  text-align: left;
+}
+
+.folderList p,
+.recentFileList p {
+  margin: 0;
+}
+
+.folderList small,
+.recentFileList small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.folderList em,
+.recentFileList em {
+  color: var(--gold-strong);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.folderIcon,
+.fileBadge {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 2px solid var(--gold-strong);
+  border-radius: 10px;
+  color: var(--gold-strong);
+}
+
+.folderIcon::before {
+  content: "";
+  width: 32px;
+  height: 22px;
+  border: 2px solid currentColor;
+  border-top-width: 8px;
+  border-radius: 4px;
+}
+
+.fileBadge {
+  border-color: #4dd983;
+  color: #4dd983;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fixedDocCta {
+  margin-top: 24px;
+}
+
 .docReadinessCard,
 .uploadHero,
 .analysisHero,

@@ -24,7 +24,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 18 | `deadlines` | 8.68 |
 | 19 | `legal` | 5.38 |
 | 20 | `legalSearch` | 10.77 |
-| 21 | `documents` | 17.42 |
+| 21 | `documents` | 8.33 |
 | 22 | `profile` | 4.63 |
 | 23 | `settings` | 4.05 |
 | 24 | `subscription` | 6.03 |
@@ -33,12 +33,12 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 ## Worst Screens
 
 - 13 `claimDraft`: 18.18%
-- 21 `documents`: 17.42%
 - 09 `documentCheck`: 14.96%
 - 10 `documentUpload`: 14.64%
 - 12 `claim`: 14.28%
 - 14 `claimSend`: 13.65%
 - 16 `case`: 13.49%
 - 11 `analysis`: 12.47%
+- 20 `legalSearch`: 10.77%
 
 Note: this is a measurement gate, not yet a pass/fail pixel-perfect threshold.
