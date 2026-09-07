@@ -222,11 +222,13 @@
 - RC10 QA release bundle — `npm run release:bundle -- v0.1.0-rc.10` produced `dist/release/ai-lawyer-kz-v0.1.0-rc.10-release-bundle.tar.gz` SHA-256 `cf16619d84d0fc9ef5553608dc7bb4fb0c8e1a0290ba0447631c815fbe9fb642`.
 - Server archive security scan — fixed `scripts/security-scan.mjs` to use a filesystem fallback outside git worktrees; `npm run test:security`, `npm run check` and `npm run build` passed locally before redeploy.
 - Server security scan stderr cleanup — uploaded `/tmp/ai-lawyer-kz-security-scan-stderr-fix.tar.gz` to `/opt/ai-lawyer-kz/ai-lawyer-kz-security-scan-stderr-fix.tar.gz` SHA-256 `79d1b5bbb233d2515ea8f94817fac4a46b47957b531c21eae37e2c3a2a90c805`; server install health passed, server `npm run test:security` completed cleanly without git fallback stderr, server `npm run test:audit` found 0 vulnerabilities, and `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Web full screenshot matrix — `scripts/web/check-screenshots.mjs` now targets every dark design screen 01-25 and light screens 01-20 across `390x844`, `430x932` and `1440x900`; `npm run test:web-screenshots`, `npm run test:web-visual` and `npm run test:design-pixel` passed. Capture is strict only with `WEB_SCREENSHOT_STRICT=1` and currently skipped locally because Playwright is not installed.
 - Deployed voice upload smoke — server install completed, migration `0005_transcript_audio_metadata.sql` applied, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and HTTPS multipart `POST /api/v1/voice/transcripts/audio` returned `status=ready`, `audioFileId`, `audioSha256` and `audioStorageKey`.
 
 ## Заблокировано
 
 - `docker --version` — `docker: command not found`.
+- `npm run test:web-screenshots:strict` — blocked until Playwright is installed in the workspace.
 - Production Android signing — blocked, production keystore is not provided.
 - iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
 - Custom production domain setup — blocked until DNS is provided; trusted HTTPS test endpoint is available at `https://89-207-250-217.sslip.io`.

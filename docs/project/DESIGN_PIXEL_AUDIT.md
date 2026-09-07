@@ -49,11 +49,13 @@
 
 ## Visual Baselines
 
-Обязательные web screenshots для следующих срезов:
+Обязательные web screenshots для следующих срезов (`WEB_BASE_URL=<url> npm run test:web-screenshots:strict`):
 
-- Mobile compact dark/light: 390x844.
-- Mobile large dark/light: 430x932.
-- Desktop dark/light: 1440x900.
+- Mobile compact: 390x844.
+- Mobile large: 430x932.
+- Desktop: 1440x900.
+- Dark: all screens 01-25.
+- Light: screens 01-20 where light PNG references exist.
 
 Acceptance для mobile/web center frame:
 
