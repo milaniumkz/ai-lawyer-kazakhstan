@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 
 interface HttpLikeResponse {
-  status(code: number): { json(body: unknown): void };
+  status(code: number): { json?: (body: unknown) => void; send?: (body: unknown) => void };
 }
 
 interface HttpLikeRequest {
@@ -17,7 +17,13 @@ export class SafeHttpExceptionFilter implements ExceptionFilter {
     const correlationId = getCorrelationId(request.headers);
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    response.status(status).json(buildErrorEnvelope(exception, correlationId));
+    const sender = response.status(status);
+    const body = buildErrorEnvelope(exception, correlationId);
+    if (sender.json) {
+      sender.json(body);
+      return;
+    }
+    sender.send?.(body);
   }
 }
 

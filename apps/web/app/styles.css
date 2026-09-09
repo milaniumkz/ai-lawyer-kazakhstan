@@ -1848,15 +1848,22 @@ button:disabled {
   .caseRow em { grid-column: 2; }
   .actionBar, .searchRow, .composer { flex-direction: column; align-items: stretch; }
   .bottomNav button { padding: 8px 2px; font-size: 11px; }
+  .appShell[data-view="claimDraft"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
   .appShell[data-view="claimDraft"] .contentPanel {
-    padding: 22px 20px 32px;
+    padding: 22px 20px 22px;
   }
   .appShell[data-view="claimDraft"] .bottomNav {
     display: none;
   }
   .appShell[data-view="claimDraft"] .screenHeader {
-    grid-template-columns: 40px minmax(0, 1fr);
-    margin-bottom: 10px;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    margin-bottom: 8px;
   }
   .appShell[data-view="claimDraft"] .screenHeader button {
     width: 38px;
@@ -1865,36 +1872,99 @@ button:disabled {
   }
   .appShell[data-view="claimDraft"] .screenHeader h2 {
     text-align: center;
+    font-size: 18px;
+    line-height: 1.06;
+    white-space: nowrap;
   }
   .appShell[data-view="claimDraft"] .screenHeader p {
     display: none;
   }
   .appShell[data-view="claimDraft"] .claimStatusRow {
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 3px;
   }
   .appShell[data-view="claimDraft"] .claimStatusRow span {
     display: grid;
     place-items: center;
     min-height: 40px;
-    padding: 6px 5px;
-    font-size: 12px;
+    border-color: var(--gold);
+    border-radius: 20px;
+    padding: 6px 7px;
+    font-size: 8px;
     line-height: 1.2;
   }
   .appShell[data-view="claimDraft"] .claimPaper {
-    gap: 9px;
+    gap: 4px;
+    min-height: 448px;
+    margin: 0 8px;
     border-color: var(--gold);
-    border-radius: 20px;
-    padding: 16px 22px 24px;
+    background: #f1ece3;
+    border-radius: 22px;
+    padding: 11px 22px 12px;
   }
   .appShell[data-view="claimDraft"] .claimPaper .paperMark {
-    font-size: 30px;
+    font-size: 38px;
   }
   .appShell[data-view="claimDraft"] .claimPaper h1 {
-    font-size: 31px;
+    font-size: 24px;
+    line-height: 1.05;
+    margin-bottom: 2px;
   }
   .appShell[data-view="claimDraft"] .claimPaper section {
-    padding-top: 10px;
+    display: grid;
+    grid-template-columns: 31px minmax(0, 1fr);
+    gap: 8px;
+    padding-top: 5px;
+  }
+  .appShell[data-view="claimDraft"] .claimPaper section span {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(173, 123, 37, 0.36);
+    border-radius: 50%;
+    color: #ad7b25;
+    font-size: 12px;
+  }
+  .appShell[data-view="claimDraft"] .claimPaper b {
+    margin-bottom: 1px;
+    font-size: 10px;
+  }
+  .appShell[data-view="claimDraft"] .claimPaper p {
+    margin: 0;
+    font-size: 8px;
+    line-height: 1.18;
+  }
+  .appShell[data-view="claimDraft"] .claimPaper aside {
+    display: grid;
+    gap: 2px;
+    margin-top: 3px;
+    border: 1px solid rgba(173, 123, 37, 0.28);
+    border-radius: 12px;
+    background: rgba(173, 123, 37, 0.06);
+    padding: 6px 10px;
+  }
+  .appShell[data-view="claimDraft"] .claimDraftActions {
+    gap: 10px;
+    margin: 18px 0 9px;
+  }
+  .appShell[data-view="claimDraft"] .claimDraftActions button {
+    min-height: 31px;
+    border-color: var(--gold);
+    background: var(--panel-soft);
+    color: var(--gold-strong);
+    font-size: 10px;
+  }
+  .appShell[data-view="claimDraft"] .heroCta {
+    min-height: 38px;
+    background: linear-gradient(180deg, #d2a554, #bd8530);
+    font-size: 16px;
+  }
+  .appShell[data-view="claimDraft"] .claimSecure {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 8px;
+    text-align: center;
   }
   .appShell[data-view="documentUpload"] .contentPanel {
     padding: 34px 20px 34px;

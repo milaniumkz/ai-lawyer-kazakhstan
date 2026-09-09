@@ -1,7 +1,16 @@
-import { Body, Controller, Get, Headers, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
+import type { FastifyRequest } from 'fastify';
 import { assertSameUser, assertUserId } from '../../common/user-context';
 import { CasesService } from './cases.service';
+
+type MultipartField = { value?: unknown };
+type MultipartFile = {
+  filename: string;
+  mimetype: string;
+  fields: Record<string, unknown>;
+  toBuffer: () => Promise<Buffer>;
+};
+type MultipartRequest = FastifyRequest & { file: () => Promise<MultipartFile | undefined> };
 
 @Controller()
 export class CasesController {
@@ -43,12 +52,18 @@ export class CasesController {
   }
 
   @Post('voice/transcripts/audio')
-  @UseInterceptors(FileInterceptor('audio', { limits: { fileSize: 25 * 1024 * 1024 } }))
-  createAudioTranscript(
-    @UploadedFile() file: { originalname: string; mimetype: string; size: number; buffer: Buffer },
-    @Body() body: { caseId?: string; language?: 'ru' | 'kk' | 'en'; text?: string },
+  async createAudioTranscript(
+    @Req() request: MultipartRequest,
     @Headers('x-user-id') userId?: string | string[],
   ) {
+    const part = await request.file();
+    const buffer = await part?.toBuffer();
+    const body = {
+      caseId: stringField(part?.fields.caseId as MultipartField | undefined),
+      language: languageField(part?.fields.language as MultipartField | undefined),
+      text: stringField(part?.fields.text as MultipartField | undefined),
+    };
+    const file = buffer && part ? { originalname: part.filename, mimetype: part.mimetype, size: buffer.length, buffer } : undefined;
     return this.cases.createTranscriptFromAudio(body, file, assertUserId(userId));
   }
 
@@ -56,4 +71,13 @@ export class CasesController {
   getTranscript(@Param('id') id: string, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.getTranscript(id, assertUserId(userId));
   }
+}
+
+function stringField(field?: MultipartField) {
+  return typeof field?.value === 'string' ? field.value : undefined;
+}
+
+function languageField(field?: MultipartField): 'ru' | 'kk' | 'en' | undefined {
+  const value = stringField(field);
+  return value === 'ru' || value === 'kk' || value === 'en' ? value : undefined;
 }

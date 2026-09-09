@@ -1,24 +1,27 @@
-import { INestApplication } from '@nestjs/common';
+import multipart from '@fastify/multipart';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SafeHttpExceptionFilter } from '../common/safe-http-exception.filter';
 import { AppModule } from './app.module';
 
 describe('AppModule HTTP smoke', () => {
-  let app: INestApplication;
+  let app: NestFastifyApplication;
   let voiceUploadDir: string;
 
   beforeAll(async () => {
     voiceUploadDir = await mkdtemp(join(tmpdir(), 'app-smoke-voice-'));
     process.env.VOICE_UPLOAD_DIR = voiceUploadDir;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication();
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    await app.register(multipart, { limits: { fileSize: 25 * 1024 * 1024 } });
     app.setGlobalPrefix('api/v1');
     app.useGlobalFilters(new SafeHttpExceptionFilter());
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
   afterAll(async () => {

@@ -1290,13 +1290,15 @@ export default function WebHome() {
               <article className="claimPaper">
                 <div className="paperMark">⚖</div>
                 <h1>Досудебная претензия</h1>
-                <section><b>От кого</b><p>{profileName || "Заявитель"}<br />Контактные данные из профиля</p></section>
-                <section><b>Кому</b><p>Ответчик<br />Реквизиты уточняются пользователем</p></section>
-                <section><b>Суть требования</b><p>{claimBody}</p></section>
-                <section><b>Норма права</b><p>{selectedNorm ? `${selectedNorm.title}, ${selectedNorm.article}, ${selectedNorm.source}` : "Нет подтвержденной нормы. Требуется ручная проверка официального источника РК."}</p></section>
+                <section><span>◎</span><div><b>От кого</b><p>{profileName || "Заявитель"} · контакты из профиля</p></div></section>
+                <section><span>▦</span><div><b>Кому</b><p>Ответчик · реквизиты уточняются пользователем</p></div></section>
+                <section><span>▤</span><div><b>Суть требования</b><p>{generatedClaimBody ? claimBody : "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ."}</p></div></section>
+                <section><span>⚖</span><div><b>Норма права</b><p>{selectedNorm ? `${selectedNorm.title}, ${selectedNorm.article}, ${selectedNorm.source}` : "Нет подтвержденной нормы РК. Требуется ручная проверка."}</p></div></section>
+                <aside><b>Правовое обоснование</b><p>Добавляется только после подтверждения официального источника РК.</p></aside>
               </article>
               <div className="claimDraftActions"><button onClick={() => go("claim")}>✎ Редактировать</button><button onClick={() => setSyncState("PDF будет сформирован через documents adapter после подтверждения")}>▣ Скачать PDF</button></div>
               <button className="primary wide heroCta" onClick={confirmClaimSent}>✧ Перейти к отправке</button>
+              <p className="claimSecure">🛡 Документ защищён и хранится безопасно</p>
             </>
           )}
           {view === "claimSend" && (
