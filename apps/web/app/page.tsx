@@ -957,7 +957,7 @@ export default function WebHome() {
       return (
         <section className="contentPanel authPanel">
           <AppHeader
-            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "SMS подтверждение" : "Биометрия"}
+            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "SMS подтверждение" : "Быстрый вход"}
             subtitle="Безопасный вход, согласие v1 и локальная биометрия"
           />
           {view === "login" && (

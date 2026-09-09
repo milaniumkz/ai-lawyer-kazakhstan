@@ -11,6 +11,116 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="biometric"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="biometric"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background:
+      radial-gradient(circle at 50% 26%, rgba(209, 160, 74, 0.1), transparent 32%),
+      #020912;
+  }
+  .appShell[data-view="biometric"] .appStatus,
+  .appShell[data-view="biometric"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="biometric"] .authPanel {
+    min-height: 685px;
+    align-content: start;
+    gap: 0;
+    padding: 28px 20px 34px;
+    overflow: hidden;
+  }
+  .appShell[data-view="biometric"] .screenHeader {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .appShell[data-view="biometric"] .screenHeader button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 40px;
+  }
+  .appShell[data-view="biometric"] .screenHeader h2 {
+    margin: 0;
+    text-align: center;
+    font-size: 23px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="biometric"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="biometric"] .authMark {
+    width: 238px;
+    margin: 0 auto 26px;
+    border-color: rgba(209, 160, 74, 0.76);
+    background:
+      radial-gradient(circle, rgba(255, 228, 154, 0.12), transparent 40%),
+      repeating-radial-gradient(circle, transparent 0 11px, rgba(216, 161, 58, 0.15) 12px 13px);
+    box-shadow: 0 0 0 34px rgba(216, 161, 58, 0.04), inset 0 0 38px rgba(230, 189, 98, 0.08);
+  }
+  .appShell[data-view="biometric"] .authMark span {
+    width: 52%;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 58px;
+    box-shadow: none;
+  }
+  .appShell[data-view="biometric"] .panelHeader {
+    margin-bottom: 0;
+    text-align: center;
+  }
+  .appShell[data-view="biometric"] .panelHeader h2 {
+    margin-bottom: 17px;
+    font-size: 33px;
+    line-height: 1.02;
+    white-space: nowrap;
+  }
+  .appShell[data-view="biometric"] .panelHeader p {
+    max-width: 350px;
+    margin: 0 auto 8px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.28;
+  }
+  .appShell[data-view="biometric"] .goldDivider {
+    width: 170px;
+    margin: 0 auto 12px;
+  }
+  .appShell[data-view="biometric"] .heroCta {
+    width: calc(100% - 50px);
+    min-height: 60px;
+    margin: 0 auto 12px;
+    border-radius: 14px;
+    font-size: 23px;
+  }
+  .appShell[data-view="biometric"] .outlineGold {
+    width: calc(100% - 50px);
+    min-height: 54px;
+    margin: 0 auto 18px;
+    border-color: var(--gold);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 22px;
+  }
+  .appShell[data-view="biometric"] .secureHint {
+    max-width: 250px;
+    margin: 8px auto 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: center;
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="documents"] {
     --bg: #020912;
     --panel: #06111d;
