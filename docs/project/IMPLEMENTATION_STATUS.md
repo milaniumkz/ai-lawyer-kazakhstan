@@ -166,6 +166,7 @@
 | Web document upload deploy P1 | Public HTTPS server refreshed with the completed screen 10 document upload pixel gate | `/tmp/ai-lawyer-kz-document-upload-complete.tar.gz` SHA-256 `534f84cdec98aa561760fdd6f6ee10f8b37fbd12de6fea14adcd140e9a8750be`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 
 | Web legal search complete pixel gate P1 | Screen 20 `legalSearch` is closed under the one-screen rule: mobile dark reference diff is `3.99%`, search/popular queries/tabs/result guardrail/action layout match the PNG density, sticky action overlap is removed, and all buttons keep real RAG/local-state/source/blocker behavior without РФ legal truth | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff`, `npm run check`, `npm run build` passed; `npm run docker:config` blocked because Docker CLI is unavailable locally | done |
+| Web legal search deploy P1 | Public HTTPS server refreshed with the completed screen 20 legal search pixel gate | `/tmp/ai-lawyer-kz-legal-search-complete.tar.gz` SHA-256 `1f78937a50dcb22974b1b13661d6ebcb382965767e592efa3674b06952338335`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 
 ## Блокеры окружения
 
