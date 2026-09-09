@@ -14,7 +14,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 08 | `category` | 6.06 |
 | 09 | `documentCheck` | 6.41 |
 | 10 | `documentUpload` | 12.07 |
-| 11 | `analysis` | 12.47 |
+| 11 | `analysis` | 3.68 |
 | 12 | `claim` | 6.29 |
 | 13 | `claimDraft` | 3.89 |
 | 14 | `claimSend` | 5.90 |
@@ -33,11 +33,11 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 ## Closed Screens
 
 - 02 `login`: 3.20%
+- 11 `analysis`: 3.68%
 - 13 `claimDraft`: 3.89%
 
 ## Next Screen Queue
 
-- 11 `analysis`: 12.47%
 - 10 `documentUpload`: 12.07%
 - 20 `legalSearch`: 10.77%
 - 06 `home`: 10.10%
@@ -45,5 +45,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 01 `onboarding`: 8.35%
 - 21 `documents`: 8.33%
 - 05 `biometric`: 7.65%
+- 07 `newCase`: 7.49%
 
-Note: 23 screens remain above the 4% release threshold.
+Note: 22 screens remain above the 4% release threshold.

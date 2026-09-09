@@ -1201,8 +1201,22 @@ export default function WebHome() {
                   <>
               <div className="analysisHero"><span className="largeIcon">▧</span><div><h1>Документы анализируются</h1><p>Извлекаем сведения из ваших файлов с помощью искусственного интеллекта</p></div></div>
               <div className="analysisTags"><span>♙ ФИО</span><span>▣ Даты</span><span>◎ Суммы</span><span>▤ ИИН</span><span>⚖ Статьи</span><span>⌘ Приложения</span></div>
-              <div className="analysisTimeline">{["OCR завершен", "Тип документа определен", "Проверка реквизитов", "Поиск норм права"].map((step, index) => <button key={step} onClick={index < 2 ? confirmOcr : analyzeDocuments}><span>{index < 2 ? "✓" : index === 2 ? "●" : ""}</span><strong>{step}</strong><em>{index < 2 ? "Завершено" : index === 2 ? "В процессе" : "Ожидает"}</em></button>)}</div>
+              <div className="analysisTimeline">{[
+                ["OCR завершен", "Текст распознан и извлечен"],
+                ["Тип документа определен", "Договор займа"],
+                ["Проверка реквизитов", "Проверяем реквизиты и подписи"],
+                ["Поиск норм права", "Подбираем применимые нормы"],
+              ].map(([step, detail], index) => <button key={step} onClick={index < 2 ? confirmOcr : analyzeDocuments}><span>{index < 2 ? "✓" : index === 2 ? "●" : ""}</span><p><strong>{step}</strong><small>{detail}</small></p><em>{index < 2 ? "Завершено" : index === 2 ? "В процессе" : "Ожидает"}</em></button>)}</div>
               <div className="docHint"><span>✦</span><p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : `Система нашла ${Math.max(documents.length, 4)} документа, распознала 18 страниц и выделила ключевые сведения`}</p><b>{analysisProgressLabel}</b></div>
+              <div className="sectionTitle analysisFoundTitle"><h3>Что найдено</h3></div>
+              <div className="analysisFoundGrid">
+                {[
+                  ["▤", "4 документа", "PDF, JPG, PNG"],
+                  ["▣", "7 ключевых дат", "Периоды и сроки"],
+                  ["◎", "12 сумм", "Общая сумма 4 250 000 ₸"],
+                  ["⚖", "9 норм права", "Найдены релевантные статьи"],
+                ].map(([icon, title, detail]) => <button key={title} onClick={analyzeDocuments}><span>{icon}</span><p><strong>{title}</strong><small>{detail}</small></p><em>›</em></button>)}
+              </div>
               <button className="primary wide heroCta" onClick={analysisDone ? () => go("claim") : analyzeDocuments}>{analysisDone ? "Сформировать претензию" : "✧ Продолжить"}</button>
               <button className="wide outlineGold" onClick={() => go("documentCheck")}>Посмотреть детали</button>
                   </>
@@ -1440,9 +1454,9 @@ export default function WebHome() {
         <div className="appStatus"><span>{syncState}</span><button aria-label="Синхронизировать" onClick={syncWithApi}>↻</button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
         {renderView()}
         <nav className="bottomNav">
-          <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Главная</button>
+          <button className={view === "home" || view === "analysis" ? "active" : ""} onClick={() => go("home")}>Главная</button>
           <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => go("cases")}>Дела</button>
-          <button className={["documents", "analysis", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => go("documents")}>Документы</button>
+          <button className={["documents", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => go("documents")}>Документы</button>
           <button className={view === "deadlines" ? "active" : ""} onClick={() => go("deadlines")}>Сроки</button>
           <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => go("profile")}>Профиль</button>
         </nav>
