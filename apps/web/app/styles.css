@@ -11,6 +11,190 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="home"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="home"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background:
+      radial-gradient(circle at 50% 24%, rgba(209, 160, 74, 0.12), transparent 28%),
+      #020912;
+  }
+  .appShell[data-view="home"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="home"] .homeScreen {
+    min-height: 685px;
+    padding: 34px 21px 75px;
+    overflow: hidden;
+  }
+  .appShell[data-view="home"] .topLine {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+  }
+  .appShell[data-view="home"] .topLine h1 {
+    margin-bottom: 6px;
+    font-size: 20px;
+    line-height: 1.05;
+  }
+  .appShell[data-view="home"] .topLine p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="home"] .topActions {
+    gap: 8px;
+  }
+  .appShell[data-view="home"] .bell {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 24px;
+  }
+  .appShell[data-view="home"] .avatar {
+    width: 42px;
+    height: 42px;
+    border-color: var(--gold);
+    color: var(--gold-strong);
+    font-size: 13px;
+  }
+  .appShell[data-view="home"] .mic {
+    width: 164px;
+    margin: 31px auto 14px;
+    border-width: 1px;
+    box-shadow: 0 0 0 22px rgba(216, 161, 58, 0.07), 0 0 0 48px rgba(216, 161, 58, 0.035);
+  }
+  .appShell[data-view="home"] .mic span {
+    font-size: 58px;
+  }
+  .appShell[data-view="home"] .homeScreen > h2 {
+    margin-bottom: 5px;
+    font-size: 19px;
+    line-height: 1.1;
+  }
+  .appShell[data-view="home"] .hint {
+    margin-bottom: 17px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .appShell[data-view="home"] .quickGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 11px;
+    margin: 0 0 22px;
+  }
+  .appShell[data-view="home"] .quickGrid button {
+    min-height: 88px;
+    border-color: rgba(209, 160, 74, 0.32);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #0b1828, #06111d);
+    padding: 10px 6px;
+    color: var(--gold-strong);
+    font-size: 10px;
+    line-height: 1.15;
+  }
+  .appShell[data-view="home"] .quickIcon {
+    margin-bottom: 8px;
+    font-size: 25px;
+  }
+  .appShell[data-view="home"] .quickGrid small {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.2;
+  }
+  .appShell[data-view="home"] .sectionTitle {
+    margin-bottom: 8px;
+  }
+  .appShell[data-view="home"] .sectionTitle h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .appShell[data-view="home"] .sectionTitle button {
+    color: var(--gold-strong);
+    font-size: 12px;
+  }
+  .appShell[data-view="home"] .list {
+    gap: 9px;
+  }
+  .appShell[data-view="home"] .caseRow {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    gap: 11px;
+    min-height: 70px;
+    border-color: rgba(209, 160, 74, 0.29);
+    border-radius: 13px;
+    background: linear-gradient(180deg, #0a1726, #06111d);
+    padding: 9px 10px;
+  }
+  .appShell[data-view="home"] .caseRow .roundIcon {
+    width: 43px;
+    height: 43px;
+    font-size: 22px;
+  }
+  .appShell[data-view="home"] .caseRow strong {
+    font-size: 13px;
+    line-height: 1.1;
+  }
+  .appShell[data-view="home"] .caseRow small,
+  .appShell[data-view="home"] .caseRow em {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="home"] .caseRow em {
+    grid-column: auto;
+  }
+  .appShell[data-view="home"] .bottomNav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    border-color: rgba(209, 160, 74, 0.18);
+    padding: 7px 12px max(8px, env(safe-area-inset-bottom));
+    background: rgba(2, 9, 18, 0.96);
+  }
+  .appShell[data-view="home"] .bottomNav button {
+    display: grid;
+    gap: 3px;
+    min-height: 49px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 2px 0;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .appShell[data-view="home"] .bottomNav button::before {
+    color: currentColor;
+    font-size: 19px;
+    line-height: 1;
+  }
+  .appShell[data-view="home"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="home"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="home"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="home"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="home"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+  .appShell[data-view="home"] .bottomNav button.active {
+    background: transparent;
+    color: var(--gold-strong);
+  }
+  .appShell[data-view="home"] .bottomNav button.active::after {
+    content: "";
+    justify-self: center;
+    width: 42px;
+    height: 1px;
+    border-radius: 999px;
+    background: var(--gold);
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="legalSearch"] {
     --bg: #020912;
     --panel: #06111d;
