@@ -1397,7 +1397,7 @@ export default function WebHome() {
           <h3 className="goldSection">Использование в августе</h3>
           <div className="usageBars">{["Консультации|34 из 100|34", "Документы|12 из 30|40", "Голосовые минуты|68 из 180|38"].map((row) => { const [label, value, progress] = row.split("|"); return <div key={label}><b>{label}</b><em>{value}</em><progress value={Number(progress)} max="100" /></div>; })}</div>
           <h3 className="goldSection">Выберите план</h3>
-          <div className="planCards">{["Базовый|0 ₸|5 консультаций · 2 документа", "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту", "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка"].map((row, index) => { const [title, price, desc] = row.split("|"); return <button className={index === 1 ? "active" : ""} key={title} onClick={loadSubscription}><b>{title}</b><em>{price}</em><small>{desc}</small></button>; })}</div>
+          <div className="planCards">{["Базовый|0 ₸|5 консультаций · 2 документа", "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту", "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка"].map((row, index) => { const [title, price, desc] = row.split("|"); return <button className={index === 1 ? "active" : ""} key={title} onClick={loadSubscription}><b>{title}</b><em>{price}</em><small>{desc.split(" · ").map((item) => <span key={item}>✓ {item}</span>)}</small>{index === 1 && <i>Рекомендуем</i>}</button>; })}</div>
           <div className="analysisBox"><strong>Подписка</strong><p>{subscriptionStatus}</p></div>
           <button className="primary wide" onClick={loadSubscription}>Управление подпиской</button>
         </section>

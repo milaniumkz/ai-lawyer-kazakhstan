@@ -3593,6 +3593,176 @@ button:disabled {
     color: var(--gold-strong);
     font-size: 13px;
   }
+  .appShell[data-view="subscription"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="subscription"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    margin: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(209, 160, 74, 0.74);
+    border-radius: 18px;
+  }
+  .appShell[data-view="subscription"] .contentPanel {
+    min-height: 685px;
+    padding: 17px 20px 84px;
+    overflow: hidden;
+  }
+  .appShell[data-view="subscription"] .screenHeader {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    align-items: center;
+    margin-bottom: 7px;
+    border-bottom: 1px solid rgba(209, 160, 74, 0.28);
+    padding-bottom: 2px;
+  }
+  .appShell[data-view="subscription"] .screenHeader button {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 30px;
+  }
+  .appShell[data-view="subscription"] .screenHeader div {
+    text-align: center;
+  }
+  .appShell[data-view="subscription"] .screenHeader h2 {
+    color: var(--gold-strong);
+    font-size: 18px;
+    line-height: 1;
+  }
+  .appShell[data-view="subscription"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="subscription"] .subscriptionHero {
+    min-height: 58px;
+    border-color: var(--gold);
+    border-radius: 9px;
+    padding: 9px 11px;
+  }
+  .appShell[data-view="subscription"] .subscriptionHero p,
+  .appShell[data-view="subscription"] .subscriptionHero small {
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.15;
+  }
+  .appShell[data-view="subscription"] .subscriptionHero h2 {
+    font-size: 17px;
+    line-height: 1;
+  }
+  .appShell[data-view="subscription"] .subscriptionHero span {
+    align-self: center;
+    padding: 8px 15px;
+    font-size: 9px;
+  }
+  .appShell[data-view="subscription"] .goldSection {
+    margin: 16px 0 8px;
+    font-size: 13px;
+    line-height: 1.1;
+  }
+  .appShell[data-view="subscription"] .usageBars {
+    display: grid;
+    gap: 6px;
+  }
+  .appShell[data-view="subscription"] .usageBars div {
+    min-height: 38px;
+    gap: 4px 8px;
+    border: 1px solid rgba(209, 160, 74, 0.44);
+    border-radius: 7px;
+    background: var(--panel-soft);
+    padding: 7px 10px;
+  }
+  .appShell[data-view="subscription"] .usageBars b {
+    font-size: 9px;
+  }
+  .appShell[data-view="subscription"] .usageBars em {
+    color: var(--muted);
+    font-size: 8px;
+    font-style: normal;
+  }
+  .appShell[data-view="subscription"] .usageBars progress {
+    height: 5px;
+    margin: 0;
+    background: rgba(226, 185, 93, 0.16);
+  }
+  .appShell[data-view="subscription"] .usageBars progress::-webkit-progress-bar {
+    background: rgba(226, 185, 93, 0.16);
+    border-radius: 99px;
+  }
+  .appShell[data-view="subscription"] .usageBars progress::-webkit-progress-value {
+    background: linear-gradient(180deg, #ffe28a 0%, #d59b31 100%);
+    border-radius: 99px;
+  }
+  .appShell[data-view="subscription"] .usageBars progress::-moz-progress-bar {
+    background: linear-gradient(180deg, #ffe28a 0%, #d59b31 100%);
+    border-radius: 99px;
+  }
+  .appShell[data-view="subscription"] .planCards {
+    display: grid;
+    gap: 7px;
+  }
+  .appShell[data-view="subscription"] .planCards button {
+    min-height: 68px;
+    border: 1px solid rgba(209, 160, 74, 0.42);
+    border-radius: 8px;
+    background: var(--panel-soft);
+    padding: 8px 10px;
+    font-size: 9px;
+  }
+  .appShell[data-view="subscription"] .planCards button.active {
+    border-color: var(--gold);
+  }
+  .appShell[data-view="subscription"] .planCards b {
+    font-size: 12px;
+  }
+  .appShell[data-view="subscription"] .planCards em {
+    color: var(--gold-strong);
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 800;
+  }
+  .appShell[data-view="subscription"] .planCards small {
+    display: grid;
+    gap: 2px;
+    color: var(--muted);
+    font-size: 7px;
+  }
+  .appShell[data-view="subscription"] .planCards small span {
+    color: #72d58a;
+  }
+  .appShell[data-view="subscription"] .planCards i {
+    justify-self: end;
+    align-self: start;
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    color: var(--gold-strong);
+    padding: 2px 5px;
+    font-size: 6px;
+    font-style: normal;
+  }
+  .appShell[data-view="subscription"] .analysisBox {
+    display: none;
+  }
+  .appShell[data-view="subscription"] .contentPanel > .primary.wide {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 66px;
+    min-height: 31px;
+    border-radius: 0;
+    font-size: 11px;
+  }
+  .appShell[data-view="subscription"] .bottomNav {
+    padding: 6px 18px 7px;
+  }
+  .appShell[data-view="subscription"] .bottomNav button {
+    min-height: 42px;
+    border-radius: 8px;
+    font-size: 8px;
+  }
   .appShell[data-view="analysis"] .deviceFrame {
     min-height: calc(100vh - 8px);
     margin: 4px;
