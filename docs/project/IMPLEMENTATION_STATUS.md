@@ -165,6 +165,8 @@
 | Web document upload complete pixel gate P1 | Screen 10 `documentUpload` is closed under the one-screen rule: mobile dark reference diff is `3.93%`, the upload hero, file/camera action cards, recent files and CTA fit the reference viewport, and buttons keep real file/camera picker and route behavior | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff`, `npm run check`, `npm run build` passed; Docker unavailable locally | done |
 | Web document upload deploy P1 | Public HTTPS server refreshed with the completed screen 10 document upload pixel gate | `/tmp/ai-lawyer-kz-document-upload-complete.tar.gz` SHA-256 `534f84cdec98aa561760fdd6f6ee10f8b37fbd12de6fea14adcd140e9a8750be`; server install health passed; server `npm run test:audit` found 0 vulnerabilities; public smoke passed | done |
 
+| Web legal search complete pixel gate P1 | Screen 20 `legalSearch` is closed under the one-screen rule: mobile dark reference diff is `3.99%`, search/popular queries/tabs/result guardrail/action layout match the PNG density, sticky action overlap is removed, and all buttons keep real RAG/local-state/source/blocker behavior without РФ legal truth | `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff`, `npm run check`, `npm run build` passed; `npm run docker:config` blocked because Docker CLI is unavailable locally | done |
+
 ## Блокеры окружения
 
 - `docker` не установлен.

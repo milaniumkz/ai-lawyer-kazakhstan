@@ -1242,18 +1242,23 @@ export default function WebHome() {
     }
 
     if (view === "legal" || view === "legalSearch") {
+      const legalSearchTabs = view === "legalSearch" ? ["Все", "Статьи", "Пункты", "Разъяснения"] : ["Кодексы", "Законы", "Судебная практика"];
+      const legalFallback = legalQuery.trim().length >= 8
+        ? "Нажмите “Найти норму”, чтобы получить ответ только из официальных источников РК."
+        : "Введите запрос и запустите поиск. Без подтвержденного источника норма не добавляется в документ.";
       return (
         <section className="contentPanel">
-          <AppHeader title={view === "legalSearch" ? "Поиск нормы права" : "Нормы права"} subtitle="Официальные источники РК" />
+          <AppHeader title={view === "legalSearch" ? "Поиск нормы" : "Нормы права"} subtitle="Официальные источники РК" />
           <div className="legalSearch">
             <span>⌕</span>
-            <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="Поиск по нормам права, статьям, законам..." />
+            <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="взыскание алиментов" />
             <button aria-label="Фильтр" className={legalActiveOnly ? "activeIcon" : ""} onClick={toggleLegalFilter}>☷</button>
           </div>
-          {view === "legalSearch" && <div className="popularQueries"><span>Популярные запросы</span>{["взыскание алиментов", "алименты на ребенка", "размер алиментов", "индексация алиментов"].map((query) => <button key={query} onClick={() => setLegalQuery(query)}>⌕ {query}</button>)}<button onClick={() => setLegalQuery("")}>Очистить</button></div>}
-          <div className="chips">{["Кодексы", "Законы", "Судебная практика"].map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => selectLegalTab(tab)}>{tab}</button>)}</div>
+          {view === "legalSearch" && <div className="popularQueries"><span>Популярные запросы</span>{["взыскание алиментов", "алименты на ребенка", "размер алиментов", "индексация алиментов", "неустойка по алиментам"].map((query) => <button key={query} onClick={() => setLegalQuery(query)}>⌕ {query}</button>)}<button onClick={() => setLegalQuery("")}>Очистить</button></div>}
+          <div className="chips legalTabs">{legalSearchTabs.map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => selectLegalTab(tab)}>{tab}</button>)}</div>
+          {view === "legalSearch" && <div className="legalResultMeta"><span>{legalNorms.length ? `Найдено ${legalNorms.length} подтверждений` : "Ожидает поиска"}</span><button onClick={toggleLegalFilter}>По релевантности⌄</button></div>}
           <div className="list">
-            {!legalNorms.length && <div className="normCard"><strong>Нет подтвержденной нормы</strong><span>Запустите поиск</span><small>Будет показан только ответ API из официального источника или честный статус “недостаточно источников”.</small><p>Фиктивные нормы не отображаются.</p></div>}
+            {!legalNorms.length && <div className="normCard legalFallbackCard"><em>Официальная проверка</em><strong>Нет подтвержденной нормы РК</strong><span>Источник не выбран</span><small>zan.gov.kz · Әділет · суды РК</small><p>{legalFallback}</p><div className="normAiBox"><b>Пояснение AI</b><p>Ответ появится после проверки citation validator. Фиктивные нормы не отображаются.</p></div></div>}
             {legalNorms.map((norm, index) => (
               <button className={selectedNorm?.article === norm.article ? "normCard active" : "normCard"} key={`${norm.title}-${norm.article}`} onClick={() => { setSelectedNorm(norm); setLegalAnswer(norm.text); }}>
                 {index === 0 && <em>Рекомендованная норма</em>}
@@ -1261,6 +1266,7 @@ export default function WebHome() {
                 <span>{norm.article}</span>
                 <small>Источник: {norm.source} · Актуально на {norm.date}</small>
                 <p>{norm.text}</p>
+                {index === 0 && <div className="normAiBox"><b>AI пояснение</b><p>{norm.text}</p></div>}
               </button>
             ))}
           </div>
@@ -1454,7 +1460,7 @@ export default function WebHome() {
         <div className="appStatus"><span>{syncState}</span><button aria-label="Синхронизировать" onClick={syncWithApi}>↻</button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
         {renderView()}
         <nav className="bottomNav">
-          <button className={view === "home" || view === "analysis" ? "active" : ""} onClick={() => go("home")}>Главная</button>
+          <button className={view === "home" || view === "analysis" || view === "legalSearch" ? "active" : ""} onClick={() => go("home")}>Главная</button>
           <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => go("cases")}>Дела</button>
           <button className={["documents", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => go("documents")}>Документы</button>
           <button className={view === "deadlines" ? "active" : ""} onClick={() => go("deadlines")}>Сроки</button>

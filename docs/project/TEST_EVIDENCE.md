@@ -249,6 +249,7 @@
 
 ## Заблокировано
 
+- Web legal search complete pixel gate — local production `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff` reports screen 20 `legalSearch` at `3.99%`. `npm run check` passed through lint/typecheck/API tests/contracts/design/admin/web/security/audit/Flutter/AI; `npm run build` passed. `npm run docker:config` could not run because Docker CLI is not installed.
 - `docker --version` — `docker: command not found`.
 - Production Android signing — blocked, production keystore is not provided.
 - iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
