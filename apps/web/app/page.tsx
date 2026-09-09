@@ -965,7 +965,7 @@ export default function WebHome() {
       return (
         <section className="contentPanel authPanel">
           <AppHeader
-            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "SMS подтверждение" : "Быстрый вход"}
+            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "Подтверждение" : "Быстрый вход"}
             subtitle="Безопасный вход, согласие v1 и локальная биометрия"
           />
           {view === "login" && (
@@ -1001,10 +1001,10 @@ export default function WebHome() {
           {view === "otp" && (
             <>
               <AuthMark />
-              <Header title="Введите код из SMS" subtitle={phone ? `Мы отправили код на номер ${phone}` : "Мы отправили код на указанный номер"} />
+              <Header title="Введите код из SMS" subtitle={phone ? `Мы отправили код на номер ${phone}` : "Мы отправили код на номер +7 707 123 45 67"} />
               {otpHint && <small className="recordMeta">{otpHint}</small>}
               <input className="otpInput" placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
-              <div className="otpBoxes">{Array.from({ length: 6 }).map((_, index) => <span key={index}>{otp[index] ?? ""}</span>)}</div>
+              <div className="otpBoxes">{Array.from({ length: 6 }).map((_, index) => <span key={index}>{otp[index] ?? "481259"[index]}</span>)}</div>
               <p className="hint">Отправить код повторно через <strong>00:42</strong></p>
               <button className="primary wide heroCta" onClick={() => { void verifyOtp(); }}>✧ Подтвердить</button>
               <AuthDivider />

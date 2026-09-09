@@ -11,6 +11,144 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="otp"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: #020912;
+  }
+  .appShell[data-view="otp"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background: #020912;
+  }
+  .appShell[data-view="otp"] .appStatus,
+  .appShell[data-view="otp"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="otp"] .authPanel {
+    min-height: 693px;
+    align-content: start;
+    gap: 0;
+    padding: 31px 38px 28px;
+    overflow: hidden;
+  }
+  .appShell[data-view="otp"] .screenHeader {
+    position: relative;
+    display: block;
+    margin: 0 0 32px;
+    text-align: center;
+  }
+  .appShell[data-view="otp"] .screenHeader button {
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 28px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 40px;
+    line-height: 0.75;
+  }
+  .appShell[data-view="otp"] .screenHeader h2 {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 31px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .appShell[data-view="otp"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="otp"] .authMark {
+    width: 152px;
+    height: 156px;
+    margin: 0 auto 7px;
+    border: 0;
+    border-radius: 50%;
+    background: url("/design-assets/otp-scale-art-dark.png") center / contain no-repeat;
+    box-shadow: none;
+  }
+  .appShell[data-view="otp"] .authMark span {
+    display: none;
+  }
+  .appShell[data-view="otp"] .panelHeader {
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .appShell[data-view="otp"] .panelHeader h2 {
+    margin: 0 0 12px;
+    font-size: 35px;
+    line-height: 1.02;
+    white-space: nowrap;
+  }
+  .appShell[data-view="otp"] .panelHeader p {
+    max-width: 300px;
+    margin: 0 auto;
+    color: #b6bfca;
+    font-size: 19px;
+    line-height: 1.32;
+  }
+  .appShell[data-view="otp"] .panelHeader p::first-line {
+    color: #b6bfca;
+  }
+  .appShell[data-view="otp"] .recordMeta {
+    display: none;
+  }
+  .appShell[data-view="otp"] .otpInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .appShell[data-view="otp"] .otpBoxes {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 9px;
+    margin: 0 0 18px;
+  }
+  .appShell[data-view="otp"] .otpBoxes span {
+    min-height: 57px;
+    border-color: #d8a33c;
+    border-radius: 9px;
+    background: rgba(6, 17, 29, 0.58);
+    color: var(--gold-strong);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .appShell[data-view="otp"] .hint {
+    margin: 0 auto 23px;
+    color: #b6bfca;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .appShell[data-view="otp"] .hint strong {
+    color: var(--gold-strong);
+    font-weight: 400;
+  }
+  .appShell[data-view="otp"] .heroCta {
+    min-height: 64px;
+    width: 100%;
+    margin-bottom: 34px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
+    color: #07111d;
+    font-size: 25px;
+    font-weight: 400;
+    box-shadow: inset 0 1px 0 rgba(255, 246, 194, 0.78), 0 10px 28px rgba(5, 10, 18, 0.18);
+  }
+  .appShell[data-view="otp"] .goldDivider {
+    width: 260px;
+    margin: 0 auto 21px;
+  }
+  .appShell[data-view="otp"] .linkAction {
+    width: 100%;
+    color: var(--gold-strong);
+    font-size: 19px;
+  }
+
   .appShell[data-view="cases"] {
     --bg: #020912;
     --panel: #06111d;
