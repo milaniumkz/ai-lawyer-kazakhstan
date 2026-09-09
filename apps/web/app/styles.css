@@ -11,6 +11,206 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="documents"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="documents"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background:
+      radial-gradient(circle at 50% 17%, rgba(209, 160, 74, 0.08), transparent 30%),
+      #020912;
+  }
+  .appShell[data-view="documents"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="documents"] .documentsOverview {
+    min-height: 685px;
+    padding: 24px 20px 76px;
+    overflow: hidden;
+  }
+  .appShell[data-view="documents"] .screenHeader {
+    grid-template-columns: minmax(0, 1fr) 40px;
+    gap: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(209, 160, 74, 0.38);
+    padding-bottom: 14px;
+  }
+  .appShell[data-view="documents"] .screenHeader button {
+    display: grid;
+    place-items: center;
+    grid-column: 2;
+    width: 35px;
+    height: 35px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    color: var(--gold-strong);
+    font-size: 24px;
+    line-height: 1;
+  }
+  .appShell[data-view="documents"] .screenHeader button::before {
+    content: "↥";
+    font-size: 24px;
+  }
+  .appShell[data-view="documents"] .screenHeader button {
+    font-size: 0;
+  }
+  .appShell[data-view="documents"] .screenHeader div {
+    grid-column: 1;
+    text-align: center;
+  }
+  .appShell[data-view="documents"] .screenHeader h2 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="documents"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="documents"] .docSearch {
+    grid-template-columns: 34px minmax(0, 1fr);
+    min-height: 31px;
+    margin: 0 0 10px;
+    border-color: rgba(209, 160, 74, 0.45);
+    border-radius: 16px;
+    background: #071524;
+    padding: 0 12px;
+  }
+  .appShell[data-view="documents"] .docSearch span {
+    color: var(--gold-strong);
+    font-size: 19px;
+  }
+  .appShell[data-view="documents"] .docSearch input {
+    color: var(--text);
+    font-size: 10px;
+  }
+  .appShell[data-view="documents"] .docTabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-bottom: 13px;
+  }
+  .appShell[data-view="documents"] .docTabs button {
+    min-height: 28px;
+    border-color: rgba(209, 160, 74, 0.45);
+    border-radius: 10px;
+    background: #071524;
+    color: var(--muted);
+    font-size: 9px;
+  }
+  .appShell[data-view="documents"] .docTabs button.active {
+    background: color-mix(in srgb, var(--gold) 16%, transparent);
+    color: var(--gold-strong);
+  }
+  .appShell[data-view="documents"] .goldSection {
+    margin: 0 0 7px;
+    font-size: 14px;
+  }
+  .appShell[data-view="documents"] .folderList,
+  .appShell[data-view="documents"] .recentFileList {
+    gap: 7px;
+  }
+  .appShell[data-view="documents"] .folderList {
+    margin-bottom: 10px;
+  }
+  .appShell[data-view="documents"] .folderList button,
+  .appShell[data-view="documents"] .recentFileList button {
+    grid-template-columns: 40px minmax(0, 1fr) auto 7px;
+    gap: 8px;
+    min-height: 50px;
+    border-color: rgba(209, 160, 74, 0.34);
+    border-radius: 13px;
+    background: linear-gradient(180deg, #0a1726, #06111d);
+    padding: 7px 8px;
+  }
+  .appShell[data-view="documents"] .folderIcon,
+  .appShell[data-view="documents"] .fileBadge {
+    width: 31px;
+    height: 31px;
+    border-width: 2px;
+    border-radius: 8px;
+    font-size: 9px;
+  }
+  .appShell[data-view="documents"] .folderIcon::before {
+    width: 19px;
+    height: 14px;
+    border-width: 2px;
+    border-top-width: 6px;
+  }
+  .appShell[data-view="documents"] .folderList strong,
+  .appShell[data-view="documents"] .recentFileList strong {
+    font-size: 10px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="documents"] .folderList small,
+  .appShell[data-view="documents"] .recentFileList small {
+    margin-top: 4px;
+    font-size: 8px;
+    line-height: 1.16;
+  }
+  .appShell[data-view="documents"] .folderList em,
+  .appShell[data-view="documents"] .recentFileList em,
+  .appShell[data-view="documents"] .folderList b,
+  .appShell[data-view="documents"] .recentFileList b {
+    font-size: 8px;
+  }
+  .appShell[data-view="documents"] .fixedDocCta {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: 70px;
+    z-index: 21;
+    min-height: 35px;
+    margin: 0;
+    border-radius: 14px;
+    font-size: 13px;
+  }
+  .appShell[data-view="documents"] .bottomNav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    border-color: rgba(209, 160, 74, 0.18);
+    padding: 7px 12px max(8px, env(safe-area-inset-bottom));
+    background: rgba(2, 9, 18, 0.96);
+  }
+  .appShell[data-view="documents"] .bottomNav button {
+    display: grid;
+    gap: 3px;
+    min-height: 49px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 2px 0;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .appShell[data-view="documents"] .bottomNav button::before {
+    color: currentColor;
+    font-size: 19px;
+    line-height: 1;
+  }
+  .appShell[data-view="documents"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="documents"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="documents"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="documents"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="documents"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+  .appShell[data-view="documents"] .bottomNav button.active {
+    background: transparent;
+    color: var(--gold-strong);
+  }
+  .appShell[data-view="documents"] .bottomNav button.active::after {
+    content: "";
+    justify-self: center;
+    width: 42px;
+    height: 1px;
+    border-radius: 999px;
+    background: var(--gold);
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="onboarding"] {
     --bg: #020912;
     --panel: #06111d;
