@@ -1026,7 +1026,7 @@ export default function WebHome() {
           <button className={recording ? "mic small active" : "mic small"} disabled={voiceBusy} onClick={() => { void startRecording(); }} aria-label="Записать голос"><span>⌾</span></button>
           <div className="recordCard">
             <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{voiceBusy ? "Сохраняю аудио" : recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
-            <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
+            <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} placeholder="Я хочу подать на алименты и подготовить иск в суд..." />
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl}>Запись голоса</audio>}
             <small className="recordMeta">{speechStatus}</small>
             {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}

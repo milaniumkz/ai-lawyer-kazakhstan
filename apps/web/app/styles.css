@@ -11,6 +11,174 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="newCase"] {
+    --bg: #07111d;
+    --panel: #071524;
+    --panel-soft: #081827;
+    background: #07111d;
+  }
+  .appShell[data-view="newCase"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background: #07111d;
+  }
+  .appShell[data-view="newCase"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .contentPanel {
+    min-height: 693px;
+    padding: 36px 38px 30px;
+    overflow: hidden;
+  }
+  .appShell[data-view="newCase"] .screenHeader {
+    position: relative;
+    display: block;
+    margin: 0 0 18px;
+    text-align: center;
+  }
+  .appShell[data-view="newCase"] .screenHeader button {
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 28px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 40px;
+    line-height: 0.75;
+  }
+  .appShell[data-view="newCase"] .screenHeader h2 {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 27px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .appShell[data-view="newCase"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .heroTitle {
+    width: 330px;
+    margin: 0 -8px 10px;
+    font-size: 30px;
+    line-height: 1.04;
+    white-space: nowrap;
+  }
+  .appShell[data-view="newCase"] .contentPanel > .hint {
+    width: 295px;
+    margin: 0 auto 0;
+    color: #aeb9c8;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.28;
+  }
+  .appShell[data-view="newCase"] .mic.small {
+    position: relative;
+    overflow: visible;
+    width: 340px;
+    height: 230px;
+    aspect-ratio: auto;
+    margin: 0 -13px 7px;
+    border: 0;
+    border-radius: 0;
+    background: url("/design-assets/new-case-voice-art-dark.png") center / contain no-repeat;
+    box-shadow: none;
+  }
+  .appShell[data-view="newCase"] .mic.small::before,
+  .appShell[data-view="newCase"] .mic.small::after {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .mic.small span {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .mic.small span::before {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .recordCard {
+    height: 126px;
+    margin: 0 0 17px;
+    border-radius: 16px;
+    padding: 15px 17px 14px;
+    background: #071524;
+  }
+  .appShell[data-view="newCase"] .recordLine {
+    gap: 10px;
+    font-size: 16px;
+  }
+  .appShell[data-view="newCase"] .recordLine strong {
+    font-size: 16px;
+  }
+  .appShell[data-view="newCase"] .recordLine em {
+    color: var(--gold-strong);
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .appShell[data-view="newCase"] .dot {
+    width: 14px;
+    height: 14px;
+  }
+  .appShell[data-view="newCase"] .recordCard textarea {
+    min-height: 45px;
+    margin-top: 10px;
+    padding: 2px 0;
+    color: #d9e3ef;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  .appShell[data-view="newCase"] .recordCard textarea::placeholder {
+    color: rgba(231, 236, 243, 0.76);
+    opacity: 1;
+  }
+  .appShell[data-view="newCase"] .recordMeta {
+    display: none;
+  }
+  .appShell[data-view="newCase"] .wave {
+    height: 18px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0 4px, transparent 4px 12px);
+  }
+  .appShell[data-view="newCase"] .contentPanel > .primary,
+  .appShell[data-view="newCase"] .contentPanel > button.wide:not(.primary) {
+    position: static;
+    width: 100%;
+    height: 55px;
+    margin: 0 0 12px;
+    border-radius: 13px;
+    font-size: 18px;
+  }
+  .appShell[data-view="newCase"] .contentPanel > .primary {
+    background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 246, 194, 0.78), 0 10px 28px rgba(5, 10, 18, 0.18);
+  }
+  .appShell[data-view="newCase"] .contentPanel > .primary::before {
+    content: "";
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    margin-right: 12px;
+    border-radius: 3px;
+    background: #06111d;
+    vertical-align: -2px;
+  }
+  .appShell[data-view="newCase"] .contentPanel > button.wide:not(.primary) {
+    opacity: 1;
+    pointer-events: auto;
+    border: 1px solid #d8a33c;
+    background: transparent;
+    color: #f3c968;
+  }
+  .appShell[data-view="newCase"] .contentPanel::after {
+    content: "▢  Чат сохранится, даже если вы прерветесь";
+    display: block;
+    margin-top: 12px;
+    color: #9099a8;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  .appShell[data-view="newCase"] .bottomNav {
+    display: none;
+  }
+
   .appShell[data-view="biometric"] {
     --bg: #020912;
     --panel: #06111d;

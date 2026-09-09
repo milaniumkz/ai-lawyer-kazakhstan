@@ -10,7 +10,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 04 | `otp` | 6.88 |
 | 05 | `biometric` | 2.72 |
 | 06 | `home` | 2.98 |
-| 07 | `newCase` | 7.49 |
+| 07 | `newCase` | 3.66 |
 | 08 | `category` | 6.06 |
 | 09 | `documentCheck` | 6.41 |
 | 10 | `documentUpload` | 3.93 |
@@ -36,6 +36,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 02 `login`: 3.20%
 - 05 `biometric`: 2.72%
 - 06 `home`: 2.98%
+- 07 `newCase`: 3.66%
 - 10 `documentUpload`: 3.93%
 - 11 `analysis`: 3.68%
 - 13 `claimDraft`: 3.89%
@@ -45,7 +46,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 ## Next Screen Queue
 
-- 07 `newCase`: 7.49%
 - 15 `cases`: 7.02%
 - 04 `otp`: 6.88%
 - 09 `documentCheck`: 6.41%
@@ -53,5 +53,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 08 `category`: 6.06%
 - 24 `subscription`: 6.03%
 - 14 `claimSend`: 5.90%
+- 03 `register`: 5.88%
 
-Note: 15 screens remain above the 4% release threshold.
+Note: 14 screens remain above the 4% release threshold.
