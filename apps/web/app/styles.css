@@ -11,6 +11,237 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="deadlines"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="deadlines"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background:
+      radial-gradient(circle at 50% 13%, rgba(209, 160, 74, 0.09), transparent 31%),
+      #020912;
+  }
+  .appShell[data-view="deadlines"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="deadlines"] .contentPanel {
+    min-height: 685px;
+    padding: 26px 18px 78px;
+    overflow: hidden;
+  }
+  .appShell[data-view="deadlines"] .screenHeader {
+    grid-template-columns: minmax(0, 1fr) 68px;
+    align-items: start;
+    margin-bottom: 13px;
+  }
+  .appShell[data-view="deadlines"] .screenHeader button {
+    display: none;
+  }
+  .appShell[data-view="deadlines"] .screenHeader::before {
+    content: "♧";
+    justify-self: end;
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 1px;
+    color: var(--gold-strong);
+    font-size: 25px;
+  }
+  .appShell[data-view="deadlines"] .screenHeader::after {
+    content: "ДМ";
+    display: grid;
+    place-items: center;
+    justify-self: end;
+    grid-column: 2;
+    grid-row: 1;
+    width: 39px;
+    height: 39px;
+    margin-top: -4px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    color: var(--gold-strong);
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .appShell[data-view="deadlines"] .screenHeader div {
+    grid-column: 1 / 2;
+  }
+  .appShell[data-view="deadlines"] .screenHeader h2 {
+    margin-bottom: 5px;
+    font-size: 24px;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+  .appShell[data-view="deadlines"] .screenHeader p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .appShell[data-view="deadlines"] .caseCalendar {
+    min-height: 185px;
+    border-color: rgba(209, 160, 74, 0.48);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #0a1726, #06111d);
+    padding: 13px 15px 12px;
+  }
+  .appShell[data-view="deadlines"] .calendarTop {
+    margin-bottom: 9px;
+  }
+  .appShell[data-view="deadlines"] .calendarTop strong {
+    font-size: 17px;
+  }
+  .appShell[data-view="deadlines"] .calendarTop button {
+    min-width: 25px;
+    min-height: 25px;
+    font-size: 24px;
+  }
+  .appShell[data-view="deadlines"] .calendarGrid {
+    gap: 2px 9px;
+  }
+  .appShell[data-view="deadlines"] .calendarGrid button {
+    min-height: 25px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .appShell[data-view="deadlines"] .calendarGrid button.marked {
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
+  }
+  .appShell[data-view="deadlines"] .deadlineFilters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+    margin: 11px 0 13px;
+  }
+  .appShell[data-view="deadlines"] .deadlineFilters button {
+    min-height: 34px;
+    border-color: rgba(209, 160, 74, 0.45);
+    border-radius: 10px;
+    background: #071524;
+    padding: 5px 6px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .appShell[data-view="deadlines"] .deadlineFilters button.active {
+    background: linear-gradient(180deg, #ffe28a, #c89236);
+    color: #18210f;
+  }
+  .appShell[data-view="deadlines"] .deadlineList {
+    position: relative;
+    gap: 7px;
+    padding-left: 45px;
+  }
+  .appShell[data-view="deadlines"] .deadlineList::before {
+    content: "";
+    position: absolute;
+    left: 22px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: rgba(209, 160, 74, 0.55);
+  }
+  .appShell[data-view="deadlines"] .deadlineRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    min-height: 57px;
+    border-color: rgba(209, 160, 74, 0.35);
+    border-radius: 13px;
+    background: linear-gradient(180deg, #0a1726, #06111d);
+    padding: 8px 9px 8px 12px;
+  }
+  .appShell[data-view="deadlines"] .deadlineRow .roundIcon {
+    position: absolute;
+    left: 0;
+    width: 43px;
+    height: 43px;
+    border-color: var(--gold);
+    background: #071524;
+    font-size: 20px;
+  }
+  .appShell[data-view="deadlines"] .deadlineRow p {
+    gap: 3px;
+  }
+  .appShell[data-view="deadlines"] .deadlineRow strong {
+    font-size: 13px;
+    line-height: 1.12;
+  }
+  .appShell[data-view="deadlines"] .deadlineRow small,
+  .appShell[data-view="deadlines"] .deadlineRow em {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="deadlines"] .deadlineRow em {
+    color: var(--gold-strong);
+    text-align: right;
+  }
+  .appShell[data-view="deadlines"] .docHint {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px;
+    min-height: 52px;
+    margin-top: 10px;
+    border-color: rgba(209, 160, 74, 0.42);
+    border-radius: 13px;
+    background: linear-gradient(180deg, #0a1726, #06111d);
+    padding: 8px 10px;
+  }
+  .appShell[data-view="deadlines"] .docHint + .docHint {
+    display: none;
+  }
+  .appShell[data-view="deadlines"] .docHint span {
+    font-size: 24px;
+  }
+  .appShell[data-view="deadlines"] .docHint p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="deadlines"] .bottomNav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    border-color: rgba(209, 160, 74, 0.18);
+    padding: 7px 12px max(8px, env(safe-area-inset-bottom));
+    background: rgba(2, 9, 18, 0.96);
+  }
+  .appShell[data-view="deadlines"] .bottomNav button {
+    display: grid;
+    gap: 3px;
+    min-height: 49px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 2px 0;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .appShell[data-view="deadlines"] .bottomNav button::before {
+    color: currentColor;
+    font-size: 19px;
+    line-height: 1;
+  }
+  .appShell[data-view="deadlines"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="deadlines"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="deadlines"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="deadlines"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="deadlines"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+  .appShell[data-view="deadlines"] .bottomNav button.active {
+    background: transparent;
+    color: var(--gold-strong);
+  }
+  .appShell[data-view="deadlines"] .bottomNav button.active::after {
+    content: "";
+    justify-self: center;
+    width: 42px;
+    height: 1px;
+    border-radius: 999px;
+    background: var(--gold);
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="home"] {
     --bg: #020912;
     --panel: #06111d;
