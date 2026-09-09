@@ -1181,14 +1181,14 @@ export default function WebHome() {
           )}
           {view === "documentUpload" && (
             <>
-              <div className="uploadHero"><AuthMark icon="▧" /><h1>Добавьте документ</h1><p>Загрузите файл любым удобным способом для анализа и консультации</p></div>
+              <div className="uploadHero"><AuthMark icon="⇧" /><h1>Добавьте документ</h1><p>Загрузите файл любым удобным способом для анализа и консультации</p></div>
               <div className="uploadActions">
-                <button onClick={() => scanInputRef.current?.click()}>▣ Сканировать камерой</button>
-                <button onClick={() => fileInputRef.current?.click()}>▰ Выбрать из файлов</button>
-                <button onClick={() => scanInputRef.current?.click()}>▣ Сделать фото</button>
+                <button onClick={() => scanInputRef.current?.click()}><span>▣</span>Сканировать камерой</button>
+                <button onClick={() => fileInputRef.current?.click()}><span>▰</span>Выбрать из файлов</button>
+                <button onClick={() => scanInputRef.current?.click()}><span>▣</span>Сделать фото</button>
               </div>
               <div className="sectionTitle"><h3>Недавние загрузки</h3><button onClick={() => go("documents")}>Все ›</button></div>
-              <div className="list">{recentDocs.map((doc) => <button className="docRow uploadDocRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><span className="fileBadge">{doc.name.endsWith(".jpg") ? "IMG" : "PDF"}</span><p><strong>{doc.name}</strong><small>{doc.status}</small></p><em>⋮</em></button>)}</div>
+              <div className="list">{recentDocs.map((doc) => <button className="docRow uploadDocRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><span className={`fileBadge ${doc.name.endsWith(".jpg") ? "imageBadge" : ""}`}>{doc.name.endsWith(".jpg") ? "IMG" : "PDF"}</span><p><strong>{doc.name}</strong><small>{doc.status}</small></p><em>⋮</em></button>)}</div>
               <p className="hint">▣ Поддерживаются PDF, DOCX, JPG, PNG</p>
               <button className="primary wide heroCta" onClick={() => go("documentCheck")}>✧ Продолжить</button>
             </>

@@ -2130,6 +2130,176 @@ button:disabled {
     border-radius: 999px;
     background: var(--gold);
   }
+  .appShell[data-view="documentUpload"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="documentUpload"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    margin: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(209, 160, 74, 0.74);
+    border-radius: 18px;
+  }
+  .appShell[data-view="documentUpload"] .contentPanel {
+    min-height: 685px;
+    padding: 18px 22px 20px;
+    overflow: hidden;
+  }
+  .appShell[data-view="documentUpload"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader button {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 40px;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader h2 {
+    text-align: center;
+    font-size: 26px;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero {
+    display: grid;
+    justify-items: center;
+    min-height: 272px;
+    border-color: rgba(209, 160, 74, 0.58);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #071521, #06111d);
+    padding: 18px 22px 22px;
+    text-align: center;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero .authMark {
+    width: 152px;
+    height: 152px;
+    margin: 0;
+    border-color: rgba(209, 160, 74, 0.75);
+  }
+  .appShell[data-view="documentUpload"] .uploadHero .authMark::before {
+    inset: -18px;
+    border-color: rgba(209, 160, 74, 0.32);
+  }
+  .appShell[data-view="documentUpload"] .uploadHero .authMark span {
+    width: 82px;
+    height: 82px;
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(216, 161, 58, 0.28), rgba(6, 17, 29, 0.92));
+    color: var(--gold-strong);
+    font-size: 40px;
+    box-shadow: inset 0 0 24px rgba(216, 161, 58, 0.16), 0 16px 28px rgba(0, 0, 0, 0.22);
+  }
+  .appShell[data-view="documentUpload"] .uploadHero h1 {
+    margin-top: 8px;
+    font-size: 30px;
+    line-height: 1.05;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero p {
+    margin-top: 8px;
+    max-width: 292px;
+    font-size: 14px;
+    line-height: 1.42;
+  }
+  .appShell[data-view="documentUpload"] .uploadActions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .appShell[data-view="documentUpload"] .uploadActions button {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    min-height: 80px;
+    border-color: rgba(209, 160, 74, 0.72);
+    border-radius: 14px;
+    background: var(--panel-soft);
+    color: var(--gold-strong);
+    padding: 12px 6px;
+    font-size: 13px;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .appShell[data-view="documentUpload"] .uploadActions span {
+    display: grid;
+    place-items: center;
+    color: var(--gold-strong);
+    font-size: 26px;
+  }
+  .appShell[data-view="documentUpload"] .sectionTitle {
+    margin: 18px 0 9px;
+  }
+  .appShell[data-view="documentUpload"] .sectionTitle h3 {
+    color: var(--gold-strong);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+  }
+  .appShell[data-view="documentUpload"] .sectionTitle button {
+    color: var(--gold-strong);
+    font-size: 17px;
+    font-weight: 800;
+  }
+  .appShell[data-view="documentUpload"] .list {
+    gap: 8px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow {
+    grid-template-columns: 50px minmax(0, 1fr) 24px;
+    min-height: 62px;
+    border-color: rgba(209, 160, 74, 0.42);
+    border-radius: 14px;
+    background: var(--panel-soft);
+    padding: 8px 12px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow .fileBadge {
+    width: 38px;
+    height: 38px;
+    border-color: #d94b3f;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ec6758, #b32f27);
+    color: #fff2e7;
+    font-size: 10px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow p {
+    margin: 0;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow strong {
+    font-size: 14px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow small {
+    color: var(--muted);
+    font-size: 10px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow em {
+    color: var(--gold-strong);
+    font-size: 24px;
+  }
+  .appShell[data-view="documentUpload"] .hint {
+    margin: 14px 0 12px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+  .appShell[data-view="documentUpload"] .heroCta {
+    width: calc(100% - 58px);
+    min-height: 46px;
+    margin: 0 29px;
+    border-radius: 17px;
+    background: linear-gradient(180deg, #ffe28a, #c89236);
+    font-size: 20px;
+  }
   .appShell[data-view="claimDraft"] {
     --bg: #020912;
     --panel: #06111d;
@@ -2352,6 +2522,79 @@ button:disabled {
   }
   .appShell[data-view="documentUpload"] .heroCta {
     min-height: 72px;
+  }
+  .appShell[data-view="documentUpload"] .contentPanel {
+    min-height: 685px;
+    padding: 14px 18px 20px;
+    overflow: hidden;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader {
+    margin-bottom: 10px;
+  }
+  .appShell[data-view="documentUpload"] .screenHeader h2 {
+    font-size: 25px;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero {
+    min-height: 250px;
+    border-radius: 18px;
+    gap: 8px;
+    padding: 12px 22px 18px;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero .authMark {
+    width: 122px;
+    height: 122px;
+    margin-bottom: 2px;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero h1 {
+    font-size: 30px;
+  }
+  .appShell[data-view="documentUpload"] .uploadHero p {
+    font-size: 13px;
+    line-height: 1.38;
+  }
+  .appShell[data-view="documentUpload"] .uploadActions {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .appShell[data-view="documentUpload"] .uploadActions button {
+    min-height: 78px;
+    border-radius: 14px;
+    padding: 10px 5px;
+    font-size: 12px;
+  }
+  .appShell[data-view="documentUpload"] .sectionTitle {
+    margin: 14px 0 8px;
+  }
+  .appShell[data-view="documentUpload"] .sectionTitle h3,
+  .appShell[data-view="documentUpload"] .sectionTitle button {
+    font-size: 18px;
+  }
+  .appShell[data-view="documentUpload"] .list {
+    gap: 5px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow {
+    min-height: 55px;
+    padding: 6px 12px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow .fileBadge {
+    width: 34px;
+    height: 34px;
+  }
+  .appShell[data-view="documentUpload"] .uploadDocRow .imageBadge {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(255, 226, 138, 0.22), rgba(216, 161, 58, 0.62));
+    color: #22170a;
+  }
+  .appShell[data-view="documentUpload"] .hint {
+    margin: 8px 0 7px;
+    font-size: 12px;
+  }
+  .appShell[data-view="documentUpload"] .heroCta {
+    width: calc(100% - 98px);
+    min-height: 48px;
+    margin: 0 49px;
+    border-radius: 17px;
+    font-size: 19px;
   }
   .appShell[data-view="claim"] .contentPanel {
     padding: 34px 20px 34px;
