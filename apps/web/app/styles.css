@@ -3896,6 +3896,153 @@ button:disabled {
     border-radius: 8px;
     font-size: 8px;
   }
+  .appShell[data-view="legal"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="legal"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    margin: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(209, 160, 74, 0.74);
+    border-radius: 18px;
+  }
+  .appShell[data-view="legal"] .contentPanel {
+    min-height: 685px;
+    padding: 18px 20px 18px;
+    overflow: hidden;
+  }
+  .appShell[data-view="legal"] .bottomNav,
+  .appShell[data-view="legal"] .analysisBox {
+    display: none;
+  }
+  .appShell[data-view="legal"] .screenHeader {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .appShell[data-view="legal"] .screenHeader::after {
+    content: "i";
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    color: var(--gold-strong);
+    font-family: Georgia, serif;
+    font-size: 16px;
+  }
+  .appShell[data-view="legal"] .screenHeader button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 27px;
+    line-height: .75;
+  }
+  .appShell[data-view="legal"] .screenHeader h2 {
+    text-align: center;
+    color: var(--gold-strong);
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .appShell[data-view="legal"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="legal"] .legalSearch {
+    height: 32px;
+    gap: 8px;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .appShell[data-view="legal"] .legalSearch span,
+  .appShell[data-view="legal"] .legalSearch button {
+    font-size: 18px;
+  }
+  .appShell[data-view="legal"] .legalSearch input {
+    font-size: 10px;
+  }
+  .appShell[data-view="legal"] .legalTabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+  .appShell[data-view="legal"] .legalTabs .chip {
+    min-height: 30px;
+    border-radius: 7px;
+    padding: 6px 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .appShell[data-view="legal"] .list {
+    gap: 8px;
+    max-height: 410px;
+    overflow: hidden;
+  }
+  .appShell[data-view="legal"] .normCard {
+    position: relative;
+    gap: 4px;
+    min-height: 92px;
+    border: 1px solid rgba(209, 160, 74, .34);
+    border-radius: 9px;
+    background: var(--panel-soft);
+    padding: 9px 14px;
+    overflow: hidden;
+  }
+  .appShell[data-view="legal"] .normCard em {
+    color: var(--gold-strong);
+    font-size: 8px;
+  }
+  .appShell[data-view="legal"] .normCard strong {
+    max-width: 260px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.15;
+  }
+  .appShell[data-view="legal"] .normCard span {
+    color: var(--gold-strong);
+    font-size: 10px;
+  }
+  .appShell[data-view="legal"] .normCard small,
+  .appShell[data-view="legal"] .normCard p {
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.2;
+  }
+  .appShell[data-view="legal"] .normAiBox {
+    margin-top: 3px;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 8px;
+  }
+  .appShell[data-view="legal"] .normAiBox b {
+    font-size: 8px;
+  }
+  .appShell[data-view="legal"] .actionBar {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 17px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .appShell[data-view="legal"] .actionBar button {
+    min-height: 31px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+  .appShell[data-view="legal"] .actionBar button:nth-child(2) {
+    display: none;
+  }
   .appShell[data-view="analysis"] .deviceFrame {
     min-height: calc(100vh - 8px);
     margin: 4px;

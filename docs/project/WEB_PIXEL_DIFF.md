@@ -22,7 +22,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 16 | `case` | 5.30 |
 | 17 | `chat` | 4.04 |
 | 18 | `deadlines` | 3.68 |
-| 19 | `legal` | 5.49 |
+| 19 | `legal` | 3.42 |
 | 20 | `legalSearch` | 3.99 |
 | 21 | `documents` | 3.90 |
 | 22 | `profile` | 4.63 |
@@ -45,13 +45,13 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 13 `claimDraft`: 3.89%
 - 15 `cases`: 3.13%
 - 18 `deadlines`: 3.68%
+- 19 `legal`: 3.42%
 - 20 `legalSearch`: 3.99%
 - 21 `documents`: 3.90%
 - 24 `subscription`: 3.81%
 
 ## Next Screen Queue
 
-- 19 `legal`: 5.49%
 - 16 `case`: 5.30%
 - 04 `otp`: 5.19%
 - 25 `help`: 5.06%
@@ -59,5 +59,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 07 `newCase`: 4.23%
 - 23 `settings`: 4.05%
 - 17 `chat`: 4.04%
+- 14 `claimSend`: 4.00%
 
-Note: 9 screens remain above the 4% release threshold.
+Note: 8 screens remain above the 4% release threshold.
