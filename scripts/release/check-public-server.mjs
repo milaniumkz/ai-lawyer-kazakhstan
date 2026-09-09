@@ -66,11 +66,12 @@ async function expectPublicWebBundle() {
 }
 
 async function apiJson(path, init) {
+  const hasBody = init?.body !== undefined;
   const response = await fetch(`${baseUrl}/api/v1${path}`, {
     ...init,
     headers: {
-      'content-type': 'application/json',
       'x-correlation-id': 'public-api-demo-check',
+      ...(hasBody ? { 'content-type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
   });
@@ -83,11 +84,12 @@ async function apiJson(path, init) {
 }
 
 async function expectApiFailure(path, init, expectedStatus) {
+  const hasBody = init?.body !== undefined;
   const response = await fetch(`${baseUrl}/api/v1${path}`, {
     ...init,
     headers: {
-      'content-type': 'application/json',
       'x-correlation-id': 'public-api-demo-check',
+      ...(hasBody ? { 'content-type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
   });

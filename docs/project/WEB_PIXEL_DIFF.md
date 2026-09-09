@@ -30,12 +30,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 24 | `subscription` | 6.03 |
 | 25 | `help` | 5.06 |
 
-## Closed Screens
-
-- 13 `claimDraft`: 3.89%, meets the `<=4%` one-screen release rule.
-- 02 `login`: 3.20%, remains within the release threshold.
-
-## Next Screen Queue
+## Worst Screens
 
 - 11 `analysis`: 12.47%
 - 10 `documentUpload`: 12.07%
@@ -46,4 +41,4 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 21 `documents`: 8.33%
 - 05 `biometric`: 7.65%
 
-Note: screens above 4% stay open; each screen is closed only after adaptive visuals, functional actions, checks, docs, commit and deploy.
+Note: this is a measurement gate, not yet a pass/fail pixel-perfect threshold.
