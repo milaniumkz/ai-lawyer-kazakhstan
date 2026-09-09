@@ -60,6 +60,8 @@ for number, view in SCREEN_MAP.items():
     rows.append((number, view, mse_percent(reference, actual)))
 
 worst = sorted(rows, key=lambda item: item[2], reverse=True)[:8]
+closed = [(number, view, score) for number, view, score in rows if score <= 4]
+open_screens = [(number, view, score) for number, view, score in rows if score > 4]
 REPORT.write_text(
     "\n".join(
         [
@@ -71,11 +73,15 @@ REPORT.write_text(
             "|---|---|---:|",
             *[f"| {number} | `{view}` | {score:.2f} |" for number, view, score in rows],
             "",
-            "## Worst Screens",
+            "## Closed Screens",
+            "",
+            *[f"- {number} `{view}`: {score:.2f}%" for number, view, score in closed],
+            "",
+            "## Next Screen Queue",
             "",
             *[f"- {number} `{view}`: {score:.2f}%" for number, view, score in worst],
             "",
-            "Note: this is a measurement gate, not yet a pass/fail pixel-perfect threshold.",
+            f"Note: {len(open_screens)} screens remain above the 4% release threshold.",
         ]
     )
     + "\n",

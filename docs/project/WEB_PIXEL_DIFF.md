@@ -30,7 +30,12 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 24 | `subscription` | 6.03 |
 | 25 | `help` | 5.06 |
 
-## Worst Screens
+## Closed Screens
+
+- 02 `login`: 3.20%
+- 13 `claimDraft`: 3.89%
+
+## Next Screen Queue
 
 - 11 `analysis`: 12.47%
 - 10 `documentUpload`: 12.07%
@@ -41,4 +46,4 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 21 `documents`: 8.33%
 - 05 `biometric`: 7.65%
 
-Note: this is a measurement gate, not yet a pass/fail pixel-perfect threshold.
+Note: 23 screens remain above the 4% release threshold.
