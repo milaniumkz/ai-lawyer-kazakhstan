@@ -11,6 +11,197 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="cases"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: #020912;
+  }
+  .appShell[data-view="cases"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background: #020912;
+  }
+  .appShell[data-view="cases"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="cases"] .contentPanel {
+    min-height: 693px;
+    padding: 32px 22px 88px;
+    overflow: hidden;
+  }
+  .appShell[data-view="cases"] .screenHeader {
+    position: relative;
+    display: block;
+    margin: 0 0 20px;
+    text-align: center;
+  }
+  .appShell[data-view="cases"] .screenHeader::after {
+    content: "";
+    display: block;
+    width: 136px;
+    height: 12px;
+    margin: 14px auto 0;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    mask-image: linear-gradient(90deg, transparent 0 5%, #000 18% 45%, transparent 46% 54%, #000 55% 82%, transparent 95%);
+    opacity: 0.86;
+  }
+  .appShell[data-view="cases"] .screenHeader button {
+    position: absolute;
+    left: 0;
+    top: 3px;
+    width: 28px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 38px;
+    line-height: 0.75;
+  }
+  .appShell[data-view="cases"] .screenHeader h2 {
+    margin: 0;
+    font-size: 42px;
+    line-height: 1.02;
+  }
+  .appShell[data-view="cases"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="cases"] .screenHeader div::after {
+    content: "⌕";
+    position: absolute;
+    right: 0;
+    top: 3px;
+    color: var(--gold-strong);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 37px;
+    font-weight: 300;
+  }
+  .appShell[data-view="cases"] .caseFilters {
+    grid-template-columns: 0.8fr 1fr 0.8fr 1.05fr;
+    gap: 13px;
+    margin: 0 0 17px;
+  }
+  .appShell[data-view="cases"] .caseFilters button {
+    min-height: 43px;
+    border: 1px solid rgba(209, 160, 74, 0.42);
+    border-radius: 14px;
+    background: #071524;
+    color: #aeb6c2;
+    padding: 0 8px;
+    font-size: 16px;
+    font-weight: 400;
+  }
+  .appShell[data-view="cases"] .caseFilters button.active {
+    border-color: var(--gold-strong);
+    background: linear-gradient(180deg, rgba(255, 226, 142, 0.10), rgba(7, 21, 36, 0.88));
+    color: var(--gold-strong);
+    box-shadow: inset 0 0 22px rgba(230, 189, 98, 0.08);
+  }
+  .appShell[data-view="cases"] .caseSearchRow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .appShell[data-view="cases"] .list {
+    gap: 12px;
+  }
+  .appShell[data-view="cases"] .caseRow {
+    min-height: 86px;
+    grid-template-columns: 76px minmax(0, 1fr) 68px;
+    gap: 10px;
+    border-color: rgba(209, 160, 74, 0.34);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #071524, #06111d);
+    padding: 14px 13px;
+  }
+  .appShell[data-view="cases"] .caseRow .roundIcon {
+    width: 58px;
+    height: 58px;
+    border-color: rgba(209, 160, 74, 0.72);
+    background: radial-gradient(circle, rgba(230, 189, 98, 0.08), transparent 58%);
+    color: var(--gold-strong);
+    font-size: 29px;
+  }
+  .appShell[data-view="cases"] .caseRow span:not(.roundIcon) {
+    gap: 5px;
+  }
+  .appShell[data-view="cases"] .caseRow strong {
+    color: #f8f4ec;
+    font-size: 16px;
+    line-height: 1.08;
+  }
+  .appShell[data-view="cases"] .caseRow small {
+    color: #9fa8b7;
+    font-size: 11px;
+    line-height: 1.18;
+  }
+  .appShell[data-view="cases"] .caseRow .goldDot {
+    color: var(--gold-strong) !important;
+    font-size: 12px;
+  }
+  .appShell[data-view="cases"] .caseRow em {
+    justify-self: end;
+    color: #a8b0bd;
+    text-align: left;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="cases"] .caseRow::after {
+    content: "›";
+    color: var(--gold-strong);
+    font-size: 27px;
+  }
+  .appShell[data-view="cases"] .bottomNav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 13px;
+    min-height: 70px;
+    padding: 8px 26px 9px;
+    border-top: 1px solid rgba(209, 160, 74, 0.22);
+    border-radius: 0;
+    background: rgba(2, 9, 18, 0.96);
+  }
+  .appShell[data-view="cases"] .bottomNav button {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 54px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    color: #a8b0bd;
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .appShell[data-view="cases"] .bottomNav button::before {
+    display: block;
+    color: currentColor;
+    font-size: 27px;
+    line-height: 1;
+  }
+  .appShell[data-view="cases"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="cases"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="cases"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="cases"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="cases"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+  .appShell[data-view="cases"] .bottomNav button.active {
+    background: transparent;
+    color: var(--gold-strong);
+  }
+  .appShell[data-view="cases"] .bottomNav button.active::after {
+    content: "";
+    justify-self: center;
+    width: 36px;
+    height: 1px;
+    border-radius: 999px;
+    background: var(--gold);
+  }
+
   .appShell[data-view="newCase"] {
     --bg: #07111d;
     --panel: #071524;

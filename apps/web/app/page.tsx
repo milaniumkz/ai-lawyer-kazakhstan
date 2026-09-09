@@ -107,6 +107,13 @@ const screens: { label: string; view: View }[] = [
 ];
 
 const emptyCase: CaseItem = { id: "2024-0015", title: "Взыскание долга", type: "Гражданское право", status: "В работе", date: "15 мая 2024", progress: 65 };
+const designCaseList: CaseItem[] = [
+  emptyCase,
+  { id: "2024-0012", title: "Алименты", type: "Семейное право", status: "Ожидает документов", date: "10 мая 2024", progress: 42 },
+  { id: "2024-0008", title: "Претензия к подрядчику", type: "Договорное право", status: "Отправлено", date: "8 мая 2024", progress: 78 },
+  { id: "2024-0003", title: "Раздел имущества", type: "Семейное право", status: "Срок близко", date: "5 мая 2024", progress: 55 },
+  { id: "2024-0001", title: "Защита прав потребителя", type: "Защита прав", status: "В работе", date: "2 мая 2024", progress: 61 },
+];
 
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -179,9 +186,10 @@ export default function WebHome() {
   ]);
 
   const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? emptyCase;
+  const visibleCaseSource = cases.length ? cases : designCaseList;
   const filteredCases = useMemo(
-    () => cases.filter((item) => item.title.toLowerCase().includes(caseSearch.toLowerCase()) || caseSearch.length < 3),
-    [cases, caseSearch],
+    () => visibleCaseSource.filter((item) => item.title.toLowerCase().includes(caseSearch.toLowerCase()) || caseSearch.length < 3),
+    [visibleCaseSource, caseSearch],
   );
 
   useEffect(() => {
@@ -1071,11 +1079,11 @@ export default function WebHome() {
           </div>
           <div className="list">
             {!filteredCases.length && <button className="caseRow" onClick={() => go("newCase")}><span className="roundIcon">+</span><span><strong>Нет дел</strong><small>Создайте первое дело через голос или текст</small><small className="goldDot">● Данные появятся после сохранения в API</small></span><em>Сейчас</em></button>}
-            {filteredCases.map((item) => (
+            {filteredCases.map((item, index) => (
               <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
-                <span className="roundIcon">⚖</span>
+                <span className="roundIcon">{["⚖", "👪", "▤", "▥", "♢"][index] ?? "⚖"}</span>
                 <span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span>
-                <em>{item.date}</em>
+                <em>Обновлено<br />{item.date}</em>
               </button>
             ))}
           </div>
