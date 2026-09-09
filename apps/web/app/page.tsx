@@ -76,6 +76,8 @@ type SavedState = {
   remoteCaseId: string;
   remoteDocumentId: string;
   generatedClaimBody: string;
+  claimSendContact: string;
+  claimSendMessage: string;
 };
 
 const screens: { label: string; view: View }[] = [
@@ -151,6 +153,8 @@ export default function WebHome() {
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
+  const [claimSendContact, setClaimSendContact] = useState("+7 905 123-45-67");
+  const [claimSendMessage, setClaimSendMessage] = useState("Здравствуйте!\nНаправляю Вам претензию по делу №2024-0015.\nПрошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист");
   const [deadlineStatus, setDeadlineStatus] = useState("Ближайший срок: досудебная претензия за 10 дней");
   const [subscriptionStatus, setSubscriptionStatus] = useState("Лимиты обновятся после входа");
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -231,6 +235,8 @@ export default function WebHome() {
       if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
       if (saved.generatedClaimBody) setGeneratedClaimBody(saved.generatedClaimBody);
+      if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
+      if (saved.claimSendMessage) setClaimSendMessage(saved.claimSendMessage);
       setSyncState("Локальные данные восстановлены");
     } catch {
       setSyncState("Не удалось восстановить локальные данные");
@@ -249,9 +255,9 @@ export default function WebHome() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody };
+    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody, claimSendContact, claimSendMessage };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
-  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody]);
+  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody, claimSendContact, claimSendMessage]);
 
   useEffect(() => {
     if (!recording || paused) return undefined;
@@ -1339,10 +1345,13 @@ export default function WebHome() {
               <h3 className="goldSection">Выберите способ отправки</h3>
               <div className="sendMethods">{["E-mail", "WhatsApp", "SMS", "Почтовая отправка"].map((method) => <button className={method === "WhatsApp" ? "active" : ""} key={method} onClick={() => setSyncState(`${method}: внешний канал, требуется ручная отправка или provider adapter`)}><span>{method === "E-mail" ? "✉" : method === "WhatsApp" ? "☎" : method === "SMS" ? "…" : "▤"}</span><strong>{method}</strong></button>)}</div>
               <div className="recipientCard"><span>☎</span><p><small>Получатель</small><br /><b>Иванов Иван Иванович</b><br />+7 905 123-45-67</p></div>
+              <p className="fieldLabel">Вложенные файлы</p>
               <div className="attachmentRow"><span>PDF</span><p><b>Претензия.pdf</b><br />245 КБ</p><button onClick={() => setSyncState("Файл доступен после генерации PDF adapter")}>⇩</button></div>
-              <input value="+7 905 123-45-67" onChange={() => setSyncState("Контакт получателя редактируется в профиле дела")} />
-              <textarea value={"Здравствуйте!\nНаправляю Вам претензию по делу. Прошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист"} onChange={(event) => setSyncState(`Текст сообщения обновлен: ${event.currentTarget.value.length} символов`)} />
-              <div className="docHint"><span>🛡</span><p>Доставка сообщения зависит от внешнего сервиса. Статус отправки фиксируется вручную или через официальный adapter.</p></div>
+              <p className="fieldLabel">Контакт получателя</p>
+              <input value={claimSendContact} onChange={(event) => { setClaimSendContact(event.currentTarget.value); setSyncState("Контакт получателя обновлен локально"); }} />
+              <p className="fieldLabel">Текст сообщения</p>
+              <textarea value={claimSendMessage} onChange={(event) => { setClaimSendMessage(event.currentTarget.value); setSyncState(`Текст сообщения обновлен: ${event.currentTarget.value.length} символов`); }} />
+              <div className="docHint"><span>◇</span><p>Доставка сообщения зависит от внешнего сервиса. Статус отправки и доставки может быть недоступен или отображаться с задержкой.</p></div>
               <button className="primary wide heroCta" onClick={confirmClaimSent}>{sent ? "Отправка зафиксирована" : "✧ Отправить"}</button>
               <button className="wide outlineGold" onClick={() => { setClaimReady(true); setSyncState("Черновик отправки сохранен локально"); }}>▤ Сохранить как черновик</button>
             </>
