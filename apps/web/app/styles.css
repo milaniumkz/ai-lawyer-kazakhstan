@@ -11,6 +11,91 @@
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="onboarding"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="onboarding"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    background:
+      radial-gradient(circle at 50% 21%, rgba(209, 160, 74, 0.11), transparent 30%),
+      #020912;
+  }
+  .appShell[data-view="onboarding"] .appStatus,
+  .appShell[data-view="onboarding"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="onboarding"] .contentPanel {
+    min-height: 685px;
+    align-content: start;
+    gap: 0;
+    padding: 36px 20px 34px;
+    overflow: hidden;
+  }
+  .appShell[data-view="onboarding"] .contentPanel::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    z-index: 0;
+    pointer-events: none;
+    border: 1px solid rgba(209, 160, 74, 0.62);
+    border-radius: 26px;
+  }
+  .appShell[data-view="onboarding"] .contentPanel > * {
+    position: relative;
+    z-index: 1;
+  }
+  .appShell[data-view="onboarding"] .authMark {
+    width: 184px;
+    margin: 68px auto 39px;
+    border-color: rgba(209, 160, 74, 0.76);
+    background:
+      radial-gradient(circle, rgba(255, 228, 154, 0.18), transparent 38%),
+      repeating-radial-gradient(circle, transparent 0 10px, rgba(216, 161, 58, 0.16) 11px 12px);
+    box-shadow: 0 0 0 36px rgba(216, 161, 58, 0.04), inset 0 0 38px rgba(230, 189, 98, 0.08);
+  }
+  .appShell[data-view="onboarding"] .authMark span {
+    width: 50%;
+    font-size: 38px;
+  }
+  .appShell[data-view="onboarding"] .panelHeader {
+    text-align: center;
+    margin-bottom: 0;
+  }
+  .appShell[data-view="onboarding"] .panelHeader h2 {
+    margin-bottom: 17px;
+    font-size: 55px;
+    line-height: 0.95;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .appShell[data-view="onboarding"] .panelHeader p {
+    margin-bottom: 16px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .appShell[data-view="onboarding"] .goldDivider {
+    width: 170px;
+    margin: 0 auto 58px;
+    gap: 7px;
+  }
+  .appShell[data-view="onboarding"] .heroCta {
+    width: calc(100% - 50px);
+    min-height: 64px;
+    margin: 0 auto 31px;
+    border-radius: 13px;
+    font-size: 24px;
+  }
+  .appShell[data-view="onboarding"] .linkAction {
+    justify-self: center;
+    color: var(--gold-strong);
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="deadlines"] {
     --bg: #020912;
     --panel: #06111d;
