@@ -86,7 +86,7 @@
     max-width: 300px;
     margin: 0 auto;
     color: #b6bfca;
-    font-size: 19px;
+    font-size: 27px;
     line-height: 1.32;
   }
   .appShell[data-view="otp"] .panelHeader p::first-line {
@@ -146,7 +146,7 @@
   .appShell[data-view="otp"] .linkAction {
     width: 100%;
     color: var(--gold-strong);
-    font-size: 19px;
+    font-size: 26px;
   }
 
   .appShell[data-view="cases"] {
@@ -397,7 +397,7 @@
     width: 295px;
     margin: 0 auto 0;
     color: #aeb9c8;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 400;
     line-height: 1.28;
   }
@@ -583,7 +583,7 @@
     max-width: 350px;
     margin: 0 auto 8px;
     color: var(--muted);
-    font-size: 15px;
+    font-size: 17px;
     line-height: 1.28;
   }
   .appShell[data-view="biometric"] .goldDivider {
@@ -687,7 +687,7 @@
   }
   .appShell[data-view="documents"] .docSearch span {
     color: var(--gold-strong);
-    font-size: 19px;
+    font-size: 22px;
   }
   .appShell[data-view="documents"] .docSearch input {
     color: var(--text);
@@ -795,7 +795,7 @@
   }
   .appShell[data-view="documents"] .bottomNav button::before {
     color: currentColor;
-    font-size: 19px;
+    font-size: 22px;
     line-height: 1;
   }
   .appShell[data-view="documents"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
@@ -4472,24 +4472,158 @@ button:disabled {
     font-size: 24px;
   }
   .appShell[data-view="documentCheck"] .contentPanel {
-    padding-bottom: 34px;
+    min-height: 693px;
+    padding: 32px 24px 24px;
+    overflow: hidden;
   }
   .appShell[data-view="documentCheck"] .bottomNav {
     display: none;
   }
+  .appShell[data-view="documentCheck"] .appStatus {
+    display: none;
+  }
+  .appShell[data-view="documentCheck"] .screenHeader {
+    position: relative;
+    display: block;
+    margin: 0 0 10px;
+    text-align: center;
+  }
+  .appShell[data-view="documentCheck"] .screenHeader button {
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 28px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 40px;
+    line-height: 0.75;
+  }
+  .appShell[data-view="documentCheck"] .screenHeader h2 {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .appShell[data-view="documentCheck"] .screenHeader p {
+    display: none;
+  }
   .appShell[data-view="documentCheck"] .docReadinessCard {
-    grid-template-columns: 86px minmax(0, 1fr);
-    min-height: 152px;
-    margin-top: 14px;
+    grid-template-columns: 92px minmax(0, 1fr);
+    height: 120px;
+    gap: 12px;
+    margin: 0 0 18px;
+    border-radius: 14px;
+    padding: 13px 15px;
+    background: linear-gradient(180deg, #071524, #06111d);
+  }
+  .appShell[data-view="documentCheck"] .docReadinessCard .largeIcon {
+    width: 72px;
+    height: 72px;
+    border: 1px solid rgba(209, 160, 74, 0.64);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgba(255, 225, 143, 0.10), transparent 50%),
+      repeating-radial-gradient(circle, transparent 0 9px, rgba(216, 161, 58, 0.13) 10px 11px);
+    color: var(--gold-strong);
+    font-size: 32px;
   }
   .appShell[data-view="documentCheck"] .docReadinessCard h3 {
-    font-size: 30px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
     line-height: 1.08;
   }
+  .appShell[data-view="documentCheck"] .docReadinessCard h3 b {
+    font-size: 19px;
+    font-weight: 800;
+  }
+  .appShell[data-view="documentCheck"] .docReadinessCard progress {
+    height: 14px;
+    margin: 7px 0 8px;
+  }
+  .appShell[data-view="documentCheck"] .docReadinessCard p {
+    font-size: 11px;
+    line-height: 1.18;
+  }
+  .appShell[data-view="documentCheck"] .goldSection {
+    gap: 12px;
+    margin: 0 0 12px;
+    font-size: 19px;
+    line-height: 1.1;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist {
+    border-radius: 14px;
+  }
   .appShell[data-view="documentCheck"] .docChecklist button {
-    min-height: 58px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    min-height: 50px;
+    gap: 10px;
+    padding: 8px 14px;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist span {
+    width: 34px;
+    height: 34px;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist strong {
+    font-size: 12px;
+    line-height: 1.15;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist em {
+    font-size: 11px;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist .ok {
+    color: #75db76;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist .miss {
+    color: #ff706b;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist .ok + strong + em {
+    color: #75db76;
+  }
+  .appShell[data-view="documentCheck"] .docChecklist .miss + strong + em {
+    color: #ff8a7e;
   }
   .appShell[data-view="documentCheck"] .docHint {
-    margin-top: 22px;
+    grid-template-columns: 70px minmax(0, 1fr) 24px;
+    min-height: 64px;
+    margin: 12px 0 14px;
+    border-radius: 13px;
+    padding: 8px 14px;
+  }
+  .appShell[data-view="documentCheck"] .docHint .largeIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 25px;
+  }
+  .appShell[data-view="documentCheck"] .docHint p {
+    color: var(--gold-strong);
+    font-size: 12px;
+    line-height: 1.22;
+  }
+  .appShell[data-view="documentCheck"] .docHint::after {
+    content: "✦";
+    color: var(--gold-strong);
+    font-size: 16px;
+  }
+  .appShell[data-view="documentCheck"] .heroCta,
+  .appShell[data-view="documentCheck"] .outlineGold {
+    min-height: 44px;
+    border-radius: 13px;
+    font-size: 16px;
+  }
+  .appShell[data-view="documentCheck"] .heroCta {
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
+    color: #06111d;
+    box-shadow: inset 0 1px 0 rgba(255, 246, 194, 0.78);
+  }
+  .appShell[data-view="documentCheck"] .outlineGold {
+    border-color: var(--gold);
+    background: transparent;
+    color: var(--gold-strong);
   }
 }
