@@ -143,7 +143,7 @@ export default function WebHome() {
   const [audioUrl, setAudioUrl] = useState("");
   const [speechStatus, setSpeechStatus] = useState("Распознавание речи еще не запускалось");
   const [transcriptJobId, setTranscriptJobId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Гражданское право");
+  const [selectedCategory, setSelectedCategory] = useState("Семейное право");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");

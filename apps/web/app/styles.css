@@ -3470,6 +3470,129 @@ button:disabled {
     --panel-soft: #071524;
     background: var(--bg);
   }
+  .appShell[data-view="category"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #071524;
+    background: var(--bg);
+  }
+  .appShell[data-view="category"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    margin: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(209, 160, 74, 0.74);
+    border-radius: 18px;
+  }
+  .appShell[data-view="category"] .contentPanel {
+    min-height: 685px;
+    padding: 16px 38px 18px;
+    overflow: hidden;
+  }
+  .appShell[data-view="category"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="category"] .screenHeader {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .appShell[data-view="category"] .screenHeader button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 34px;
+  }
+  .appShell[data-view="category"] .screenHeader h2 {
+    text-align: center;
+    color: var(--gold-strong);
+    font-size: 18px;
+    line-height: 1.05;
+  }
+  .appShell[data-view="category"] .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="category"] .categoryHero {
+    gap: 6px;
+    margin: 0 0 8px;
+    border-color: rgba(209, 160, 74, 0.72);
+    border-radius: 16px;
+    padding: 14px 20px 13px;
+  }
+  .appShell[data-view="category"] .categoryHero .authMark {
+    width: 90px;
+    height: 90px;
+    margin: 0;
+  }
+  .appShell[data-view="category"] .categoryHero .authMark span {
+    font-size: 34px;
+  }
+  .appShell[data-view="category"] .categoryHero strong {
+    margin-top: 0;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .appShell[data-view="category"] .categoryHero .goldDivider {
+    width: 188px;
+    margin: 0;
+  }
+  .appShell[data-view="category"] .categoryHero h1 {
+    max-width: 260px;
+    color: var(--gold-strong);
+    font-size: 25px;
+    line-height: 1.12;
+  }
+  .appShell[data-view="category"] .categoryPill {
+    min-height: 38px;
+    margin-top: 4px;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 15px;
+  }
+  .appShell[data-view="category"] .categoryHero p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .appShell[data-view="category"] > .deviceFrame .hint {
+    margin: 0 0 12px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .appShell[data-view="category"] .contentPanel > .goldDivider {
+    width: 278px;
+    margin: 0 auto -8px;
+  }
+  .appShell[data-view="category"] .categoryAlternatives {
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+  .appShell[data-view="category"] .categoryAlternatives button {
+    min-height: 36px;
+    border-radius: 7px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .appShell[data-view="category"] .categoryAlternatives + .hint {
+    position: relative;
+    margin: 0 0 10px;
+    padding-left: 36px;
+    font-size: 12px;
+  }
+  .appShell[data-view="category"] .heroCta {
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  .appShell[data-view="category"] .linkAction {
+    min-height: 34px;
+    margin-top: 8px;
+    color: var(--gold-strong);
+    font-size: 13px;
+  }
   .appShell[data-view="analysis"] .deviceFrame {
     min-height: calc(100vh - 8px);
     margin: 4px;
