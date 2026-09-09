@@ -1298,15 +1298,20 @@ export default function WebHome() {
               <div className="claimBuildHero">
                 <AuthMark icon="▤" />
                 <div><h1>Подготовка досудебной претензии</h1><p>AI юрист анализирует данные дела и формирует текст претензии по подтвержденным источникам РК.</p></div>
-              </div>
-              <div className="claimSteps">
-                {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : () => setSyncState(step)}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
+                <div className="claimSteps">
+                  {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : () => setSyncState(step)}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
+                </div>
               </div>
               <div className="claimBasis">
                 <strong>Основания</strong>
-                <p>Подтвержденные нормы РК добавляются только после поиска в официальных источниках. Если источник не подтвержден, документ уходит на ручную проверку.</p>
+                <ul>
+                  <li>zan.gov.kz: официальная редакция.</li>
+                  <li>Әділет: сверка статуса нормы.</li>
+                  <li>Ручная проверка при отсутствии источника.</li>
+                </ul>
               </div>
               <div className="claimProgress"><span>Прогресс подготовки</span><b>{claimReady ? "100%" : "74%"}</b><progress value={claimReady ? 100 : 74} max="100" /></div>
+              <div className="docHint"><span>ⓘ</span><p>В документ будут включены: фактические обстоятельства, ваши требования, сроки исполнения и правовое обоснование.</p></div>
               <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
               <button className="primary wide heroCta" onClick={generateClaim}>{claimReady ? "Открыть проект" : "✧ Открыть проект"}</button>
               <button className="wide outlineGold" onClick={() => go("case")}>Отменить</button>
