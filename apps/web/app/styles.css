@@ -3988,7 +3988,7 @@ button:disabled {
   }
   .appShell[data-view="legal"] .normCard {
     position: relative;
-    gap: 4px;
+    gap: 5px;
     min-height: 92px;
     border: 1px solid rgba(209, 160, 74, .34);
     border-radius: 9px;
@@ -5093,46 +5093,60 @@ button:disabled {
     line-height: 1;
   }
   .appShell[data-view="case"] .contentPanel {
-    padding: 34px 20px 34px;
+    min-height: 685px;
+    padding: 18px 17px 18px;
+    overflow: hidden;
   }
   .appShell[data-view="case"] .bottomNav {
     display: none;
   }
   .appShell[data-view="case"] .screenHeader {
-    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
     align-items: center;
     border-bottom: 1px solid var(--line);
-    margin-bottom: 22px;
-    padding-bottom: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+  }
+  .appShell[data-view="case"] .screenHeader::after {
+    content: "⇧  ···";
+    justify-self: end;
+    color: var(--gold-strong);
+    font-size: 18px;
+    letter-spacing: 0;
   }
   .appShell[data-view="case"] .screenHeader button {
-    width: 40px;
-    height: 40px;
-    font-size: 42px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 30px;
   }
   .appShell[data-view="case"] .screenHeader div {
     text-align: center;
   }
   .appShell[data-view="case"] .screenHeader h2 {
-    font-size: 28px;
+    color: var(--gold-strong);
+    font-size: 15px;
+    font-weight: 400;
   }
   .appShell[data-view="case"] .screenHeader p {
     display: none;
   }
   .appShell[data-view="case"] .caseDetailHero {
     display: grid;
-    grid-template-columns: 118px minmax(0, 1fr) auto;
-    gap: 18px;
+    grid-template-columns: 78px minmax(0, 1fr) auto;
+    gap: 8px;
     align-items: center;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
   }
   .appShell[data-view="case"] .caseDetailHero .largeIcon {
-    width: 104px;
-    height: 104px;
-    font-size: 44px;
+    width: 66px;
+    height: 66px;
+    font-size: 30px;
   }
   .appShell[data-view="case"] .caseDetailHero h2 {
-    font-size: 38px;
+    font-size: 23px;
     line-height: 1.05;
   }
   .appShell[data-view="case"] .caseDetailHero p {
@@ -5140,39 +5154,39 @@ button:disabled {
   }
   .appShell[data-view="case"] .caseDetailHero strong {
     color: var(--gold-strong);
-    font-size: 22px;
+    font-size: 19px;
   }
   .appShell[data-view="case"] .caseMetricGrid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
+    gap: 4px;
   }
   .appShell[data-view="case"] .caseMetricGrid .info {
     justify-items: center;
-    min-height: 118px;
+    min-height: 86px;
     border-color: var(--gold);
-    border-radius: 16px;
-    padding: 12px 6px;
+    border-radius: 7px;
+    padding: 7px 3px;
     text-align: center;
   }
   .appShell[data-view="case"] .caseMetricGrid .info small {
-    font-size: 13px;
+    font-size: 8px;
   }
   .appShell[data-view="case"] .caseMetricGrid .info strong {
-    font-size: 14px;
+    font-size: 9px;
     line-height: 1.2;
   }
   .appShell[data-view="case"] .goldSection {
-    margin: 22px 0 16px;
-    font-size: 25px;
+    margin: 14px 0 10px;
+    font-size: 13px;
   }
   .appShell[data-view="case"] .caseProgressRail {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0;
-    margin-bottom: 20px;
+    margin-bottom: 11px;
   }
   .appShell[data-view="case"] .caseProgressRail button {
     position: relative;
-    min-height: 108px;
+    min-height: 76px;
     border: 0;
     background: transparent;
     padding: 0 3px;
@@ -5180,7 +5194,7 @@ button:disabled {
   .appShell[data-view="case"] .caseProgressRail button::after {
     content: "";
     position: absolute;
-    top: 23px;
+    top: 17px;
     left: 50%;
     width: 100%;
     height: 2px;
@@ -5192,33 +5206,52 @@ button:disabled {
   .appShell[data-view="case"] .caseProgressRail span {
     position: relative;
     z-index: 1;
-    width: 48px;
-    height: 48px;
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
   }
   .appShell[data-view="case"] .caseProgressRail strong {
-    font-size: 13px;
+    font-size: 8px;
   }
   .appShell[data-view="case"] .caseProgressRail small {
-    font-size: 11px;
+    font-size: 7px;
   }
   .appShell[data-view="case"] .caseInfoGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 4px;
   }
   .appShell[data-view="case"] .caseInfoGrid .info {
-    min-height: 118px;
+    min-height: 105px;
     border-color: var(--gold);
-    border-radius: 16px;
-    padding: 14px;
+    border-radius: 7px;
+    padding: 10px;
+  }
+  .appShell[data-view="case"] .caseInfoGrid .info small {
+    font-size: 9px;
+  }
+  .appShell[data-view="case"] .caseInfoGrid .info strong {
+    font-size: 11px;
+    line-height: 1.2;
   }
   .appShell[data-view="case"] .actionBar {
     display: grid;
-    gap: 12px;
-    margin-top: 18px;
+    gap: 7px;
+    margin-top: 6px;
   }
   .appShell[data-view="case"] .actionBar .primary {
-    min-height: 72px;
-    font-size: 24px;
+    min-height: 39px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
+    color: #07111d;
+    font-size: 14px;
+  }
+  .appShell[data-view="case"] .actionBar button:not(.primary) {
+    min-height: 31px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+  .appShell[data-view="case"] .actionBar button:last-child {
+    display: none;
   }
   .appShell[data-view="documentCheck"] .contentPanel {
     min-height: 693px;
