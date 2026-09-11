@@ -31,6 +31,12 @@ export class CasesController {
     return this.cases.listCases(assertUserId(userId));
   }
 
+  @Get('case-categories')
+  listCategories(@Headers('x-user-id') userId?: string | string[]) {
+    assertUserId(userId);
+    return this.cases.listCategories();
+  }
+
   @Get('cases/:caseId')
   getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.getCase(caseId, assertUserId(userId));

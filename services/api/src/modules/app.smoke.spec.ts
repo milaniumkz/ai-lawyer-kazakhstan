@@ -36,6 +36,13 @@ describe('AppModule HTTP smoke', () => {
     });
   });
 
+  it('serves case taxonomy for authenticated user context', async () => {
+    await request(app.getHttpServer()).get('/api/v1/case-categories').set('x-user-id', '00000000-0000-4000-8000-000000000001').expect(200).expect(({ body }) => {
+      expect(body).toHaveLength(25);
+      expect(body.some((item: { id: string; criteria: string[] }) => item.id === 'administrative_offense' && item.criteria.length > 0)).toBe(true);
+    });
+  });
+
   it('covers identity, cases, documents, RAG, templates and billing routes', async () => {
     const auth = await request(app.getHttpServer())
       .post('/api/v1/auth/register')

@@ -4,6 +4,7 @@
 
 ## Выполнено
 
+- Case classification taxonomy P0 — added 25 Kazakhstan case categories with criteria and weighted backend classification; `GET /api/v1/case-categories` is protected by `x-user-id`; web/Flutter label maps cover the taxonomy. `npm --workspace services/api test -- cases.service.spec.ts app.smoke.spec.ts --runInBand`, `npm run test:contract`, `npm run test:security`, `npm run check`, and `npm run build` passed. Docker config was skipped because Docker CLI is unavailable.
 - `pwd` — рабочая директория подтверждена.
 - `git status --short --branch` — репозиторий без коммитов, исходные файлы untracked.
 - `git log --oneline -15` — недоступен, потому что коммитов еще нет.

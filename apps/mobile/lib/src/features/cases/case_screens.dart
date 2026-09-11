@@ -12,6 +12,47 @@ import '../auth/auth_screens.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 
+const caseCategoryLabels = {
+  'family': 'Семейные споры',
+  'civil_contract': 'Договоры и долги',
+  'labor': 'Трудовые споры',
+  'housing': 'Жилищные споры',
+  'property_real_estate': 'Имущество и недвижимость',
+  'land': 'Земельные споры',
+  'inheritance': 'Наследство',
+  'consumer': 'Защита потребителей',
+  'banking_credit': 'Банки, кредиты и МФО',
+  'insurance': 'Страховые споры',
+  'tort_damage': 'Вред и компенсация',
+  'corporate_commercial': 'Бизнес и корпоративные споры',
+  'bankruptcy_rehabilitation': 'Банкротство и реабилитация',
+  'tax_customs': 'Налоги и таможня',
+  'ip_copyright': 'Интеллектуальная собственность',
+  'medical': 'Медицинские споры',
+  'administrative_public_law': 'Спор с госорганом',
+  'administrative_offense': 'Административное правонарушение',
+  'criminal': 'Уголовное дело',
+  'enforcement': 'Исполнительное производство',
+  'migration': 'Миграционные вопросы',
+  'special_proceeding': 'Особое производство',
+  'order_proceeding': 'Судебный приказ',
+  'mediation_settlement': 'Медиация и мировое соглашение',
+  'clarification_required': 'Требует уточнения',
+};
+
+const categoryAlternatives = [
+  'Расторжение брака',
+  'Содержание супруги',
+  'Семейные споры',
+  'Договоры и долги',
+  'Трудовые споры',
+  'Спор с госорганом',
+  'Административное правонарушение',
+  'Имущество и недвижимость',
+  'Наследство',
+  'Банки, кредиты и МФО',
+];
+
 class CasesListScreen extends StatefulWidget {
   const CasesListScreen({super.key, this.caseApi});
 
@@ -317,7 +358,7 @@ class _CaseMetrics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const metrics = [
-      (Icons.menu_book_outlined, 'Категория', 'Гражданское право'),
+      (Icons.menu_book_outlined, 'Категория', 'Договоры и долги'),
       (Icons.gavel_outlined, 'Стадия', 'Досудебная подготовка'),
       (Icons.account_balance_outlined, 'Маршрут', 'Assisted mode'),
       (Icons.calendar_month_outlined, 'Срок', '15 мая 2024'),
@@ -939,12 +980,7 @@ CaseListItem caseFromJson(Map<String, dynamic> json) {
 }
 
 String _categoryTitle(String? value) {
-  return switch (value) {
-    'family' => 'Семейное право',
-    'labor' => 'Трудовой спор',
-    'administrative' => 'Административное право',
-    _ => 'Гражданское право',
-  };
+  return caseCategoryLabels[value] ?? 'Требует уточнения';
 }
 
 class CategoryScreen extends StatefulWidget {
@@ -955,7 +991,7 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
-  var category = 'Гражданское право';
+  var category = 'Договоры и долги';
 
   @override
   Widget build(BuildContext context) {
@@ -975,7 +1011,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             label: const Text('Продолжить'),
           ),
           TextButton(
-            onPressed: () => setState(() => category = 'Трудовой спор'),
+            onPressed: () => setState(() => category = 'Трудовые споры'),
             child: const Text('Изменить вручную'),
           ),
         ],
@@ -996,7 +1032,7 @@ class _CategoryResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title =
-        category == 'Семейное право' ? 'Брачно-семейные отношения' : category;
+        category == 'Семейные споры' ? 'Брачно-семейные отношения' : category;
     return Column(
       children: [
         Card(
@@ -1025,7 +1061,7 @@ class _CategoryResultCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 OutlinedButton.icon(
-                  onPressed: () => onSelected('Семейное право'),
+                  onPressed: () => onSelected('Семейные споры'),
                   icon: const Icon(Icons.family_restroom_outlined),
                   label: const Text('Взыскание алиментов'),
                 ),
@@ -1049,11 +1085,15 @@ class _CategoryResultCard extends StatelessWidget {
         const SizedBox(height: 20),
         const Text('Возможные альтернативы'),
         const SizedBox(height: 12),
-        for (final item in const ['Расторжение брака', 'Содержание супруги'])
+        for (final item in categoryAlternatives)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: OutlinedButton.icon(
-              onPressed: () => onSelected('Семейное право'),
+              onPressed: () => onSelected(
+                item == 'Расторжение брака' || item == 'Содержание супруги'
+                    ? 'Семейные споры'
+                    : item,
+              ),
               icon: const Icon(Icons.timer_outlined),
               label: Text(item),
             ),

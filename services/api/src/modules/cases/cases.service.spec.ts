@@ -2,7 +2,8 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { CasesService } from './cases.service';
+import { CASE_TAXONOMY } from './case-taxonomy';
+import { CasesService, classifyProblem } from './cases.service';
 import { CasesRepository } from './repositories/cases.repository';
 
 describe('CasesService', () => {
@@ -14,6 +15,17 @@ describe('CasesService', () => {
     expect(first.id).toBe(second?.id);
     expect(first.category).toBe('civil_contract');
     expect(await service.listCases('u1')).toHaveLength(1);
+  });
+
+  it('covers Kazakhstan judicial case taxonomy with deterministic criteria', () => {
+    expect(CASE_TAXONOMY).toHaveLength(25);
+    expect(classifyProblem('Нужно взыскать алименты на ребенка после развода').category).toBe('family');
+    expect(classifyProblem('Хочу обжаловать постановление и штраф по КоАП за нарушение ПДД').category).toBe('administrative_offense');
+    expect(classifyProblem('Акимат незаконно отказал в государственной услуге, нужно оспорить бездействие').category).toBe('administrative_public_law');
+    expect(classifyProblem('Полиция возбудила уголовное дело, следователь вызывает как подозреваемого').category).toBe('criminal');
+    expect(classifyProblem('Нотариус отказал оформить наследство после смерти отца').category).toBe('inheritance');
+    expect(classifyProblem('Пришло налоговое уведомление от органа госдоходов, начислили НДС').category).toBe('tax_customs');
+    expect(classifyProblem('Непонятная ситуация, нужна консультация').category).toBe('clarification_required');
   });
 
   it('adds user message and safe assistant fallback', async () => {

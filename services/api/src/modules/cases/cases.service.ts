@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
+import { CASE_TAXONOMY, classifyByTaxonomy } from './case-taxonomy';
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
 
@@ -64,6 +65,10 @@ export class CasesService {
   async listCases(ownerUserId: string) {
     if (this.repository) return this.repository.listCases(ownerUserId);
     return [...this.cases.values()].filter((item) => item.ownerUserId === ownerUserId);
+  }
+
+  listCategories() {
+    return CASE_TAXONOMY;
   }
 
   async getCase(caseId: string, ownerUserId?: string) {
@@ -188,12 +193,7 @@ function safeAudioExtension(fileName: string, mimeType: string) {
 }
 
 export function classifyProblem(text: string) {
-  const normalized = text.toLowerCase();
-  if (normalized.includes('алимент')) return { category: 'family', subcategory: 'alimony', confidence: 0.86 };
-  if (normalized.includes('долг') || normalized.includes('задолж')) return { category: 'civil_contract', subcategory: 'debt_collection', confidence: 0.82 };
-  if (normalized.includes('работ') || normalized.includes('зарплат')) return { category: 'labor', subcategory: 'salary', confidence: 0.78 };
-  if (normalized.includes('жалоб') || normalized.includes('орган')) return { category: 'administrative', subcategory: 'state_body_complaint', confidence: 0.72 };
-  return { category: 'clarification_required', subcategory: 'unknown', confidence: 0.48 };
+  return classifyByTaxonomy(text);
 }
 
 function makeTitle(text: string) {

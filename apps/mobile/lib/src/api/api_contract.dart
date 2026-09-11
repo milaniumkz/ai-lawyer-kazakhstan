@@ -10,6 +10,7 @@ abstract final class ApiContract {
   static const authOtpVerify = '/auth/otp/verify';
   static const authRefresh = '/auth/refresh';
   static const authRegister = '/auth/register';
+  static const caseCategories = '/case-categories';
   static const cases = '/cases';
   static const casesCaseId = '/cases/{caseId}';
   static const casesCaseIdDocuments = '/cases/{caseId}/documents';

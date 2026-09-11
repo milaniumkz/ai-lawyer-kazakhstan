@@ -288,6 +288,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LegalCase"
+  /case-categories:
+    get:
+      operationId: listCaseCategories
+      summary: List Kazakhstan case classification categories
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Case classification taxonomy with criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseCategory"
   /cases/{caseId}:
     get:
       operationId: getCase
@@ -1092,6 +1112,39 @@ components:
         createdAt:
           type: string
           format: date-time
+    CaseCategory:
+      type: object
+      required: [id, subcategory, title, procedure, description, criteria, keywords, officialSourceRefs]
+      properties:
+        id:
+          type: string
+        subcategory:
+          type: string
+        title:
+          type: string
+        procedure:
+          type: string
+          enum: [civil, administrative_public_law, administrative_offense, criminal, enforcement, special]
+        description:
+          type: string
+        criteria:
+          type: array
+          items:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        negativeKeywords:
+          type: array
+          items:
+            type: string
+        highRisk:
+          type: boolean
+        officialSourceRefs:
+          type: array
+          items:
+            type: string
     CreateCaseRequest:
       type: object
       required: [ownerUserId, problemText]

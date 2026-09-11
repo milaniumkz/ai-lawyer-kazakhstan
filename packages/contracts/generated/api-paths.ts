@@ -9,6 +9,7 @@ export const apiPaths = [
   "/auth/otp/verify",
   "/auth/refresh",
   "/auth/register",
+  "/case-categories",
   "/cases",
   "/cases/{caseId}",
   "/cases/{caseId}/documents",

@@ -153,6 +153,45 @@ type SavedState = {
   profileComplete: boolean;
 };
 
+const CASE_CATEGORY_LABELS: Record<string, string> = {
+  family: "Семейные споры",
+  civil_contract: "Договоры и долги",
+  labor: "Трудовые споры",
+  housing: "Жилищные споры",
+  property_real_estate: "Имущество и недвижимость",
+  land: "Земельные споры",
+  inheritance: "Наследство",
+  consumer: "Защита потребителей",
+  banking_credit: "Банки, кредиты и МФО",
+  insurance: "Страховые споры",
+  tort_damage: "Вред и компенсация",
+  corporate_commercial: "Бизнес и корпоративные споры",
+  bankruptcy_rehabilitation: "Банкротство и реабилитация",
+  tax_customs: "Налоги и таможня",
+  ip_copyright: "Интеллектуальная собственность",
+  medical: "Медицинские споры",
+  administrative_public_law: "Спор с госорганом",
+  administrative_offense: "Административное правонарушение",
+  criminal: "Уголовное дело",
+  enforcement: "Исполнительное производство",
+  migration: "Миграционные вопросы",
+  special_proceeding: "Особое производство",
+  order_proceeding: "Судебный приказ",
+  mediation_settlement: "Медиация и мировое соглашение",
+  clarification_required: "Требует уточнения",
+};
+
+const CATEGORY_ALTERNATIVES = [
+  "Семейные споры",
+  "Договоры и долги",
+  "Трудовые споры",
+  "Спор с госорганом",
+  "Административное правонарушение",
+  "Имущество и недвижимость",
+  "Наследство",
+  "Банки, кредиты и МФО",
+];
+
 const screens: { label: string; view: View }[] = [
   { label: "Онбординг", view: "onboarding" },
   { label: "Вход и регистрация", view: "login" },
@@ -211,7 +250,7 @@ export default function WebHome() {
     "Распознавание речи еще не запускалось",
   );
   const [transcriptJobId, setTranscriptJobId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Семейное право");
+  const [selectedCategory, setSelectedCategory] = useState("Семейные споры");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");
@@ -458,17 +497,10 @@ export default function WebHome() {
   }
 
   function mapCase(record: ApiLegalCase): CaseItem {
-    const categoryMap: Record<string, string> = {
-      civil_contract: "Гражданское право",
-      labor: "Трудовой спор",
-      family: "Семейное право",
-      administrative: "Административное право",
-      clarification_required: "Требует уточнения",
-    };
     return {
       id: record.id.slice(0, 8),
       title: record.title,
-      type: categoryMap[record.category] ?? selectedCategory,
+      type: CASE_CATEGORY_LABELS[record.category] ?? selectedCategory,
       status:
         record.status === "consultation"
           ? "Консультация открыта"
@@ -1773,13 +1805,13 @@ export default function WebHome() {
             <strong>Категория определена</strong>
             <AuthDivider />
             <h1>
-              {selectedCategory === "Семейное право"
+              {selectedCategory === "Семейные споры"
                 ? "Брачно-семейные отношения"
                 : selectedCategory}
             </h1>
             <button
               className="categoryPill"
-              onClick={() => setSelectedCategory("Семейное право")}
+              onClick={() => setSelectedCategory("Семейные споры")}
             >
               ♙ Взыскание алиментов
             </button>
@@ -1790,11 +1822,11 @@ export default function WebHome() {
           <AuthDivider />
           <p className="hint">Возможные альтернативы</p>
           <div className="categoryAlternatives">
-            {["Расторжение брака", "Содержание супруги"].map((type) => (
+            {CATEGORY_ALTERNATIVES.map((type) => (
               <button
                 key={type}
                 onClick={() => {
-                  setSelectedCategory("Семейное право");
+                  setSelectedCategory(type);
                   setSyncState(`Категория выбрана: ${type}`);
                 }}
               >
