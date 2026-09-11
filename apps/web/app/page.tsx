@@ -166,6 +166,19 @@ function normalizeKzPhoneInput(value: string) {
   return `+7${subscriberDigits.slice(0, 10)}`;
 }
 
+function isValidKzIinBin(value: string) {
+  if (!/^\d{12}$/.test(value)) return false;
+  const digits = [...value].map(Number);
+  const firstWeights = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const secondWeights = [3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 2];
+  const checksum = (weights: number[]) =>
+    weights.reduce((sum, weight, index) => sum + weight * digits[index], 0) %
+    11;
+  const first = checksum(firstWeights);
+  const control = first === 10 ? checksum(secondWeights) : first;
+  return control !== 10 && control === digits[11];
+}
+
 const AUTH_I18N: Record<
   Language,
   {
@@ -187,6 +200,7 @@ const AUTH_I18N: Record<
     middleName: string;
     city: string;
     iinBin: string;
+    iinBinInvalid: string;
     consent: string;
     finishRegister: string;
     alreadyHaveAccount: string;
@@ -225,6 +239,7 @@ const AUTH_I18N: Record<
     middleName: "Отчество",
     city: "Город",
     iinBin: "ИИН/БИН, если нужно",
+    iinBinInvalid: "ИИН/БИН должен состоять из 12 цифр и проходить проверку РК. Оставьте поле пустым, если он не нужен.",
     consent: "Я принимаю условия и согласен на обработку данных",
     finishRegister: "✧ Завершить регистрацию",
     alreadyHaveAccount: "Уже есть аккаунт? Войти",
@@ -262,6 +277,7 @@ const AUTH_I18N: Record<
     middleName: "Әкесінің аты",
     city: "Қала",
     iinBin: "ЖСН/БСН, қажет болса",
+    iinBinInvalid: "ЖСН/БСН 12 цифрдан тұрып, ҚР тексерісінен өтуі керек. Қажет болмаса, бос қалдырыңыз.",
     consent: "Шарттарды қабылдаймын және деректерді өңдеуге келісемін",
     finishRegister: "✧ Тіркеуді аяқтау",
     alreadyHaveAccount: "Аккаунт бар ма? Кіру",
@@ -299,6 +315,7 @@ const AUTH_I18N: Record<
     middleName: "Middle name",
     city: "City",
     iinBin: "IIN/BIN, if needed",
+    iinBinInvalid: "IIN/BIN must have 12 digits and pass Kazakhstan checksum. Leave it empty if it is not needed.",
     consent: "I accept the terms and consent to data processing",
     finishRegister: "✧ Complete registration",
     alreadyHaveAccount: "Already have an account? Sign in",
@@ -478,6 +495,8 @@ export default function WebHome() {
   const activeCase =
     cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? null;
   const authText = AUTH_I18N[language];
+  const cleanProfileId = profileId.replace(/\D/g, "");
+  const profileIdInvalid = Boolean(cleanProfileId) && !isValidKzIinBin(cleanProfileId);
   const filteredCases = useMemo(
     () =>
       cases.filter(
@@ -1514,6 +1533,10 @@ export default function WebHome() {
       setSyncState("Введите имя профиля");
       return;
     }
+    if (profileIdInvalid) {
+      setSyncState(authText.iinBinInvalid);
+      return;
+    }
     setProfileName(fullName);
     try {
       const userId = await ensureUser();
@@ -1522,7 +1545,6 @@ export default function WebHome() {
         ИП: "individual_entrepreneur",
         Юрлицо: "legal_entity",
       };
-      const cleanIinBin = profileId.replace(/\D/g, "");
       await apiJson("/profiles", {
         method: "POST",
         headers: { "x-user-id": userId },
@@ -1530,7 +1552,7 @@ export default function WebHome() {
           userId,
           type: profileTypeMap[profileType] ?? "person",
           displayName: fullName,
-          iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined,
+          iinBin: cleanProfileId.length === 12 ? cleanProfileId : undefined,
           address: city.trim(),
         }),
       });
@@ -1779,8 +1801,17 @@ export default function WebHome() {
                 <input
                   placeholder={authText.iinBin}
                   value={profileId}
-                  onChange={(event) => setProfileId(event.target.value)}
+                  inputMode="numeric"
+                  maxLength={12}
+                  onChange={(event) =>
+                    setProfileId(
+                      event.target.value.replace(/\D/g, "").slice(0, 12),
+                    )
+                  }
                 />
+                {profileIdInvalid && (
+                  <small className="fieldError">{authText.iinBinInvalid}</small>
+                )}
                 <div className="chips profileChips">
                   {["Физлицо", "ИП", "Юрлицо"].map((type) => (
                     <button
@@ -1802,7 +1833,7 @@ export default function WebHome() {
                 </label>
                 <button
                   className="primary wide heroCta"
-                  disabled={!consent}
+                  disabled={!consent || profileIdInvalid}
                   onClick={() => {
                     void saveProfile();
                   }}

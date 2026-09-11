@@ -2183,6 +2183,14 @@ button { cursor: pointer; }
   padding: 22px;
 }
 
+.fieldError {
+  display: block;
+  margin-top: -4px;
+  color: #ffb4a8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .profileChips {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
