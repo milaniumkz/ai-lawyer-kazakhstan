@@ -12,5 +12,5 @@
 - Bundle ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
 - Current validation: debug no-codesign build.
-- Production blocker: Apple distribution certificates, profiles and App Store Connect access are not provided.
+- Production blocker: Apple account login for `dqkzfan@gmail.com` is rejected by Xcode, and no provisioning profile for `kz.milanium.lawyer` is available.
 - Required before submission: archive/export, privacy manifest review, screenshots, support/privacy/terms URLs, reviewer notes.
