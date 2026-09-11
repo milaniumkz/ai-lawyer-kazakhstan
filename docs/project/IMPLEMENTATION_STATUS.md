@@ -205,3 +205,9 @@
 - `docker` не установлен.
 - Production government/payment/SMS/storage provider credentials are not provided; all related integrations stay in official adapter + local/manual mode.
 - Custom production domain/DNS is not provided; trusted test HTTPS is available at `89-207-250-217.sslip.io`.
+
+## 2026-09-11 App Store Preparation
+
+| Требование | Реализация | Тест | Статус |
+|---|---|---|---|
+| Mobile application id update | Android `namespace`/`applicationId` and iOS `PRODUCT_BUNDLE_IDENTIFIER` changed to `kz.milanium.lawyer`; iOS test bundle changed to `kz.milanium.lawyer.RunnerTests`; store guide updated | `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed; `flutter test` passed with 31 tests; `flutter build ios --release --no-codesign` built `build/ios/iphoneos/Runner.app` with bundle id `kz.milanium.lawyer`; Android release APK rebuilt and `aapt` confirms package `kz.milanium.lawyer`; full `npm run check` passed | done |

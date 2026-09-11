@@ -32,7 +32,7 @@ Date: 2026-09-07
 
 - Source tag: `v0.1.0-rc.10`
 - QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.10-release-bundle.tar.gz`
-- Android APK SHA-256: `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec`
+- Android APK SHA-256: `b2dfdac8e0282f394c17892e31297f1462a2222df3e8a762fa8a57f5954e0fc9`
 
 ## Not Production Until
 

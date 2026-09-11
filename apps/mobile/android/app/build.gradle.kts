@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "kz.ailawyer.mobile"
+    namespace = "kz.milanium.lawyer"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "kz.ailawyer.mobile"
+        applicationId = "kz.milanium.lawyer"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
