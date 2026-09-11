@@ -156,6 +156,16 @@ type SavedState = {
 
 type Language = "RU" | "KZ" | "EN";
 
+function normalizeKzPhoneInput(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "+7";
+  const subscriberDigits =
+    digits.length > 10 && (digits.startsWith("7") || digits.startsWith("8"))
+      ? digits.slice(1)
+      : digits;
+  return `+7${subscriberDigits.slice(0, 10)}`;
+}
+
 const AUTH_I18N: Record<
   Language,
   {
@@ -443,7 +453,7 @@ export default function WebHome() {
       text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
     },
   ]);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+7");
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
@@ -1711,7 +1721,12 @@ export default function WebHome() {
                   autoComplete="tel"
                   placeholder={authText.phonePlaceholder}
                   value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
+                  onFocus={() => {
+                    if (!phone) setPhone("+7");
+                  }}
+                  onChange={(event) =>
+                    setPhone(normalizeKzPhoneInput(event.target.value))
+                  }
                 />
               </label>
               <button
