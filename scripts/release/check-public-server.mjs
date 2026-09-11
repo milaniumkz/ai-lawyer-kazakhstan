@@ -25,7 +25,7 @@ async function expectPublicWebBundle() {
   const response = await expectHttp('/');
   if (!response.ok) return;
   const html = await response.text();
-  const htmlNeedles = ['AI Юрист', 'Здравствуйте, Дмитрий', 'Рассказать проблему', '/_next/static/'];
+  const htmlNeedles = ['AI Юрист', 'Вход и регистрация', '/_next/static/'];
   for (const needle of htmlNeedles) {
     if (!html.includes(needle)) failures.push(`public web html missing: ${needle}`);
   }
@@ -51,6 +51,7 @@ async function expectPublicWebBundle() {
 
   const bundleNeedles = [
     'Синхронизировать',
+    'Рассказать проблему',
     'Продолжить',
     'Онбординг',
     'Вход и регистрация',
@@ -134,6 +135,11 @@ async function expectPublicApiDemo() {
     failures.push('/api/v1/cases did not return case id');
     return;
   }
+
+  const categories = await apiJson('/case-categories', {
+    headers: { 'x-user-id': userId },
+  });
+  if (!Array.isArray(categories) || categories.length < 25) failures.push('/api/v1/case-categories did not return taxonomy');
 
   const upload = await apiJson('/files/upload-sessions', {
     method: 'POST',

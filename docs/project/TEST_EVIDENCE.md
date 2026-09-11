@@ -5,6 +5,7 @@
 ## Выполнено
 
 - Case classification taxonomy P0 — added 25 Kazakhstan case categories with criteria and weighted backend classification; `GET /api/v1/case-categories` is protected by `x-user-id`; web/Flutter label maps cover the taxonomy. `npm --workspace services/api test -- cases.service.spec.ts app.smoke.spec.ts --runInBand`, `npm run test:contract`, `npm run test:security`, `npm run check`, and `npm run build` passed. Docker config was skipped because Docker CLI is unavailable.
+- Case taxonomy server refresh — uploaded `/tmp/ai-lawyer-kz-case-taxonomy.tar.gz` to `/opt/ai-lawyer-kz-case-taxonomy.tar.gz` SHA-256 `79d5ba781092e8e150d8a995f7d7b05c7b5cf17614c6ea889c6c05f4dde9890d`; server install health passed, public API health returned OK, `/api/v1/case-categories` returned 25 categories, and `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after updating the smoke expectations for auth-first web.
 - `pwd` — рабочая директория подтверждена.
 - `git status --short --branch` — репозиторий без коммитов, исходные файлы untracked.
 - `git log --oneline -15` — недоступен, потому что коммитов еще нет.
