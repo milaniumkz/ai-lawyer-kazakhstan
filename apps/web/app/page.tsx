@@ -181,50 +181,6 @@ const screens: { label: string; view: View }[] = [
   { label: "Помощь", view: "help" },
 ];
 
-const emptyCase: CaseItem = {
-  id: "2024-0015",
-  title: "Взыскание долга",
-  type: "Гражданское право",
-  status: "В работе",
-  date: "15 мая 2024",
-  progress: 65,
-};
-const designCaseList: CaseItem[] = [
-  emptyCase,
-  {
-    id: "2024-0012",
-    title: "Алименты",
-    type: "Семейное право",
-    status: "Ожидает документов",
-    date: "10 мая 2024",
-    progress: 42,
-  },
-  {
-    id: "2024-0008",
-    title: "Претензия к подрядчику",
-    type: "Договорное право",
-    status: "Отправлено",
-    date: "8 мая 2024",
-    progress: 78,
-  },
-  {
-    id: "2024-0003",
-    title: "Раздел имущества",
-    type: "Семейное право",
-    status: "Срок близко",
-    date: "5 мая 2024",
-    progress: 55,
-  },
-  {
-    id: "2024-0001",
-    title: "Защита прав потребителя",
-    type: "Защита прав",
-    status: "В работе",
-    date: "2 мая 2024",
-    progress: 61,
-  },
-];
-
 export default function WebHome() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
@@ -313,16 +269,15 @@ export default function WebHome() {
   ]);
 
   const activeCase =
-    cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? emptyCase;
-  const visibleCaseSource = cases.length ? cases : designCaseList;
+    cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? null;
   const filteredCases = useMemo(
     () =>
-      visibleCaseSource.filter(
+      cases.filter(
         (item) =>
           item.title.toLowerCase().includes(caseSearch.toLowerCase()) ||
           caseSearch.length < 3,
       ),
-    [visibleCaseSource, caseSearch],
+    [cases, caseSearch],
   );
 
   useEffect(() => {
@@ -358,7 +313,6 @@ export default function WebHome() {
       else setView("login");
       if (saved.theme === "light" || saved.theme === "dark")
         setTheme(saved.theme);
-      if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
       if (saved.documents?.length) setDocuments(saved.documents);
@@ -1936,6 +1890,27 @@ export default function WebHome() {
     }
 
     if (view === "case") {
+      if (!activeCase) {
+        return (
+          <section className="contentPanel">
+            <AppHeader
+              title="Карточка дела"
+              subtitle="Нет выбранного дела из базы данных"
+              back="cases"
+            />
+            <div className="analysisBox">
+              <strong>Нет реального дела</strong>
+              <p>
+                Создайте первое дело, чтобы карточка заполнилась данными из
+                API/БД.
+              </p>
+            </div>
+            <button className="primary wide" onClick={() => go("newCase")}>
+              Создать дело
+            </button>
+          </section>
+        );
+      }
       return (
         <section className="contentPanel">
           <AppHeader
@@ -2018,6 +1993,24 @@ export default function WebHome() {
     }
 
     if (view === "chat") {
+      if (!activeCase) {
+        return (
+          <section className="contentPanel chatPanel">
+            <AppHeader
+              title="Чат по делу"
+              subtitle="Нет выбранного дела из базы данных"
+              back="cases"
+            />
+            <div className="analysisBox">
+              <strong>Чат недоступен</strong>
+              <p>Сначала создайте или выберите реальное дело из API/БД.</p>
+            </div>
+            <button className="primary wide" onClick={() => go("newCase")}>
+              Создать дело
+            </button>
+          </section>
+        );
+      }
       return (
         <section className="contentPanel chatPanel">
           <AppHeader
@@ -2554,7 +2547,9 @@ export default function WebHome() {
                 <p>
                   <strong>{task.title}</strong>
                   <small>
-                    Дело №{activeCase.id} · {activeCase.title}
+                    {activeCase
+                      ? `Дело №${activeCase.id} · ${activeCase.title}`
+                      : "Нет выбранного дела из БД"}
                   </small>
                   <small>{task.done ? "Готово" : task.due}</small>
                 </p>
@@ -3313,7 +3308,7 @@ export default function WebHome() {
       <section className="homeScreen">
         <div className="topLine">
           <div>
-            <h1>Здравствуйте, Дмитрий</h1>
+            <h1>Здравствуйте, {profileName || phone || "пользователь"}</h1>
             <p>Ваш умный юридический помощник</p>
           </div>
           <div className="topActions">
@@ -3505,15 +3500,25 @@ export default function WebHome() {
         </nav>
       </section>
       <aside className="rightPanel" aria-label="Контекст дела">
-        <div className="caseHero compact">
-          <span className="roundIcon">⚖</span>
-          <div>
-            <h2>{activeCase.title}</h2>
-            <p>{activeCase.status}</p>
+        {activeCase ? (
+          <div className="caseHero compact">
+            <span className="roundIcon">⚖</span>
+            <div>
+              <h2>{activeCase.title}</h2>
+              <p>{activeCase.status}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="analysisBox">
+            <strong>Нет дела</strong>
+            <p>Данные появятся после загрузки из БД или создания дела.</p>
+          </div>
+        )}
         <div className="tileGrid compactTiles">
-          <Info label="Готовность" value={`${activeCase.progress}%`} />
+          <Info
+            label="Готовность"
+            value={activeCase ? `${activeCase.progress}%` : "0%"}
+          />
           <Info label="Документы" value={`${documents.length}`} />
         </div>
         <div className="sideSection">

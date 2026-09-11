@@ -193,25 +193,36 @@ void main() {
   testWidgets('cases list filters search and opens case details',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Все дела'));
-    await tester.tap(find.text('Все дела'));
+    AuthRuntime.userId = 'user-1';
+    final api = _FakeCaseApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        initialLocation: '/cases',
+        routes: [
+          GoRoute(
+              path: '/cases',
+              builder: (_, __) => CasesListScreen(caseApi: api)),
+          GoRoute(
+              path: '/case/details',
+              builder: (_, __) => const CaseDetailsScreen()),
+        ],
+      ),
+    ));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('В работе'));
     await tester.pumpAndSettle();
-    expect(find.text('Взыскание долга'), findsOneWidget);
+    expect(find.text('Дело из API'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Поиск дела'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Алименты');
+    await tester.enterText(find.byType(TextField), 'API');
     await tester.pumpAndSettle();
-    expect(find.text('Алименты'), findsWidgets);
+    expect(find.text('Дело из API'), findsWidgets);
     await tester.tap(find.byTooltip('Назад'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Взыскание долга').first);
+    await tester.tap(find.text('Дело из API').first);
     await tester.pumpAndSettle();
     expect(find.text('Карточка дела'), findsOneWidget);
     expect(find.text('Продолжить работу'), findsOneWidget);

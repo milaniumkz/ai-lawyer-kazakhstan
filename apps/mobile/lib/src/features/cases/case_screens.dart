@@ -24,8 +24,8 @@ class CasesListScreen extends StatefulWidget {
 class _CasesListScreenState extends State<CasesListScreen> {
   late final CaseApiPort caseApi;
   var selectedFilter = 'Все';
-  var status = 'Локальные последние дела';
-  var cases = caseItems;
+  var status = 'Данные из БД еще не загружены';
+  var cases = const <CaseListItem>[];
   final filters = const ['Все', 'В работе', 'Суд', 'Претензии'];
 
   @override
@@ -46,8 +46,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
     try {
       final remote = await caseApi.listCases(AuthRuntime.userId);
       setState(() {
-        cases = remote.isEmpty ? caseItems : remote;
-        status = 'Дела загружены из API: ${remote.length}';
+        cases = remote;
+        status = remote.isEmpty
+            ? 'В БД пока нет дел'
+            : 'Дела загружены из API: ${remote.length}';
       });
     } catch (error) {
       setState(() => status = 'Cases API ошибка: $error');
@@ -64,7 +66,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
             tooltip: 'Поиск дела',
             onPressed: () => showSearch(
               context: context,
-              delegate: _CaseSearchDelegate(),
+              delegate: _CaseSearchDelegate(cases),
             ),
             icon: const Icon(Icons.search),
           ),
@@ -94,11 +96,26 @@ class _CasesListScreenState extends State<CasesListScreen> {
             ),
             Text(status),
             const SizedBox(height: 18),
-            for (final item in cases)
-              _ReferenceCaseListTile(
-                item: item,
-                onTap: () => context.go('/case/details'),
-              ),
+            if (cases.isEmpty)
+              Card(
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.add)),
+                  title: const Text('Нет дел'),
+                  subtitle: const Text(
+                      'Создайте первое дело, чтобы оно появилось из БД'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/case/new'),
+                ),
+              )
+            else
+              for (final item in cases)
+                _ReferenceCaseListTile(
+                  item: item,
+                  onTap: () {
+                    MobileCaseRuntime.activeCaseId = item.id;
+                    context.go('/case/details');
+                  },
+                ),
           ],
         ),
       ),
@@ -185,6 +202,10 @@ class NewCaseScreen extends StatefulWidget {
 }
 
 class _CaseSearchDelegate extends SearchDelegate<String> {
+  _CaseSearchDelegate(this.cases);
+
+  final List<CaseListItem> cases;
+
   @override
   List<Widget>? buildActions(BuildContext context) => [
         IconButton(
@@ -206,11 +227,16 @@ class _CaseSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final items = caseItems
+    final items = cases
         .where((item) => item.title.toLowerCase().contains(query.toLowerCase()))
         .toList();
     return ListView(
       children: [
+        if (items.isEmpty)
+          const ListTile(
+            title: Text('Нет дел'),
+            subtitle: Text('Поиск работает только по данным из API/БД'),
+          ),
         for (final item in items)
           ListTile(
             title: Text(item.title),
@@ -267,11 +293,16 @@ class _CaseDetailHero extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Взыскание долга',
+              Text(
+                  MobileCaseRuntime.activeCaseId.isEmpty
+                      ? 'Нет выбранного дела'
+                      : 'Дело из БД',
                   style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 4),
-              const Text('Дело №2024-0015 · Гражданское право РК'),
-              const Text('● В работе'),
+              Text(MobileCaseRuntime.activeCaseId.isEmpty
+                  ? 'Откройте дело из списка API/БД'
+                  : 'Дело №${MobileCaseRuntime.activeCaseId}'),
+              const Text('● Только реальные данные'),
             ],
           ),
         ),
@@ -401,19 +432,6 @@ class CaseListItem {
   final IconData icon;
   final String id;
 }
-
-const caseItems = [
-  CaseListItem('Взыскание долга', 'Гражданское право · Дело №2024-0015',
-      '● В работе', Icons.balance_outlined),
-  CaseListItem('Алименты', 'Семейное право · Дело №2024-0012',
-      '● Ожидает документов', Icons.family_restroom_outlined),
-  CaseListItem('Претензия к подрядчику', 'Договорное право · Дело №2024-0008',
-      '● Отправлено', Icons.description_outlined),
-  CaseListItem('Раздел имущества', 'Семейное право · Дело №2024-0003',
-      '● Срок близко', Icons.account_balance_outlined),
-  CaseListItem('Защита прав потребителя', 'Защита прав · Дело №2024-0001',
-      '● В работе', Icons.verified_user_outlined),
-];
 
 class _NewCaseScreenState extends State<NewCaseScreen> {
   late final TextEditingController transcriptController;
@@ -1204,11 +1222,16 @@ class _CaseSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Взыскание долга',
+            Text(
+                MobileCaseRuntime.activeCaseId.isEmpty
+                    ? 'Нет выбранного дела'
+                    : 'Дело из БД',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            const Text('Категория: гражданско-правовой спор'),
-            const Text('Готовность: 17% подготовки, не вероятность выигрыша'),
+            Text(MobileCaseRuntime.activeCaseId.isEmpty
+                ? 'Выберите реальное дело из списка'
+                : 'ID из БД: ${MobileCaseRuntime.activeCaseId}'),
+            const Text('Готовность рассчитывается после загрузки API-данных'),
           ],
         ),
       ),

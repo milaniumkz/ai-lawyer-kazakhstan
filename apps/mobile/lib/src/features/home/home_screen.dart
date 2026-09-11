@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../auth/auth_screens.dart';
+import '../cases/case_screens.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -110,8 +112,45 @@ class _GoldDivider extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key, this.caseApi});
+
+  final CaseApiPort? caseApi;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final CaseApiPort caseApi;
+  var cases = const <CaseListItem>[];
+  var status = 'Данные из БД еще не загружены';
+
+  @override
+  void initState() {
+    super.initState();
+    caseApi = widget.caseApi ?? HttpCaseApi();
+    refreshCases();
+  }
+
+  Future<void> refreshCases() async {
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы загрузить данные из БД');
+      return;
+    }
+    setState(() => status = 'Загружаю данные из БД...');
+    try {
+      final remote = await caseApi.listCases(AuthRuntime.userId);
+      setState(() {
+        cases = remote;
+        status = remote.isEmpty
+            ? 'В БД пока нет дел'
+            : 'Дела загружены из БД: ${remote.length}';
+      });
+    } catch (error) {
+      setState(() => status = 'Ошибка загрузки из БД: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +165,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Здравствуйте, Дмитрий',
+                    'Здравствуйте, ${AuthRuntime.displayName}',
                     style: theme.textTheme.displaySmall?.copyWith(
                       color: AppColors.goldDark,
                     ),
@@ -135,9 +174,14 @@ class HomeScreen extends StatelessWidget {
                 IconButton(
                   tooltip: 'Уведомления',
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Новых уведомлений нет')),
+                    SnackBar(content: Text(status)),
                   ),
                   icon: const Icon(Icons.notifications_none),
+                ),
+                IconButton(
+                  tooltip: 'Обновить из БД',
+                  onPressed: refreshCases,
+                  icon: const Icon(Icons.sync_outlined),
                 ),
                 IconButton(
                   key: const ValueKey('home-profile'),
@@ -217,18 +261,23 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const _CaseCard(
-              title: 'Взыскание долга',
-              subtitle: 'Дело №2024-0015 · Гражданское право',
-              status: 'В работе',
-              route: '/case/details',
-            ),
-            const _CaseCard(
-              title: 'Алименты',
-              subtitle: 'Дело №2024-0012 · Семейное право',
-              status: 'Подготовка документов',
-              route: '/case/details',
-            ),
+            Text(status, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 12),
+            if (cases.isEmpty)
+              _CaseCard(
+                title: 'Нет дел',
+                subtitle: 'Создайте первое дело',
+                status: 'Только реальные данные из БД',
+                route: '/case/new',
+              )
+            else
+              for (final item in cases.take(2))
+                _CaseCard(
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  status: item.status,
+                  route: '/case/details',
+                ),
           ],
         ),
       ),
