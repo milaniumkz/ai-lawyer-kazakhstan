@@ -25,7 +25,7 @@ async function expectPublicWebBundle() {
   const response = await expectHttp('/');
   if (!response.ok) return;
   const html = await response.text();
-  const htmlNeedles = ['AI Юрист', 'Вход и регистрация', '/_next/static/'];
+  const htmlNeedles = ['AI Юрист', 'Вход в AI Юрист', '/_next/static/'];
   for (const needle of htmlNeedles) {
     if (!html.includes(needle)) failures.push(`public web html missing: ${needle}`);
   }
