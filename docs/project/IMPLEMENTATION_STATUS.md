@@ -211,3 +211,4 @@
 | Требование | Реализация | Тест | Статус |
 |---|---|---|---|
 | Mobile application id update | Android `namespace`/`applicationId` and iOS `PRODUCT_BUNDLE_IDENTIFIER` changed to `kz.milanium.lawyer`; iOS test bundle changed to `kz.milanium.lawyer.RunnerTests`; store guide updated | `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed; `flutter test` passed with 31 tests; `flutter build ios --release --no-codesign` built `build/ios/iphoneos/Runner.app` with bundle id `kz.milanium.lawyer`; Android release APK rebuilt and `aapt` confirms package `kz.milanium.lawyer`; full `npm run check` passed | done |
+| iOS App Store Connect upload | iOS project uses Apple team `Z3NZN92Y7P`; archive for bundle id `kz.milanium.lawyer` was uploaded to App Store Connect for processing | `xcodebuild archive` succeeded; `xcodebuild -exportArchive` with `destination=upload` succeeded; Apple warning only: MinimumOSVersion 13.0 must become 15.0 by Spring 2027 | done |

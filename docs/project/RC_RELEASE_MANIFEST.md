@@ -10,7 +10,7 @@ Date: 2026-09-07
 - Admin web app.
 - NestJS API with PostgreSQL persistence.
 - FastAPI AI service in local/stub provider mode.
-- Flutter Android debug/release APKs and iOS no-codesign build evidence.
+- Flutter Android debug/release APKs and iOS App Store Connect upload evidence.
 - Cloud server test deployment with Nginx, systemd, UFW and PostgreSQL backups.
 - Interactive mobile/web RC flows with covered button actions in local/stub mode.
 
@@ -40,4 +40,4 @@ Date: 2026-09-07
 - Production secrets are provided through runtime secret storage.
 - SMS/payment/storage/government integrations receive official credentials.
 - Legal templates and source ingestion are formally approved.
-- Android/iOS production signing credentials are provided.
+- App Store Connect processing, metadata, screenshots and reviewer notes are completed.

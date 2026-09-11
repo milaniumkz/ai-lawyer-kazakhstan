@@ -11,7 +11,6 @@
 
 - Bundle ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
-- Xcode team: `KLW65DNH6F` (Dmitriy Shtrakhov).
-- Current validation: debug no-codesign build.
-- Production blocker: Xcode still attempts a rejected saved account `dqkzfan@gmail.com`, and no provisioning profile for `kz.milanium.lawyer` is available under the active Apple account.
-- Required before submission: archive/export, privacy manifest review, screenshots, support/privacy/terms URLs, reviewer notes.
+- Xcode team: `Z3NZN92Y7P`.
+- Current validation: archive succeeded and App Store Connect upload succeeded on 2026-09-11; uploaded package is processing.
+- Required before submission/review: App Store Connect processing result, TestFlight check, privacy manifest review, screenshots, support/privacy/terms URLs, reviewer notes.
