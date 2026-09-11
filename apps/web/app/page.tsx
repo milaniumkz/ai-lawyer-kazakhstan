@@ -128,6 +128,7 @@ type SpeechWindow = Window & {
 type SavedState = {
   view: View;
   theme: "dark" | "light";
+  language: Language;
   cases: CaseItem[];
   activeCaseId: string;
   caseText: string;
@@ -151,6 +152,157 @@ type SavedState = {
   middleName: string;
   city: string;
   profileComplete: boolean;
+};
+
+type Language = "RU" | "KZ" | "EN";
+
+const AUTH_I18N: Record<
+  Language,
+  {
+    brand: string;
+    loginTitle: string;
+    loginSubtitle: string;
+    steps: [string, string, string];
+    phoneLabel: string;
+    phonePlaceholder: string;
+    smsButton: string;
+    sending: string;
+    biometric: string;
+    newAccountHint: string;
+    languageStatus: string;
+    registerTitle: string;
+    registerSubtitle: string;
+    lastName: string;
+    firstName: string;
+    middleName: string;
+    city: string;
+    iinBin: string;
+    consent: string;
+    finishRegister: string;
+    alreadyHaveAccount: string;
+    otpTitle: string;
+    otpSent: string;
+    otpFallback: string;
+    otpPlaceholder: string;
+    resend: string;
+    confirm: string;
+    changePhone: string;
+    biometricTitle: string;
+    biometricSubtitle: string;
+    biometricEnable: string;
+    biometricEnabled: string;
+    later: string;
+    biometricHint: string;
+  }
+> = {
+  RU: {
+    brand: "AI Юрист",
+    loginTitle: "Вход в AI Юрист",
+    loginSubtitle: "Введите номер телефона. Если профиль уже есть в базе, откроется главная. Если нет - регистрация.",
+    steps: ["1. Номер", "2. SMS", "3. Профиль"],
+    phoneLabel: "Номер телефона",
+    phonePlaceholder: "+7 701 000 00 01",
+    smsButton: "Получить SMS-код",
+    sending: "Отправляю",
+    biometric: "Войти по Face ID / Touch ID",
+    newAccountHint: "Новый аккаунт создается только после подтверждения SMS-кода.",
+    languageStatus: "Язык интерфейса",
+    registerTitle: "Заполните анкету",
+    registerSubtitle: "Первый вход: данные нужны для документов и дел",
+    lastName: "Фамилия",
+    firstName: "Имя",
+    middleName: "Отчество",
+    city: "Город",
+    iinBin: "ИИН/БИН, если нужно",
+    consent: "Я принимаю условия и согласен на обработку данных",
+    finishRegister: "✧ Завершить регистрацию",
+    alreadyHaveAccount: "Уже есть аккаунт? Войти",
+    otpTitle: "Введите код из SMS",
+    otpSent: "Мы отправили код на номер",
+    otpFallback: "Мы отправили код на номер +7 707 123 45 67",
+    otpPlaceholder: "Код из SMS",
+    resend: "Отправить код повторно через",
+    confirm: "✧ Подтвердить",
+    changePhone: "Изменить номер",
+    biometricTitle: "Включить биометрию",
+    biometricSubtitle: "Входите в приложение быстрее и безопаснее с помощью Face ID / Touch ID",
+    biometricEnable: "✧ Включить",
+    biometricEnabled: "✓ Биометрия включена",
+    later: "Позже",
+    biometricHint: "▣ Биометрические данные хранятся только на устройстве",
+  },
+  KZ: {
+    brand: "AI Заңгер",
+    loginTitle: "AI Заңгерге кіру",
+    loginSubtitle: "Телефон нөмірін енгізіңіз. Профиль базада болса, басты бет ашылады. Болмаса - тіркеу ашылады.",
+    steps: ["1. Нөмір", "2. SMS", "3. Профиль"],
+    phoneLabel: "Телефон нөмірі",
+    phonePlaceholder: "+7 701 000 00 01",
+    smsButton: "SMS-код алу",
+    sending: "Жіберілуде",
+    biometric: "Face ID / Touch ID арқылы кіру",
+    newAccountHint: "Жаңа аккаунт SMS-код расталғаннан кейін ғана жасалады.",
+    languageStatus: "Интерфейс тілі",
+    registerTitle: "Анкетаны толтырыңыз",
+    registerSubtitle: "Алғашқы кіру: деректер құжаттар мен істер үшін қажет",
+    lastName: "Тегі",
+    firstName: "Аты",
+    middleName: "Әкесінің аты",
+    city: "Қала",
+    iinBin: "ЖСН/БСН, қажет болса",
+    consent: "Шарттарды қабылдаймын және деректерді өңдеуге келісемін",
+    finishRegister: "✧ Тіркеуді аяқтау",
+    alreadyHaveAccount: "Аккаунт бар ма? Кіру",
+    otpTitle: "SMS кодын енгізіңіз",
+    otpSent: "Код жіберілген нөмір",
+    otpFallback: "Код +7 707 123 45 67 нөміріне жіберілді",
+    otpPlaceholder: "SMS коды",
+    resend: "Кодты қайта жіберу",
+    confirm: "✧ Растау",
+    changePhone: "Нөмірді өзгерту",
+    biometricTitle: "Биометрияны қосу",
+    biometricSubtitle: "Face ID / Touch ID арқылы жылдам әрі қауіпсіз кіріңіз",
+    biometricEnable: "✧ Қосу",
+    biometricEnabled: "✓ Биометрия қосылды",
+    later: "Кейін",
+    biometricHint: "▣ Биометриялық деректер тек құрылғыда сақталады",
+  },
+  EN: {
+    brand: "AI Lawyer",
+    loginTitle: "Sign in to AI Lawyer",
+    loginSubtitle: "Enter your phone number. If your profile exists in the database, the home screen opens. Otherwise, registration opens.",
+    steps: ["1. Phone", "2. SMS", "3. Profile"],
+    phoneLabel: "Phone number",
+    phonePlaceholder: "+7 701 000 00 01",
+    smsButton: "Get SMS code",
+    sending: "Sending",
+    biometric: "Sign in with Face ID / Touch ID",
+    newAccountHint: "A new account is created only after SMS confirmation.",
+    languageStatus: "Interface language",
+    registerTitle: "Complete your profile",
+    registerSubtitle: "First sign-in: these details are needed for documents and cases",
+    lastName: "Last name",
+    firstName: "First name",
+    middleName: "Middle name",
+    city: "City",
+    iinBin: "IIN/BIN, if needed",
+    consent: "I accept the terms and consent to data processing",
+    finishRegister: "✧ Complete registration",
+    alreadyHaveAccount: "Already have an account? Sign in",
+    otpTitle: "Enter the SMS code",
+    otpSent: "We sent the code to",
+    otpFallback: "We sent the code to +7 707 123 45 67",
+    otpPlaceholder: "SMS code",
+    resend: "Resend code in",
+    confirm: "✧ Confirm",
+    changePhone: "Change phone",
+    biometricTitle: "Enable biometrics",
+    biometricSubtitle: "Sign in faster and safer with Face ID / Touch ID",
+    biometricEnable: "✧ Enable",
+    biometricEnabled: "✓ Biometrics enabled",
+    later: "Later",
+    biometricHint: "▣ Biometric data stays only on this device",
+  },
 };
 
 const CASE_CATEGORY_LABELS: Record<string, string> = {
@@ -310,6 +462,7 @@ export default function WebHome() {
 
   const activeCase =
     cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? null;
+  const authText = AUTH_I18N[language];
   const filteredCases = useMemo(
     () =>
       cases.filter(
@@ -353,6 +506,8 @@ export default function WebHome() {
       else setView("login");
       if (saved.theme === "light" || saved.theme === "dark")
         setTheme(saved.theme);
+      if (saved.language === "RU" || saved.language === "KZ" || saved.language === "EN")
+        setLanguage(saved.language);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
       if (saved.documents?.length) setDocuments(saved.documents);
@@ -401,6 +556,7 @@ export default function WebHome() {
     const saved: SavedState = {
       view,
       theme,
+      language,
       cases,
       activeCaseId,
       caseText,
@@ -430,6 +586,7 @@ export default function WebHome() {
     hydrated,
     view,
     theme,
+    language,
     cases,
     activeCaseId,
     caseText,
@@ -1515,7 +1672,7 @@ export default function WebHome() {
           {view === "login" && (
             <>
               <div className="loginTopBar">
-                <strong>AI Юрист</strong>
+                <strong>{authText.brand}</strong>
                 <div className="languageTabs">
                   {(["RU", "KZ", "EN"] as const).map((item) => (
                     <button
@@ -1523,7 +1680,7 @@ export default function WebHome() {
                       className={language === item ? "active" : ""}
                       onClick={() => {
                         setLanguage(item);
-                        setSyncState(`Язык интерфейса: ${item}`);
+                        setSyncState(`${AUTH_I18N[item].languageStatus}: ${item}`);
                       }}
                     >
                       {item}
@@ -1533,21 +1690,21 @@ export default function WebHome() {
               </div>
               <AuthMark />
               <Header
-                title="Вход в AI Юрист"
-                subtitle="Введите номер телефона. Если профиль уже есть в базе, откроется главная. Если нет - регистрация."
+                title={authText.loginTitle}
+                subtitle={authText.loginSubtitle}
               />
               <AuthDivider />
               <div className="loginFlow">
-                <span className="active">1. Номер</span>
-                <span>2. SMS</span>
-                <span>3. Профиль</span>
+                <span className="active">{authText.steps[0]}</span>
+                <span>{authText.steps[1]}</span>
+                <span>{authText.steps[2]}</span>
               </div>
               <label className="phoneField">
-                <small>Номер телефона</small>
+                <small>{authText.phoneLabel}</small>
                 <input
                   inputMode="tel"
                   autoComplete="tel"
-                  placeholder="+7 701 000 00 01"
+                  placeholder={authText.phonePlaceholder}
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                 />
@@ -1558,16 +1715,16 @@ export default function WebHome() {
                   void startAuth();
                 }}
               >
-                Получить SMS-код
+                {syncState.includes("Отправляю OTP") ? authText.sending : authText.smsButton}
               </button>
               <AuthDivider />
               <AuthActionRow
                 icon="⌗"
-                label="Войти по Face ID / Touch ID"
+                label={authText.biometric}
                 onClick={() => go("biometric")}
               />
               <p className="authStatusPill">
-                Новый аккаунт создается только после подтверждения SMS-кода.
+                {authText.newAccountHint}
               </p>
             </>
           )}
@@ -1575,32 +1732,32 @@ export default function WebHome() {
             <>
               <AuthMark />
               <Header
-                title="Заполните анкету"
-                subtitle="Первый вход: данные нужны для документов и дел"
+                title={authText.registerTitle}
+                subtitle={authText.registerSubtitle}
               />
               <div className="authFormCard">
                 <input
-                  placeholder="Фамилия"
+                  placeholder={authText.lastName}
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
                 />
                 <input
-                  placeholder="Имя"
+                  placeholder={authText.firstName}
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
                 />
                 <input
-                  placeholder="Отчество"
+                  placeholder={authText.middleName}
                   value={middleName}
                   onChange={(event) => setMiddleName(event.target.value)}
                 />
                 <input
-                  placeholder="Город"
+                  placeholder={authText.city}
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
                 />
                 <input
-                  placeholder="ИИН/БИН, если нужно"
+                  placeholder={authText.iinBin}
                   value={profileId}
                   onChange={(event) => setProfileId(event.target.value)}
                 />
@@ -1621,7 +1778,7 @@ export default function WebHome() {
                     checked={consent}
                     onChange={(event) => setConsent(event.target.checked)}
                   />{" "}
-                  Я принимаю условия и согласен на обработку данных
+                  {authText.consent}
                 </label>
                 <button
                   className="primary wide heroCta"
@@ -1630,11 +1787,11 @@ export default function WebHome() {
                     void saveProfile();
                   }}
                 >
-                  ✧ Завершить регистрацию
+                  {authText.finishRegister}
                 </button>
               </div>
               <button className="linkAction" onClick={() => go("login")}>
-                Уже есть аккаунт? Войти
+                {authText.alreadyHaveAccount}
               </button>
             </>
           )}
@@ -1642,17 +1799,17 @@ export default function WebHome() {
             <>
               <AuthMark />
               <Header
-                title="Введите код из SMS"
+                title={authText.otpTitle}
                 subtitle={
                   phone
-                    ? `Мы отправили код на номер ${phone}`
-                    : "Мы отправили код на номер +7 707 123 45 67"
+                    ? `${authText.otpSent} ${phone}`
+                    : authText.otpFallback
                 }
               />
               {otpHint && <small className="recordMeta">{otpHint}</small>}
               <input
                 className="otpInput"
-                placeholder="Код из SMS"
+                placeholder={authText.otpPlaceholder}
                 value={otp}
                 onChange={(event) => setOtp(event.target.value)}
               />
@@ -1662,7 +1819,7 @@ export default function WebHome() {
                 ))}
               </div>
               <p className="hint">
-                Отправить код повторно через <strong>00:42</strong>
+                {authText.resend} <strong>00:42</strong>
               </p>
               <button
                 className="primary wide heroCta"
@@ -1670,7 +1827,7 @@ export default function WebHome() {
                   void verifyOtp();
                 }}
               >
-                ✧ Подтвердить
+                {authText.confirm}
               </button>
               <AuthDivider />
               <button
@@ -1681,7 +1838,7 @@ export default function WebHome() {
                   go("login");
                 }}
               >
-                Изменить номер
+                {authText.changePhone}
               </button>
             </>
           )}
@@ -1689,8 +1846,8 @@ export default function WebHome() {
             <>
               <AuthMark icon="⌗" />
               <Header
-                title="Включить биометрию"
-                subtitle="Входите в приложение быстрее и безопаснее с помощью Face ID / Touch ID"
+                title={authText.biometricTitle}
+                subtitle={authText.biometricSubtitle}
               />
               <AuthDivider />
               <button
@@ -1700,16 +1857,16 @@ export default function WebHome() {
                   setSyncState("Биометрия включена локально");
                 }}
               >
-                {biometricEnabled ? "✓ Биометрия включена" : "✧ Включить"}
+                {biometricEnabled ? authText.biometricEnabled : authText.biometricEnable}
               </button>
               <button
                 className="wide outlineGold"
                 onClick={() => go("profile")}
               >
-                Позже
+                {authText.later}
               </button>
               <p className="hint secureHint">
-                ▣ Биометрические данные хранятся только на устройстве
+                {authText.biometricHint}
               </p>
             </>
           )}
