@@ -292,13 +292,13 @@
 - Web auth OTP input deploy — uploaded `/tmp/ai-lawyer-kz-auth-otp-input-v2.tar.gz` to `/opt/ai-lawyer-kz-auth-otp-input-v2.tar.gz` SHA-256 `ebaaf671d04258756292c566827970a9c0ef7a5552e7fab1d25c276ac3a05db4`; server install health passed, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and Playwright public smoke confirmed the phone input starts empty with placeholder only, the local SMS code is visible as `SMS-код для теста: 111111`, and OTP boxes accept/display `111111`.
 - Web auth phone prefix deploy — uploaded `/tmp/ai-lawyer-kz-auth-phone-prefix.tar.gz` to `/opt/ai-lawyer-kz-auth-phone-prefix.tar.gz` SHA-256 `ae80ed386ad450d4439206b9c031e8ce680780ab2e757db283ae19d61dbb5c17`; server install health passed, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and Playwright public smoke confirmed the phone input starts at `+7`, pasted `87011234567` becomes `+77011234567`, pasted `7017654321` becomes `+77017654321`, and clearing the field restores `+7`.
 - Web registration IIN/BIN validation deploy — uploaded `/tmp/ai-lawyer-kz-profile-iin-validation.tar.gz` to `/opt/ai-lawyer-kz-profile-iin-validation.tar.gz` SHA-256 `58b7660fd8400272c128ec1709c07be79fdad30f3aab407a67b6a993021d0fc3`; server install health passed, public smoke passed, and Playwright public registration flow confirmed invalid `979797979797` shows an inline Kazakhstan checksum error with the submit button disabled and no `/api/v1/profiles` request, while clearing optional IIN/BIN creates the profile and opens `home`.
+- App Store upload — `/Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=3` produced `apps/mobile/build/ios/ipa/AI Юрист.ipa` SHA-256 `264289e0fb1f6886c6b53db33aa2ec0fbbcc67632769661377c966818edf89e0`; bundle ID `kz.milanium.lawyer`, signing identity `Apple Distribution: Dmitriy Shtrakhov (Z3NZN92Y7P)`, team `Z3NZN92Y7P`. `xcrun altool --validate-app` passed with API key `G8J9YL2DH3`; `xcrun altool --upload-app` succeeded with no errors, Delivery UUID `22621fff-471e-4689-9fcf-51a2684d5563`, processing state `PROCESSING`. Flutter warned that the app icon and launch image still use default placeholder assets.
 - `docker --version` — `docker: command not found`.
 - Production Android signing — blocked, production keystore is not provided.
-- iOS archive/export for TestFlight/App Store — blocked, production Apple certificates/profiles and store account flow are not provided.
 - Custom production domain setup — blocked until DNS is provided; trusted HTTPS test endpoint is available at `https://89-207-250-217.sslip.io`.
 - Production external secrets — blocked until SMS/payment/storage/government provider credentials are provided.
 
 ## Не запускалось
 
 - Real PostgreSQL/Docker Compose health checks — Docker отсутствует.
-- App Store/TestFlight archive/export — нет Apple distribution credentials.
+- App Store Connect final review submission — upload is complete, but Apple build processing/review selection is still external App Store Connect state.
