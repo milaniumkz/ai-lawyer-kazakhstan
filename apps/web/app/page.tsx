@@ -233,6 +233,7 @@ export default function WebHome() {
   const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [language, setLanguage] = useState<"RU" | "KZ" | "EN">("RU");
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [activeCaseId, setActiveCaseId] = useState("");
   const [caseText, setCaseText] = useState("");
@@ -1310,9 +1311,11 @@ export default function WebHome() {
       })) as ApiAuthSession;
       setAuthUserId(verified.user.id);
       setSyncState(`Вход подтвержден API: ${verified.user.id.slice(0, 8)}`);
-      if (verified.isNewUser || verified.profileRequired || !profileComplete)
-        go("register");
-      else go("home");
+      if (verified.isNewUser || verified.profileRequired) setView("register");
+      else {
+        setProfileComplete(true);
+        setView("home");
+      }
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1361,7 +1364,7 @@ export default function WebHome() {
       });
       setProfileComplete(true);
       setSyncState(`Профиль сохранен в API: ${profileType}`);
-      go("home");
+      setView("home");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1502,65 +1505,70 @@ export default function WebHome() {
       view === "biometric"
     ) {
       return (
-        <section className="contentPanel authPanel">
-          <AppHeader
-            title={
-              view === "login"
-                ? "Вход и регистрация"
-                : view === "register"
-                  ? "Регистрация пользователя"
-                  : view === "otp"
-                    ? "Подтверждение"
-                    : "Быстрый вход"
-            }
-            subtitle="Безопасный вход, согласие v1 и локальная биометрия"
-          />
+        <section
+          className={
+            view === "login"
+              ? "contentPanel authPanel loginPanel"
+              : "contentPanel authPanel"
+          }
+        >
           {view === "login" && (
             <>
-              <div className="languageTabs">
-                <button className="active">RU</button>
-                <button>KZ</button>
-                <button>EN</button>
+              <div className="loginTopBar">
+                <strong>AI Юрист</strong>
+                <div className="languageTabs">
+                  {(["RU", "KZ", "EN"] as const).map((item) => (
+                    <button
+                      key={item}
+                      className={language === item ? "active" : ""}
+                      onClick={() => {
+                        setLanguage(item);
+                        setSyncState(`Язык интерфейса: ${item}`);
+                      }}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <AuthDivider />
-              <div className="authTabs">
-                <button className="active">Телефон</button>
-                <button
-                  onClick={() =>
-                    setSyncState("Сначала подтвердите номер SMS-кодом")
-                  }
-                >
-                  Анкета после SMS
-                </button>
-              </div>
-              <input
-                placeholder="+7 номер телефона"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+              <AuthMark />
+              <Header
+                title="Вход в AI Юрист"
+                subtitle="Введите номер телефона. Если профиль уже есть в базе, откроется главная. Если нет - регистрация."
               />
-              <AuthActionRow
-                icon="☎"
-                label="Получить SMS-код"
+              <AuthDivider />
+              <div className="loginFlow">
+                <span className="active">1. Номер</span>
+                <span>2. SMS</span>
+                <span>3. Профиль</span>
+              </div>
+              <label className="phoneField">
+                <small>Номер телефона</small>
+                <input
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="+7 701 000 00 01"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                />
+              </label>
+              <button
+                className="primary wide heroCta loginSubmit"
                 onClick={() => {
                   void startAuth();
                 }}
-              />
+              >
+                Получить SMS-код
+              </button>
               <AuthDivider />
               <AuthActionRow
                 icon="⌗"
                 label="Войти по Face ID / Touch ID"
                 onClick={() => go("biometric")}
               />
-              <button
-                className="linkAction"
-                onClick={() =>
-                  setSyncState(
-                    "Новый аккаунт создается после подтверждения SMS",
-                  )
-                }
-              >
-                Регистрация после SMS
-              </button>
+              <p className="authStatusPill">
+                Новый аккаунт создается только после подтверждения SMS-кода.
+              </p>
             </>
           )}
           {view === "register" && (
@@ -1650,7 +1658,7 @@ export default function WebHome() {
               />
               <div className="otpBoxes">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <span key={index}>{otp[index] ?? "481259"[index]}</span>
+                  <span key={index}>{otp[index] ?? ""}</span>
                 ))}
               </div>
               <p className="hint">

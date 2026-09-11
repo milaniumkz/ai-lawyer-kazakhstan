@@ -7,6 +7,7 @@ import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
 import 'package:ai_lawyer_kz/src/features/subscription/subscription_screen.dart';
 import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
 import 'package:ai_lawyer_kz/src/api/api_contract.dart';
+import 'package:ai_lawyer_kz/src/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -109,6 +110,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(profileApi.savedUserId, 'user-1');
     expect(find.text('Рассказать проблему'), findsOneWidget);
+  });
+
+  testWidgets('auth and registration screens do not show bottom navigation',
+      (tester) async {
+    for (final route in ['/login', '/otp', '/register']) {
+      await tester.pumpWidget(MaterialApp.router(
+        routerConfig: GoRouter(
+          initialLocation: route,
+          routes: [
+            GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+            GoRoute(
+                path: '/register', builder: (_, __) => const RegisterScreen()),
+            GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
+          ],
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppBottomNav), findsNothing);
+    }
   });
 
   testWidgets('all release routes open through app router', (tester) async {

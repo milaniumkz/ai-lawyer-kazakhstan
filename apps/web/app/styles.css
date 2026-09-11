@@ -1759,6 +1759,29 @@ button { cursor: pointer; }
   color: var(--text);
 }
 
+.appShell[data-view="login"],
+.appShell[data-view="register"],
+.appShell[data-view="otp"],
+.appShell[data-view="biometric"] {
+  grid-template-columns: minmax(340px, 620px);
+  align-items: center;
+}
+
+.appShell[data-view="login"] .sidebar,
+.appShell[data-view="login"] .rightPanel,
+.appShell[data-view="login"] .appStatus,
+.appShell[data-view="register"] .sidebar,
+.appShell[data-view="register"] .rightPanel,
+.appShell[data-view="register"] .appStatus,
+.appShell[data-view="otp"] .sidebar,
+.appShell[data-view="otp"] .rightPanel,
+.appShell[data-view="otp"] .appStatus,
+.appShell[data-view="biometric"] .sidebar,
+.appShell[data-view="biometric"] .rightPanel,
+.appShell[data-view="biometric"] .appStatus {
+  display: none;
+}
+
 .sidebar,
 .rightPanel,
 .deviceFrame,
@@ -1909,6 +1932,87 @@ button { cursor: pointer; }
   display: grid;
   align-content: center;
   gap: 14px;
+}
+
+.loginPanel {
+  align-content: start;
+  gap: 16px;
+  padding-top: 36px;
+}
+
+.loginTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 2px;
+}
+
+.loginTopBar strong {
+  color: var(--gold-strong);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.loginFlow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.loginFlow span,
+.authStatusPill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-soft) 82%, transparent);
+  color: var(--muted);
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.loginFlow span.active {
+  border-color: var(--gold);
+  color: var(--gold-strong);
+  box-shadow: inset 0 0 22px rgba(230, 189, 98, 0.1);
+}
+
+.phoneField {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--panel-soft) 86%, transparent);
+  padding: 14px 16px;
+}
+
+.phoneField small {
+  color: var(--gold-strong);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.phoneField input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 28px;
+}
+
+.phoneField input:focus {
+  outline: none;
+}
+
+.loginSubmit {
+  min-height: 72px;
+  font-size: 24px;
+}
+
+.authStatusPill {
+  border-radius: 18px;
+  line-height: 1.45;
 }
 
 .brandMark {
@@ -3554,6 +3658,13 @@ textarea { min-height: 132px; resize: vertical; }
   white-space: nowrap;
 }
 
+.appShell[data-view="login"] .bottomNav,
+.appShell[data-view="register"] .bottomNav,
+.appShell[data-view="otp"] .bottomNav,
+.appShell[data-view="biometric"] .bottomNav {
+  display: none;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
@@ -3568,6 +3679,12 @@ button:disabled {
   .appShell { grid-template-columns: minmax(0, 1fr); padding: 0; }
   .sidebar, .rightPanel { display: none; }
   .deviceFrame { border-radius: 0; min-height: 100vh; }
+  .appShell[data-view="login"] .bottomNav,
+  .appShell[data-view="register"] .bottomNav,
+  .appShell[data-view="otp"] .bottomNav,
+  .appShell[data-view="biometric"] .bottomNav {
+    display: none;
+  }
   .bottomNav {
     position: fixed;
     z-index: 20;
@@ -3579,6 +3696,42 @@ button:disabled {
 @media (max-width: 620px) {
   .deviceFrame { overflow: visible; }
   .homeScreen, .contentPanel { min-height: 100vh; padding: 34px 18px 118px; }
+  .loginPanel {
+    padding: 28px 24px 36px;
+  }
+  .loginPanel .authMark {
+    width: min(46vw, 176px);
+    margin-bottom: 8px;
+  }
+  .loginPanel .panelHeader {
+    text-align: center;
+  }
+  .loginPanel .panelHeader h2 {
+    font-size: 36px;
+    line-height: 1.02;
+  }
+  .loginPanel .panelHeader p {
+    max-width: 330px;
+    margin-inline: auto;
+    font-size: 15px;
+  }
+  .loginPanel .languageTabs {
+    min-width: 136px;
+  }
+  .loginPanel .languageTabs button {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+  .loginFlow span {
+    padding: 9px 6px;
+    font-size: 11px;
+  }
+  .phoneField input {
+    font-size: 24px;
+  }
+  .loginSubmit {
+    min-height: 66px;
+  }
   .appStatus {
     display: none;
   }
