@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AI Юрист использует микрофон для голосового описания юридической ситуации.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AI Юрист использует доступ к фото и файлам, чтобы прикреплять документы и доказательства к делу.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>AI Юрист использует распознавание речи, чтобы превратить голосовое описание в текст.</string>
 	<key>LSRequiresIPhoneOS</key>
