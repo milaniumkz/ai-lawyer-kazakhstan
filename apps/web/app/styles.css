@@ -92,8 +92,17 @@
   .appShell[data-view="otp"] .panelHeader p::first-line {
     color: #b6bfca;
   }
-  .appShell[data-view="otp"] .recordMeta {
-    display: none;
+  .appShell[data-view="otp"] .recordMeta.otpHint {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 14px;
+    border: 1px solid rgba(216, 163, 60, 0.55);
+    border-radius: 999px;
+    background: rgba(216, 163, 60, 0.12);
+    padding: 8px 14px;
+    color: var(--gold-strong);
+    font-size: 15px;
+    line-height: 1;
   }
   .appShell[data-view="otp"] .otpInput {
     position: absolute;
@@ -2188,6 +2197,11 @@ button { cursor: pointer; }
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: text;
 }
 
 .otpBoxes span {

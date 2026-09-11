@@ -183,6 +183,7 @@ const AUTH_I18N: Record<
     otpTitle: string;
     otpSent: string;
     otpFallback: string;
+    otpTestCode: string;
     otpPlaceholder: string;
     resend: string;
     confirm: string;
@@ -220,6 +221,7 @@ const AUTH_I18N: Record<
     otpTitle: "Введите код из SMS",
     otpSent: "Мы отправили код на номер",
     otpFallback: "Мы отправили код на номер +7 707 123 45 67",
+    otpTestCode: "SMS-код для теста",
     otpPlaceholder: "Код из SMS",
     resend: "Отправить код повторно через",
     confirm: "✧ Подтвердить",
@@ -256,6 +258,7 @@ const AUTH_I18N: Record<
     otpTitle: "SMS кодын енгізіңіз",
     otpSent: "Код жіберілген нөмір",
     otpFallback: "Код +7 707 123 45 67 нөміріне жіберілді",
+    otpTestCode: "Тест SMS-коды",
     otpPlaceholder: "SMS коды",
     resend: "Кодты қайта жіберу",
     confirm: "✧ Растау",
@@ -292,6 +295,7 @@ const AUTH_I18N: Record<
     otpTitle: "Enter the SMS code",
     otpSent: "We sent the code to",
     otpFallback: "We sent the code to +7 707 123 45 67",
+    otpTestCode: "Test SMS code",
     otpPlaceholder: "SMS code",
     resend: "Resend code in",
     confirm: "✧ Confirm",
@@ -407,6 +411,7 @@ export default function WebHome() {
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");
+  const otpInputRef = useRef<HTMLInputElement | null>(null);
   const [remoteCaseId, setRemoteCaseId] = useState("");
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
@@ -438,7 +443,7 @@ export default function WebHome() {
       text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
     },
   ]);
-  const [phone, setPhone] = useState("+77010000001");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
@@ -1438,7 +1443,7 @@ export default function WebHome() {
       setOtpId(registered.otpId);
       setOtpHint(
         registered.deliveryMode === "stub" && registered.testCode
-          ? `RC local SMS: ${registered.testCode}`
+          ? `${authText.otpTestCode}: ${registered.testCode}`
           : "Код отправлен через подключенный канал",
       );
       setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
@@ -1806,18 +1811,29 @@ export default function WebHome() {
                     : authText.otpFallback
                 }
               />
-              {otpHint && <small className="recordMeta">{otpHint}</small>}
+              {otpHint && <small className="recordMeta otpHint">{otpHint}</small>}
               <input
+                ref={otpInputRef}
                 className="otpInput"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
                 placeholder={authText.otpPlaceholder}
                 value={otp}
-                onChange={(event) => setOtp(event.target.value)}
+                onChange={(event) =>
+                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                }
               />
-              <div className="otpBoxes">
+              <button
+                type="button"
+                className="otpBoxes"
+                aria-label={authText.otpPlaceholder}
+                onClick={() => otpInputRef.current?.focus()}
+              >
                 {Array.from({ length: 6 }).map((_, index) => (
                   <span key={index}>{otp[index] ?? ""}</span>
                 ))}
-              </div>
+              </button>
               <p className="hint">
                 {authText.resend} <strong>00:42</strong>
               </p>
