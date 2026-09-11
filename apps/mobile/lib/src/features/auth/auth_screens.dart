@@ -21,23 +21,19 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final AuthApiPort authApi;
   late final TextEditingController loginController;
-  late final TextEditingController passwordController;
-  bool usePhone = true;
   var isBusy = false;
-  var status = 'Введите телефон или e-mail';
+  var status = 'Введите номер телефона';
 
   @override
   void initState() {
     super.initState();
     authApi = widget.authApi ?? HttpAuthApi();
     loginController = TextEditingController(text: '+77010000001');
-    passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
     loginController.dispose();
-    passwordController.dispose();
     super.dispose();
   }
 
@@ -49,10 +45,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       final result = await authApi.register(
-        channel: usePhone ? 'phone' : 'email',
-        phone: usePhone ? loginController.text.trim() : null,
-        email: usePhone ? null : loginController.text.trim(),
-        password: passwordController.text,
+        channel: 'phone',
+        phone: loginController.text.trim(),
       );
       AuthRuntime.otpId = result.otpId;
       AuthRuntime.otpCodeHint = result.testCode;
@@ -71,41 +65,16 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                  value: true,
-                  label: Text('Телефон'),
-                  icon: Icon(Icons.phone_outlined)),
-              ButtonSegment(
-                  value: false,
-                  label: Text('E-mail'),
-                  icon: Icon(Icons.mail_outline)),
-            ],
-            selected: {usePhone},
-            onSelectionChanged: (value) =>
-                setState(() => usePhone = value.first),
-          ),
+          const _AuthEmblem(icon: Icons.phone_iphone_outlined),
           const SizedBox(height: 14),
           const _AuthDivider(),
           const SizedBox(height: 16),
           TextField(
             controller: loginController,
-            keyboardType:
-                usePhone ? TextInputType.phone : TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: usePhone ? '+7 номер телефона' : 'E-mail',
-              prefixIcon:
-                  Icon(usePhone ? Icons.phone_outlined : Icons.mail_outline),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: passwordController,
-            obscureText: true,
+            keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
-              labelText: 'Пароль или PIN',
-              prefixIcon: Icon(Icons.lock_outline),
+              labelText: '+7 номер телефона',
+              prefixIcon: Icon(Icons.phone_outlined),
             ),
           ),
           const SizedBox(height: 12),
@@ -122,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
           FilledButton.icon(
             onPressed: isBusy ? null : requestOtp,
             icon: const Icon(Icons.auto_awesome),
-            label: Text(isBusy ? 'Отправляю' : 'Получить код'),
+            label: Text(isBusy ? 'Отправляю' : 'Получить SMS-код'),
           ),
           TextButton(
             onPressed: () => _showAction(
@@ -130,8 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text('Восстановить доступ'),
           ),
           TextButton(
-            onPressed: () => context.go('/register'),
-            child: const Text('Зарегистрироваться'),
+            onPressed: () => _showAction(
+                context, 'Анкета откроется после подтверждения SMS'),
+            child: const Text('Регистрация после SMS'),
           ),
         ],
       ),
@@ -140,57 +110,81 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key, this.authApi});
+  const RegisterScreen({super.key, this.authApi, this.profileApi});
 
   final AuthApiPort? authApi;
+  final ProfileApiPort? profileApi;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  late final AuthApiPort authApi;
-  late final TextEditingController nameController;
-  late final TextEditingController phoneController;
-  late final TextEditingController emailController;
+  late final ProfileApiPort profileApi;
+  late final TextEditingController lastNameController;
+  late final TextEditingController firstNameController;
+  late final TextEditingController middleNameController;
+  late final TextEditingController cityController;
+  late final TextEditingController iinController;
   var consent = true;
   var isBusy = false;
-  var status = 'Заполните данные регистрации';
+  var profileType = 'Физлицо';
+  var status = 'Заполните анкету после SMS';
 
   @override
   void initState() {
     super.initState();
-    authApi = widget.authApi ?? HttpAuthApi();
-    nameController = TextEditingController(text: 'Тестовый пользователь');
-    phoneController = TextEditingController(text: '+77010000002');
-    emailController = TextEditingController(text: 'client@example.kz');
+    profileApi = widget.profileApi ?? HttpProfileApi();
+    final parts = AuthRuntime.displayName.split(' ');
+    lastNameController =
+        TextEditingController(text: parts.length > 1 ? parts.first : '');
+    firstNameController =
+        TextEditingController(text: parts.length > 1 ? parts[1] : '');
+    middleNameController = TextEditingController(
+        text: parts.length > 2 ? parts.sublist(2).join(' ') : '');
+    cityController = TextEditingController(text: 'Алматы');
+    iinController = TextEditingController();
   }
 
   @override
   void dispose() {
-    nameController.dispose();
-    phoneController.dispose();
-    emailController.dispose();
+    lastNameController.dispose();
+    firstNameController.dispose();
+    middleNameController.dispose();
+    cityController.dispose();
+    iinController.dispose();
     super.dispose();
   }
 
   Future<void> createAccount() async {
     if (isBusy || !consent) return;
+    final fullName = [
+      lastNameController.text.trim(),
+      firstNameController.text.trim(),
+      middleNameController.text.trim(),
+    ].where((part) => part.isNotEmpty).join(' ');
+    if (lastNameController.text.trim().isEmpty ||
+        firstNameController.text.trim().isEmpty ||
+        cityController.text.trim().isEmpty) {
+      setState(() => status = 'Заполните фамилию, имя и город');
+      return;
+    }
     setState(() {
       isBusy = true;
-      status = 'Создаю аккаунт через API...';
+      status = 'Сохраняю профиль через API...';
     });
     try {
-      final result = await authApi.register(
-        channel: 'phone',
-        phone: phoneController.text.trim(),
-        email: emailController.text.trim(),
-        password: 'mobile-pin',
+      final id = await profileApi.createProfile(
+        userId: AuthRuntime.userId,
+        type: profileType,
+        displayName: fullName,
+        iinBin: iinController.text.trim(),
+        address: cityController.text.trim(),
       );
-      AuthRuntime.displayName = nameController.text.trim();
-      AuthRuntime.otpId = result.otpId;
-      AuthRuntime.otpCodeHint = result.testCode;
-      if (mounted) context.go('/otp');
+      AuthRuntime.displayName = fullName;
+      AuthRuntime.profileComplete = true;
+      setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
+      if (mounted) context.go('/');
     } catch (error) {
       setState(() => status = 'Регистрация API ошибка: $error');
     } finally {
@@ -211,29 +205,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               children: [
                 TextField(
-                  controller: nameController,
+                  controller: lastNameController,
                   decoration: const InputDecoration(
-                    labelText: 'Ф.И.О.',
+                    labelText: 'Фамилия',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
+                  controller: firstNameController,
                   decoration: const InputDecoration(
-                    labelText: '+7 номер телефона',
-                    prefixIcon: Icon(Icons.phone_outlined),
+                    labelText: 'Имя',
+                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: middleNameController,
                   decoration: const InputDecoration(
-                    labelText: 'E-mail',
-                    prefixIcon: Icon(Icons.mail_outline),
+                    labelText: 'Отчество',
+                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: cityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Город',
+                    prefixIcon: Icon(Icons.location_city_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: iinController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'ИИН/БИН, если нужно',
+                    prefixIcon: Icon(Icons.pin_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ProfileTypeSelector(
+                  selected: profileType,
+                  onSelected: (value) => setState(() => profileType = value),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
@@ -250,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           FilledButton.icon(
             onPressed: consent && !isBusy ? createAccount : null,
             icon: const Icon(Icons.auto_awesome),
-            label: Text(isBusy ? 'Создаю' : 'Создать аккаунт'),
+            label: Text(isBusy ? 'Сохраняю' : 'Завершить регистрацию'),
           ),
           TextButton(
             onPressed: () => context.go('/login'),
@@ -308,7 +322,12 @@ class OtpScreen extends StatelessWidget {
                   code: controller.text.trim(),
                 );
                 AuthRuntime.userId = session.userId;
-                if (context.mounted) context.go('/biometric');
+                AuthRuntime.profileComplete = !session.profileRequired;
+                if (context.mounted) {
+                  context.go(session.isNewUser || session.profileRequired
+                      ? '/register'
+                      : '/');
+                }
               } catch (error) {
                 if (context.mounted) {
                   _showAction(context, 'OTP API ошибка: $error');
@@ -513,6 +532,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         iinBin: iinController.text.trim(),
         address: addressController.text.trim(),
       );
+      AuthRuntime.displayName = nameController.text.trim();
+      AuthRuntime.profileComplete = true;
       setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
     } catch (error) {
       setState(() => status = 'Профиль API ошибка: $error');
@@ -1078,9 +1099,15 @@ class AuthOtpResult {
 }
 
 class AuthSessionResult {
-  const AuthSessionResult({required this.userId});
+  const AuthSessionResult({
+    required this.userId,
+    this.isNewUser = false,
+    this.profileRequired = true,
+  });
 
   final String userId;
+  final bool isNewUser;
+  final bool profileRequired;
 }
 
 class AccountExportResult {
@@ -1098,6 +1125,7 @@ abstract final class AuthRuntime {
   static String? otpCodeHint;
   static String userId = '';
   static String displayName = 'Тестовый пользователь';
+  static bool profileComplete = false;
 }
 
 class HttpAuthApi implements AuthApiPort {
@@ -1140,7 +1168,11 @@ class HttpAuthApi implements AuthApiPort {
       'code': code,
     });
     final user = body['user'] as Map<String, dynamic>;
-    return AuthSessionResult(userId: user['id'] as String);
+    return AuthSessionResult(
+      userId: user['id'] as String,
+      isNewUser: body['isNewUser'] as bool? ?? false,
+      profileRequired: body['profileRequired'] as bool? ?? true,
+    );
   }
 
   Future<Map<String, dynamic>> _postJson(

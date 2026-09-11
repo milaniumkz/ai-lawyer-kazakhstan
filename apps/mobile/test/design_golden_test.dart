@@ -14,7 +14,10 @@ void main() {
   testWidgets('home screen matches light design regression golden',
       (tester) async {
     await setReferenceViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp(themeMode: ThemeMode.light));
+    await tester.pumpWidget(const AiLawyerApp(
+      themeMode: ThemeMode.light,
+      initialLocation: '/',
+    ));
     await tester.pumpAndSettle();
 
     await expectLater(
@@ -24,7 +27,10 @@ void main() {
   testWidgets('home screen matches dark design regression golden',
       (tester) async {
     await setReferenceViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp(themeMode: ThemeMode.dark));
+    await tester.pumpWidget(const AiLawyerApp(
+      themeMode: ThemeMode.dark,
+      initialLocation: '/',
+    ));
     await tester.pumpAndSettle();
 
     await expectLater(

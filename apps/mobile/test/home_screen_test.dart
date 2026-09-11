@@ -2,6 +2,7 @@ import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/auth/auth_screens.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
 import 'package:ai_lawyer_kz/src/features/documents/document_screens.dart';
+import 'package:ai_lawyer_kz/src/features/home/home_screen.dart';
 import 'package:ai_lawyer_kz/src/features/legal/legal_screens.dart';
 import 'package:ai_lawyer_kz/src/features/subscription/subscription_screen.dart';
 import 'package:ai_lawyer_kz/src/features/workflows/workflow_screens.dart';
@@ -16,6 +17,7 @@ void main() {
     AuthRuntime.otpCodeHint = null;
     AuthRuntime.userId = '';
     AuthRuntime.displayName = 'Тестовый пользователь';
+    AuthRuntime.profileComplete = false;
     MobileCaseRuntime.activeCaseId = '';
     WorkflowRuntime.generatedBody = '';
   });
@@ -29,7 +31,7 @@ void main() {
 
   testWidgets('shows the main voice action', (tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
 
     expect(find.text('Рассказать проблему'), findsOneWidget);
     await tester.drag(find.text('Рассказать проблему'), const Offset(0, -500));
@@ -38,7 +40,7 @@ void main() {
   });
 
   testWidgets('main voice button opens case intake route', (tester) async {
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
@@ -46,7 +48,7 @@ void main() {
   });
 
   testWidgets('profile icon opens profile route', (tester) async {
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
 
     await tester.tap(find.byKey(const ValueKey('home-profile')));
     await tester.pumpAndSettle();
@@ -69,9 +71,11 @@ void main() {
     expect(find.text('Вход и регистрация'), findsWidgets);
   });
 
-  testWidgets('registration otp and biometric flow works', (tester) async {
+  testWidgets('phone otp requires profile before home on first login',
+      (tester) async {
     await setLargeViewport(tester);
     final api = _FakeAuthApi();
+    final profileApi = _FakeProfileApi();
     await tester.pumpWidget(MaterialApp.router(
       routerConfig: GoRouter(
         initialLocation: '/login',
@@ -80,31 +84,31 @@ void main() {
               path: '/login', builder: (_, __) => LoginScreen(authApi: api)),
           GoRoute(
               path: '/register',
-              builder: (_, __) => RegisterScreen(authApi: api)),
+              builder: (_, __) => RegisterScreen(profileApi: profileApi)),
           GoRoute(path: '/otp', builder: (_, __) => OtpScreen(authApi: api)),
-          GoRoute(
-              path: '/biometric', builder: (_, __) => const BiometricScreen()),
+          GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
         ],
       ),
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Зарегистрироваться'));
-    await tester.pumpAndSettle();
-    expect(find.text('Регистрация пользователя'), findsWidgets);
-
-    await tester.tap(find.text('Создать аккаунт'));
+    await tester.tap(find.text('Получить SMS-код'));
     await tester.pumpAndSettle();
     expect(api.registerCalled, isTrue);
     expect(find.text('RC local SMS: 111111'), findsOneWidget);
+
     await tester.tap(find.text('Подтвердить'));
     await tester.pumpAndSettle();
     expect(api.verifyCalled, isTrue);
-    expect(find.text('Быстрый вход по биометрии'), findsWidgets);
+    expect(find.text('Регистрация пользователя'), findsWidgets);
 
-    await tester.tap(find.text('Включить биометрию'));
+    await tester.enterText(find.widgetWithText(TextField, 'Фамилия'), 'Иванов');
+    await tester.enterText(find.widgetWithText(TextField, 'Имя'), 'Иван');
+    await tester.enterText(find.widgetWithText(TextField, 'Город'), 'Алматы');
+    await tester.tap(find.text('Завершить регистрацию'));
     await tester.pumpAndSettle();
-    expect(find.text('Включено'), findsOneWidget);
+    expect(profileApi.savedUserId, 'user-1');
+    expect(find.text('Рассказать проблему'), findsOneWidget);
   });
 
   testWidgets('all release routes open through app router', (tester) async {
@@ -150,7 +154,7 @@ void main() {
 
   testWidgets('case category flow opens documents', (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новое дело'));
     await tester.pumpAndSettle();
@@ -166,7 +170,7 @@ void main() {
   testWidgets('bottom navigation opens cases documents deadlines and profile',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('nav-cases')));
@@ -189,7 +193,7 @@ void main() {
   testWidgets('cases list filters search and opens case details',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Все дела'));
     await tester.tap(find.text('Все дела'));
@@ -245,7 +249,7 @@ void main() {
   testWidgets('profile settings help and biometric actions work',
       (tester) async {
     await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp());
+    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
@@ -713,7 +717,11 @@ class _FakeAuthApi implements AuthApiPort {
     required String code,
   }) async {
     verifyCalled = true;
-    return const AuthSessionResult(userId: 'user-1');
+    return const AuthSessionResult(
+      userId: 'user-1',
+      isNewUser: true,
+      profileRequired: true,
+    );
   }
 }
 

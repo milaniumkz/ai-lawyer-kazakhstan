@@ -64,7 +64,7 @@ class AiLawyerApp extends StatelessWidget {
   const AiLawyerApp({
     super.key,
     this.themeMode = ThemeMode.system,
-    this.initialLocation = '/',
+    this.initialLocation = '/login',
   });
 
   final ThemeMode themeMode;

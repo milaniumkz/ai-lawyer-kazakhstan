@@ -30,19 +30,87 @@ type View =
   | "settings"
   | "subscription"
   | "help";
-type CaseItem = { id: string; title: string; type: string; status: string; date: string; progress: number };
+type CaseItem = {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  date: string;
+  progress: number;
+};
 type Message = { role: "user" | "assistant"; text: string };
-type DocumentItem = { name: string; status: string; sizeBytes?: number; source?: "file" | "camera" };
+type DocumentItem = {
+  name: string;
+  status: string;
+  sizeBytes?: number;
+  source?: "file" | "camera";
+};
 type TaskItem = { title: string; due: string; done: boolean };
-type LegalNorm = { title: string; article: string; source: string; date: string; text: string; url: string };
-type ApiLegalCase = { id: string; title: string; category: string; status: string; readinessPercent: number; createdAt: string };
-type ApiDocument = { id: string; fileName: string; status: string; extractedFields?: Record<string, string> };
-type ApiGeneratedDocument = { id: string; title: string; body: string; status: string; expertReviewRequired: boolean };
-type ApiLegalAnswer = { status: string; message: string; fragment?: { title: string; article?: string; sourceUrl: string; text: string; retrievedAt?: string } };
-type ApiOtpResponse = { otpId: string; deliveryMode: "stub" | "sms" | "email"; testCode?: string };
-type TranscriptJob = { id: string; status: string; transcript: string; progress: string[]; audioFileId?: string; audioSha256?: string };
-type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
-type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
+type LegalNorm = {
+  title: string;
+  article: string;
+  source: string;
+  date: string;
+  text: string;
+  url: string;
+};
+type ApiLegalCase = {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  readinessPercent: number;
+  createdAt: string;
+};
+type ApiDocument = {
+  id: string;
+  fileName: string;
+  status: string;
+  extractedFields?: Record<string, string>;
+};
+type ApiGeneratedDocument = {
+  id: string;
+  title: string;
+  body: string;
+  status: string;
+  expertReviewRequired: boolean;
+};
+type ApiLegalAnswer = {
+  status: string;
+  message: string;
+  fragment?: {
+    title: string;
+    article?: string;
+    sourceUrl: string;
+    text: string;
+    retrievedAt?: string;
+  };
+};
+type ApiOtpResponse = {
+  otpId: string;
+  deliveryMode: "stub" | "sms" | "email";
+  testCode?: string;
+};
+type ApiAuthSession = {
+  user: { id: string };
+  isNewUser?: boolean;
+  profileRequired?: boolean;
+};
+type TranscriptJob = {
+  id: string;
+  status: string;
+  transcript: string;
+  progress: string[];
+  audioFileId?: string;
+  audioSha256?: string;
+};
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  0: { transcript: string };
+};
+type SpeechRecognitionEventLike = {
+  results: ArrayLike<SpeechRecognitionResultLike>;
+};
 type SpeechRecognitionInstance = {
   lang: string;
   continuous: boolean;
@@ -78,6 +146,11 @@ type SavedState = {
   generatedClaimBody: string;
   claimSendContact: string;
   claimSendMessage: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  city: string;
+  profileComplete: boolean;
 };
 
 const screens: { label: string; view: View }[] = [
@@ -108,13 +181,48 @@ const screens: { label: string; view: View }[] = [
   { label: "Помощь", view: "help" },
 ];
 
-const emptyCase: CaseItem = { id: "2024-0015", title: "Взыскание долга", type: "Гражданское право", status: "В работе", date: "15 мая 2024", progress: 65 };
+const emptyCase: CaseItem = {
+  id: "2024-0015",
+  title: "Взыскание долга",
+  type: "Гражданское право",
+  status: "В работе",
+  date: "15 мая 2024",
+  progress: 65,
+};
 const designCaseList: CaseItem[] = [
   emptyCase,
-  { id: "2024-0012", title: "Алименты", type: "Семейное право", status: "Ожидает документов", date: "10 мая 2024", progress: 42 },
-  { id: "2024-0008", title: "Претензия к подрядчику", type: "Договорное право", status: "Отправлено", date: "8 мая 2024", progress: 78 },
-  { id: "2024-0003", title: "Раздел имущества", type: "Семейное право", status: "Срок близко", date: "5 мая 2024", progress: 55 },
-  { id: "2024-0001", title: "Защита прав потребителя", type: "Защита прав", status: "В работе", date: "2 мая 2024", progress: 61 },
+  {
+    id: "2024-0012",
+    title: "Алименты",
+    type: "Семейное право",
+    status: "Ожидает документов",
+    date: "10 мая 2024",
+    progress: 42,
+  },
+  {
+    id: "2024-0008",
+    title: "Претензия к подрядчику",
+    type: "Договорное право",
+    status: "Отправлено",
+    date: "8 мая 2024",
+    progress: 78,
+  },
+  {
+    id: "2024-0003",
+    title: "Раздел имущества",
+    type: "Семейное право",
+    status: "Срок близко",
+    date: "5 мая 2024",
+    progress: 55,
+  },
+  {
+    id: "2024-0001",
+    title: "Защита прав потребителя",
+    type: "Защита прав",
+    status: "В работе",
+    date: "2 мая 2024",
+    progress: 61,
+  },
 ];
 
 export default function WebHome() {
@@ -127,7 +235,7 @@ export default function WebHome() {
   const audioBlobRef = useRef<Blob | null>(null);
   const speechDraftRef = useRef("");
   const clientSequenceRef = useRef(0);
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [cases, setCases] = useState<CaseItem[]>([]);
@@ -143,7 +251,9 @@ export default function WebHome() {
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioUrl, setAudioUrl] = useState("");
-  const [speechStatus, setSpeechStatus] = useState("Распознавание речи еще не запускалось");
+  const [speechStatus, setSpeechStatus] = useState(
+    "Распознавание речи еще не запускалось",
+  );
   const [transcriptJobId, setTranscriptJobId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Семейное право");
   const [authUserId, setAuthUserId] = useState("");
@@ -154,30 +264,43 @@ export default function WebHome() {
   const [selectedDocument, setSelectedDocument] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
   const [claimSendContact, setClaimSendContact] = useState("+7 905 123-45-67");
-  const [claimSendMessage, setClaimSendMessage] = useState("Здравствуйте!\nНаправляю Вам претензию по делу №2024-0015.\nПрошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист");
-  const [deadlineStatus, setDeadlineStatus] = useState("Ближайший срок: досудебная претензия за 10 дней");
-  const [subscriptionStatus, setSubscriptionStatus] = useState("Лимиты обновятся после входа");
+  const [claimSendMessage, setClaimSendMessage] = useState(
+    "Здравствуйте!\nНаправляю Вам претензию по делу №2024-0015.\nПрошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист",
+  );
+  const [deadlineStatus, setDeadlineStatus] = useState(
+    "Ближайший срок: досудебная претензия за 10 дней",
+  );
+  const [subscriptionStatus, setSubscriptionStatus] = useState(
+    "Лимиты обновятся после входа",
+  );
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("");
-  const [legalAnswer, setLegalAnswer] = useState("Введите вопрос и нажмите найти норму.");
+  const [legalAnswer, setLegalAnswer] = useState(
+    "Введите вопрос и нажмите найти норму.",
+  );
   const [legalTab, setLegalTab] = useState("Кодексы");
   const [legalActiveOnly, setLegalActiveOnly] = useState(true);
   const [legalNorms, setLegalNorms] = useState<LegalNorm[]>([]);
   const [selectedNorm, setSelectedNorm] = useState<LegalNorm | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК." },
+    {
+      role: "assistant",
+      text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
+    },
   ]);
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("Дмитрий");
-  const [email, setEmail] = useState("client@example.kz");
+  const [phone, setPhone] = useState("+77010000001");
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
-  const [profileName, setProfileName] = useState("Дмитрий");
-  const [profileId, setProfileId] = useState("********1234");
+  const [profileName, setProfileName] = useState("");
+  const [profileId, setProfileId] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [city, setCity] = useState("");
+  const [profileComplete, setProfileComplete] = useState(false);
   const [syncState, setSyncState] = useState("Не синхронизировано");
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
@@ -189,18 +312,34 @@ export default function WebHome() {
     { title: "Сверить срок исковой давности", due: "До подачи", done: true },
   ]);
 
-  const activeCase = cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? emptyCase;
+  const activeCase =
+    cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? emptyCase;
   const visibleCaseSource = cases.length ? cases : designCaseList;
   const filteredCases = useMemo(
-    () => visibleCaseSource.filter((item) => item.title.toLowerCase().includes(caseSearch.toLowerCase()) || caseSearch.length < 3),
+    () =>
+      visibleCaseSource.filter(
+        (item) =>
+          item.title.toLowerCase().includes(caseSearch.toLowerCase()) ||
+          caseSearch.length < 3,
+      ),
     [visibleCaseSource, caseSearch],
   );
 
   useEffect(() => {
     if (!hydrated) return;
+    const publicViews: View[] = ["onboarding", "login", "otp", "register"];
+    if (!authUserId && !publicViews.includes(view)) {
+      setView("login");
+      return;
+    }
+    if (authUserId && !profileComplete && !publicViews.includes(view)) {
+      setView("register");
+      return;
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (window.location.hash !== `#${view}`) window.history.replaceState(null, "", `#${view}`);
-  }, [hydrated, view]);
+    if (window.location.hash !== `#${view}`)
+      window.history.replaceState(null, "", `#${view}`);
+  }, [authUserId, hydrated, profileComplete, view]);
 
   useEffect(() => {
     const hashView = window.location.hash.replace("#", "") as View;
@@ -214,8 +353,11 @@ export default function WebHome() {
     try {
       const saved = JSON.parse(raw) as Partial<SavedState>;
       if (hasHashView) setView(hashView);
-      else if (saved.view) setView(saved.view);
-      if (saved.theme === "light" || saved.theme === "dark") setTheme(saved.theme);
+      else if (saved.authUserId && saved.profileComplete && saved.view)
+        setView(saved.view);
+      else setView("login");
+      if (saved.theme === "light" || saved.theme === "dark")
+        setTheme(saved.theme);
       if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
@@ -224,17 +366,24 @@ export default function WebHome() {
       if (saved.profileType) setProfileType(saved.profileType);
       if (saved.profileName) {
         setProfileName(saved.profileName);
-        setName(saved.profileName);
       }
       if (saved.profileId) setProfileId(saved.profileId);
+      if (saved.firstName) setFirstName(saved.firstName);
+      if (saved.lastName) setLastName(saved.lastName);
+      if (saved.middleName) setMiddleName(saved.middleName);
+      if (saved.city) setCity(saved.city);
+      if (typeof saved.profileComplete === "boolean")
+        setProfileComplete(saved.profileComplete);
       if (typeof saved.maskPii === "boolean") setMaskPii(saved.maskPii);
-      if (typeof saved.budgetAlerts === "boolean") setBudgetAlerts(saved.budgetAlerts);
+      if (typeof saved.budgetAlerts === "boolean")
+        setBudgetAlerts(saved.budgetAlerts);
       if (saved.tasks?.length) setTasks(saved.tasks);
       if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
       if (saved.authUserId) setAuthUserId(saved.authUserId);
       if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
-      if (saved.generatedClaimBody) setGeneratedClaimBody(saved.generatedClaimBody);
+      if (saved.generatedClaimBody)
+        setGeneratedClaimBody(saved.generatedClaimBody);
       if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
       if (saved.claimSendMessage) setClaimSendMessage(saved.claimSendMessage);
       setSyncState("Локальные данные восстановлены");
@@ -255,23 +404,91 @@ export default function WebHome() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const saved: SavedState = { view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody, claimSendContact, claimSendMessage };
+    const saved: SavedState = {
+      view,
+      theme,
+      cases,
+      activeCaseId,
+      caseText,
+      documents,
+      messages,
+      profileType,
+      profileName,
+      profileId,
+      maskPii,
+      budgetAlerts,
+      tasks,
+      selectedCategory,
+      authUserId,
+      remoteCaseId,
+      remoteDocumentId,
+      generatedClaimBody,
+      claimSendContact,
+      claimSendMessage,
+      firstName,
+      lastName,
+      middleName,
+      city,
+      profileComplete,
+    };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
-  }, [hydrated, view, theme, cases, activeCaseId, caseText, documents, messages, profileType, profileName, profileId, maskPii, budgetAlerts, tasks, selectedCategory, authUserId, remoteCaseId, remoteDocumentId, generatedClaimBody, claimSendContact, claimSendMessage]);
+  }, [
+    hydrated,
+    view,
+    theme,
+    cases,
+    activeCaseId,
+    caseText,
+    documents,
+    messages,
+    profileType,
+    profileName,
+    profileId,
+    maskPii,
+    budgetAlerts,
+    tasks,
+    selectedCategory,
+    authUserId,
+    remoteCaseId,
+    remoteDocumentId,
+    generatedClaimBody,
+    claimSendContact,
+    claimSendMessage,
+    firstName,
+    lastName,
+    middleName,
+    city,
+    profileComplete,
+  ]);
 
   useEffect(() => {
     if (!recording || paused) return undefined;
-    const timer = window.setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
+    const timer = window.setInterval(
+      () => setRecordingSeconds((seconds) => seconds + 1),
+      1000,
+    );
     return () => window.clearInterval(timer);
   }, [paused, recording]);
 
-  useEffect(() => () => {
-    speechRecognitionRef.current?.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-  }, [audioUrl]);
+  useEffect(
+    () => () => {
+      speechRecognitionRef.current?.stop();
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    },
+    [audioUrl],
+  );
 
   function go(nextView: View) {
+    const publicViews: View[] = ["onboarding", "login", "otp", "register"];
+    if (!authUserId && !publicViews.includes(nextView)) {
+      setView("login");
+      return;
+    }
+    if (authUserId && !profileComplete && !publicViews.includes(nextView)) {
+      setView("register");
+      return;
+    }
     setView(nextView);
   }
 
@@ -298,8 +515,15 @@ export default function WebHome() {
       id: record.id.slice(0, 8),
       title: record.title,
       type: categoryMap[record.category] ?? selectedCategory,
-      status: record.status === "consultation" ? "Консультация открыта" : "Требует уточнения",
-      date: new Date(record.createdAt).toLocaleDateString("ru-KZ", { day: "2-digit", month: "long", year: "numeric" }),
+      status:
+        record.status === "consultation"
+          ? "Консультация открыта"
+          : "Требует уточнения",
+      date: new Date(record.createdAt).toLocaleDateString("ru-KZ", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
       progress: record.readinessPercent,
     };
   }
@@ -312,20 +536,34 @@ export default function WebHome() {
     setSyncState("Создаю дело в API...");
     try {
       const ownerUserId = await ensureUser();
-      const legalCase = await apiJson("/cases", {
+      const legalCase = (await apiJson("/cases", {
         method: "POST",
-        headers: { "idempotency-key": nextClientId("web-case"), "x-user-id": ownerUserId },
-        body: JSON.stringify({ ownerUserId, problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}` }),
-      }) as ApiLegalCase;
+        headers: {
+          "idempotency-key": nextClientId("web-case"),
+          "x-user-id": ownerUserId,
+        },
+        body: JSON.stringify({
+          ownerUserId,
+          problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}`,
+        }),
+      })) as ApiLegalCase;
       const next = mapCase(legalCase);
       setRemoteCaseId(legalCase.id);
       setCases([next, ...cases]);
       setActiveCaseId(next.id);
-      setTasks((items) => items.map((item) => item.title === "Проверить расписку" ? { ...item, done: true } : item));
+      setTasks((items) =>
+        items.map((item) =>
+          item.title === "Проверить расписку" ? { ...item, done: true } : item,
+        ),
+      );
       setSyncState(`Дело сохранено в API: №${next.id}`);
       go("case");
     } catch (error) {
-      setSyncState(error instanceof Error ? `API ошибка: ${error.message}` : "Не удалось создать дело");
+      setSyncState(
+        error instanceof Error
+          ? `API ошибка: ${error.message}`
+          : "Не удалось создать дело",
+      );
     }
   }
 
@@ -335,7 +573,10 @@ export default function WebHome() {
     setMessages((items) => [
       ...items,
       { role: "user", text: outgoing },
-      { role: "assistant", text: "Для ответа потребуется договор, расписка, переписка и подтвержденная норма из официального источника РК." },
+      {
+        role: "assistant",
+        text: "Для ответа потребуется договор, расписка, переписка и подтвержденная норма из официального источника РК.",
+      },
     ]);
     setChatInput("");
     updateActiveCase("AI уточняет факты", 72);
@@ -345,28 +586,54 @@ export default function WebHome() {
     }
     try {
       const userId = await ensureUser();
-      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
-      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as { role: "system" | "user" | "assistant"; text: string }[];
-      setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ role: item.role as "user" | "assistant", text: item.text })));
+      await apiJson(`/cases/${remoteCaseId}/messages`, {
+        method: "POST",
+        headers: { "x-user-id": userId },
+        body: JSON.stringify({ role: "user", text: outgoing }),
+      });
+      const serverMessages = (await apiJson(`/cases/${remoteCaseId}/messages`, {
+        headers: { "x-user-id": userId },
+      })) as { role: "system" | "user" | "assistant"; text: string }[];
+      setMessages(
+        serverMessages
+          .filter((item) => item.role !== "system")
+          .map((item) => ({
+            role: item.role as "user" | "assistant",
+            text: item.text,
+          })),
+      );
       setSyncState("Чат сохранен в API");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Чат локально, API ошибка: ${error.message}` : "Чат локально");
+      setSyncState(
+        error instanceof Error
+          ? `Чат локально, API ошибка: ${error.message}`
+          : "Чат локально",
+      );
     }
   }
 
   async function fileSha256(file: File) {
     const buffer = await file.arrayBuffer();
     const digest = await crypto.subtle.digest("SHA-256", buffer);
-    return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   async function addDocument(file: File, source: "file" | "camera" = "file") {
-    const localDoc: DocumentItem = { name: file.name, status: "Загружен", sizeBytes: file.size, source };
+    const localDoc: DocumentItem = {
+      name: file.name,
+      status: "Загружен",
+      sizeBytes: file.size,
+      source,
+    };
     setSelectedDocument(file.name);
     setDocuments((items) => [localDoc, ...items]);
     updateActiveCase("Документы загружены", 76);
     if (!remoteCaseId) {
-      setSyncState(`Файл добавлен из браузера: ${file.name}. Для API сохранения сначала создайте дело.`);
+      setSyncState(
+        `Файл добавлен из браузера: ${file.name}. Для API сохранения сначала создайте дело.`,
+      );
       return;
     }
     try {
@@ -374,30 +641,54 @@ export default function WebHome() {
       const session = await apiJson("/files/upload-sessions", {
         method: "POST",
         headers: { "x-user-id": userId },
-        body: JSON.stringify({ caseId: remoteCaseId, fileName: file.name, mimeType: file.type || mimeTypeFor(file.name), sizeBytes: file.size }),
+        body: JSON.stringify({
+          caseId: remoteCaseId,
+          fileName: file.name,
+          mimeType: file.type || mimeTypeFor(file.name),
+          sizeBytes: file.size,
+        }),
       });
-      const document = await apiJson("/files/complete", {
+      const document = (await apiJson("/files/complete", {
         method: "POST",
         headers: { "x-user-id": userId },
-        body: JSON.stringify({ uploadSessionId: session.id, sha256: await fileSha256(file) }),
-      }) as ApiDocument;
+        body: JSON.stringify({
+          uploadSessionId: session.id,
+          sha256: await fileSha256(file),
+        }),
+      })) as ApiDocument;
       setRemoteDocumentId(document.id);
-      setDocuments((items) => items.map((item, index) => index === 0 ? { ...item, name: document.fileName, status: "OCR-review" } : item));
+      setDocuments((items) =>
+        items.map((item, index) =>
+          index === 0
+            ? { ...item, name: document.fileName, status: "OCR-review" }
+            : item,
+        ),
+      );
       setSyncState(`Документ сохранен в API: ${document.fileName}`);
     } catch (error) {
-      setSyncState(error instanceof Error ? `Документ локально, API ошибка: ${error.message}` : "Документ добавлен локально");
+      setSyncState(
+        error instanceof Error
+          ? `Документ локально, API ошибка: ${error.message}`
+          : "Документ добавлен локально",
+      );
     }
   }
 
   async function apiJson(path: string, init?: RequestInit) {
     const response = await fetch(`/api/v1${path}`, {
       ...init,
-      headers: { "content-type": "application/json", "x-correlation-id": "web-app-sync", ...(init?.headers ?? {}) },
+      headers: {
+        "content-type": "application/json",
+        "x-correlation-id": "web-app-sync",
+        ...(init?.headers ?? {}),
+      },
     });
     const body = await response.json();
     if (!response.ok) {
       const message = body.message ?? body.error ?? `${path} failed`;
-      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+      throw new Error(
+        typeof message === "string" ? message : JSON.stringify(message),
+      );
     }
     return body;
   }
@@ -405,13 +696,18 @@ export default function WebHome() {
   async function apiForm(path: string, formData: FormData, userId?: string) {
     const response = await fetch(`/api/v1${path}`, {
       method: "POST",
-      headers: { "x-correlation-id": "web-voice-upload", ...(userId ? { "x-user-id": userId } : {}) },
+      headers: {
+        "x-correlation-id": "web-voice-upload",
+        ...(userId ? { "x-user-id": userId } : {}),
+      },
       body: formData,
     });
     const body = await response.json();
     if (!response.ok) {
       const message = body.message ?? body.error ?? `${path} failed`;
-      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+      throw new Error(
+        typeof message === "string" ? message : JSON.stringify(message),
+      );
     }
     return body;
   }
@@ -425,13 +721,21 @@ export default function WebHome() {
         go("login");
         return;
       }
-      const remoteCases = await apiJson("/cases", { headers: { "x-user-id": authUserId } }) as ApiLegalCase[];
+      const remoteCases = (await apiJson("/cases", {
+        headers: { "x-user-id": authUserId },
+      })) as ApiLegalCase[];
       setCases(remoteCases.map(mapCase));
-      const budget = await apiJson("/subscriptions/current", { headers: { "x-user-id": authUserId } });
+      const budget = await apiJson("/subscriptions/current", {
+        headers: { "x-user-id": authUserId },
+      });
       setSubscriptionStatus(`Тариф ${budget.plan}, расход ${budget.percent}%`);
       setSyncState(`Синхронизировано: ${remoteCases.length} дел`);
     } catch (error) {
-      setSyncState(error instanceof Error ? `Ошибка: ${error.message}` : "Ошибка синхронизации");
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка: ${error.message}`
+          : "Ошибка синхронизации",
+      );
     }
   }
 
@@ -440,8 +744,10 @@ export default function WebHome() {
     if (ext === "png") return "image/png";
     if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
     if (ext === "doc") return "application/msword";
-    if (ext === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    if (ext === "xlsx") return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    if (ext === "docx")
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    if (ext === "xlsx")
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     return "application/pdf";
   }
 
@@ -460,47 +766,69 @@ export default function WebHome() {
       await apiJson(`/documents/${remoteDocumentId}/ocr-confirm`, {
         method: "POST",
         headers: { "x-user-id": userId },
-        body: JSON.stringify({ fields: { documentTitle: selectedDocument, confirmedBy: profileName } }),
+        body: JSON.stringify({
+          fields: { documentTitle: selectedDocument, confirmedBy: profileName },
+        }),
       });
-      setDocuments((items) => items.map((item) => item.name === selectedDocument ? { ...item, status: "Готов" } : item));
+      setDocuments((items) =>
+        items.map((item) =>
+          item.name === selectedDocument ? { ...item, status: "Готов" } : item,
+        ),
+      );
       setSyncState("OCR поля подтверждены в API");
     } catch (error) {
-      setSyncState(error instanceof Error ? `OCR локально, API ошибка: ${error.message}` : "OCR подтвержден локально");
+      setSyncState(
+        error instanceof Error
+          ? `OCR локально, API ошибка: ${error.message}`
+          : "OCR подтвержден локально",
+      );
     }
   }
 
   async function runLegalSearch() {
-    const query = `${legalQuery.trim()} ${legalTab} ${legalActiveOnly ? "действующая редакция" : "архив редакций"}`.trim();
+    const query =
+      `${legalQuery.trim()} ${legalTab} ${legalActiveOnly ? "действующая редакция" : "архив редакций"}`.trim();
     if (legalQuery.trim().length < 8) {
       setLegalAnswer("Введите вопрос подробнее.");
       return;
     }
     setLegalAnswer("Идет поиск по официальным источникам РК...");
     try {
-      const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query }) }) as ApiLegalAnswer;
+      const answer = (await apiJson("/rag/answer", {
+        method: "POST",
+        body: JSON.stringify({ query }),
+      })) as ApiLegalAnswer;
       if (answer.fragment) {
         const norm: LegalNorm = {
           title: answer.fragment.title,
           article: answer.fragment.article ?? "Официальный фрагмент",
           source: new URL(answer.fragment.sourceUrl).hostname,
-          date: answer.fragment.retrievedAt ? new Date(answer.fragment.retrievedAt).toLocaleDateString("ru-KZ") : "проверено API",
+          date: answer.fragment.retrievedAt
+            ? new Date(answer.fragment.retrievedAt).toLocaleDateString("ru-KZ")
+            : "проверено API",
           text: answer.fragment.text,
           url: answer.fragment.sourceUrl,
         };
         setLegalNorms([norm]);
         setSelectedNorm(norm);
-        setLegalAnswer(`${answer.message} Источник: ${answer.fragment.sourceUrl}`);
+        setLegalAnswer(
+          `${answer.message} Источник: ${answer.fragment.sourceUrl}`,
+        );
       } else {
         setLegalNorms([]);
         setSelectedNorm(null);
-        setLegalAnswer(`${answer.message} Нет подтвержденной нормы из официального источника. Нужна ручная проверка.`);
+        setLegalAnswer(
+          `${answer.message} Нет подтвержденной нормы из официального источника. Нужна ручная проверка.`,
+        );
       }
       setSyncState(`RAG статус: ${answer.status}`);
     } catch (error) {
       setLegalNorms([]);
       setSelectedNorm(null);
       setLegalAnswer("Нет подтвержденной нормы. Требуется ручная проверка.");
-      setSyncState(error instanceof Error ? `RAG ошибка: ${error.message}` : "RAG ошибка");
+      setSyncState(
+        error instanceof Error ? `RAG ошибка: ${error.message}` : "RAG ошибка",
+      );
     }
   }
 
@@ -510,7 +838,10 @@ export default function WebHome() {
       return;
     }
     const citation = `${selectedNorm.title}, ${selectedNorm.article}, источник: ${selectedNorm.source}`;
-    setGeneratedClaimBody((body) => `${body || "Проект документа"}\n\nПодтвержденная норма: ${citation}`);
+    setGeneratedClaimBody(
+      (body) =>
+        `${body || "Проект документа"}\n\nПодтвержденная норма: ${citation}`,
+    );
     setSyncState(`Норма добавлена в документ: ${selectedNorm.article}`);
     go("claimDraft");
   }
@@ -522,7 +853,9 @@ export default function WebHome() {
     }
     const url = selectedNorm.url;
     window.open(url, "_blank", "noopener,noreferrer");
-    setLegalAnswer(`Официальный источник открыт: ${url}. Если браузер заблокировал новую вкладку, используйте этот адрес вручную.`);
+    setLegalAnswer(
+      `Официальный источник открыт: ${url}. Если браузер заблокировал новую вкладку, используйте этот адрес вручную.`,
+    );
     setSyncState(`Источник выбран: ${selectedNorm.source}`);
   }
 
@@ -534,8 +867,8 @@ export default function WebHome() {
     setSyncState("Формирую претензию...");
     try {
       const userId = await ensureUser();
-      const templates = await apiJson("/templates") as { id: string }[];
-      const generated = await apiJson("/documents/generate", {
+      const templates = (await apiJson("/templates")) as { id: string }[];
+      const generated = (await apiJson("/documents/generate", {
         method: "POST",
         headers: { "x-user-id": userId },
         body: JSON.stringify({
@@ -550,14 +883,18 @@ export default function WebHome() {
           },
           confirmedCitationIds: [],
         }),
-      }) as ApiGeneratedDocument;
+      })) as ApiGeneratedDocument;
       setGeneratedClaimBody(generated.body);
       setClaimReady(true);
       updateActiveCase("Проект претензии готов", 91);
       setSyncState(`Проект создан в API: ${generated.id.slice(0, 8)}`);
       go("claimDraft");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Ошибка генерации: ${error.message}` : "Не удалось сформировать претензию");
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка генерации: ${error.message}`
+          : "Не удалось сформировать претензию",
+      );
     }
   }
 
@@ -577,13 +914,21 @@ export default function WebHome() {
     if (remoteCaseId) {
       try {
         const userId = await ensureUser();
-        const remoteDocs = await apiJson(`/cases/${remoteCaseId}/documents`, { headers: { "x-user-id": userId } }) as ApiDocument[];
+        const remoteDocs = (await apiJson(`/cases/${remoteCaseId}/documents`, {
+          headers: { "x-user-id": userId },
+        })) as ApiDocument[];
         setSyncState(`Анализ API завершен: документов ${remoteDocs.length}`);
       } catch (error) {
-        setSyncState(error instanceof Error ? `Анализ локально, API ошибка: ${error.message}` : "Анализ завершен локально");
+        setSyncState(
+          error instanceof Error
+            ? `Анализ локально, API ошибка: ${error.message}`
+            : "Анализ завершен локально",
+        );
       }
     } else {
-      setSyncState("Анализ локальных файлов завершен. Для серверной обработки создайте дело.");
+      setSyncState(
+        "Анализ локальных файлов завершен. Для серверной обработки создайте дело.",
+      );
     }
     go("analysis");
   }
@@ -596,19 +941,37 @@ export default function WebHome() {
     const sentAt = new Date().toLocaleString("ru-KZ");
     setSent(true);
     updateActiveCase("Отправка претензии зафиксирована", 100);
-    setTasks((items) => [{ title: `Отправка претензии подтверждена ${sentAt}`, due: "Зафиксировано", done: true }, ...items]);
+    setTasks((items) => [
+      {
+        title: `Отправка претензии подтверждена ${sentAt}`,
+        due: "Зафиксировано",
+        done: true,
+      },
+      ...items,
+    ]);
     setSyncState(`Отправка зафиксирована пользователем: ${sentAt}`);
     go("claimSend");
   }
 
   function saveSettings() {
-    window.localStorage.setItem("ai-lawyer-web-settings", JSON.stringify({ maskPii, budgetAlerts, savedAt: new Date().toISOString() }));
+    window.localStorage.setItem(
+      "ai-lawyer-web-settings",
+      JSON.stringify({
+        maskPii,
+        budgetAlerts,
+        savedAt: new Date().toISOString(),
+      }),
+    );
     setSyncState("Настройки сохранены в браузере");
   }
 
   function toggleNotifications() {
     setNotificationOpen((open) => !open);
-    setSyncState(notificationOpen ? "Уведомления скрыты" : `Уведомления открыты: ${tasks.filter((task) => !task.done).length} активных`);
+    setSyncState(
+      notificationOpen
+        ? "Уведомления скрыты"
+        : `Уведомления открыты: ${tasks.filter((task) => !task.done).length} активных`,
+    );
   }
 
   function continueCaseIntake() {
@@ -623,7 +986,9 @@ export default function WebHome() {
     setLegalTab(tab);
     setLegalNorms([]);
     setSelectedNorm(null);
-    setLegalAnswer(`Раздел выбран: ${tab}. Запустите поиск по официальным источникам РК.`);
+    setLegalAnswer(
+      `Раздел выбран: ${tab}. Запустите поиск по официальным источникам РК.`,
+    );
     setSyncState(`Раздел норм права: ${tab}`);
   }
 
@@ -631,8 +996,16 @@ export default function WebHome() {
     setLegalActiveOnly((active) => !active);
     setLegalNorms([]);
     setSelectedNorm(null);
-    setLegalAnswer(legalActiveOnly ? "Фильтр: включая архивные редакции." : "Фильтр: только действующие редакции.");
-    setSyncState(legalActiveOnly ? "Фильтр норм: включая архивные редакции" : "Фильтр норм: только действующие редакции");
+    setLegalAnswer(
+      legalActiveOnly
+        ? "Фильтр: включая архивные редакции."
+        : "Фильтр: только действующие редакции.",
+    );
+    setSyncState(
+      legalActiveOnly
+        ? "Фильтр норм: включая архивные редакции"
+        : "Фильтр норм: только действующие редакции",
+    );
   }
 
   async function createSupportRequest() {
@@ -644,46 +1017,84 @@ export default function WebHome() {
     if (remoteCaseId) {
       try {
         const userId = await ensureUser();
-        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: `Поддержка: ${caseText}` }) });
+        await apiJson(`/cases/${remoteCaseId}/messages`, {
+          method: "POST",
+          headers: { "x-user-id": userId },
+          body: JSON.stringify({
+            role: "user",
+            text: `Поддержка: ${caseText}`,
+          }),
+        });
       } catch {
         // Support request still remains in local case history when API message sync is unavailable.
       }
     }
     setHelpStatus(`Обращение ${ticketId} создано`);
-    setMessages((items) => [...items, { role: "user", text: `Поддержка: ${caseText}` }, { role: "assistant", text: `Обращение ${ticketId} принято в ручную проверку.` }]);
-    setTasks((items) => [{ title: `Ответ поддержки ${ticketId}`, due: "24 часа", done: false }, ...items]);
+    setMessages((items) => [
+      ...items,
+      { role: "user", text: `Поддержка: ${caseText}` },
+      {
+        role: "assistant",
+        text: `Обращение ${ticketId} принято в ручную проверку.`,
+      },
+    ]);
+    setTasks((items) => [
+      { title: `Ответ поддержки ${ticketId}`, due: "24 часа", done: false },
+      ...items,
+    ]);
     setSyncState(`Поддержка создана: ${ticketId}`);
   }
 
   async function loadSubscription() {
     try {
       const userId = await ensureUser();
-      const budget = await apiJson("/subscriptions/current", { headers: { "x-user-id": userId } });
-      setSubscriptionStatus(`Тариф ${budget.plan}, расход ${budget.percent}%, TTS ${budget.ttsDisabled ? "выключен" : "доступен"}`);
+      const budget = await apiJson("/subscriptions/current", {
+        headers: { "x-user-id": userId },
+      });
+      setSubscriptionStatus(
+        `Тариф ${budget.plan}, расход ${budget.percent}%, TTS ${budget.ttsDisabled ? "выключен" : "доступен"}`,
+      );
       setSyncState("Подписка обновлена из API");
     } catch (error) {
       setSubscriptionStatus("Не удалось загрузить подписку");
-      setSyncState(error instanceof Error ? `Подписка: ${error.message}` : "Ошибка подписки");
+      setSyncState(
+        error instanceof Error
+          ? `Подписка: ${error.message}`
+          : "Ошибка подписки",
+      );
     }
   }
 
   function toggleTask(title: string) {
-    setTasks((items) => items.map((item) => item.title === title ? { ...item, done: !item.done } : item));
+    setTasks((items) =>
+      items.map((item) =>
+        item.title === title ? { ...item, done: !item.done } : item,
+      ),
+    );
     setDeadlineStatus(`Срок обновлен: ${title}`);
   }
 
   function formatDuration(seconds: number) {
-    const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const minutes = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
     return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
   }
 
   function getSpeechRecognitionConstructor() {
     const speechWindow = window as SpeechWindow;
-    return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    return (
+      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
+    );
   }
 
   function getSupportedAudioMimeType() {
-    const options = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"];
+    const options = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/aac",
+    ];
     return options.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
   }
 
@@ -709,7 +1120,8 @@ export default function WebHome() {
           setSpeechStatus("Речь распознана браузером");
         }
       };
-      recognition.onerror = () => setSpeechStatus("Live распознавание недоступно, аудио сохранено");
+      recognition.onerror = () =>
+        setSpeechStatus("Live распознавание недоступно, аудио сохранено");
       recognition.start();
       speechRecognitionRef.current = recognition;
       setSpeechStatus("Live распознавание включено");
@@ -720,7 +1132,10 @@ export default function WebHome() {
 
   async function startRecording() {
     if (recording || voiceBusy) return;
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
       setSyncState("Браузер не поддерживает запись голоса");
       return;
     }
@@ -735,13 +1150,18 @@ export default function WebHome() {
       }
       mediaStreamRef.current = stream;
       const mimeType = getSupportedAudioMimeType();
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const recorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined,
+      );
       mediaRecorderRef.current = recorder;
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const blob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
         audioBlobRef.current = blob;
         setAudioUrl(URL.createObjectURL(blob));
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -783,7 +1203,8 @@ export default function WebHome() {
 
   function stopRecordingAndGetBlob() {
     const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state === "inactive") return Promise.resolve(audioBlobRef.current);
+    if (!recorder || recorder.state === "inactive")
+      return Promise.resolve(audioBlobRef.current);
     return new Promise<Blob | null>((resolve) => {
       const previousStop = recorder.onstop;
       recorder.onstop = (event) => {
@@ -805,12 +1226,18 @@ export default function WebHome() {
     setSyncState("Запись завершена, сохраняю аудио...");
     try {
       const blob = await stopRecordingAndGetBlob();
-      if (!blob || blob.size === 0) throw new Error("Пустая запись: попробуйте еще раз");
-      const extension = blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
+      if (!blob || blob.size === 0)
+        throw new Error("Пустая запись: попробуйте еще раз");
+      const extension =
+        blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
       const recognizedText = speechDraftRef.current.trim() || caseText.trim();
       if (recognizedText) setCaseText(recognizedText);
       if (!authUserId) {
-        setSyncState(recognizedText ? "Текст распознан локально. Войдите для синхронизации аудио" : "Аудио записано локально. Войдите для синхронизации");
+        setSyncState(
+          recognizedText
+            ? "Текст распознан локально. Войдите для синхронизации аудио"
+            : "Аудио записано локально. Войдите для синхронизации",
+        );
         go("category");
         return;
       }
@@ -819,43 +1246,65 @@ export default function WebHome() {
       formData.append("language", "ru");
       if (remoteCaseId) formData.append("caseId", remoteCaseId);
       if (recognizedText) formData.append("text", recognizedText);
-      const job = await apiForm("/voice/transcripts/audio", formData, authUserId) as TranscriptJob;
+      const job = (await apiForm(
+        "/voice/transcripts/audio",
+        formData,
+        authUserId,
+      )) as TranscriptJob;
       setTranscriptJobId(job.id);
       if (job.transcript) setCaseText(job.transcript);
-      setSyncState(job.audioFileId ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}` : `Transcript job готов: ${job.id.slice(0, 8)}`);
+      setSyncState(
+        job.audioFileId
+          ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}`
+          : `Transcript job готов: ${job.id.slice(0, 8)}`,
+      );
       go("category");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Ошибка записи: ${error.message}` : "Ошибка записи");
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка записи: ${error.message}`
+          : "Ошибка записи",
+      );
     } finally {
       setVoiceBusy(false);
     }
   }
 
   function updateActiveCase(status: string, progress: number) {
-    setCases((items) => items.map((item) => (item.id === activeCaseId ? { ...item, status, progress: Math.max(item.progress, progress) } : item)));
+    setCases((items) =>
+      items.map((item) =>
+        item.id === activeCaseId
+          ? { ...item, status, progress: Math.max(item.progress, progress) }
+          : item,
+      ),
+    );
   }
 
-  async function startAuth(target: "login" | "register") {
+  async function startAuth() {
     if (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11) {
       setSyncState("Введите корректный номер +7");
       return;
     }
-    if (target === "register" && (!name.trim() || !email.includes("@") || !consent)) {
-      setSyncState("Заполните имя, email и согласие");
-      return;
-    }
     setSyncState("Отправляю OTP через API...");
     try {
-      const registered = await apiJson("/auth/register", {
+      const registered = (await apiJson("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ channel: "phone", phone, email: target === "register" ? email : undefined, password: password || undefined, consentVersion: "v1" }),
-      }) as ApiOtpResponse;
+        body: JSON.stringify({ channel: "phone", phone, consentVersion: "v1" }),
+      })) as ApiOtpResponse;
       setOtpId(registered.otpId);
-      setOtpHint(registered.deliveryMode === "stub" && registered.testCode ? `RC local SMS: ${registered.testCode}` : "Код отправлен через подключенный канал");
+      setOtpHint(
+        registered.deliveryMode === "stub" && registered.testCode
+          ? `RC local SMS: ${registered.testCode}`
+          : "Код отправлен через подключенный канал",
+      );
       setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
       go("otp");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Auth API ошибка: ${error.message}` : "Auth API ошибка");
+      setSyncState(
+        error instanceof Error
+          ? `Auth API ошибка: ${error.message}`
+          : "Auth API ошибка",
+      );
     }
   }
 
@@ -869,50 +1318,94 @@ export default function WebHome() {
       return;
     }
     try {
-      const verified = await apiJson("/auth/otp/verify", { method: "POST", body: JSON.stringify({ otpId, code: otp }) });
+      const verified = (await apiJson("/auth/otp/verify", {
+        method: "POST",
+        body: JSON.stringify({ otpId, code: otp }),
+      })) as ApiAuthSession;
       setAuthUserId(verified.user.id);
-      setProfileName(name.trim() || profileName);
       setSyncState(`Вход подтвержден API: ${verified.user.id.slice(0, 8)}`);
-      go("biometric");
+      if (verified.isNewUser || verified.profileRequired || !profileComplete)
+        go("register");
+      else go("home");
     } catch (error) {
-      setSyncState(error instanceof Error ? `OTP API ошибка: ${error.message}` : "OTP API ошибка");
+      setSyncState(
+        error instanceof Error
+          ? `OTP API ошибка: ${error.message}`
+          : "OTP API ошибка",
+      );
     }
   }
 
   async function saveProfile() {
-    if (!profileName.trim()) {
+    const fullName =
+      [lastName, firstName, middleName]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" ") || profileName.trim();
+    if (
+      view === "register" &&
+      (!lastName.trim() || !firstName.trim() || !city.trim())
+    ) {
+      setSyncState("Заполните фамилию, имя и город");
+      return;
+    }
+    if (!fullName) {
       setSyncState("Введите имя профиля");
       return;
     }
-    setName(profileName);
+    setProfileName(fullName);
     try {
       const userId = await ensureUser();
       const profileTypeMap: Record<string, string> = {
-        "Физлицо": "person",
-        "ИП": "individual_entrepreneur",
-        "Юрлицо": "legal_entity",
+        Физлицо: "person",
+        ИП: "individual_entrepreneur",
+        Юрлицо: "legal_entity",
       };
       const cleanIinBin = profileId.replace(/\D/g, "");
       await apiJson("/profiles", {
         method: "POST",
         headers: { "x-user-id": userId },
-        body: JSON.stringify({ userId, type: profileTypeMap[profileType] ?? "person", displayName: profileName, iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined }),
+        body: JSON.stringify({
+          userId,
+          type: profileTypeMap[profileType] ?? "person",
+          displayName: fullName,
+          iinBin: cleanIinBin.length === 12 ? cleanIinBin : undefined,
+          address: city.trim(),
+        }),
       });
+      setProfileComplete(true);
       setSyncState(`Профиль сохранен в API: ${profileType}`);
+      go("home");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Профиль локально: ${error.message}` : `Профиль сохранен локально: ${profileType}`);
+      setSyncState(
+        error instanceof Error
+          ? `Профиль API ошибка: ${error.message}`
+          : `Профиль API ошибка`,
+      );
     }
   }
 
   async function exportAccount() {
     try {
       const userId = await ensureUser();
-      const exported = await apiJson("/account/export", { headers: { "x-user-id": userId } }) as { profiles?: unknown[]; sessions?: unknown[]; exportedAt?: string };
+      const exported = (await apiJson("/account/export", {
+        headers: { "x-user-id": userId },
+      })) as {
+        profiles?: unknown[];
+        sessions?: unknown[];
+        exportedAt?: string;
+      };
       const profileCount = exported.profiles?.length ?? 0;
       const sessionCount = exported.sessions?.length ?? 0;
-      setSyncState(`Экспорт готов: ${profileCount} профилей, ${sessionCount} сессий`);
+      setSyncState(
+        `Экспорт готов: ${profileCount} профилей, ${sessionCount} сессий`,
+      );
     } catch (error) {
-      setSyncState(error instanceof Error ? `Экспорт API ошибка: ${error.message}` : "Экспорт API ошибка");
+      setSyncState(
+        error instanceof Error
+          ? `Экспорт API ошибка: ${error.message}`
+          : "Экспорт API ошибка",
+      );
     }
   }
 
@@ -920,38 +1413,83 @@ export default function WebHome() {
     if (!window.confirm("Удалить аккаунт и отозвать все сессии?")) return;
     try {
       const userId = await ensureUser();
-      await apiJson("/account", { method: "DELETE", headers: { "x-user-id": userId } });
+      await apiJson("/account", {
+        method: "DELETE",
+        headers: { "x-user-id": userId },
+      });
       setAuthUserId("");
       setOtpId("");
       setOtp("");
       setRemoteCaseId("");
       setRemoteDocumentId("");
+      setProfileComplete(false);
       setSyncState("Аккаунт удален, сессии отозваны");
       go("login");
     } catch (error) {
-      setSyncState(error instanceof Error ? `Удаление API ошибка: ${error.message}` : "Удаление API ошибка");
+      setSyncState(
+        error instanceof Error
+          ? `Удаление API ошибка: ${error.message}`
+          : "Удаление API ошибка",
+      );
     }
   }
 
-  function AppHeader({ title, subtitle, back = "home" }: { title: string; subtitle: string; back?: View }) {
+  function AppHeader({
+    title,
+    subtitle,
+    back = "home",
+  }: {
+    title: string;
+    subtitle: string;
+    back?: View;
+  }) {
     return (
       <header className="screenHeader">
-        <button aria-label="Назад" onClick={() => go(back)}>‹</button>
-        <div><h2>{title}</h2><p>{subtitle}</p></div>
+        <button aria-label="Назад" onClick={() => go(back)}>
+          ‹
+        </button>
+        <div>
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
       </header>
     );
   }
 
   function AuthMark({ icon = "⚖" }: { icon?: string }) {
-    return <div className="authMark"><span>{icon}</span></div>;
+    return (
+      <div className="authMark">
+        <span>{icon}</span>
+      </div>
+    );
   }
 
   function AuthDivider() {
-    return <div className="goldDivider"><span></span><i>◇</i><span></span></div>;
+    return (
+      <div className="goldDivider">
+        <span></span>
+        <i>◇</i>
+        <span></span>
+      </div>
+    );
   }
 
-  function AuthActionRow({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
-    return <button className="authActionRow" onClick={onClick}><span>{icon}</span><strong>{label}</strong><em>›</em></button>;
+  function AuthActionRow({
+    icon,
+    label,
+    onClick,
+  }: {
+    icon: string;
+    label: string;
+    onClick: () => void;
+  }) {
+    return (
+      <button className="authActionRow" onClick={onClick}>
+        <span>{icon}</span>
+        <strong>{label}</strong>
+        <em>›</em>
+      </button>
+    );
   }
 
   function renderView() {
@@ -961,70 +1499,224 @@ export default function WebHome() {
           <AuthMark />
           <Header title="AI Юрист" subtitle="Ваш умный юридический помощник" />
           <AuthDivider />
-          <button className="primary wide heroCta" onClick={() => go("login")}>✧ Начать работу</button>
-          <button className="linkAction" onClick={() => go("login")}>♙ Войти в аккаунт</button>
+          <button className="primary wide heroCta" onClick={() => go("login")}>
+            ✧ Начать работу
+          </button>
+          <button className="linkAction" onClick={() => go("login")}>
+            ♙ Войти в аккаунт
+          </button>
         </section>
       );
     }
 
-    if (view === "login" || view === "register" || view === "otp" || view === "biometric") {
+    if (
+      view === "login" ||
+      view === "register" ||
+      view === "otp" ||
+      view === "biometric"
+    ) {
       return (
         <section className="contentPanel authPanel">
           <AppHeader
-            title={view === "login" ? "Вход и регистрация" : view === "register" ? "Регистрация пользователя" : view === "otp" ? "Подтверждение" : "Быстрый вход"}
+            title={
+              view === "login"
+                ? "Вход и регистрация"
+                : view === "register"
+                  ? "Регистрация пользователя"
+                  : view === "otp"
+                    ? "Подтверждение"
+                    : "Быстрый вход"
+            }
             subtitle="Безопасный вход, согласие v1 и локальная биометрия"
           />
           {view === "login" && (
             <>
-              <div className="languageTabs"><button className="active">RU</button><button>KZ</button><button>EN</button></div>
+              <div className="languageTabs">
+                <button className="active">RU</button>
+                <button>KZ</button>
+                <button>EN</button>
+              </div>
               <AuthDivider />
-              <div className="authTabs"><button className="active">Вход</button><button onClick={() => go("register")}>Регистрация</button></div>
-              <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
-              <input placeholder="Пароль или PIN" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-              <AuthActionRow icon="☎" label="Войти по номеру телефона" onClick={() => { void startAuth("login"); }} />
-              <AuthActionRow icon="✉" label="Войти по e-mail" onClick={() => { setPhone(email); void startAuth("login"); }} />
+              <div className="authTabs">
+                <button className="active">Телефон</button>
+                <button
+                  onClick={() =>
+                    setSyncState("Сначала подтвердите номер SMS-кодом")
+                  }
+                >
+                  Анкета после SMS
+                </button>
+              </div>
+              <input
+                placeholder="+7 номер телефона"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
+              <AuthActionRow
+                icon="☎"
+                label="Получить SMS-код"
+                onClick={() => {
+                  void startAuth();
+                }}
+              />
               <AuthDivider />
-              <AuthActionRow icon="⌗" label="Войти по Face ID / Touch ID" onClick={() => go("biometric")} />
-              <button className="linkAction" onClick={() => go("register")}>Нет аккаунта? Зарегистрироваться</button>
+              <AuthActionRow
+                icon="⌗"
+                label="Войти по Face ID / Touch ID"
+                onClick={() => go("biometric")}
+              />
+              <button
+                className="linkAction"
+                onClick={() =>
+                  setSyncState(
+                    "Новый аккаунт создается после подтверждения SMS",
+                  )
+                }
+              >
+                Регистрация после SMS
+              </button>
             </>
           )}
           {view === "register" && (
             <>
               <AuthMark />
+              <Header
+                title="Заполните анкету"
+                subtitle="Первый вход: данные нужны для документов и дел"
+              />
               <div className="authFormCard">
-                <input placeholder="Имя" value={name} onChange={(event) => setName(event.target.value)} />
-                <input placeholder="Фамилия" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
-                <input placeholder="+7 номер телефона" value={phone} onChange={(event) => setPhone(event.target.value)} />
-                <input placeholder="E-mail" value={email} onChange={(event) => setEmail(event.target.value)} />
-                <input placeholder="Пароль" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-                <div className="chips profileChips">{["Физлицо", "ИП", "Юрлицо"].map((type) => <button className={profileType === type ? "chip active" : "chip"} key={type} onClick={() => setProfileType(type)}>{type}</button>)}</div>
-                <label className="toggle"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Я принимаю условия и согласен на обработку данных</label>
-                <button className="primary wide heroCta" onClick={() => { void startAuth("register"); }}>✧ Создать аккаунт</button>
+                <input
+                  placeholder="Фамилия"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                />
+                <input
+                  placeholder="Имя"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                />
+                <input
+                  placeholder="Отчество"
+                  value={middleName}
+                  onChange={(event) => setMiddleName(event.target.value)}
+                />
+                <input
+                  placeholder="Город"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                />
+                <input
+                  placeholder="ИИН/БИН, если нужно"
+                  value={profileId}
+                  onChange={(event) => setProfileId(event.target.value)}
+                />
+                <div className="chips profileChips">
+                  {["Физлицо", "ИП", "Юрлицо"].map((type) => (
+                    <button
+                      className={profileType === type ? "chip active" : "chip"}
+                      key={type}
+                      onClick={() => setProfileType(type)}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                <label className="toggle">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                  />{" "}
+                  Я принимаю условия и согласен на обработку данных
+                </label>
+                <button
+                  className="primary wide heroCta"
+                  disabled={!consent}
+                  onClick={() => {
+                    void saveProfile();
+                  }}
+                >
+                  ✧ Завершить регистрацию
+                </button>
               </div>
-              <button className="linkAction" onClick={() => go("login")}>Уже есть аккаунт? Войти</button>
+              <button className="linkAction" onClick={() => go("login")}>
+                Уже есть аккаунт? Войти
+              </button>
             </>
           )}
           {view === "otp" && (
             <>
               <AuthMark />
-              <Header title="Введите код из SMS" subtitle={phone ? `Мы отправили код на номер ${phone}` : "Мы отправили код на номер +7 707 123 45 67"} />
+              <Header
+                title="Введите код из SMS"
+                subtitle={
+                  phone
+                    ? `Мы отправили код на номер ${phone}`
+                    : "Мы отправили код на номер +7 707 123 45 67"
+                }
+              />
               {otpHint && <small className="recordMeta">{otpHint}</small>}
-              <input className="otpInput" placeholder="Код из SMS" value={otp} onChange={(event) => setOtp(event.target.value)} />
-              <div className="otpBoxes">{Array.from({ length: 6 }).map((_, index) => <span key={index}>{otp[index] ?? "481259"[index]}</span>)}</div>
-              <p className="hint">Отправить код повторно через <strong>00:42</strong></p>
-              <button className="primary wide heroCta" onClick={() => { void verifyOtp(); }}>✧ Подтвердить</button>
+              <input
+                className="otpInput"
+                placeholder="Код из SMS"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value)}
+              />
+              <div className="otpBoxes">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <span key={index}>{otp[index] ?? "481259"[index]}</span>
+                ))}
+              </div>
+              <p className="hint">
+                Отправить код повторно через <strong>00:42</strong>
+              </p>
+              <button
+                className="primary wide heroCta"
+                onClick={() => {
+                  void verifyOtp();
+                }}
+              >
+                ✧ Подтвердить
+              </button>
               <AuthDivider />
-              <button className="linkAction" onClick={() => { void startAuth("login"); }}>Изменить номер</button>
+              <button
+                className="linkAction"
+                onClick={() => {
+                  setOtp("");
+                  setOtpId("");
+                  go("login");
+                }}
+              >
+                Изменить номер
+              </button>
             </>
           )}
           {view === "biometric" && (
             <>
               <AuthMark icon="⌗" />
-              <Header title="Включить биометрию" subtitle="Входите в приложение быстрее и безопаснее с помощью Face ID / Touch ID" />
+              <Header
+                title="Включить биометрию"
+                subtitle="Входите в приложение быстрее и безопаснее с помощью Face ID / Touch ID"
+              />
               <AuthDivider />
-              <button className="primary wide heroCta" onClick={() => { setBiometricEnabled(true); setSyncState("Биометрия включена локально"); }}>{biometricEnabled ? "✓ Биометрия включена" : "✧ Включить"}</button>
-              <button className="wide outlineGold" onClick={() => go("profile")}>Позже</button>
-              <p className="hint secureHint">▣ Биометрические данные хранятся только на устройстве</p>
+              <button
+                className="primary wide heroCta"
+                onClick={() => {
+                  setBiometricEnabled(true);
+                  setSyncState("Биометрия включена локально");
+                }}
+              >
+                {biometricEnabled ? "✓ Биометрия включена" : "✧ Включить"}
+              </button>
+              <button
+                className="wide outlineGold"
+                onClick={() => go("profile")}
+              >
+                Позже
+              </button>
+              <p className="hint secureHint">
+                ▣ Биометрические данные хранятся только на устройстве
+              </p>
             </>
           )}
         </section>
@@ -1034,20 +1726,82 @@ export default function WebHome() {
     if (view === "newCase") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Новое дело" subtitle="Голосовое или текстовое описание проблемы" />
+          <AppHeader
+            title="Новое дело"
+            subtitle="Голосовое или текстовое описание проблемы"
+          />
           <h1 className="heroTitle">Опишите проблему</h1>
-          <p className="hint">Расскажите о ситуации голосом, а мы поможем с решением</p>
-          <button className={recording ? "mic small active" : "mic small"} disabled={voiceBusy} onClick={() => { void startRecording(); }} aria-label="Записать голос"><span>⌾</span></button>
+          <p className="hint">
+            Расскажите о ситуации голосом, а мы поможем с решением
+          </p>
+          <button
+            className={recording ? "mic small active" : "mic small"}
+            disabled={voiceBusy}
+            onClick={() => {
+              void startRecording();
+            }}
+            aria-label="Записать голос"
+          >
+            <span>⌾</span>
+          </button>
           <div className="recordCard">
-            <div className="recordLine"><span className={recording && !paused ? "dot live" : "dot"}></span><strong>{voiceBusy ? "Сохраняю аудио" : recording ? (paused ? "Пауза" : "Идет запись") : audioUrl ? "Запись готова" : "Готов к записи"}</strong><em>{formatDuration(recordingSeconds)}</em></div>
-            <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} placeholder="Я хочу подать на алименты и подготовить иск в суд..." />
-            {audioUrl && <audio className="voicePlayback" controls src={audioUrl}>Запись голоса</audio>}
+            <div className="recordLine">
+              <span
+                className={recording && !paused ? "dot live" : "dot"}
+              ></span>
+              <strong>
+                {voiceBusy
+                  ? "Сохраняю аудио"
+                  : recording
+                    ? paused
+                      ? "Пауза"
+                      : "Идет запись"
+                    : audioUrl
+                      ? "Запись готова"
+                      : "Готов к записи"}
+              </strong>
+              <em>{formatDuration(recordingSeconds)}</em>
+            </div>
+            <textarea
+              value={caseText}
+              onChange={(event) => setCaseText(event.target.value)}
+              placeholder="Я хочу подать на алименты и подготовить иск в суд..."
+            />
+            {audioUrl && (
+              <audio className="voicePlayback" controls src={audioUrl}>
+                Запись голоса
+              </audio>
+            )}
             <small className="recordMeta">{speechStatus}</small>
-            {transcriptJobId && <small className="recordMeta">Transcript job: {transcriptJobId.slice(0, 8)}</small>}
+            {transcriptJobId && (
+              <small className="recordMeta">
+                Transcript job: {transcriptJobId.slice(0, 8)}
+              </small>
+            )}
             <div className="wave" aria-hidden="true"></div>
           </div>
-          <button className="primary wide" disabled={voiceBusy} onClick={recording ? finishRecording : continueCaseIntake}>{voiceBusy ? "Сохраняю..." : recording ? "■ Завершить запись" : "Продолжить"}</button>
-          <button className="wide" disabled={voiceBusy} onClick={pauseRecording}>{recording ? (paused ? "▶ Продолжить" : "Ⅱ Пауза") : "Начать запись"}</button>
+          <button
+            className="primary wide"
+            disabled={voiceBusy}
+            onClick={recording ? finishRecording : continueCaseIntake}
+          >
+            {voiceBusy
+              ? "Сохраняю..."
+              : recording
+                ? "■ Завершить запись"
+                : "Продолжить"}
+          </button>
+          <button
+            className="wide"
+            disabled={voiceBusy}
+            onClick={pauseRecording}
+          >
+            {recording
+              ? paused
+                ? "▶ Продолжить"
+                : "Ⅱ Пауза"
+              : "Начать запись"}
+          </button>
         </section>
       );
     }
@@ -1055,21 +1809,60 @@ export default function WebHome() {
     if (view === "category") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Категория спора" subtitle="AI определил категорию по описанию" back="newCase" />
+          <AppHeader
+            title="Категория спора"
+            subtitle="AI определил категорию по описанию"
+            back="newCase"
+          />
           <div className="categoryHero">
             <AuthMark />
             <strong>Категория определена</strong>
             <AuthDivider />
-            <h1>{selectedCategory === "Семейное право" ? "Брачно-семейные отношения" : selectedCategory}</h1>
-            <button className="categoryPill" onClick={() => setSelectedCategory("Семейное право")}>♙ Взыскание алиментов</button>
-            <p>Уверенность: <b>92%</b></p>
+            <h1>
+              {selectedCategory === "Семейное право"
+                ? "Брачно-семейные отношения"
+                : selectedCategory}
+            </h1>
+            <button
+              className="categoryPill"
+              onClick={() => setSelectedCategory("Семейное право")}
+            >
+              ♙ Взыскание алиментов
+            </button>
+            <p>
+              Уверенность: <b>92%</b>
+            </p>
           </div>
           <AuthDivider />
           <p className="hint">Возможные альтернативы</p>
-          <div className="categoryAlternatives">{["Расторжение брака", "Содержание супруги"].map((type) => <button key={type} onClick={() => { setSelectedCategory("Семейное право"); setSyncState(`Категория выбрана: ${type}`); }}>◴ {type}</button>)}</div>
-          <p className="hint">✦ На основании вашего описания система определила наиболее подходящую категорию спора.</p>
-          <button className="primary wide heroCta" onClick={addCase}>✧ Продолжить</button>
-          <button className="linkAction" onClick={() => setSyncState("Откройте список альтернатив и выберите категорию")}>Изменить вручную</button>
+          <div className="categoryAlternatives">
+            {["Расторжение брака", "Содержание супруги"].map((type) => (
+              <button
+                key={type}
+                onClick={() => {
+                  setSelectedCategory("Семейное право");
+                  setSyncState(`Категория выбрана: ${type}`);
+                }}
+              >
+                ◴ {type}
+              </button>
+            ))}
+          </div>
+          <p className="hint">
+            ✦ На основании вашего описания система определила наиболее
+            подходящую категорию спора.
+          </p>
+          <button className="primary wide heroCta" onClick={addCase}>
+            ✧ Продолжить
+          </button>
+          <button
+            className="linkAction"
+            onClick={() =>
+              setSyncState("Откройте список альтернатив и выберите категорию")
+            }
+          >
+            Изменить вручную
+          </button>
         </section>
       );
     }
@@ -1078,18 +1871,63 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader title="Мои дела" subtitle="Фильтр, поиск и карточки дел" />
-          <div className="caseFilters">{["Все", "В работе", "Суд", "Претензии"].map((filter) => <button className={filter === "Все" ? "active" : ""} key={filter} onClick={() => setCaseSearch(filter === "Все" ? "" : filter)}>{filter}</button>)}</div>
+          <div className="caseFilters">
+            {["Все", "В работе", "Суд", "Претензии"].map((filter) => (
+              <button
+                className={filter === "Все" ? "active" : ""}
+                key={filter}
+                onClick={() => setCaseSearch(filter === "Все" ? "" : filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
           <div className="searchRow caseSearchRow">
-            <input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="Поиск дела" />
+            <input
+              value={caseSearch}
+              onChange={(event) => setCaseSearch(event.target.value)}
+              placeholder="Поиск дела"
+            />
             <button onClick={() => setCaseSearch("")}>Очистить</button>
           </div>
           <div className="list">
-            {!filteredCases.length && <button className="caseRow" onClick={() => go("newCase")}><span className="roundIcon">+</span><span><strong>Нет дел</strong><small>Создайте первое дело через голос или текст</small><small className="goldDot">● Данные появятся после сохранения в API</small></span><em>Сейчас</em></button>}
+            {!filteredCases.length && (
+              <button className="caseRow" onClick={() => go("newCase")}>
+                <span className="roundIcon">+</span>
+                <span>
+                  <strong>Нет дел</strong>
+                  <small>Создайте первое дело через голос или текст</small>
+                  <small className="goldDot">
+                    ● Данные появятся после сохранения в API
+                  </small>
+                </span>
+                <em>Сейчас</em>
+              </button>
+            )}
             {filteredCases.map((item, index) => (
-              <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
-                <span className="roundIcon">{["⚖", "👪", "▤", "▥", "♢"][index] ?? "⚖"}</span>
-                <span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span>
-                <em>Обновлено<br />{item.date}</em>
+              <button
+                className="caseRow"
+                key={item.id}
+                onClick={() => {
+                  setActiveCaseId(item.id);
+                  go("case");
+                }}
+              >
+                <span className="roundIcon">
+                  {["⚖", "👪", "▤", "▥", "♢"][index] ?? "⚖"}
+                </span>
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>
+                    Дело №{item.id} · {item.type}
+                  </small>
+                  <small className="goldDot">● {item.status}</small>
+                </span>
+                <em>
+                  Обновлено
+                  <br />
+                  {item.date}
+                </em>
               </button>
             ))}
           </div>
@@ -1100,10 +1938,17 @@ export default function WebHome() {
     if (view === "case") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Карточка дела" subtitle={`Дело №${activeCase.id} · ${activeCase.type}`} back="cases" />
+          <AppHeader
+            title="Карточка дела"
+            subtitle={`Дело №${activeCase.id} · ${activeCase.type}`}
+            back="cases"
+          />
           <div className="caseHero caseDetailHero">
             <span className="largeIcon">⚖</span>
-            <div><h2>{activeCase.title}</h2><p>{activeCase.status}</p></div>
+            <div>
+              <h2>{activeCase.title}</h2>
+              <p>{activeCase.status}</p>
+            </div>
             <strong>{activeCase.progress}%</strong>
           </div>
           <div className="caseMetricGrid">
@@ -1114,10 +1959,57 @@ export default function WebHome() {
             <Info label="Готовность" value={`${activeCase.progress}%`} />
           </div>
           <h3 className="goldSection">Прогресс дела</h3>
-          <div className="caseProgressRail">{["Консультация", "Документы", "Претензия", "Подписание", "Отправка"].map((step, index) => <button className={index <= 1 ? "done" : ""} key={step} onClick={() => index === 1 ? go("documents") : index === 2 ? go("claim") : setSyncState(`${step}: ожидает предыдущий шаг`)}><span>{index === 0 ? "👥" : index === 1 ? "▤" : index === 2 ? "▧" : index === 3 ? "✎" : "➤"}</span><strong>{step}</strong><small>{index <= 1 ? "В работе" : "Ожидает"}</small></button>)}</div>
-          <div className="caseInfoGrid"><Info label="Участники дела" value="Истец: вы · Ответчик: уточняется" /><Info label="Сумма и требования" value="1 250 000 ₸" /><Info label="Документы" value={`${documents.length || 12} всего · 2 требуют внимания`} /><Info label="Ключевые даты" value="Претензия 18 мая · Суд 30 мая" /></div>
+          <div className="caseProgressRail">
+            {[
+              "Консультация",
+              "Документы",
+              "Претензия",
+              "Подписание",
+              "Отправка",
+            ].map((step, index) => (
+              <button
+                className={index <= 1 ? "done" : ""}
+                key={step}
+                onClick={() =>
+                  index === 1
+                    ? go("documents")
+                    : index === 2
+                      ? go("claim")
+                      : setSyncState(`${step}: ожидает предыдущий шаг`)
+                }
+              >
+                <span>
+                  {index === 0
+                    ? "👥"
+                    : index === 1
+                      ? "▤"
+                      : index === 2
+                        ? "▧"
+                        : index === 3
+                          ? "✎"
+                          : "➤"}
+                </span>
+                <strong>{step}</strong>
+                <small>{index <= 1 ? "В работе" : "Ожидает"}</small>
+              </button>
+            ))}
+          </div>
+          <div className="caseInfoGrid">
+            <Info
+              label="Участники дела"
+              value="Истец: вы · Ответчик: уточняется"
+            />
+            <Info label="Сумма и требования" value="1 250 000 ₸" />
+            <Info
+              label="Документы"
+              value={`${documents.length || 12} всего · 2 требуют внимания`}
+            />
+            <Info label="Ключевые даты" value="Претензия 18 мая · Суд 30 мая" />
+          </div>
           <div className="actionBar">
-            <button className="primary" onClick={() => go("chat")}>Продолжить работу</button>
+            <button className="primary" onClick={() => go("chat")}>
+              Продолжить работу
+            </button>
             <button onClick={() => go("documents")}>Открыть документы</button>
             <button onClick={() => go("claim")}>Сформировать претензию</button>
           </div>
@@ -1128,83 +2020,323 @@ export default function WebHome() {
     if (view === "chat") {
       return (
         <section className="contentPanel chatPanel">
-          <AppHeader title="Чат по делу" subtitle={activeCase.title} back="case" />
-          <div className="chatCaseCard"><span className="roundIcon">⚖</span><p><b>{activeCase.title}</b><br />Дело №{activeCase.id} · {activeCase.type}</p><em>● {activeCase.status}</em></div>
-          <div className="messages">
-            {messages.map((message, index) => <div key={`${message.role}-${index}`} className={message.role}>{message.text}</div>)}
+          <AppHeader
+            title="Чат по делу"
+            subtitle={activeCase.title}
+            back="case"
+          />
+          <div className="chatCaseCard">
+            <span className="roundIcon">⚖</span>
+            <p>
+              <b>{activeCase.title}</b>
+              <br />
+              Дело №{activeCase.id} · {activeCase.type}
+            </p>
+            <em>● {activeCase.status}</em>
           </div>
-          <button className="primary wide heroCta" onClick={() => go("claim")}>✧ Сформировать документ</button>
+          <div className="messages">
+            {messages.map((message, index) => (
+              <div key={`${message.role}-${index}`} className={message.role}>
+                {message.text}
+              </div>
+            ))}
+          </div>
+          <button className="primary wide heroCta" onClick={() => go("claim")}>
+            ✧ Сформировать документ
+          </button>
           <div className="composer">
-            <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }} placeholder="Сообщение юристу AI" />
-            <button className="primary" onClick={sendMessage}>Отправить</button>
+            <input
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") sendMessage();
+              }}
+              placeholder="Сообщение юристу AI"
+            />
+            <button className="primary" onClick={sendMessage}>
+              Отправить
+            </button>
           </div>
         </section>
       );
     }
 
-    if (view === "documents" || view === "analysis" || view === "documentCheck" || view === "documentUpload") {
-      const recentDocs = documents.length ? documents : [
-        { name: "Свидетельство_о_браке.pdf", status: "PDF · 1.2 МБ · 15 мая 2024" },
-        { name: "Справка_о_доходах.jpg", status: "JPG · 0.8 МБ · 14 мая 2024" },
-      ];
+    if (
+      view === "documents" ||
+      view === "analysis" ||
+      view === "documentCheck" ||
+      view === "documentUpload"
+    ) {
+      const recentDocs = documents.length
+        ? documents
+        : [
+            {
+              name: "Свидетельство_о_браке.pdf",
+              status: "PDF · 1.2 МБ · 15 мая 2024",
+            },
+            {
+              name: "Справка_о_доходах.jpg",
+              status: "JPG · 0.8 МБ · 14 мая 2024",
+            },
+          ];
       return (
-        <section className={view === "documents" ? "contentPanel documentsOverview" : "contentPanel"}>
+        <section
+          className={
+            view === "documents"
+              ? "contentPanel documentsOverview"
+              : "contentPanel"
+          }
+        >
           <AppHeader
-            title={view === "analysis" ? "Анализ документов" : view === "documentUpload" ? "Загрузка документа" : view === "documentCheck" ? "Проверка документов" : "Документы и доказательства"}
+            title={
+              view === "analysis"
+                ? "Анализ документов"
+                : view === "documentUpload"
+                  ? "Загрузка документа"
+                  : view === "documentCheck"
+                    ? "Проверка документов"
+                    : "Документы и доказательства"
+            }
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
-          <input ref={fileInputRef} className="fileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "file"); go("documentUpload"); }} />
-          <input ref={scanInputRef} className="fileInput" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addDocument(file, "camera"); go("documentUpload"); }} />
+          <input
+            ref={fileInputRef}
+            className="fileInput"
+            type="file"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void addDocument(file, "file");
+              go("documentUpload");
+            }}
+          />
+          <input
+            ref={scanInputRef}
+            className="fileInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void addDocument(file, "camera");
+              go("documentUpload");
+            }}
+          />
           {view === "documents" && (
             <>
-              <div className="docSearch"><span>⌕</span><input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="Поиск по документам и делам" /></div>
-              <div className="docTabs"><button className="active" onClick={() => setSyncState("Раздел документов открыт")}>Документы</button><button onClick={() => setSyncState("Раздел доказательств открыт")}>Доказательства</button><button onClick={() => setSyncState("Недавние файлы открыты")}>Недавние</button></div>
+              <div className="docSearch">
+                <span>⌕</span>
+                <input
+                  value={caseSearch}
+                  onChange={(event) => setCaseSearch(event.target.value)}
+                  placeholder="Поиск по документам и делам"
+                />
+              </div>
+              <div className="docTabs">
+                <button
+                  className="active"
+                  onClick={() => setSyncState("Раздел документов открыт")}
+                >
+                  Документы
+                </button>
+                <button
+                  onClick={() => setSyncState("Раздел доказательств открыт")}
+                >
+                  Доказательства
+                </button>
+                <button onClick={() => setSyncState("Недавние файлы открыты")}>
+                  Недавние
+                </button>
+              </div>
               <h3 className="goldSection">Папки</h3>
               <div className="folderList">
                 {[
-                  ["Личные документы", "Паспорт, ИИН, доверенности", "5 файлов"],
-                  ["Договоры и переписка", "Договоры, письма, сообщения", "12 файлов"],
-                  ["Судебные документы", "Иски, определения, решения", "8 файлов"],
-                ].map(([title, sub, count]) => <button key={title} onClick={() => setSyncState(`Открыта папка: ${title}`)}><span className="folderIcon"></span><p><strong>{title}</strong><small>{sub}</small></p><em>{count}</em><b>›</b></button>)}
+                  [
+                    "Личные документы",
+                    "Паспорт, ИИН, доверенности",
+                    "5 файлов",
+                  ],
+                  [
+                    "Договоры и переписка",
+                    "Договоры, письма, сообщения",
+                    "12 файлов",
+                  ],
+                  [
+                    "Судебные документы",
+                    "Иски, определения, решения",
+                    "8 файлов",
+                  ],
+                ].map(([title, sub, count]) => (
+                  <button
+                    key={title}
+                    onClick={() => setSyncState(`Открыта папка: ${title}`)}
+                  >
+                    <span className="folderIcon"></span>
+                    <p>
+                      <strong>{title}</strong>
+                      <small>{sub}</small>
+                    </p>
+                    <em>{count}</em>
+                    <b>›</b>
+                  </button>
+                ))}
               </div>
               <h3 className="goldSection">Последние файлы</h3>
               <div className="recentFileList">
                 {[
-                  ["Исковое заявление.pdf", "PDF · 482 КБ · сегодня", "Проверено"],
-                  ["Договор займа.pdf", "PDF · 1,2 МБ · вчера", "Нужна проверка"],
-                  ["Переписка WhatsApp.zip", "ZIP · 3,4 МБ · 15 мая", "Доказательство"],
-                ].map(([name, meta, status]) => <button key={name} onClick={() => { setSelectedDocument(name); setSyncState(`Открыт файл: ${name}`); }}><span className="fileBadge">DOC</span><p><strong>{name}</strong><small>{meta}</small></p><em>{status}</em><b>›</b></button>)}
+                  [
+                    "Исковое заявление.pdf",
+                    "PDF · 482 КБ · сегодня",
+                    "Проверено",
+                  ],
+                  [
+                    "Договор займа.pdf",
+                    "PDF · 1,2 МБ · вчера",
+                    "Нужна проверка",
+                  ],
+                  [
+                    "Переписка WhatsApp.zip",
+                    "ZIP · 3,4 МБ · 15 мая",
+                    "Доказательство",
+                  ],
+                ].map(([name, meta, status]) => (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      setSelectedDocument(name);
+                      setSyncState(`Открыт файл: ${name}`);
+                    }}
+                  >
+                    <span className="fileBadge">DOC</span>
+                    <p>
+                      <strong>{name}</strong>
+                      <small>{meta}</small>
+                    </p>
+                    <em>{status}</em>
+                    <b>›</b>
+                  </button>
+                ))}
               </div>
-              <button className="primary wide heroCta fixedDocCta" onClick={() => fileInputRef.current?.click()}>Добавить документ</button>
+              <button
+                className="primary wide heroCta fixedDocCta"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Добавить документ
+              </button>
             </>
           )}
           {view === "documentCheck" && (
             <>
               <div className="docReadinessCard">
                 <span className="largeIcon">⚖</span>
-                <div><h3>Готовность дела: <b>68%</b></h3><progress value={68} max="100" /><p>Чем выше готовность, тем больше шансов на успешный исход дела.</p></div>
+                <div>
+                  <h3>
+                    Готовность дела: <b>68%</b>
+                  </h3>
+                  <progress value={68} max="100" />
+                  <p>
+                    Чем выше готовность, тем больше шансов на успешный исход
+                    дела.
+                  </p>
+                </div>
               </div>
               <h3 className="goldSection">▤ Не хватает документов</h3>
               <div className="docChecklist">
-                {["Удостоверение личности", "Свидетельство о браке", "Свидетельство о рождении ребенка", "Справка о доходах"].map((name, index) => <button key={name} onClick={index < 2 ? confirmOcr : () => go("documentUpload")}><span className={index < 2 ? "ok" : "miss"}>{index < 2 ? "✓" : "−"}</span><strong>{name}</strong><em>{index < 2 ? "Есть" : "Отсутствует"}</em></button>)}
+                {[
+                  "Удостоверение личности",
+                  "Свидетельство о браке",
+                  "Свидетельство о рождении ребенка",
+                  "Справка о доходах",
+                ].map((name, index) => (
+                  <button
+                    key={name}
+                    onClick={
+                      index < 2 ? confirmOcr : () => go("documentUpload")
+                    }
+                  >
+                    <span className={index < 2 ? "ok" : "miss"}>
+                      {index < 2 ? "✓" : "−"}
+                    </span>
+                    <strong>{name}</strong>
+                    <em>{index < 2 ? "Есть" : "Отсутствует"}</em>
+                  </button>
+                ))}
               </div>
-              <div className="docHint"><span className="largeIcon">▧</span><p>Для подготовки иска желательно добавить недостающие документы.</p></div>
-              <button className="primary wide heroCta" onClick={() => fileInputRef.current?.click()}>⇧ Загрузить документы</button>
-              <button className="wide outlineGold" onClick={() => go("analysis")}>Продолжить без них</button>
+              <div className="docHint">
+                <span className="largeIcon">▧</span>
+                <p>
+                  Для подготовки иска желательно добавить недостающие документы.
+                </p>
+              </div>
+              <button
+                className="primary wide heroCta"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                ⇧ Загрузить документы
+              </button>
+              <button
+                className="wide outlineGold"
+                onClick={() => go("analysis")}
+              >
+                Продолжить без них
+              </button>
             </>
           )}
           {view === "documentUpload" && (
             <>
-              <div className="uploadHero"><AuthMark icon="⇧" /><h1>Добавьте документ</h1><p>Загрузите файл любым удобным способом для анализа и консультации</p></div>
-              <div className="uploadActions">
-                <button onClick={() => scanInputRef.current?.click()}><span>▣</span>Сканировать камерой</button>
-                <button onClick={() => fileInputRef.current?.click()}><span>▰</span>Выбрать из файлов</button>
-                <button onClick={() => scanInputRef.current?.click()}><span>▣</span>Сделать фото</button>
+              <div className="uploadHero">
+                <AuthMark icon="⇧" />
+                <h1>Добавьте документ</h1>
+                <p>
+                  Загрузите файл любым удобным способом для анализа и
+                  консультации
+                </p>
               </div>
-              <div className="sectionTitle"><h3>Недавние загрузки</h3><button onClick={() => go("documents")}>Все ›</button></div>
-              <div className="list">{recentDocs.map((doc) => <button className="docRow uploadDocRow" key={doc.name} onClick={() => { setSelectedDocument(doc.name); setSyncState(`Открыт документ: ${doc.name}`); }}><span className={`fileBadge ${doc.name.endsWith(".jpg") ? "imageBadge" : ""}`}>{doc.name.endsWith(".jpg") ? "IMG" : "PDF"}</span><p><strong>{doc.name}</strong><small>{doc.status}</small></p><em>⋮</em></button>)}</div>
+              <div className="uploadActions">
+                <button onClick={() => scanInputRef.current?.click()}>
+                  <span>▣</span>Сканировать камерой
+                </button>
+                <button onClick={() => fileInputRef.current?.click()}>
+                  <span>▰</span>Выбрать из файлов
+                </button>
+                <button onClick={() => scanInputRef.current?.click()}>
+                  <span>▣</span>Сделать фото
+                </button>
+              </div>
+              <div className="sectionTitle">
+                <h3>Недавние загрузки</h3>
+                <button onClick={() => go("documents")}>Все ›</button>
+              </div>
+              <div className="list">
+                {recentDocs.map((doc) => (
+                  <button
+                    className="docRow uploadDocRow"
+                    key={doc.name}
+                    onClick={() => {
+                      setSelectedDocument(doc.name);
+                      setSyncState(`Открыт документ: ${doc.name}`);
+                    }}
+                  >
+                    <span
+                      className={`fileBadge ${doc.name.endsWith(".jpg") ? "imageBadge" : ""}`}
+                    >
+                      {doc.name.endsWith(".jpg") ? "IMG" : "PDF"}
+                    </span>
+                    <p>
+                      <strong>{doc.name}</strong>
+                      <small>{doc.status}</small>
+                    </p>
+                    <em>⋮</em>
+                  </button>
+                ))}
+              </div>
               <p className="hint">▣ Поддерживаются PDF, DOCX, JPG, PNG</p>
-              <button className="primary wide heroCta" onClick={() => go("documentCheck")}>✧ Продолжить</button>
+              <button
+                className="primary wide heroCta"
+                onClick={() => go("documentCheck")}
+              >
+                ✧ Продолжить
+              </button>
             </>
           )}
           {view === "analysis" && (
@@ -1213,26 +2345,98 @@ export default function WebHome() {
                 const analysisProgressLabel = analysisDone ? "100%" : "82%";
                 return (
                   <>
-              <div className="analysisHero"><span className="largeIcon">▧</span><div><h1>Документы анализируются</h1><p>Извлекаем сведения из ваших файлов с помощью искусственного интеллекта</p></div></div>
-              <div className="analysisTags"><span>♙ ФИО</span><span>▣ Даты</span><span>◎ Суммы</span><span>▤ ИИН</span><span>⚖ Статьи</span><span>⌘ Приложения</span></div>
-              <div className="analysisTimeline">{[
-                ["OCR завершен", "Текст распознан и извлечен"],
-                ["Тип документа определен", "Договор займа"],
-                ["Проверка реквизитов", "Проверяем реквизиты и подписи"],
-                ["Поиск норм права", "Подбираем применимые нормы"],
-              ].map(([step, detail], index) => <button key={step} onClick={index < 2 ? confirmOcr : analyzeDocuments}><span>{index < 2 ? "✓" : index === 2 ? "●" : ""}</span><p><strong>{step}</strong><small>{detail}</small></p><em>{index < 2 ? "Завершено" : index === 2 ? "В процессе" : "Ожидает"}</em></button>)}</div>
-              <div className="docHint"><span>✦</span><p>{analysisDone ? "Анализ завершен. Можно формировать претензию." : `Система нашла ${Math.max(documents.length, 4)} документа, распознала 18 страниц и выделила ключевые сведения`}</p><b>{analysisProgressLabel}</b></div>
-              <div className="sectionTitle analysisFoundTitle"><h3>Что найдено</h3></div>
-              <div className="analysisFoundGrid">
-                {[
-                  ["▤", "4 документа", "PDF, JPG, PNG"],
-                  ["▣", "7 ключевых дат", "Периоды и сроки"],
-                  ["◎", "12 сумм", "Общая сумма 4 250 000 ₸"],
-                  ["⚖", "9 норм права", "Найдены релевантные статьи"],
-                ].map(([icon, title, detail]) => <button key={title} onClick={analyzeDocuments}><span>{icon}</span><p><strong>{title}</strong><small>{detail}</small></p><em>›</em></button>)}
-              </div>
-              <button className="primary wide heroCta" onClick={analysisDone ? () => go("claim") : analyzeDocuments}>{analysisDone ? "Сформировать претензию" : "✧ Продолжить"}</button>
-              <button className="wide outlineGold" onClick={() => go("documentCheck")}>Посмотреть детали</button>
+                    <div className="analysisHero">
+                      <span className="largeIcon">▧</span>
+                      <div>
+                        <h1>Документы анализируются</h1>
+                        <p>
+                          Извлекаем сведения из ваших файлов с помощью
+                          искусственного интеллекта
+                        </p>
+                      </div>
+                    </div>
+                    <div className="analysisTags">
+                      <span>♙ ФИО</span>
+                      <span>▣ Даты</span>
+                      <span>◎ Суммы</span>
+                      <span>▤ ИИН</span>
+                      <span>⚖ Статьи</span>
+                      <span>⌘ Приложения</span>
+                    </div>
+                    <div className="analysisTimeline">
+                      {[
+                        ["OCR завершен", "Текст распознан и извлечен"],
+                        ["Тип документа определен", "Договор займа"],
+                        [
+                          "Проверка реквизитов",
+                          "Проверяем реквизиты и подписи",
+                        ],
+                        ["Поиск норм права", "Подбираем применимые нормы"],
+                      ].map(([step, detail], index) => (
+                        <button
+                          key={step}
+                          onClick={index < 2 ? confirmOcr : analyzeDocuments}
+                        >
+                          <span>
+                            {index < 2 ? "✓" : index === 2 ? "●" : ""}
+                          </span>
+                          <p>
+                            <strong>{step}</strong>
+                            <small>{detail}</small>
+                          </p>
+                          <em>
+                            {index < 2
+                              ? "Завершено"
+                              : index === 2
+                                ? "В процессе"
+                                : "Ожидает"}
+                          </em>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="docHint">
+                      <span>✦</span>
+                      <p>
+                        {analysisDone
+                          ? "Анализ завершен. Можно формировать претензию."
+                          : `Система нашла ${Math.max(documents.length, 4)} документа, распознала 18 страниц и выделила ключевые сведения`}
+                      </p>
+                      <b>{analysisProgressLabel}</b>
+                    </div>
+                    <div className="sectionTitle analysisFoundTitle">
+                      <h3>Что найдено</h3>
+                    </div>
+                    <div className="analysisFoundGrid">
+                      {[
+                        ["▤", "4 документа", "PDF, JPG, PNG"],
+                        ["▣", "7 ключевых дат", "Периоды и сроки"],
+                        ["◎", "12 сумм", "Общая сумма 4 250 000 ₸"],
+                        ["⚖", "9 норм права", "Найдены релевантные статьи"],
+                      ].map(([icon, title, detail]) => (
+                        <button key={title} onClick={analyzeDocuments}>
+                          <span>{icon}</span>
+                          <p>
+                            <strong>{title}</strong>
+                            <small>{detail}</small>
+                          </p>
+                          <em>›</em>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="primary wide heroCta"
+                      onClick={
+                        analysisDone ? () => go("claim") : analyzeDocuments
+                      }
+                    >
+                      {analysisDone ? "Сформировать претензию" : "✧ Продолжить"}
+                    </button>
+                    <button
+                      className="wide outlineGold"
+                      onClick={() => go("documentCheck")}
+                    >
+                      Посмотреть детали
+                    </button>
                   </>
                 );
               })()}
@@ -1245,67 +2449,323 @@ export default function WebHome() {
     if (view === "deadlines") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Календарь и сроки" subtitle="Контроль процессуальных дат" />
-          <div className="calendar caseCalendar"><div className="calendarTop"><button onClick={() => setDeadlineStatus("Предыдущий месяц недоступен в локальном календаре")}>‹</button><strong>Май 2024</strong><button onClick={() => setDeadlineStatus("Следующий месяц недоступен в локальном календаре")}>›</button></div><div className="calendarGrid">{["Пн","Вт","Ср","Чт","Пт","Сб","Вс","29","30","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","1","2"].map((day, index) => <button className={["9","16","22"].includes(day) ? "marked" : ""} key={`${day}-${index}`} onClick={() => setDeadlineStatus(`Выбрана дата: ${day} мая`)}>{day}</button>)}</div></div>
-          <div className="caseFilters deadlineFilters">{["Все", "Срочно", "Суд", "Напоминания"].map((filter) => <button className={filter === "Все" ? "active" : ""} key={filter} onClick={() => setDeadlineStatus(`Фильтр сроков: ${filter}`)}>{filter}</button>)}</div>
-          <div className="deadlineList">{tasks.map((task, index) => <button className={task.done ? "deadlineRow done" : "deadlineRow"} key={task.title} onClick={() => toggleTask(task.title)}><span className="roundIcon">{index === 0 ? "⚖" : index === 1 ? "▤" : "🔔"}</span><p><strong>{task.title}</strong><small>Дело №{activeCase.id} · {activeCase.title}</small><small>{task.done ? "Готово" : task.due}</small></p><em>{index === 0 ? "Срочно" : "Важно"} ›</em></button>)}</div>
-          <div className="docHint"><span>✦</span><p>Сроки рассчитываются автоматически по календарю дела и подтвержденным правилам РК.</p></div>
-          <div className="docHint"><span>✦</span><p>{deadlineStatus}</p></div>
+          <AppHeader
+            title="Календарь и сроки"
+            subtitle="Контроль процессуальных дат"
+          />
+          <div className="calendar caseCalendar">
+            <div className="calendarTop">
+              <button
+                onClick={() =>
+                  setDeadlineStatus(
+                    "Предыдущий месяц недоступен в локальном календаре",
+                  )
+                }
+              >
+                ‹
+              </button>
+              <strong>Май 2024</strong>
+              <button
+                onClick={() =>
+                  setDeadlineStatus(
+                    "Следующий месяц недоступен в локальном календаре",
+                  )
+                }
+              >
+                ›
+              </button>
+            </div>
+            <div className="calendarGrid">
+              {[
+                "Пн",
+                "Вт",
+                "Ср",
+                "Чт",
+                "Пт",
+                "Сб",
+                "Вс",
+                "29",
+                "30",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "19",
+                "20",
+                "21",
+                "22",
+                "23",
+                "24",
+                "25",
+                "26",
+                "27",
+                "28",
+                "29",
+                "30",
+                "31",
+                "1",
+                "2",
+              ].map((day, index) => (
+                <button
+                  className={["9", "16", "22"].includes(day) ? "marked" : ""}
+                  key={`${day}-${index}`}
+                  onClick={() => setDeadlineStatus(`Выбрана дата: ${day} мая`)}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="caseFilters deadlineFilters">
+            {["Все", "Срочно", "Суд", "Напоминания"].map((filter) => (
+              <button
+                className={filter === "Все" ? "active" : ""}
+                key={filter}
+                onClick={() => setDeadlineStatus(`Фильтр сроков: ${filter}`)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+          <div className="deadlineList">
+            {tasks.map((task, index) => (
+              <button
+                className={task.done ? "deadlineRow done" : "deadlineRow"}
+                key={task.title}
+                onClick={() => toggleTask(task.title)}
+              >
+                <span className="roundIcon">
+                  {index === 0 ? "⚖" : index === 1 ? "▤" : "🔔"}
+                </span>
+                <p>
+                  <strong>{task.title}</strong>
+                  <small>
+                    Дело №{activeCase.id} · {activeCase.title}
+                  </small>
+                  <small>{task.done ? "Готово" : task.due}</small>
+                </p>
+                <em>{index === 0 ? "Срочно" : "Важно"} ›</em>
+              </button>
+            ))}
+          </div>
+          <div className="docHint">
+            <span>✦</span>
+            <p>
+              Сроки рассчитываются автоматически по календарю дела и
+              подтвержденным правилам РК.
+            </p>
+          </div>
+          <div className="docHint">
+            <span>✦</span>
+            <p>{deadlineStatus}</p>
+          </div>
         </section>
       );
     }
 
     if (view === "legal" || view === "legalSearch") {
-      const legalSearchTabs = view === "legalSearch" ? ["Все", "Статьи", "Пункты", "Разъяснения"] : ["Кодексы", "Законы", "Судебная практика"];
-      const legalFallback = legalQuery.trim().length >= 8
-        ? "Нажмите “Найти норму”, чтобы получить ответ только из официальных источников РК."
-        : "Введите запрос и запустите поиск. Без подтвержденного источника норма не добавляется в документ.";
+      const legalSearchTabs =
+        view === "legalSearch"
+          ? ["Все", "Статьи", "Пункты", "Разъяснения"]
+          : ["Кодексы", "Законы", "Судебная практика"];
+      const legalFallback =
+        legalQuery.trim().length >= 8
+          ? "Нажмите “Найти норму”, чтобы получить ответ только из официальных источников РК."
+          : "Введите запрос и запустите поиск. Без подтвержденного источника норма не добавляется в документ.";
       return (
         <section className="contentPanel">
-          <AppHeader title={view === "legalSearch" ? "Поиск нормы" : "Нормы права"} subtitle="Официальные источники РК" />
+          <AppHeader
+            title={view === "legalSearch" ? "Поиск нормы" : "Нормы права"}
+            subtitle="Официальные источники РК"
+          />
           <div className="legalSearch">
             <span>⌕</span>
-            <input aria-label="Поиск нормы" value={legalQuery} onChange={(event) => setLegalQuery(event.target.value)} placeholder="взыскание алиментов" />
-            <button aria-label="Фильтр" className={legalActiveOnly ? "activeIcon" : ""} onClick={toggleLegalFilter}>☷</button>
+            <input
+              aria-label="Поиск нормы"
+              value={legalQuery}
+              onChange={(event) => setLegalQuery(event.target.value)}
+              placeholder="взыскание алиментов"
+            />
+            <button
+              aria-label="Фильтр"
+              className={legalActiveOnly ? "activeIcon" : ""}
+              onClick={toggleLegalFilter}
+            >
+              ☷
+            </button>
           </div>
-          {view === "legalSearch" && <div className="popularQueries"><span>Популярные запросы</span>{["взыскание алиментов", "алименты на ребенка", "размер алиментов", "индексация алиментов", "неустойка по алиментам"].map((query) => <button key={query} onClick={() => setLegalQuery(query)}>⌕ {query}</button>)}<button onClick={() => setLegalQuery("")}>Очистить</button></div>}
-          <div className="chips legalTabs">{legalSearchTabs.map((tab) => <button className={legalTab === tab ? "chip active" : "chip"} key={tab} onClick={() => selectLegalTab(tab)}>{tab}</button>)}</div>
-          {view === "legalSearch" && <div className="legalResultMeta"><span>{legalNorms.length ? `Найдено ${legalNorms.length} подтверждений` : "Ожидает поиска"}</span><button onClick={toggleLegalFilter}>По релевантности⌄</button></div>}
-          <div className="list">
-            {!legalNorms.length && <div className="normCard legalFallbackCard"><em>Официальная проверка</em><strong>Нет подтвержденной нормы РК</strong><span>Источник не выбран</span><small>zan.gov.kz · Әділет · суды РК</small><p>{legalFallback}</p><div className="normAiBox"><b>Пояснение AI</b><p>Ответ появится после проверки citation validator. Фиктивные нормы не отображаются.</p></div></div>}
-            {legalNorms.map((norm, index) => (
-              <button className={selectedNorm?.article === norm.article ? "normCard active" : "normCard"} key={`${norm.title}-${norm.article}`} onClick={() => { setSelectedNorm(norm); setLegalAnswer(norm.text); }}>
-                {index === 0 && <em>Рекомендованная норма</em>}
-                <strong>{norm.title}</strong>
-                <span>{norm.article}</span>
-                <small>Источник: {norm.source} · Актуально на {norm.date}</small>
-                <p>{norm.text}</p>
-                {index === 0 && <div className="normAiBox"><b>AI пояснение</b><p>{norm.text}</p></div>}
+          {view === "legalSearch" && (
+            <div className="popularQueries">
+              <span>Популярные запросы</span>
+              {[
+                "взыскание алиментов",
+                "алименты на ребенка",
+                "размер алиментов",
+                "индексация алиментов",
+                "неустойка по алиментам",
+              ].map((query) => (
+                <button key={query} onClick={() => setLegalQuery(query)}>
+                  ⌕ {query}
+                </button>
+              ))}
+              <button onClick={() => setLegalQuery("")}>Очистить</button>
+            </div>
+          )}
+          <div className="chips legalTabs">
+            {legalSearchTabs.map((tab) => (
+              <button
+                className={legalTab === tab ? "chip active" : "chip"}
+                key={tab}
+                onClick={() => selectLegalTab(tab)}
+              >
+                {tab}
               </button>
             ))}
           </div>
-          <div className="analysisBox"><strong>Citation Validator</strong><p>{legalAnswer}</p></div>
+          {view === "legalSearch" && (
+            <div className="legalResultMeta">
+              <span>
+                {legalNorms.length
+                  ? `Найдено ${legalNorms.length} подтверждений`
+                  : "Ожидает поиска"}
+              </span>
+              <button onClick={toggleLegalFilter}>По релевантности⌄</button>
+            </div>
+          )}
+          <div className="list">
+            {!legalNorms.length && (
+              <div className="normCard legalFallbackCard">
+                <em>Официальная проверка</em>
+                <strong>Нет подтвержденной нормы РК</strong>
+                <span>Источник не выбран</span>
+                <small>zan.gov.kz · Әділет · суды РК</small>
+                <p>{legalFallback}</p>
+                <div className="normAiBox">
+                  <b>Пояснение AI</b>
+                  <p>
+                    Ответ появится после проверки citation validator. Фиктивные
+                    нормы не отображаются.
+                  </p>
+                </div>
+              </div>
+            )}
+            {legalNorms.map((norm, index) => (
+              <button
+                className={
+                  selectedNorm?.article === norm.article
+                    ? "normCard active"
+                    : "normCard"
+                }
+                key={`${norm.title}-${norm.article}`}
+                onClick={() => {
+                  setSelectedNorm(norm);
+                  setLegalAnswer(norm.text);
+                }}
+              >
+                {index === 0 && <em>Рекомендованная норма</em>}
+                <strong>{norm.title}</strong>
+                <span>{norm.article}</span>
+                <small>
+                  Источник: {norm.source} · Актуально на {norm.date}
+                </small>
+                <p>{norm.text}</p>
+                {index === 0 && (
+                  <div className="normAiBox">
+                    <b>AI пояснение</b>
+                    <p>{norm.text}</p>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="analysisBox">
+            <strong>Citation Validator</strong>
+            <p>{legalAnswer}</p>
+          </div>
           <div className="actionBar stickyActions">
-            <button className="primary" onClick={() => { go("legalSearch"); void runLegalSearch(); }}>Найти норму</button>
-            <button className="primary" disabled={!selectedNorm} onClick={addNormToDocument}>Добавить в документ</button>
-            <button disabled={!selectedNorm} onClick={openOfficialSource}>Открыть источник</button>
+            <button
+              className="primary"
+              onClick={() => {
+                go("legalSearch");
+                void runLegalSearch();
+              }}
+            >
+              Найти норму
+            </button>
+            <button
+              className="primary"
+              disabled={!selectedNorm}
+              onClick={addNormToDocument}
+            >
+              Добавить в документ
+            </button>
+            <button disabled={!selectedNorm} onClick={openOfficialSource}>
+              Открыть источник
+            </button>
           </div>
         </section>
       );
     }
 
     if (view === "claim" || view === "claimDraft" || view === "claimSend") {
-      const claimBody = generatedClaimBody || "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ в установленный срок. Перед отправкой документ требует проверки пользователя.";
+      const claimBody =
+        generatedClaimBody ||
+        "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ в установленный срок. Перед отправкой документ требует проверки пользователя.";
       return (
         <section className="contentPanel">
-          <AppHeader title={view === "claimSend" || sent ? "Отправка претензии" : view === "claimDraft" || claimReady ? "Проект претензии" : "Формирование претензии"} subtitle="Досудебная претензия с ручным подтверждением" back="case" />
+          <AppHeader
+            title={
+              view === "claimSend" || sent
+                ? "Отправка претензии"
+                : view === "claimDraft" || claimReady
+                  ? "Проект претензии"
+                  : "Формирование претензии"
+            }
+            subtitle="Досудебная претензия с ручным подтверждением"
+            back="case"
+          />
           {view === "claim" && (
             <>
               <div className="claimBuildHero">
                 <AuthMark icon="▤" />
-                <div><h1>Подготовка досудебной претензии</h1><p>AI юрист анализирует данные дела и формирует текст претензии по подтвержденным источникам РК.</p></div>
+                <div>
+                  <h1>Подготовка досудебной претензии</h1>
+                  <p>
+                    AI юрист анализирует данные дела и формирует текст претензии
+                    по подтвержденным источникам РК.
+                  </p>
+                </div>
                 <div className="claimSteps">
-                  {["Категория спора определена", "Нормы права подобраны", "Недостающие документы проверены", "Текст претензии формируется"].map((step, index) => <button key={step} onClick={index === 3 ? generateClaim : () => setSyncState(step)}><span>{index < 3 ? "✓" : "●"}</span><strong>{step}</strong></button>)}
+                  {[
+                    "Категория спора определена",
+                    "Нормы права подобраны",
+                    "Недостающие документы проверены",
+                    "Текст претензии формируется",
+                  ].map((step, index) => (
+                    <button
+                      key={step}
+                      onClick={
+                        index === 3 ? generateClaim : () => setSyncState(step)
+                      }
+                    >
+                      <span>{index < 3 ? "✓" : "●"}</span>
+                      <strong>{step}</strong>
+                    </button>
+                  ))}
                 </div>
               </div>
               <div className="claimBasis">
@@ -1316,44 +2776,203 @@ export default function WebHome() {
                   <li>Ручная проверка при отсутствии источника.</li>
                 </ul>
               </div>
-              <div className="claimProgress"><span>Прогресс подготовки</span><b>{claimReady ? "100%" : "74%"}</b><progress value={claimReady ? 100 : 74} max="100" /></div>
-              <div className="docHint"><span>ⓘ</span><p>В документ будут включены: фактические обстоятельства, ваши требования, сроки исполнения и правовое обоснование.</p></div>
-              <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-              <button className="primary wide heroCta" onClick={generateClaim}>{claimReady ? "Открыть проект" : "✧ Открыть проект"}</button>
-              <button className="wide outlineGold" onClick={() => go("case")}>Отменить</button>
+              <div className="claimProgress">
+                <span>Прогресс подготовки</span>
+                <b>{claimReady ? "100%" : "74%"}</b>
+                <progress value={claimReady ? 100 : 74} max="100" />
+              </div>
+              <div className="docHint">
+                <span>ⓘ</span>
+                <p>
+                  В документ будут включены: фактические обстоятельства, ваши
+                  требования, сроки исполнения и правовое обоснование.
+                </p>
+              </div>
+              <textarea
+                value={caseText}
+                onChange={(event) => setCaseText(event.target.value)}
+              />
+              <button className="primary wide heroCta" onClick={generateClaim}>
+                {claimReady ? "Открыть проект" : "✧ Открыть проект"}
+              </button>
+              <button className="wide outlineGold" onClick={() => go("case")}>
+                Отменить
+              </button>
             </>
           )}
           {view === "claimDraft" && (
             <>
-              <div className="claimStatusRow"><span>✎ Черновик</span><span>🛡 Проверено AI</span><span>⚠ Требует подтверждения</span></div>
+              <div className="claimStatusRow">
+                <span>✎ Черновик</span>
+                <span>🛡 Проверено AI</span>
+                <span>⚠ Требует подтверждения</span>
+              </div>
               <article className="claimPaper">
                 <div className="paperMark">⚖</div>
                 <h1>Досудебная претензия</h1>
-                <section><span>◎</span><div><b>От кого</b><p>{profileName || "Заявитель"} · контакты из профиля</p></div></section>
-                <section><span>▦</span><div><b>Кому</b><p>Ответчик · реквизиты уточняются пользователем</p></div></section>
-                <section><span>▤</span><div><b>Суть требования</b><p>{generatedClaimBody ? claimBody : "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ."}</p></div></section>
-                <section><span>⚖</span><div><b>Норма права</b><p>{selectedNorm ? `${selectedNorm.title}, ${selectedNorm.article}, ${selectedNorm.source}` : "Нет подтвержденной нормы РК. Требуется ручная проверка."}</p></div></section>
-                <aside><b>Правовое обоснование</b><p>Добавляется только после подтверждения официального источника РК.</p></aside>
+                <section>
+                  <span>◎</span>
+                  <div>
+                    <b>От кого</b>
+                    <p>{profileName || "Заявитель"} · контакты из профиля</p>
+                  </div>
+                </section>
+                <section>
+                  <span>▦</span>
+                  <div>
+                    <b>Кому</b>
+                    <p>Ответчик · реквизиты уточняются пользователем</p>
+                  </div>
+                </section>
+                <section>
+                  <span>▤</span>
+                  <div>
+                    <b>Суть требования</b>
+                    <p>
+                      {generatedClaimBody
+                        ? claimBody
+                        : "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ."}
+                    </p>
+                  </div>
+                </section>
+                <section>
+                  <span>⚖</span>
+                  <div>
+                    <b>Норма права</b>
+                    <p>
+                      {selectedNorm
+                        ? `${selectedNorm.title}, ${selectedNorm.article}, ${selectedNorm.source}`
+                        : "Нет подтвержденной нормы РК. Требуется ручная проверка."}
+                    </p>
+                  </div>
+                </section>
+                <aside>
+                  <b>Правовое обоснование</b>
+                  <p>
+                    Добавляется только после подтверждения официального
+                    источника РК.
+                  </p>
+                </aside>
               </article>
-              <div className="claimDraftActions"><button onClick={() => go("claim")}>✎ Редактировать</button><button onClick={() => setSyncState("PDF будет сформирован через documents adapter после подтверждения")}>▣ Скачать PDF</button></div>
-              <button className="primary wide heroCta" onClick={confirmClaimSent}>✧ Перейти к отправке</button>
-              <p className="claimSecure">🛡 Документ защищён и хранится безопасно</p>
+              <div className="claimDraftActions">
+                <button onClick={() => go("claim")}>✎ Редактировать</button>
+                <button
+                  onClick={() =>
+                    setSyncState(
+                      "PDF будет сформирован через documents adapter после подтверждения",
+                    )
+                  }
+                >
+                  ▣ Скачать PDF
+                </button>
+              </div>
+              <button
+                className="primary wide heroCta"
+                onClick={confirmClaimSent}
+              >
+                ✧ Перейти к отправке
+              </button>
+              <p className="claimSecure">
+                🛡 Документ защищён и хранится безопасно
+              </p>
             </>
           )}
           {view === "claimSend" && (
             <>
               <h3 className="goldSection">Выберите способ отправки</h3>
-              <div className="sendMethods">{["E-mail", "WhatsApp", "SMS", "Почтовая отправка"].map((method) => <button className={method === "WhatsApp" ? "active" : ""} key={method} onClick={() => setSyncState(`${method}: внешний канал, требуется ручная отправка или provider adapter`)}><span>{method === "E-mail" ? "✉" : method === "WhatsApp" ? "☎" : method === "SMS" ? "…" : "▤"}</span><strong>{method}</strong></button>)}</div>
-              <div className="recipientCard"><span>☎</span><p><small>Получатель</small><br /><b>Иванов Иван Иванович</b><br />+7 905 123-45-67</p></div>
+              <div className="sendMethods">
+                {["E-mail", "WhatsApp", "SMS", "Почтовая отправка"].map(
+                  (method) => (
+                    <button
+                      className={method === "WhatsApp" ? "active" : ""}
+                      key={method}
+                      onClick={() =>
+                        setSyncState(
+                          `${method}: внешний канал, требуется ручная отправка или provider adapter`,
+                        )
+                      }
+                    >
+                      <span>
+                        {method === "E-mail"
+                          ? "✉"
+                          : method === "WhatsApp"
+                            ? "☎"
+                            : method === "SMS"
+                              ? "…"
+                              : "▤"}
+                      </span>
+                      <strong>{method}</strong>
+                    </button>
+                  ),
+                )}
+              </div>
+              <div className="recipientCard">
+                <span>☎</span>
+                <p>
+                  <small>Получатель</small>
+                  <br />
+                  <b>Иванов Иван Иванович</b>
+                  <br />
+                  +7 905 123-45-67
+                </p>
+              </div>
               <p className="fieldLabel">Вложенные файлы</p>
-              <div className="attachmentRow"><span>PDF</span><p><b>Претензия.pdf</b><br />245 КБ</p><button onClick={() => setSyncState("Файл доступен после генерации PDF adapter")}>⇩</button></div>
+              <div className="attachmentRow">
+                <span>PDF</span>
+                <p>
+                  <b>Претензия.pdf</b>
+                  <br />
+                  245 КБ
+                </p>
+                <button
+                  onClick={() =>
+                    setSyncState("Файл доступен после генерации PDF adapter")
+                  }
+                >
+                  ⇩
+                </button>
+              </div>
               <p className="fieldLabel">Контакт получателя</p>
-              <input value={claimSendContact} onChange={(event) => { setClaimSendContact(event.currentTarget.value); setSyncState("Контакт получателя обновлен локально"); }} />
+              <input
+                value={claimSendContact}
+                onChange={(event) => {
+                  setClaimSendContact(event.currentTarget.value);
+                  setSyncState("Контакт получателя обновлен локально");
+                }}
+              />
               <p className="fieldLabel">Текст сообщения</p>
-              <textarea value={claimSendMessage} onChange={(event) => { setClaimSendMessage(event.currentTarget.value); setSyncState(`Текст сообщения обновлен: ${event.currentTarget.value.length} символов`); }} />
-              <div className="docHint"><span>◇</span><p>Доставка сообщения зависит от внешнего сервиса. Статус отправки и доставки может быть недоступен или отображаться с задержкой.</p></div>
-              <button className="primary wide heroCta" onClick={confirmClaimSent}>{sent ? "Отправка зафиксирована" : "✧ Отправить"}</button>
-              <button className="wide outlineGold" onClick={() => { setClaimReady(true); setSyncState("Черновик отправки сохранен локально"); }}>▤ Сохранить как черновик</button>
+              <textarea
+                value={claimSendMessage}
+                onChange={(event) => {
+                  setClaimSendMessage(event.currentTarget.value);
+                  setSyncState(
+                    `Текст сообщения обновлен: ${event.currentTarget.value.length} символов`,
+                  );
+                }}
+              />
+              <div className="docHint">
+                <span>◇</span>
+                <p>
+                  Доставка сообщения зависит от внешнего сервиса. Статус
+                  отправки и доставки может быть недоступен или отображаться с
+                  задержкой.
+                </p>
+              </div>
+              <button
+                className="primary wide heroCta"
+                onClick={confirmClaimSent}
+              >
+                {sent ? "Отправка зафиксирована" : "✧ Отправить"}
+              </button>
+              <button
+                className="wide outlineGold"
+                onClick={() => {
+                  setClaimReady(true);
+                  setSyncState("Черновик отправки сохранен локально");
+                }}
+              >
+                ▤ Сохранить как черновик
+              </button>
             </>
           )}
         </section>
@@ -1363,16 +2982,77 @@ export default function WebHome() {
     if (view === "profile") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Профиль" subtitle="Физическое лицо · профиль подтверждён" />
-          <div className="profileHero"><div className="profileAvatar">{(profileName || "АС").slice(0, 2).toUpperCase()}</div><h2>{profileName || "Асем Серикбосыновна"}</h2><p>Физическое лицо · профиль подтверждён</p></div>
-          <div className="claimProgress"><span>Заполненность профиля</span><b>86%</b><progress value={86} max="100" /></div>
+          <AppHeader
+            title="Профиль"
+            subtitle="Физическое лицо · профиль подтверждён"
+          />
+          <div className="profileHero">
+            <div className="profileAvatar">
+              {(profileName || "АС").slice(0, 2).toUpperCase()}
+            </div>
+            <h2>{profileName || "Асем Серикбосыновна"}</h2>
+            <p>Физическое лицо · профиль подтверждён</p>
+          </div>
+          <div className="claimProgress">
+            <span>Заполненность профиля</span>
+            <b>86%</b>
+            <progress value={86} max="100" />
+          </div>
           <h3 className="goldSection">Мои профили</h3>
-          <div className="profileCards">{["Физическое лицо|Активный профиль|Основной", "Индивидуальный предприниматель|ИП MILANIUM|›", "Юридическое лицо|Добавить организацию|›"].map((row) => { const [title, sub, tail] = row.split("|"); return <button key={title} onClick={() => setProfileType(title.includes("предприниматель") ? "ИП" : title.includes("Юридическое") ? "Юрлицо" : "Физлицо")}><span>{title === "Юридическое лицо" ? "+" : title.slice(0, 2).toUpperCase()}</span><p><b>{title}</b><small>{sub}</small></p><em>{tail}</em></button>; })}</div>
+          <div className="profileCards">
+            {[
+              "Физическое лицо|Активный профиль|Основной",
+              "Индивидуальный предприниматель|ИП MILANIUM|›",
+              "Юридическое лицо|Добавить организацию|›",
+            ].map((row) => {
+              const [title, sub, tail] = row.split("|");
+              return (
+                <button
+                  key={title}
+                  onClick={() =>
+                    setProfileType(
+                      title.includes("предприниматель")
+                        ? "ИП"
+                        : title.includes("Юридическое")
+                          ? "Юрлицо"
+                          : "Физлицо",
+                    )
+                  }
+                >
+                  <span>
+                    {title === "Юридическое лицо"
+                      ? "+"
+                      : title.slice(0, 2).toUpperCase()}
+                  </span>
+                  <p>
+                    <b>{title}</b>
+                    <small>{sub}</small>
+                  </p>
+                  <em>{tail}</em>
+                </button>
+              );
+            })}
+          </div>
           <h3 className="goldSection">Данные и безопасность</h3>
-          <input placeholder="Ф.И.О. / название" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
-          <input placeholder="ИИН/БИН" value={profileId} onChange={(event) => setProfileId(event.target.value)} />
+          <input
+            placeholder="Ф.И.О. / название"
+            value={profileName}
+            onChange={(event) => setProfileName(event.target.value)}
+          />
+          <input
+            placeholder="ИИН/БИН"
+            value={profileId}
+            onChange={(event) => setProfileId(event.target.value)}
+          />
           <div className="actionBar">
-            <button className="primary" onClick={() => { void saveProfile(); }}>Сохранить профиль</button>
+            <button
+              className="primary"
+              onClick={() => {
+                void saveProfile();
+              }}
+            >
+              Сохранить профиль
+            </button>
             <button onClick={() => go("settings")}>Настройки</button>
             <button onClick={() => go("subscription")}>Подписка</button>
             <button onClick={() => go("help")}>Помощь и поддержка</button>
@@ -1384,16 +3064,79 @@ export default function WebHome() {
     if (view === "settings") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Настройки" subtitle="Безопасность, уведомления и приватность" back="profile" />
+          <AppHeader
+            title="Настройки"
+            subtitle="Безопасность, уведомления и приватность"
+            back="profile"
+          />
           <h3 className="goldSection">Основные</h3>
-          <div className="settingsGroup"><button onClick={() => setSyncState("Язык: русский")}>Язык приложения <em>Русский ›</em></button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>Тема приложения <em>{theme === "dark" ? "Тёмная" : "Светлая"} ›</em></button><button onClick={() => setSyncState("Размер текста: средний")}>Размер текста <em>Средний ›</em></button></div>
+          <div className="settingsGroup">
+            <button onClick={() => setSyncState("Язык: русский")}>
+              Язык приложения <em>Русский ›</em>
+            </button>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              Тема приложения{" "}
+              <em>{theme === "dark" ? "Тёмная" : "Светлая"} ›</em>
+            </button>
+            <button onClick={() => setSyncState("Размер текста: средний")}>
+              Размер текста <em>Средний ›</em>
+            </button>
+          </div>
           <h3 className="goldSection">Голосовой помощник</h3>
-          <div className="settingsGroup"><label className="toggle"><input type="checkbox" checked={budgetAlerts} onChange={(event) => setBudgetAlerts(event.target.checked)} /> Голосовые ответы</label><label className="toggle"><input type="checkbox" /> Автовоспроизведение</label><button onClick={() => setSyncState("Скорость речи: 1.0x")}>Скорость речи <em>1.0x ›</em></button></div>
+          <div className="settingsGroup">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={budgetAlerts}
+                onChange={(event) => setBudgetAlerts(event.target.checked)}
+              />{" "}
+              Голосовые ответы
+            </label>
+            <label className="toggle">
+              <input type="checkbox" /> Автовоспроизведение
+            </label>
+            <button onClick={() => setSyncState("Скорость речи: 1.0x")}>
+              Скорость речи <em>1.0x ›</em>
+            </button>
+          </div>
           <h3 className="goldSection">Конфиденциальность</h3>
-          <div className="settingsGroup"><label className="toggle"><input type="checkbox" checked={maskPii} onChange={(event) => setMaskPii(event.target.checked)} /> Обезличивать данные перед AI</label><label className="toggle"><input type="checkbox" /> Сохранять голосовые записи</label><label className="toggle"><input type="checkbox" /> Аналитика использования</label></div>
-          <button className="primary wide" onClick={saveSettings}>Сохранить настройки</button>
-          <button className="wide" onClick={() => { void exportAccount(); }}>Экспортировать данные</button>
-          <button className="wide dangerAction" onClick={() => { void deleteAccount(); }}>Удалить аккаунт</button>
+          <div className="settingsGroup">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={maskPii}
+                onChange={(event) => setMaskPii(event.target.checked)}
+              />{" "}
+              Обезличивать данные перед AI
+            </label>
+            <label className="toggle">
+              <input type="checkbox" /> Сохранять голосовые записи
+            </label>
+            <label className="toggle">
+              <input type="checkbox" /> Аналитика использования
+            </label>
+          </div>
+          <button className="primary wide" onClick={saveSettings}>
+            Сохранить настройки
+          </button>
+          <button
+            className="wide"
+            onClick={() => {
+              void exportAccount();
+            }}
+          >
+            Экспортировать данные
+          </button>
+          <button
+            className="wide dangerAction"
+            onClick={() => {
+              void deleteAccount();
+            }}
+          >
+            Удалить аккаунт
+          </button>
         </section>
       );
     }
@@ -1401,14 +3144,67 @@ export default function WebHome() {
     if (view === "subscription") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Подписка" subtitle="Лимиты, история и контроль расходов" back="profile" />
-          <div className="subscriptionHero"><p>Текущий план</p><h2>Профессиональный</h2><span>Активен</span><small>действует до 15 сентября 2026</small></div>
+          <AppHeader
+            title="Подписка"
+            subtitle="Лимиты, история и контроль расходов"
+            back="profile"
+          />
+          <div className="subscriptionHero">
+            <p>Текущий план</p>
+            <h2>Профессиональный</h2>
+            <span>Активен</span>
+            <small>действует до 15 сентября 2026</small>
+          </div>
           <h3 className="goldSection">Использование в августе</h3>
-          <div className="usageBars">{["Консультации|34 из 100|34", "Документы|12 из 30|40", "Голосовые минуты|68 из 180|38"].map((row) => { const [label, value, progress] = row.split("|"); return <div key={label}><b>{label}</b><em>{value}</em><progress value={Number(progress)} max="100" /></div>; })}</div>
+          <div className="usageBars">
+            {[
+              "Консультации|34 из 100|34",
+              "Документы|12 из 30|40",
+              "Голосовые минуты|68 из 180|38",
+            ].map((row) => {
+              const [label, value, progress] = row.split("|");
+              return (
+                <div key={label}>
+                  <b>{label}</b>
+                  <em>{value}</em>
+                  <progress value={Number(progress)} max="100" />
+                </div>
+              );
+            })}
+          </div>
           <h3 className="goldSection">Выберите план</h3>
-          <div className="planCards">{["Базовый|0 ₸|5 консультаций · 2 документа", "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту", "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка"].map((row, index) => { const [title, price, desc] = row.split("|"); return <button className={index === 1 ? "active" : ""} key={title} onClick={loadSubscription}><b>{title}</b><em>{price}</em><small>{desc.split(" · ").map((item) => <span key={item}>✓ {item}</span>)}</small>{index === 1 && <i>Рекомендуем</i>}</button>; })}</div>
-          <div className="analysisBox"><strong>Подписка</strong><p>{subscriptionStatus}</p></div>
-          <button className="primary wide" onClick={loadSubscription}>Управление подпиской</button>
+          <div className="planCards">
+            {[
+              "Базовый|0 ₸|5 консультаций · 2 документа",
+              "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту",
+              "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка",
+            ].map((row, index) => {
+              const [title, price, desc] = row.split("|");
+              return (
+                <button
+                  className={index === 1 ? "active" : ""}
+                  key={title}
+                  onClick={loadSubscription}
+                >
+                  <b>{title}</b>
+                  <em>{price}</em>
+                  <small>
+                    {desc.split(" · ").map((item) => (
+                      <span key={item}>✓ {item}</span>
+                    ))}
+                  </small>
+                  {index === 1 && <i>Рекомендуем</i>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="analysisBox">
+            <strong>Подписка</strong>
+            <p>{subscriptionStatus}</p>
+          </div>
+          <button className="primary wide" onClick={loadSubscription}>
+            Управление подпиской
+          </button>
         </section>
       );
     }
@@ -1416,16 +3212,99 @@ export default function WebHome() {
     if (view === "help") {
       return (
         <section className="contentPanel">
-          <AppHeader title="Помощь" subtitle="Поддержка и ручная проверка юристом" back="profile" />
-          <div className="legalSearch"><span>⌕</span><input value={caseText} onChange={(event) => setCaseText(event.target.value)} placeholder="Найдите ответ на вопрос" /><button onClick={() => setCaseText("")}>×</button></div>
+          <AppHeader
+            title="Помощь"
+            subtitle="Поддержка и ручная проверка юристом"
+            back="profile"
+          />
+          <div className="legalSearch">
+            <span>⌕</span>
+            <input
+              value={caseText}
+              onChange={(event) => setCaseText(event.target.value)}
+              placeholder="Найдите ответ на вопрос"
+            />
+            <button onClick={() => setCaseText("")}>×</button>
+          </div>
           <h3 className="goldSection">Быстрые действия</h3>
-          <div className="helpGrid">{["Частые вопросы|Ответы на популярные темы", "Инструкции|Пошаговые руководства", "Написать в WhatsApp|Обычно отвечаем за 5 минут", "Сообщить о проблеме|Ошибка или предложение"].map((row, index) => { const [title, sub] = row.split("|"); return <button key={title} onClick={() => setHelpStatus(`${title}: создан локальный запрос`)}><span>{index + 1}</span><b>{title}</b><small>{sub}</small></button>; })}</div>
-          <div className="supportOnline"><strong>Служба поддержки онлайн</strong><span>В сети</span><p>Среднее время ответа — до 15 минут</p><button className="primary" onClick={() => { void createSupportRequest(); }}>Открыть чат</button></div>
+          <div className="helpGrid">
+            {[
+              "Частые вопросы|Ответы на популярные темы",
+              "Инструкции|Пошаговые руководства",
+              "Написать в WhatsApp|Обычно отвечаем за 5 минут",
+              "Сообщить о проблеме|Ошибка или предложение",
+            ].map((row, index) => {
+              const [title, sub] = row.split("|");
+              return (
+                <button
+                  key={title}
+                  onClick={() =>
+                    setHelpStatus(`${title}: создан локальный запрос`)
+                  }
+                >
+                  <span>{index + 1}</span>
+                  <b>{title}</b>
+                  <small>{sub}</small>
+                </button>
+              );
+            })}
+          </div>
+          <div className="supportOnline">
+            <strong>Служба поддержки онлайн</strong>
+            <span>В сети</span>
+            <p>Среднее время ответа — до 15 минут</p>
+            <button
+              className="primary"
+              onClick={() => {
+                void createSupportRequest();
+              }}
+            >
+              Открыть чат
+            </button>
+          </div>
           <h3 className="goldSection">Разделы помощи</h3>
-          <div className="profileCards">{["Аккаунт и вход|Регистрация, SMS, биометрия|›", "Дела и документы|Загрузка, анализ, шаблоны|›", "Судебный кабинет и eGov|Подписание и отправка|›", "Оплата и подписка|Тарифы, платежи, возвраты|›", "Безопасность данных|Конфиденциальность и доступы|›", "О приложении|AI Юрист v1.0.0 · лицензии и документы|›"].map((row) => { const [title, sub, tail] = row.split("|"); return <button key={title} onClick={() => setHelpStatus(`${title}: открыт раздел помощи`)}><p><b>{title}</b><small>{sub}</small></p><em>{tail}</em></button>; })}</div>
-          <div className="analysisBox"><strong>Статус обращения</strong><p>{helpStatus}</p></div>
-          <textarea value={caseText} onChange={(event) => setCaseText(event.target.value)} />
-          <button className="primary wide" onClick={() => { void createSupportRequest(); }}>Написать в поддержку</button>
+          <div className="profileCards">
+            {[
+              "Аккаунт и вход|Регистрация, SMS, биометрия|›",
+              "Дела и документы|Загрузка, анализ, шаблоны|›",
+              "Судебный кабинет и eGov|Подписание и отправка|›",
+              "Оплата и подписка|Тарифы, платежи, возвраты|›",
+              "Безопасность данных|Конфиденциальность и доступы|›",
+              "О приложении|AI Юрист v1.0.0 · лицензии и документы|›",
+            ].map((row) => {
+              const [title, sub, tail] = row.split("|");
+              return (
+                <button
+                  key={title}
+                  onClick={() =>
+                    setHelpStatus(`${title}: открыт раздел помощи`)
+                  }
+                >
+                  <p>
+                    <b>{title}</b>
+                    <small>{sub}</small>
+                  </p>
+                  <em>{tail}</em>
+                </button>
+              );
+            })}
+          </div>
+          <div className="analysisBox">
+            <strong>Статус обращения</strong>
+            <p>{helpStatus}</p>
+          </div>
+          <textarea
+            value={caseText}
+            onChange={(event) => setCaseText(event.target.value)}
+          />
+          <button
+            className="primary wide"
+            onClick={() => {
+              void createSupportRequest();
+            }}
+          >
+            Написать в поддержку
+          </button>
         </section>
       );
     }
@@ -1433,24 +3312,100 @@ export default function WebHome() {
     return (
       <section className="homeScreen">
         <div className="topLine">
-          <div><h1>Здравствуйте, Дмитрий</h1><p>Ваш умный юридический помощник</p></div>
-          <div className="topActions"><button className={notificationOpen ? "bell activeIcon" : "bell"} onClick={toggleNotifications} aria-label="Уведомления">♧</button><button className="avatar" onClick={() => go("profile")}>{profileName.slice(0, 2).toUpperCase()}</button></div>
+          <div>
+            <h1>Здравствуйте, Дмитрий</h1>
+            <p>Ваш умный юридический помощник</p>
+          </div>
+          <div className="topActions">
+            <button
+              className={notificationOpen ? "bell activeIcon" : "bell"}
+              onClick={toggleNotifications}
+              aria-label="Уведомления"
+            >
+              ♧
+            </button>
+            <button className="avatar" onClick={() => go("profile")}>
+              {profileName.slice(0, 2).toUpperCase()}
+            </button>
+          </div>
         </div>
-        {notificationOpen && <div className="analysisBox"><strong>Уведомления</strong><p>{tasks.filter((task) => !task.done).map((task) => `${task.title}: ${task.due}`).join("; ") || "Активных уведомлений нет"}</p></div>}
-        <button className={recording ? "mic active" : "mic"} onClick={() => { go("newCase"); setTimeout(() => void startRecording(), 0); }} aria-label="Рассказать проблему"><span>⌾</span></button>
+        {notificationOpen && (
+          <div className="analysisBox">
+            <strong>Уведомления</strong>
+            <p>
+              {tasks
+                .filter((task) => !task.done)
+                .map((task) => `${task.title}: ${task.due}`)
+                .join("; ") || "Активных уведомлений нет"}
+            </p>
+          </div>
+        )}
+        <button
+          className={recording ? "mic active" : "mic"}
+          onClick={() => {
+            go("newCase");
+            setTimeout(() => void startRecording(), 0);
+          }}
+          aria-label="Рассказать проблему"
+        >
+          <span>⌾</span>
+        </button>
         <h2>Рассказать проблему</h2>
-        <p className="hint">{recording ? "Запись активна. Открылся экран описания дела." : "Нажмите и говорите голосом"}</p>
+        <p className="hint">
+          {recording
+            ? "Запись активна. Открылся экран описания дела."
+            : "Нажмите и говорите голосом"}
+        </p>
         <div className="quickGrid">
-          <button onClick={() => go("newCase")}><span className="quickIcon">▣</span>Новое дело<small>Создать новое дело</small></button>
-          <button onClick={() => go("documents")}><span className="quickIcon">□</span>Мои документы<small>Просмотр и загрузка</small></button>
-          <button onClick={() => go("deadlines")}><span className="quickIcon">▦</span>Сроки и календарь<small>Даты и напоминания</small></button>
+          <button onClick={() => go("newCase")}>
+            <span className="quickIcon">▣</span>Новое дело
+            <small>Создать новое дело</small>
+          </button>
+          <button onClick={() => go("documents")}>
+            <span className="quickIcon">□</span>Мои документы
+            <small>Просмотр и загрузка</small>
+          </button>
+          <button onClick={() => go("deadlines")}>
+            <span className="quickIcon">▦</span>Сроки и календарь
+            <small>Даты и напоминания</small>
+          </button>
         </div>
-        <div className="sectionTitle"><h3>Последние дела</h3><button onClick={() => go("cases")}>Все дела</button></div>
+        <div className="sectionTitle">
+          <h3>Последние дела</h3>
+          <button onClick={() => go("cases")}>Все дела</button>
+        </div>
         <div className="list">
-          {!cases.length && <button className="caseRow" onClick={() => go("newCase")}><span className="roundIcon">+</span><span><strong>Нет дел</strong><small>Создайте первое дело</small><small className="goldDot">● Только реальные сохраненные данные</small></span><em>Сейчас</em></button>}
+          {!cases.length && (
+            <button className="caseRow" onClick={() => go("newCase")}>
+              <span className="roundIcon">+</span>
+              <span>
+                <strong>Нет дел</strong>
+                <small>Создайте первое дело</small>
+                <small className="goldDot">
+                  ● Только реальные сохраненные данные
+                </small>
+              </span>
+              <em>Сейчас</em>
+            </button>
+          )}
           {cases.slice(0, 2).map((item) => (
-            <button className="caseRow" key={item.id} onClick={() => { setActiveCaseId(item.id); go("case"); }}>
-              <span className="roundIcon">⚖</span><span><strong>{item.title}</strong><small>Дело №{item.id} · {item.type}</small><small className="goldDot">● {item.status}</small></span><em>{item.date}</em>
+            <button
+              className="caseRow"
+              key={item.id}
+              onClick={() => {
+                setActiveCaseId(item.id);
+                go("case");
+              }}
+            >
+              <span className="roundIcon">⚖</span>
+              <span>
+                <strong>{item.title}</strong>
+                <small>
+                  Дело №{item.id} · {item.type}
+                </small>
+                <small className="goldDot">● {item.status}</small>
+              </span>
+              <em>{item.date}</em>
             </button>
           ))}
         </div>
@@ -1459,7 +3414,12 @@ export default function WebHome() {
   }
 
   return (
-    <main className="appShell" data-theme={theme} data-view={view} data-design-screen-count={screens.length}>
+    <main
+      className="appShell"
+      data-theme={theme}
+      data-view={view}
+      data-design-screen-count={screens.length}
+    >
       <aside className="sidebar" aria-label="Навигация ПК">
         <strong>AI Юрист</strong>
         <small>Казахстан · RC</small>
@@ -1474,25 +3434,83 @@ export default function WebHome() {
             ["subscription", "Подписка"],
             ["profile", "Профиль"],
           ].map(([target, label]) => (
-            <button key={target} className={view === target ? "active" : ""} onClick={() => go(target as View)}>{label}</button>
+            <button
+              key={target}
+              className={view === target ? "active" : ""}
+              onClick={() => go(target as View)}
+            >
+              {label}
+            </button>
           ))}
         </nav>
       </aside>
       <section className="deviceFrame">
-        <div className="appStatus"><span>{syncState}</span><button aria-label="Синхронизировать" onClick={syncWithApi}>↻</button><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀" : "☾"}</button></div>
+        <div className="appStatus">
+          <span>{syncState}</span>
+          <button aria-label="Синхронизировать" onClick={syncWithApi}>
+            ↻
+          </button>
+          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? "☀" : "☾"}
+          </button>
+        </div>
         {renderView()}
         <nav className="bottomNav">
-          <button className={view === "home" || view === "analysis" || view === "legalSearch" ? "active" : ""} onClick={() => go("home")}>Главная</button>
-          <button className={["cases", "case", "chat", "newCase", "category"].includes(view) ? "active" : ""} onClick={() => go("cases")}>Дела</button>
-          <button className={["documents", "documentCheck", "documentUpload"].includes(view) ? "active" : ""} onClick={() => go("documents")}>Документы</button>
-          <button className={view === "deadlines" ? "active" : ""} onClick={() => go("deadlines")}>Сроки</button>
-          <button className={["profile", "settings", "subscription", "help"].includes(view) ? "active" : ""} onClick={() => go("profile")}>Профиль</button>
+          <button
+            className={
+              view === "home" || view === "analysis" || view === "legalSearch"
+                ? "active"
+                : ""
+            }
+            onClick={() => go("home")}
+          >
+            Главная
+          </button>
+          <button
+            className={
+              ["cases", "case", "chat", "newCase", "category"].includes(view)
+                ? "active"
+                : ""
+            }
+            onClick={() => go("cases")}
+          >
+            Дела
+          </button>
+          <button
+            className={
+              ["documents", "documentCheck", "documentUpload"].includes(view)
+                ? "active"
+                : ""
+            }
+            onClick={() => go("documents")}
+          >
+            Документы
+          </button>
+          <button
+            className={view === "deadlines" ? "active" : ""}
+            onClick={() => go("deadlines")}
+          >
+            Сроки
+          </button>
+          <button
+            className={
+              ["profile", "settings", "subscription", "help"].includes(view)
+                ? "active"
+                : ""
+            }
+            onClick={() => go("profile")}
+          >
+            Профиль
+          </button>
         </nav>
       </section>
       <aside className="rightPanel" aria-label="Контекст дела">
         <div className="caseHero compact">
           <span className="roundIcon">⚖</span>
-          <div><h2>{activeCase.title}</h2><p>{activeCase.status}</p></div>
+          <div>
+            <h2>{activeCase.title}</h2>
+            <p>{activeCase.status}</p>
+          </div>
         </div>
         <div className="tileGrid compactTiles">
           <Info label="Готовность" value={`${activeCase.progress}%`} />
@@ -1509,7 +3527,19 @@ export default function WebHome() {
         </div>
         <div className="sideSection">
           <h3>Сроки</h3>
-          <div className="taskList">{tasks.slice(0, 3).map((task) => <button className={task.done ? "taskRow done" : "taskRow"} key={task.title} onClick={() => toggleTask(task.title)}><span>{task.done ? "✓" : ""}</span><strong>{task.title}</strong><small>{task.due}</small></button>)}</div>
+          <div className="taskList">
+            {tasks.slice(0, 3).map((task) => (
+              <button
+                className={task.done ? "taskRow done" : "taskRow"}
+                key={task.title}
+                onClick={() => toggleTask(task.title)}
+              >
+                <span>{task.done ? "✓" : ""}</span>
+                <strong>{task.title}</strong>
+                <small>{task.due}</small>
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
     </main>
@@ -1517,9 +3547,19 @@ export default function WebHome() {
 }
 
 function Header({ title, subtitle }: { title: string; subtitle: string }) {
-  return <header className="panelHeader"><h2>{title}</h2><p>{subtitle}</p></header>;
+  return (
+    <header className="panelHeader">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </header>
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
-  return <div className="info"><small>{label}</small><strong>{value}</strong></div>;
+  return (
+    <div className="info">
+      <small>{label}</small>
+      <strong>{value}</strong>
+    </div>
+  );
 }
