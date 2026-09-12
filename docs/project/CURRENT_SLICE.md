@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store public support/legal URLs.
+App Store iOS version evidence.
 
 ## Статус
 
-DONE -> deployed and verified on public server.
+DONE -> uploaded IPA version corrected in docs.
 
 ## Scope
 
@@ -35,6 +35,8 @@ DONE -> deployed and verified on public server.
 - SHA-256: `38f108199f5ee09a0ce6cb8ee2e4c39ca593c5b13e7fe85a4ef96f572d19a977`.
 - Server install health passed, server `npm run test:audit` found 0 vulnerabilities.
 - Public release-check passed and direct URL smoke confirmed all four pages.
+- IPA `Info.plist` confirms `CFBundleShortVersionString=1.0.1`, `CFBundleVersion=3`, bundle id `kz.milanium.lawyer` and minimum iOS `15.0`.
+- Docs corrected from stale `0.1.0 (3)` to uploaded `1.0.1 (3)` for App Store evidence.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.

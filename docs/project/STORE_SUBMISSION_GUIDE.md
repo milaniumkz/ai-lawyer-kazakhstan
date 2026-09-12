@@ -12,7 +12,7 @@
 - Bundle ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
 - Xcode team: `Z3NZN92Y7P`.
-- Current validation: build `0.1.0 (3)` with `MinimumOSVersion=15.0` and Photo Library purpose string uploaded to App Store Connect on 2026-09-11; Apple build status is `VALID` for Delivery UUID `22621fff-471e-4689-9fcf-51a2684d5563`.
+- Current validation: build `1.0.1 (3)` with `MinimumOSVersion=15.0` and Photo Library purpose string uploaded to App Store Connect on 2026-09-11; Apple build status is `VALID` for Delivery UUID `22621fff-471e-4689-9fcf-51a2684d5563`.
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
