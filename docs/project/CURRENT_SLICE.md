@@ -2,11 +2,11 @@
 
 ## Срез
 
-RC11 current deploy archive.
+App Store Connect processing check.
 
 ## Статус
 
-DONE -> installed on public server.
+DONE -> uploaded build status is `VALID`.
 
 ## Scope
 
@@ -22,6 +22,8 @@ DONE -> installed on public server.
 - Current deploy archive SHA-256: `98d143e017be62893a9b963d203e77ee570a44b0c40bb9eb3ed4d0f63c672524`.
 - Current server deploy path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.11-current.tar.gz`.
 - Current archive installed into `/opt/ai-lawyer-kz/app`.
+- App Store Connect Delivery UUID: `22621fff-471e-4689-9fcf-51a2684d5563`.
+- `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -34,4 +36,4 @@ DONE -> installed on public server.
 
 ## Следующий шаг
 
-Next vertical slice: continue App Store/TestFlight processing checks, then rebuild/deploy only if Apple feedback or QA smoke finds a concrete issue.
+Next vertical slice: prepare App Store Connect review metadata/screenshots and TestFlight notes, then select the processed build in App Store Connect.

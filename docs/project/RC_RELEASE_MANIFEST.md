@@ -41,4 +41,4 @@ Date: 2026-09-12
 - Production secrets are provided through runtime secret storage.
 - SMS/payment/storage/government integrations receive official credentials.
 - Legal templates and source ingestion are formally approved.
-- App Store Connect processing, metadata, screenshots and reviewer notes are completed.
+- App Store Connect build selection/review submission, metadata, screenshots and reviewer notes are completed.
