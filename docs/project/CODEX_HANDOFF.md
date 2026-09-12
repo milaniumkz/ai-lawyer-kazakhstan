@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy classification gate and then implement admin category CRUD. Backend/OpenAPI/migration/local tests include `legal_categories`, `case_classifications`, `classification_feedback`, `/legal-categories`, `/ai/classifications`, clarifications, confirm and override. Web and Flutter category screens call classification API before case creation; Flutter analyze/test and full `npm run check` passed.
+Следующая задача: implement admin category CRUD and review queues. Classification gate is deployed: PostgreSQL has `legal_categories`, `case_classifications`, `classification_feedback`; public smoke passed for `/legal-categories/tree`, `/ai/classifications`, confirm and case creation. Web and Flutter category screens call classification API before case creation.

@@ -6,7 +6,7 @@
 
 ## Статус
 
-READY_FOR_QA -> backend/API/web/Flutter classification lifecycle implemented; production deployment and public smoke pending.
+DONE -> backend/API/web/Flutter classification lifecycle deployed; public smoke passed.
 
 ## Scope
 
@@ -20,4 +20,4 @@ READY_FOR_QA -> backend/API/web/Flutter classification lifecycle implemented; pr
 
 ## Следующий шаг
 
-Deploy server, run public smoke, then implement admin category CRUD.
+Implement admin category CRUD and review queues.
