@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: continue remaining web pixel screens above the 4% threshold. Admin manual payment import is deployed and public-smoked: `/admin/subscriptions/payments/manual` writes a paid manual receipt, history returns it, and `/subscriptions/current` reflects the paid plan.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. The runner now seeds authenticated profile state for protected screens, so the current honest queue starts with `05 biometric` at 7.22%, then `02 login` at 6.75%, `04 otp` at 6.71%, `03 register` at 5.71%, `17 chat` at 5.39%, `25 help` at 5.06%, `16 case` at 4.88% and `22 profile` at 4.77%.

@@ -37,6 +37,7 @@ const screens = [
   ['25', 'help'],
 ];
 const themes = ['dark', 'light'];
+const publicViews = new Set(['onboarding', 'login', 'otp', 'register']);
 const targets = screens.flatMap(([index, view]) =>
   themes
     .filter((theme) => theme === 'dark' || Number(index) <= 20)
@@ -78,10 +79,23 @@ async function main() {
   try {
     for (const target of targets) {
       const page = await browser.newPage({ viewport: { width: target.width, height: target.height } });
-      await page.addInitScript((theme) => {
+      await page.addInitScript(({ theme, view, isPublic }) => {
         window.localStorage.clear();
-        window.localStorage.setItem('ai-lawyer-web-state', JSON.stringify({ theme }));
-      }, target.theme);
+        window.localStorage.setItem(
+          'ai-lawyer-web-state',
+          JSON.stringify({
+            theme,
+            view,
+            language: 'RU',
+            authUserId: isPublic ? '' : '00000000-0000-4000-8000-000000000001',
+            profileComplete: !isPublic,
+            firstName: 'Дмитрий',
+            lastName: 'Штрахов',
+            city: 'Астана',
+            profileName: 'Дмитрий Штрахов',
+          }),
+        );
+      }, { theme: target.theme, view: target.hash.slice(1), isPublic: publicViews.has(target.hash.slice(1)) });
       await page.goto(`${baseUrl.replace(/\/$/, '')}${target.hash}`, { waitUntil: 'networkidle' });
       await page.locator('.appShell').waitFor({ state: 'visible' });
       await page.waitForFunction((theme) => document.querySelector('.appShell')?.getAttribute('data-theme') === theme, target.theme, { timeout: 5000 }).catch(() => {});
