@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store Connect metadata package.
+App Store screenshot assets.
 
 ## Статус
 
-DONE -> review metadata draft prepared.
+DONE -> iPhone 6.7 screenshot prep set generated.
 
 ## Scope
 
@@ -26,6 +26,8 @@ DONE -> review metadata draft prepared.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
 - App Store metadata draft prepared in `docs/project/APP_STORE_METADATA.md`.
 - Release notes and store submission guide updated with the current iOS state.
+- App Store screenshot prep set generated in `docs/project/app-store-screenshots/iphone-67-dark`.
+- 8 PNG screenshots are `1290x2796` and include login, home, voice intake, category, chat, documents, legal search and subscription.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -38,4 +40,4 @@ DONE -> review metadata draft prepared.
 
 ## Следующий шаг
 
-Next vertical slice: generate/review App Store screenshot assets, then select the processed build and fill metadata in App Store Connect.
+Next vertical slice: capture native iOS screenshots or fill App Store Connect metadata and select the processed build.
