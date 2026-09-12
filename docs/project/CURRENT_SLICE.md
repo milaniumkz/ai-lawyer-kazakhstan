@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store iOS version evidence.
+App Store branded iOS upload.
 
 ## Статус
 
-DONE -> uploaded IPA version corrected in docs.
+DONE -> build `1.0.1 (4)` uploaded, Apple processing status pending.
 
 ## Scope
 
@@ -37,6 +37,12 @@ DONE -> uploaded IPA version corrected in docs.
 - Public release-check passed and direct URL smoke confirmed all four pages.
 - IPA `Info.plist` confirms `CFBundleShortVersionString=1.0.1`, `CFBundleVersion=3`, bundle id `kz.milanium.lawyer` and minimum iOS `15.0`.
 - Docs corrected from stale `0.1.0 (3)` to uploaded `1.0.1 (3)` for App Store evidence.
+- New branded IPA built with `flutter build ipa --release --build-name=1.0.1 --build-number=4`.
+- New IPA SHA-256: `4487f28270497e1b39e8d5e96589fab148c74c8d7a780f4bd8c51eb73e693cf5`.
+- New IPA `Info.plist` confirms `CFBundleShortVersionString=1.0.1`, `CFBundleVersion=4`, bundle id `kz.milanium.lawyer`, minimum iOS `15.0`, and Microphone/Photo Library/Speech Recognition purpose strings.
+- `xcrun altool --validate-app` passed with no errors.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
+- `xcrun altool --build-status` for the new Delivery UUID hung without returning status; processing remains pending to re-check.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -49,4 +55,4 @@ DONE -> uploaded IPA version corrected in docs.
 
 ## Следующий шаг
 
-Next vertical slice: continue App Store Connect metadata entry or capture native iOS screenshots from simulator/device.
+Next vertical slice: re-check App Store Connect processing for Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`, then select the processed build if valid.
