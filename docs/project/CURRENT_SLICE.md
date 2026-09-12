@@ -6,7 +6,7 @@ App Store public support/legal URLs.
 
 ## Статус
 
-IN PROGRESS -> web pages implemented, checks pending.
+DONE -> deployed and verified on public server.
 
 ## Scope
 
@@ -30,6 +30,11 @@ IN PROGRESS -> web pages implemented, checks pending.
 - 8 PNG screenshots are `1290x2796` and include login, home, voice intake, category, chat, documents, legal search and subscription.
 - Web public pages added for `/privacy`, `/terms`, `/support` and `/delete-account`.
 - Public release-check now verifies these pages return HTTP 200.
+- Deploy archive: `/tmp/ai-lawyer-kz-store-urls-v2.tar.gz`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-store-urls-v2.tar.gz`.
+- SHA-256: `38f108199f5ee09a0ce6cb8ee2e4c39ca593c5b13e7fe85a4ef96f572d19a977`.
+- Server install health passed, server `npm run test:audit` found 0 vulnerabilities.
+- Public release-check passed and direct URL smoke confirmed all four pages.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -42,4 +47,4 @@ IN PROGRESS -> web pages implemented, checks pending.
 
 ## Следующий шаг
 
-Next vertical slice: deploy the public support/legal URLs and verify them on the server, then continue App Store Connect metadata entry.
+Next vertical slice: continue App Store Connect metadata entry or capture native iOS screenshots from simulator/device.

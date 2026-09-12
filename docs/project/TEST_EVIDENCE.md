@@ -349,7 +349,7 @@
 - App Store Connect processing check — `API_PRIVATE_KEYS_DIR=$HOME/.appstoreconnect/private_keys xcrun altool --build-status --delivery-id 22621fff-471e-4689-9fcf-51a2684d5563 --apiKey G8J9YL2DH3 --apiIssuer 69a6de93-c892-47e3-e053-5b8c7c11a4d1` returned `BUILD-STATUS: VALID` for uploaded iOS build `0.1.0 (3)`.
 - App Store metadata package — `docs/project/APP_STORE_METADATA.md` now contains RU/KK/EN listing draft, reviewer notes, required URL checklist, screenshot list and explicit adapter/manual blocker wording for unavailable production integrations.
 - App Store screenshot prep set — generated 8 iPhone 6.7 PNG screenshots in `docs/project/app-store-screenshots/iphone-67-dark`; each file is `1290x2796` and SHA-256 values are recorded in the folder README.
-- App Store public support/legal URLs — `/privacy`, `/terms`, `/support` and `/delete-account` routes added to web app and public release-check coverage.
+- App Store public support/legal URLs — `/privacy`, `/terms`, `/support` and `/delete-account` routes added to web app and public release-check coverage. `npm run check`, root `npm run build` and `npm run deploy:package -- /tmp/ai-lawyer-kz-store-urls-v2.tar.gz` passed; archive SHA-256 `38f108199f5ee09a0ce6cb8ee2e4c39ca593c5b13e7fe85a4ef96f572d19a977`; server install health passed, server `npm run test:audit` found 0 vulnerabilities, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and direct public smoke confirmed all four URLs.
 
 ## Не запускалось
 
