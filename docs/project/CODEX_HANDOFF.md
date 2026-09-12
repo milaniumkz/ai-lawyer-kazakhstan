@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: continue Flutter parity/release packaging or near-threshold web polish only when a measured change improves the diff. Current web pixel report has all 25 dark mobile reference screens at or below 4%. Latest Android release APK is `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, package `kz.milanium.lawyer`, SHA-256 `bdcd2eeeb3a59f433d324a1472c35fc2d5dc55811ef8cc6f3a18afdbdac0496c`.
+Следующая задача: refresh release bundle/checksums or continue Flutter parity/release packaging. Current web pixel report has all 25 dark mobile reference screens at or below 4%. Latest Android release APK is `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, package `kz.milanium.lawyer`, SHA-256 `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`. iOS no-codesign release build passed with bundle `kz.milanium.lawyer`, version `0.1.0 (3)`.
