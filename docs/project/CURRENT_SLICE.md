@@ -6,7 +6,7 @@ Web login screen pixel completion.
 
 ## Статус
 
-READY_FOR_COMMIT -> local visual/function gates passed.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -15,6 +15,7 @@ READY_FOR_COMMIT -> local visual/function gates passed.
 - The screen uses the reference welcome layout: back action, RU/KZ/EN switcher, login/register tabs and action rows.
 - Phone login remains real: the phone row keeps `+7` normalization and calls `/api/v1/auth/register`; registration and biometric rows route to their screens.
 - Current web pixel status: 15 screens at or below 4%, 10 screens still above threshold.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-login-screen-final.tar.gz`.
 
 ## Следующий шаг
 
