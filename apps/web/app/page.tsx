@@ -3593,29 +3593,47 @@ export default function WebHome() {
             })}
           </div>
           <h3 className="goldSection">Данные и безопасность</h3>
-          <input
-            placeholder="Ф.И.О. / название"
-            value={profileName}
-            onChange={(event) => setProfileName(event.target.value)}
-          />
-          <input
-            placeholder="ИИН/БИН"
-            value={profileId}
-            onChange={(event) => setProfileId(event.target.value)}
-          />
-          <div className="actionBar">
-            <button
-              className="primary"
-              onClick={() => {
-                void saveProfile();
-              }}
-            >
-              Сохранить профиль
-            </button>
-            <button onClick={() => go("settings")}>Настройки</button>
-            <button onClick={() => go("subscription")}>Подписка</button>
-            <button onClick={() => go("help")}>Помощь и поддержка</button>
+          <div className="profileCards profileDataCards">
+            {[
+              "Личные данные|Ф.И.О., ИИН, дата рождения|save",
+              "Контактные данные|Телефон, e-mail, адреса|save",
+              "Банковские реквизиты|Счета и платежные данные|bank",
+              "Доверенные лица|Представители и контакты|trusted",
+              "Безопасность|PIN-код, биометрия, устройства|settings",
+            ].map((row) => {
+              const [title, sub, action] = row.split("|");
+              return (
+                <button
+                  key={title}
+                  onClick={() => {
+                    if (action === "settings") {
+                      go("settings");
+                      return;
+                    }
+                    if (action === "save") {
+                      void saveProfile();
+                      return;
+                    }
+                    setSyncState(`${title}: раздел открыт`);
+                  }}
+                >
+                  <p>
+                    <b>{title}</b>
+                    <small>{sub}</small>
+                  </p>
+                  <em>›</em>
+                </button>
+              );
+            })}
           </div>
+          <button
+            className="profileSaveContract"
+            onClick={() => {
+              void saveProfile();
+            }}
+          >
+            Сохранить профиль
+          </button>
         </section>
       );
     }

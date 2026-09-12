@@ -4110,6 +4110,190 @@ progress {
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="profile"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #0a1c2b;
+    background: #020912;
+  }
+
+  .appShell[data-view="profile"] .deviceFrame {
+    border: 0;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(230, 189, 98, 0.12), transparent 17%),
+      #020912;
+  }
+
+  .appShell[data-view="profile"] .contentPanel {
+    min-height: 693px;
+    padding: 26px 20px 82px;
+    overflow: hidden;
+  }
+
+  .appShell[data-view="profile"] .screenHeader {
+    display: block;
+    margin: 0 0 9px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(230, 189, 98, 0.22);
+    text-align: center;
+  }
+
+  .appShell[data-view="profile"] .screenHeader button {
+    display: none;
+  }
+
+  .appShell[data-view="profile"] .screenHeader h2 {
+    margin: 0;
+    color: var(--gold-strong);
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="profile"] .screenHeader p {
+    display: none;
+  }
+
+  .appShell[data-view="profile"] .profileHero {
+    gap: 7px;
+    padding: 0 0 11px;
+  }
+
+  .appShell[data-view="profile"] .profileAvatar {
+    width: 61px;
+    height: 61px;
+    border-width: 1px;
+    font-size: 20px;
+  }
+
+  .appShell[data-view="profile"] .profileHero h2 {
+    font-size: 14px;
+    line-height: 1.05;
+  }
+
+  .appShell[data-view="profile"] .profileHero p {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="profile"] .claimProgress {
+    min-height: 34px;
+    margin: 0 0 17px;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  .appShell[data-view="profile"] .claimProgress span,
+  .appShell[data-view="profile"] .claimProgress b {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="profile"] .claimProgress progress {
+    height: 5px;
+  }
+
+  .appShell[data-view="profile"] .goldSection {
+    margin: 0 0 7px;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="profile"] .profileCards {
+    gap: 8px;
+    margin-bottom: 13px;
+  }
+
+  .appShell[data-view="profile"] .profileCards button {
+    grid-template-columns: 31px minmax(0, 1fr) 48px;
+    min-height: 47px;
+    gap: 9px;
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+
+  .appShell[data-view="profile"] .profileDataCards button {
+    grid-template-columns: minmax(0, 1fr) 14px;
+    min-height: 39px;
+  }
+
+  .appShell[data-view="profile"] .profileCards button > span {
+    width: 25px;
+    height: 25px;
+    font-size: 9px;
+  }
+
+  .appShell[data-view="profile"] .profileCards p {
+    gap: 2px;
+  }
+
+  .appShell[data-view="profile"] .profileCards b {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="profile"] .profileCards small {
+    font-size: 7px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="profile"] .profileCards em {
+    color: var(--gold-strong);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .appShell[data-view="profile"] .profileSaveContract {
+    display: none;
+  }
+
+  .appShell[data-view="profile"] .bottomNav {
+    background: #020912;
+    border-top: 1px solid rgba(230, 189, 98, 0.24);
+    border-radius: 0;
+    gap: 0;
+    padding: 8px 20px max(7px, env(safe-area-inset-bottom));
+  }
+
+  .appShell[data-view="profile"] .bottomNav button {
+    min-height: 45px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #8e98a5;
+    padding: 0;
+    font-size: 8px;
+  }
+
+  .appShell[data-view="profile"] .bottomNav button::before {
+    display: block;
+    margin-bottom: 4px;
+    color: #8e98a5;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="profile"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="profile"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="profile"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="profile"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="profile"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+
+  .appShell[data-view="profile"] .bottomNav button.active {
+    color: var(--gold-strong);
+  }
+
+  .appShell[data-view="profile"] .bottomNav button.active::after {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 2px;
+    margin: 5px auto 0;
+    border-radius: 99px;
+    background: var(--gold-strong);
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="help"] {
     --bg: #020912;
     --panel: #06111d;
