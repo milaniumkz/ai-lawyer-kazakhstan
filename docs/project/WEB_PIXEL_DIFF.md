@@ -28,7 +28,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 22 | `profile` | 4.77 |
 | 23 | `settings` | 4.05 |
 | 24 | `subscription` | 3.82 |
-| 25 | `help` | 5.06 |
+| 25 | `help` | 3.87 |
 
 ## Closed Screens
 
@@ -51,10 +51,10 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 20 `legalSearch`: 3.99%
 - 21 `documents`: 3.90%
 - 24 `subscription`: 3.82%
+- 25 `help`: 3.87%
 
 ## Next Screen Queue
 
-- 25 `help`: 5.06%
 - 22 `profile`: 4.77%
 - 08 `category`: 4.27%
 - 07 `newCase`: 4.23%
@@ -62,5 +62,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 14 `claimSend`: 4.00%
 - 20 `legalSearch`: 3.99%
 - 16 `case`: 3.97%
+- 10 `documentUpload`: 3.93%
 
-Note: 6 screens remain above the 4% release threshold.
+Note: 5 screens remain above the 4% release threshold.

@@ -4109,6 +4109,230 @@ progress {
   grid-column: 1 / -1;
 }
 
+@media (max-width: 620px) {
+  .appShell[data-view="help"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #0a1c2b;
+    background: #020912;
+  }
+
+  .appShell[data-view="help"] .deviceFrame {
+    border: 0;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(230, 189, 98, 0.12), transparent 17%),
+      #020912;
+  }
+
+  .appShell[data-view="help"] .contentPanel {
+    min-height: 693px;
+    padding: 25px 20px 86px;
+    overflow: hidden;
+  }
+
+  .appShell[data-view="help"] .screenHeader {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+    gap: 0;
+    align-items: center;
+    margin: 0 0 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(230, 189, 98, 0.22);
+  }
+
+  .appShell[data-view="help"] .screenHeader button {
+    width: 22px;
+    height: 22px;
+    font-size: 28px;
+    line-height: .7;
+  }
+
+  .appShell[data-view="help"] .screenHeader h2 {
+    margin: 0;
+    color: var(--gold-strong);
+    text-align: center;
+    font-size: 17px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .appShell[data-view="help"] .screenHeader p {
+    display: none;
+  }
+
+  .appShell[data-view="help"] .legalSearch {
+    height: 28px;
+    min-height: 28px;
+    margin: 0 0 15px;
+    border-radius: 8px;
+    padding: 0 9px;
+  }
+
+  .appShell[data-view="help"] .legalSearch span {
+    font-size: 15px;
+  }
+
+  .appShell[data-view="help"] .legalSearch input {
+    min-height: 26px;
+    font-size: 9px;
+  }
+
+  .appShell[data-view="help"] .legalSearch button {
+    width: 22px;
+    height: 22px;
+    font-size: 25px;
+  }
+
+  .appShell[data-view="help"] .goldSection {
+    margin: 0 0 8px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="help"] .helpGrid {
+    gap: 9px;
+    margin-bottom: 17px;
+  }
+
+  .appShell[data-view="help"] .helpGrid button {
+    grid-template-columns: 26px minmax(0, 1fr);
+    height: 48px;
+    min-height: 0;
+    gap: 9px;
+    border-radius: 8px;
+    padding: 6px 8px;
+    overflow: hidden;
+  }
+
+  .appShell[data-view="help"] .helpGrid span {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .appShell[data-view="help"] .helpGrid b {
+    font-size: 11px;
+    line-height: 1.05;
+  }
+
+  .appShell[data-view="help"] .helpGrid small {
+    font-size: 8px;
+    line-height: 1.15;
+  }
+
+  .appShell[data-view="help"] .supportOnline {
+    min-height: 72px;
+    margin: 0 0 15px;
+    gap: 3px 8px;
+    border-radius: 8px;
+    padding: 9px;
+  }
+
+  .appShell[data-view="help"] .supportOnline strong {
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="help"] .supportOnline span {
+    font-size: 9px;
+  }
+
+  .appShell[data-view="help"] .supportOnline p {
+    font-size: 8px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="help"] .supportOnline button {
+    min-height: 20px;
+    border-radius: 4px;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .appShell[data-view="help"] .profileCards {
+    gap: 6px;
+  }
+
+  .appShell[data-view="help"] .profileCards button {
+    grid-template-columns: minmax(0, 1fr) 14px;
+    min-height: 39px;
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+
+  .appShell[data-view="help"] .profileCards p {
+    gap: 2px;
+  }
+
+  .appShell[data-view="help"] .profileCards b {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="help"] .profileCards small {
+    font-size: 7px;
+    line-height: 1.1;
+  }
+
+  .appShell[data-view="help"] .profileCards em {
+    color: var(--gold-strong);
+    font-size: 15px;
+  }
+
+  .appShell[data-view="help"] .analysisBox,
+  .appShell[data-view="help"] textarea,
+  .appShell[data-view="help"] > .contentPanel > .primary,
+  .appShell[data-view="help"] .contentPanel > textarea,
+  .appShell[data-view="help"] .contentPanel > .primary.wide {
+    display: none;
+  }
+
+  .appShell[data-view="help"] .bottomNav {
+    background: #020912;
+    border-top: 1px solid rgba(230, 189, 98, 0.24);
+    border-radius: 0;
+    gap: 0;
+    padding: 8px 20px max(7px, env(safe-area-inset-bottom));
+  }
+
+  .appShell[data-view="help"] .bottomNav button {
+    min-height: 45px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #8e98a5;
+    padding: 0;
+    font-size: 8px;
+  }
+
+  .appShell[data-view="help"] .bottomNav button::before {
+    display: block;
+    margin-bottom: 4px;
+    color: #8e98a5;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="help"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="help"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="help"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="help"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="help"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+
+  .appShell[data-view="help"] .bottomNav button.active {
+    color: var(--gold-strong);
+  }
+
+  .appShell[data-view="help"] .bottomNav button.active::after {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 2px;
+    margin: 5px auto 0;
+    border-radius: 99px;
+    background: var(--gold-strong);
+  }
+}
+
 .stickyActions {
   position: sticky;
   bottom: 88px;

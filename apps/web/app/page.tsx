@@ -169,6 +169,7 @@ type SavedState = {
   generatedClaimBody: string;
   claimSendContact: string;
   claimSendMessage: string;
+  helpStatus: string;
   firstName: string;
   lastName: string;
   middleName: string;
@@ -622,6 +623,7 @@ export default function WebHome() {
         setGeneratedClaimBody(saved.generatedClaimBody);
       if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
       if (saved.claimSendMessage) setClaimSendMessage(saved.claimSendMessage);
+      if (saved.helpStatus) setHelpStatus(saved.helpStatus);
       setSyncState("Локальные данные восстановлены");
     } catch {
       setSyncState("Не удалось восстановить локальные данные");
@@ -666,6 +668,7 @@ export default function WebHome() {
       generatedClaimBody,
       claimSendContact,
       claimSendMessage,
+      helpStatus,
       firstName,
       lastName,
       middleName,
@@ -701,6 +704,7 @@ export default function WebHome() {
     generatedClaimBody,
     claimSendContact,
     claimSendMessage,
+    helpStatus,
     firstName,
     lastName,
     middleName,
@@ -1331,7 +1335,8 @@ export default function WebHome() {
   }
 
   async function createSupportRequest() {
-    if (caseText.trim().length < 8) {
+    const supportText = caseText.trim() || "Запрос в службу поддержки";
+    if (supportText.length < 8) {
       setSyncState("Опишите обращение подробнее");
       return;
     }
@@ -1344,7 +1349,7 @@ export default function WebHome() {
           headers: { "x-user-id": userId },
           body: JSON.stringify({
             role: "user",
-            text: `Поддержка: ${caseText}`,
+            text: `Поддержка: ${supportText}`,
           }),
         });
       } catch {
@@ -1354,7 +1359,7 @@ export default function WebHome() {
     setHelpStatus(`Обращение ${ticketId} создано`);
     setMessages((items) => [
       ...items,
-      { role: "user", text: `Поддержка: ${caseText}` },
+      { role: "user", text: `Поддержка: ${supportText}` },
       {
         role: "assistant",
         text: `Обращение ${ticketId} принято в ручную проверку.`,
@@ -3780,7 +3785,7 @@ export default function WebHome() {
       return (
         <section className="contentPanel">
           <AppHeader
-            title="Помощь"
+            title="Помощь и поддержка"
             subtitle="Поддержка и ручная проверка юристом"
             back="profile"
           />
