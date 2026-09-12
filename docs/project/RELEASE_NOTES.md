@@ -1,6 +1,6 @@
 # Release Notes Draft
 
-Release candidate: `v0.1.0-rc.4`.
+Release candidate: `v0.1.0-rc.11`.
 
 ## RU
 
@@ -13,6 +13,8 @@ AI-Юрист Қазақстан RC foundation тіркеу, профиль, і�
 ## EN
 
 AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls. RC4 closes placeholder buttons in mobile/web and refreshes the public test web deployment.
+
+RC11 adds branded Android/iOS launcher icons and iOS launch assets, refreshes Android release APK evidence, and keeps the web mobile dark design matrix at 25/25 screens under the 4% pixel threshold.
 
 ## Limitations
 

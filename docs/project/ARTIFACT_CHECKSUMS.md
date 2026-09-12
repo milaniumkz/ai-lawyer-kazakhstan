@@ -26,3 +26,4 @@ Generated on 2026-09-07.
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-security-scan-stderr-fix.tar.gz` | `79d1b5bbb233d2515ea8f94817fac4a46b47957b531c21eae37e2c3a2a90c805` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-web-baselines.tar.gz` | `8ae5e02f4942cd52a340e4dd50548806b4f99b3002a7c30ff8cc8bbb4f01903b` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-claim-draft-pixel.tar.gz` | `d118d8595a0793fe707ac98b24f138e948fee7c4fd74eca3318e83fc231baa7c` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`v0.1.0-rc.11`) | `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f` |
