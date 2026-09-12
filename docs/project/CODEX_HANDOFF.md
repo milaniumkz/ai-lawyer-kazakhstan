@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy the polished `16 case` screen, then continue near-threshold polish if requested. Current web pixel report has all 25 dark mobile reference screens at or below 4%; highest remaining margins start with `20 legalSearch` at 3.99%, `10 documentUpload` at 3.93% and `16 case` at 3.92%.
+Следующая задача: continue Flutter parity/release packaging or near-threshold web polish only when a measured change improves the diff. Current web pixel report has all 25 dark mobile reference screens at or below 4%. Latest Android release APK is `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, package `kz.milanium.lawyer`, SHA-256 `bdcd2eeeb3a59f433d324a1472c35fc2d5dc55811ef8cc6f3a18afdbdac0496c`.
