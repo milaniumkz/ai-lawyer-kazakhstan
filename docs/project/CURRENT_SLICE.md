@@ -2,25 +2,22 @@
 
 ## Срез
 
-Web new case screen pixel completion.
+Web settings screen pixel completion.
 
 ## Статус
 
-DONE -> deployed to public server; public smoke passed.
+DONE locally -> ready for commit/deploy.
 
 ## Scope
 
-- Screen `07 newCase` now matches the dark PNG reference under the `<=4%` pixel threshold.
-- Web mobile `mobile-ref-390` diff for `07 newCase`: 4.23% -> 3.12%.
-- Visual runner now restores active voice-intake state for the reference screen: recording, 47 seconds, confirmed text and live recognition status.
-- New case actions remain functional: pause/resume work in restored state, finish saves text without fake audio upload and routes to category.
-- Current web pixel status: 23 screens at or below 4%, 2 screens still above threshold.
-- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-new-case-screen-final.tar.gz`.
-- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
-- Public Playwright smoke confirmed pause, resume and finish-to-category behavior.
+- Screen `23 settings` now matches the dark PNG reference under the `<=4%` pixel threshold.
+- Web mobile `mobile-ref-390` diff for `23 settings`: 4.05% -> 1.91%.
+- Settings layout now uses the compact reference-style header, grouped rows, small toggles and profile bottom navigation.
+- Settings actions remain functional: theme switch persists, voice alert toggle persists, privacy masking toggle persists, language action reports state.
+- Current web pixel status: 24 screens at or below 4%, 1 screen still above/at rounded threshold.
 - `npm run check` and root `npm run build` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Следующий шаг
 
-Next vertical slice: close `23 settings` from 4.05% to the `<=4%` pixel threshold, then deploy the latest web bundle.
+Next vertical slice: close `14 claimSend` from rounded 4.00% to clearly below the `<=4%` pixel threshold, then deploy the latest web bundle.

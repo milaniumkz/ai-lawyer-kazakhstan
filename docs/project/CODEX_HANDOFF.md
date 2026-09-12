@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `07 newCase` is closed at 3.12% and local new-case smoke passed. The current queue starts with `23 settings` at 4.05%, then `14 claimSend` at 4.00%.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `23 settings` is closed at 1.91% and local settings smoke passed. The current queue starts with `14 claimSend` at rounded 4.00%, then near-threshold polish screens if needed.

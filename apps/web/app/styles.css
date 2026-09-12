@@ -4104,6 +4104,179 @@ progress {
 }
 
 @media (max-width: 620px) {
+  .appShell[data-view="settings"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #0a1c2b;
+    background: #020912;
+  }
+
+  .appShell[data-view="settings"] .deviceFrame {
+    border: 0;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(230, 189, 98, 0.12), transparent 17%),
+      #020912;
+  }
+
+  .appShell[data-view="settings"] .contentPanel {
+    min-height: 693px;
+    padding: 26px 20px 82px;
+    overflow: hidden;
+  }
+
+  .appShell[data-view="settings"] .screenHeader {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+    gap: 0;
+    align-items: center;
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(230, 189, 98, 0.22);
+  }
+
+  .appShell[data-view="settings"] .screenHeader button {
+    width: 22px;
+    height: 22px;
+    font-size: 28px;
+    line-height: .7;
+  }
+
+  .appShell[data-view="settings"] .screenHeader h2 {
+    margin: 0;
+    color: var(--gold-strong);
+    text-align: center;
+    font-size: 17px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .appShell[data-view="settings"] .screenHeader p {
+    display: none;
+  }
+
+  .appShell[data-view="settings"] .goldSection {
+    margin: 0 0 5px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="settings"] .settingsGroup {
+    gap: 0;
+    margin-bottom: 19px;
+    overflow: hidden;
+    border: 1px solid rgba(230, 189, 98, 0.28);
+    border-radius: 8px;
+    background: var(--panel-soft);
+  }
+
+  .appShell[data-view="settings"] .settingsGroup button,
+  .appShell[data-view="settings"] .settingsGroup label {
+    min-height: 34px;
+    border: 0;
+    border-bottom: 1px solid rgba(154, 174, 196, 0.12);
+    border-radius: 0;
+    background: transparent;
+    padding: 0 10px;
+    color: #d9e3ef;
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="settings"] .settingsGroup button:last-child,
+  .appShell[data-view="settings"] .settingsGroup label:last-child {
+    border-bottom: 0;
+  }
+
+  .appShell[data-view="settings"] .settingsGroup em {
+    color: var(--muted);
+    font-size: 7px;
+  }
+
+  .appShell[data-view="settings"] .toggle {
+    flex-direction: row-reverse;
+  }
+
+  .appShell[data-view="settings"] .toggle input {
+    appearance: none;
+    width: 25px;
+    height: 14px;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #3b4654;
+    position: relative;
+  }
+
+  .appShell[data-view="settings"] .toggle input::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f3f0e7;
+  }
+
+  .appShell[data-view="settings"] .toggle input:checked {
+    background: #4dd36f;
+  }
+
+  .appShell[data-view="settings"] .toggle input:checked::after {
+    left: 14px;
+  }
+
+  .appShell[data-view="settings"] .contentPanel > .wide {
+    display: none;
+  }
+
+  .appShell[data-view="settings"] .bottomNav {
+    background: #020912;
+    border-top: 1px solid rgba(230, 189, 98, 0.24);
+    border-radius: 0;
+    gap: 0;
+    padding: 8px 20px max(7px, env(safe-area-inset-bottom));
+  }
+
+  .appShell[data-view="settings"] .bottomNav button {
+    min-height: 45px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #8e98a5;
+    padding: 0;
+    font-size: 8px;
+  }
+
+  .appShell[data-view="settings"] .bottomNav button::before {
+    display: block;
+    margin-bottom: 4px;
+    color: #8e98a5;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .appShell[data-view="settings"] .bottomNav button:nth-child(1)::before { content: "⌂"; }
+  .appShell[data-view="settings"] .bottomNav button:nth-child(2)::before { content: "▣"; }
+  .appShell[data-view="settings"] .bottomNav button:nth-child(3)::before { content: "□"; }
+  .appShell[data-view="settings"] .bottomNav button:nth-child(4)::before { content: "▦"; }
+  .appShell[data-view="settings"] .bottomNav button:nth-child(5)::before { content: "◎"; }
+
+  .appShell[data-view="settings"] .bottomNav button.active {
+    color: var(--gold-strong);
+  }
+
+  .appShell[data-view="settings"] .bottomNav button.active::after {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 2px;
+    margin: 5px auto 0;
+    border-radius: 99px;
+    background: var(--gold-strong);
+  }
+}
+
+@media (max-width: 620px) {
   .appShell[data-view="profile"] {
     --bg: #020912;
     --panel: #06111d;
