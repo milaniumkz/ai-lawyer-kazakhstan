@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy the completed `14 claimSend` screen, then continue near-threshold polish if requested. Current web pixel report has all 25 dark mobile reference screens at or below 4%; highest remaining margins start with `20 legalSearch` at 3.99% and `16 case` at 3.97%.
+Следующая задача: deploy the polished `16 case` screen, then continue near-threshold polish if requested. Current web pixel report has all 25 dark mobile reference screens at or below 4%; highest remaining margins start with `20 legalSearch` at 3.99%, `10 documentUpload` at 3.93% and `16 case` at 3.92%.

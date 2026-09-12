@@ -6587,8 +6587,8 @@ button:disabled {
   }
   .appShell[data-view="case"] .caseDetailHero {
     display: grid;
-    grid-template-columns: 78px minmax(0, 1fr) auto;
-    gap: 8px;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
     align-items: center;
     margin-bottom: 8px;
   }
@@ -6605,8 +6605,7 @@ button:disabled {
     color: var(--gold-strong);
   }
   .appShell[data-view="case"] .caseDetailHero strong {
-    color: var(--gold-strong);
-    font-size: 19px;
+    display: none;
   }
   .appShell[data-view="case"] .caseMetricGrid {
     grid-template-columns: repeat(5, minmax(0, 1fr));

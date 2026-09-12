@@ -19,7 +19,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 13 | `claimDraft` | 3.90 |
 | 14 | `claimSend` | 3.85 |
 | 15 | `cases` | 2.32 |
-| 16 | `case` | 3.97 |
+| 16 | `case` | 3.92 |
 | 17 | `chat` | 3.91 |
 | 18 | `deadlines` | 3.68 |
 | 19 | `legal` | 3.36 |
@@ -47,7 +47,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 13 `claimDraft`: 3.90%
 - 14 `claimSend`: 3.85%
 - 15 `cases`: 2.32%
-- 16 `case`: 3.97%
+- 16 `case`: 3.92%
 - 17 `chat`: 3.91%
 - 18 `deadlines`: 3.68%
 - 19 `legal`: 3.36%
@@ -61,8 +61,8 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 ## Next Screen Queue
 
 - 20 `legalSearch`: 3.99%
-- 16 `case`: 3.97%
 - 10 `documentUpload`: 3.93%
+- 16 `case`: 3.92%
 - 17 `chat`: 3.91%
 - 13 `claimDraft`: 3.90%
 - 21 `documents`: 3.90%
