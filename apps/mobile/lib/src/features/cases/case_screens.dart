@@ -511,13 +511,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     setState(() => isBusy = true);
     try {
       if (recordedPath == null) {
-        if (AuthRuntime.userId.isNotEmpty) {
-          final created = await caseApi.createCase(
-            ownerUserId: AuthRuntime.userId,
-            problemText: transcriptController.text.trim(),
-          );
-          MobileCaseRuntime.activeCaseId = created.id;
-        }
+        MobileCaseRuntime.confirmedText = transcriptController.text.trim();
         if (mounted) context.go('/case/category');
         return;
       }
@@ -538,13 +532,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         transcript = job.transcript;
         transcriptController.text = job.transcript;
       });
-      if (AuthRuntime.userId.isNotEmpty) {
-        final created = await caseApi.createCase(
-          ownerUserId: AuthRuntime.userId,
-          problemText: job.transcript,
-        );
-        MobileCaseRuntime.activeCaseId = created.id;
-      }
+      MobileCaseRuntime.confirmedText = job.transcript;
       if (mounted) context.go('/case/category');
     } catch (_) {
       setState(() {
@@ -716,8 +704,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
           FilledButton.icon(
             onPressed: isBusy ? null : submitCase,
             icon: const Icon(Icons.check_circle_outline),
-            label:
-                Text(isBusy ? 'Отправляю аудио' : 'Подтвердить и создать дело'),
+            label: Text(isBusy ? 'Отправляю аудио' : 'Подтвердить текст'),
           ),
         ],
       ),
@@ -857,6 +844,19 @@ class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
 
 abstract class CaseApiPort {
   Future<List<CaseListItem>> listCases(String ownerUserId);
+  Future<CaseClassificationResult> classifyDispute({
+    required String ownerUserId,
+    required String text,
+  });
+  Future<CaseClassificationResult> confirmClassification({
+    required String ownerUserId,
+    required String classificationId,
+  });
+  Future<CaseClassificationResult> overrideClassification({
+    required String ownerUserId,
+    required String classificationId,
+    required String subcategoryCode,
+  });
   Future<CaseListItem> createCase({
     required String ownerUserId,
     required String problemText,
@@ -869,6 +869,31 @@ abstract class CaseApiPort {
 
 abstract final class MobileCaseRuntime {
   static String activeCaseId = '';
+  static String confirmedText = '';
+}
+
+class CaseClassificationResult {
+  const CaseClassificationResult({
+    required this.id,
+    required this.categoryLabel,
+    required this.subcategoryLabel,
+    required this.subcategoryCode,
+    required this.confidence,
+    required this.missingFacts,
+    required this.alternatives,
+    required this.riskLevel,
+    required this.requiredHumanReview,
+  });
+
+  final String id;
+  final String categoryLabel;
+  final String subcategoryLabel;
+  final String subcategoryCode;
+  final double confidence;
+  final List<String> missingFacts;
+  final List<String> alternatives;
+  final String riskLevel;
+  final bool requiredHumanReview;
 }
 
 class ChatMessageItem {
@@ -902,6 +927,66 @@ class HttpCaseApi implements CaseApiPort {
       for (final item in body as List<dynamic>)
         caseFromJson(item as Map<String, dynamic>),
     ];
+  }
+
+  @override
+  Future<CaseClassificationResult> classifyDispute({
+    required String ownerUserId,
+    required String text,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.aiClassifications}'),
+      headers: {
+        'content-type': 'application/json',
+        'x-correlation-id': 'mobile-classification',
+        'x-user-id': ownerUserId,
+      },
+      body: jsonEncode({'text': text}),
+    );
+    return classificationFromResponse(response);
+  }
+
+  @override
+  Future<CaseClassificationResult> confirmClassification({
+    required String ownerUserId,
+    required String classificationId,
+  }) async {
+    final path = ApiContract.aiClassificationsIdConfirm
+        .replaceFirst('{id}', classificationId);
+    final response = await http.post(
+      Uri.parse('$baseUrl${ApiContract.basePath}$path'),
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key':
+            'mobile-category-confirm-${DateTime.now().millisecondsSinceEpoch}',
+        'x-correlation-id': 'mobile-category-confirm',
+        'x-user-id': ownerUserId,
+      },
+    );
+    return classificationFromResponse(response);
+  }
+
+  @override
+  Future<CaseClassificationResult> overrideClassification({
+    required String ownerUserId,
+    required String classificationId,
+    required String subcategoryCode,
+  }) async {
+    final path = ApiContract.aiClassificationsIdOverride
+        .replaceFirst('{id}', classificationId);
+    final response = await http.post(
+      Uri.parse('$baseUrl${ApiContract.basePath}$path'),
+      headers: {
+        'content-type': 'application/json',
+        'x-correlation-id': 'mobile-category-override',
+        'x-user-id': ownerUserId,
+      },
+      body: jsonEncode({
+        'subcategoryCode': subcategoryCode,
+        'reason': 'mobile manual selection',
+      }),
+    );
+    return classificationFromResponse(response);
   }
 
   @override
@@ -979,19 +1064,133 @@ CaseListItem caseFromJson(Map<String, dynamic> json) {
   );
 }
 
+CaseClassificationResult classificationFromResponse(http.Response response) {
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw HttpException(
+        '${body['message'] ?? body['error'] ?? 'classification failed'}');
+  }
+  final result = body['result'] as Map<String, dynamic>;
+  return CaseClassificationResult(
+    id: body['id'] as String,
+    categoryLabel: result['category_label'] as String? ?? 'Категория',
+    subcategoryLabel:
+        result['subcategory_label'] as String? ?? 'Требуется уточнение',
+    subcategoryCode:
+        result['subcategory_code'] as String? ?? 'clarification_required.other',
+    confidence: ((result['confidence'] as num?) ?? 0).toDouble(),
+    missingFacts: [
+      for (final item in (result['missing_facts'] as List<dynamic>? ?? []))
+        '$item',
+    ],
+    alternatives: [
+      for (final item in (result['alternatives'] as List<dynamic>? ?? []))
+        '${(item as Map<String, dynamic>)['code']}',
+    ],
+    riskLevel: result['risk_level'] as String? ?? 'medium',
+    requiredHumanReview: result['required_human_review'] == true,
+  );
+}
+
 String _categoryTitle(String? value) {
   return caseCategoryLabels[value] ?? 'Требует уточнения';
 }
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({super.key});
+  const CategoryScreen({super.key, this.caseApi});
+
+  final CaseApiPort? caseApi;
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
-  var category = 'Договоры и долги';
+  late final CaseApiPort caseApi;
+  CaseClassificationResult? classification;
+  var status = 'Готовлю анализ категории';
+  var isBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    caseApi = widget.caseApi ?? HttpCaseApi();
+    WidgetsBinding.instance.addPostFrameCallback((_) => classify());
+  }
+
+  Future<void> classify() async {
+    if (isBusy) return;
+    final text = MobileCaseRuntime.confirmedText.trim();
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы сохранить категорию в БД');
+      return;
+    }
+    if (text.length < 4) {
+      setState(() => status = 'Вернитесь и подтвердите текст обращения');
+      return;
+    }
+    setState(() {
+      isBusy = true;
+      status = 'Анализирую категорию через API...';
+    });
+    try {
+      final result = await caseApi.classifyDispute(
+          ownerUserId: AuthRuntime.userId, text: text);
+      setState(() {
+        classification = result;
+        status = 'Категория определена';
+      });
+    } catch (error) {
+      setState(() => status = 'Ошибка классификации: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
+
+  Future<void> confirmAndCreate() async {
+    final result = classification;
+    if (isBusy || result == null || AuthRuntime.userId.isEmpty) return;
+    setState(() {
+      isBusy = true;
+      status = 'Подтверждаю категорию и создаю дело...';
+    });
+    try {
+      await caseApi.confirmClassification(
+          ownerUserId: AuthRuntime.userId, classificationId: result.id);
+      final created = await caseApi.createCase(
+        ownerUserId: AuthRuntime.userId,
+        problemText:
+            '${MobileCaseRuntime.confirmedText}\nКатегория: ${result.subcategoryCode}',
+      );
+      MobileCaseRuntime.activeCaseId = created.id;
+      if (mounted) context.go('/case/details');
+    } catch (error) {
+      setState(() => status = 'Ошибка сохранения: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
+
+  Future<void> overrideCategory(String code) async {
+    final result = classification;
+    if (isBusy || result == null || AuthRuntime.userId.isEmpty) return;
+    setState(() => isBusy = true);
+    try {
+      final updated = await caseApi.overrideClassification(
+        ownerUserId: AuthRuntime.userId,
+        classificationId: result.id,
+        subcategoryCode: code,
+      );
+      setState(() {
+        classification = updated;
+        status = 'Категория изменена вручную';
+      });
+    } catch (error) {
+      setState(() => status = 'Ошибка ручного выбора: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1001,18 +1200,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _CategoryResultCard(
-            category: category,
-            onSelected: (value) => setState(() => category = value),
+            classification: classification,
+            status: status,
+            onSelected: overrideCategory,
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: () => context.go('/documents'),
+            onPressed:
+                isBusy || classification == null ? null : confirmAndCreate,
             icon: const Icon(Icons.auto_awesome),
-            label: const Text('Продолжить'),
+            label: Text(isBusy ? 'Сохраняю' : 'Продолжить'),
           ),
           TextButton(
-            onPressed: () => setState(() => category = 'Трудовые споры'),
-            child: const Text('Изменить вручную'),
+            onPressed: isBusy ? null : classify,
+            child: const Text('Повторить анализ'),
           ),
         ],
       ),
@@ -1022,17 +1223,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
 class _CategoryResultCard extends StatelessWidget {
   const _CategoryResultCard({
-    required this.category,
+    required this.classification,
+    required this.status,
     required this.onSelected,
   });
 
-  final String category;
+  final CaseClassificationResult? classification;
+  final String status;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        category == 'Семейные споры' ? 'Брачно-семейные отношения' : category;
+    final result = classification;
+    final title = result?.categoryLabel ?? 'Категория спора';
+    final subtitle = result?.subcategoryLabel ?? status;
     return Column(
       children: [
         Card(
@@ -1047,7 +1251,7 @@ class _CategoryResultCard extends StatelessWidget {
                 const Icon(Icons.balance_outlined,
                     size: 92, color: AppColors.gold),
                 const SizedBox(height: 14),
-                const Text('Категория определена'),
+                Text(status),
                 const SizedBox(height: 8),
                 const _CaseGoldDivider(),
                 const SizedBox(height: 12),
@@ -1061,23 +1265,35 @@ class _CategoryResultCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 OutlinedButton.icon(
-                  onPressed: () => onSelected('Семейные споры'),
+                  onPressed: result == null
+                      ? null
+                      : () => onSelected(result.subcategoryCode),
                   icon: const Icon(Icons.family_restroom_outlined),
-                  label: const Text('Взыскание алиментов'),
+                  label: Text(subtitle),
                 ),
                 const SizedBox(height: 16),
                 RichText(
                   text: TextSpan(
                     style: Theme.of(context).textTheme.titleMedium,
-                    children: const [
-                      TextSpan(text: 'Уверенность: '),
+                    children: [
+                      const TextSpan(text: 'Уверенность: '),
                       TextSpan(
-                        text: '92%',
-                        style: TextStyle(color: AppColors.gold),
+                        text:
+                            '${((result?.confidence ?? 0) * 100).round()}%',
+                        style: const TextStyle(color: AppColors.gold),
                       ),
                     ],
                   ),
                 ),
+                if (result?.riskLevel == 'high' ||
+                    result?.requiredHumanReview == true) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Высокий риск: нужна проверка юристом',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1085,18 +1301,21 @@ class _CategoryResultCard extends StatelessWidget {
         const SizedBox(height: 20),
         const Text('Возможные альтернативы'),
         const SizedBox(height: 12),
-        for (final item in categoryAlternatives)
+        for (final item in (result?.alternatives.isNotEmpty == true
+            ? result!.alternatives
+            : categoryAlternatives))
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: OutlinedButton.icon(
-              onPressed: () => onSelected(
-                item == 'Расторжение брака' || item == 'Содержание супруги'
-                    ? 'Семейные споры'
-                    : item,
-              ),
+              onPressed: result == null ? null : () => onSelected(item),
               icon: const Icon(Icons.timer_outlined),
               label: Text(item),
             ),
+          ),
+        if (result?.missingFacts.isNotEmpty == true)
+          Text(
+            'Не хватает данных: ${result!.missingFacts.join(', ')}',
+            textAlign: TextAlign.center,
           ),
         const SizedBox(height: 8),
         const Text(

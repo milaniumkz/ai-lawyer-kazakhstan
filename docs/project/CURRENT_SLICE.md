@@ -6,7 +6,7 @@
 
 ## Статус
 
-PARTIAL -> backend/API implemented locally; full web/mobile visual QA and production deployment pending.
+READY_FOR_QA -> backend/API/web/Flutter classification lifecycle implemented; production deployment and public smoke pending.
 
 ## Scope
 
@@ -16,7 +16,8 @@ PARTIAL -> backend/API implemented locally; full web/mobile visual QA and produc
 - `/api/v1/legal-categories`, `/api/v1/legal-categories/tree`.
 - `/api/v1/ai/classifications` lifecycle.
 - Web category screen calls classification API and confirms before case creation.
+- Flutter category screen calls classification API, shows confidence/risk/missing facts, confirms and creates case after category confirmation.
 
 ## Следующий шаг
 
-Прогнать полный `npm run check`, затем web browser smoke и Flutter parity для category screen.
+Deploy server, run public smoke, then implement admin category CRUD.

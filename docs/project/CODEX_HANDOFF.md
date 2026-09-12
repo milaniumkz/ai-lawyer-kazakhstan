@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: finish classification gate. Backend/OpenAPI/migration/local tests now include `legal_categories`, `case_classifications`, `classification_feedback`, `/legal-categories`, `/ai/classifications`, clarifications, confirm and override. Web category screen calls classification API before case creation. Remaining work: full `npm run check`, browser smoke, Flutter parity, admin category CRUD and deployment.
+Следующая задача: deploy classification gate and then implement admin category CRUD. Backend/OpenAPI/migration/local tests include `legal_categories`, `case_classifications`, `classification_feedback`, `/legal-categories`, `/ai/classifications`, clarifications, confirm and override. Web and Flutter category screens call classification API before case creation; Flutter analyze/test and full `npm run check` passed.

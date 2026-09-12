@@ -20,6 +20,7 @@ void main() {
     AuthRuntime.displayName = 'Тестовый пользователь';
     AuthRuntime.profileComplete = false;
     MobileCaseRuntime.activeCaseId = '';
+    MobileCaseRuntime.confirmedText = '';
     WorkflowRuntime.generatedBody = '';
   });
 
@@ -169,7 +170,7 @@ void main() {
   testWidgets('shows case intake screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: NewCaseScreen()));
 
-    expect(find.text('Подтвердить и создать дело'), findsOneWidget);
+    expect(find.text('Подтвердить текст'), findsOneWidget);
   });
 
   testWidgets('case category flow opens documents', (tester) async {
@@ -178,13 +179,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новое дело'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.tap(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
     expect(find.text('Категория спора'), findsWidgets);
-
-    await tester.tap(find.text('Содержание супруги'));
-    await tester.pumpAndSettle();
-    expect(find.text('Брачно-семейные отношения'), findsOneWidget);
+    expect(find.textContaining('Войдите'), findsWidgets);
   });
 
   testWidgets('bottom navigation opens cases documents deadlines and profile',
@@ -420,14 +418,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Подтвердить и создать дело'));
+    await tester.ensureVisible(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.tap(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
 
     expect(api.uploadedPath, '/tmp/mobile-test-voice.m4a');
     expect(api.uploadedTranscript, 'Распознанный текст из микрофона');
-    expect(cases.createdText, 'Голос отправлен в API');
+    expect(cases.createdText, isNull);
+    expect(MobileCaseRuntime.confirmedText, 'Голос отправлен в API');
     expect(find.text('Категория готова'), findsOneWidget);
   });
 
@@ -457,13 +456,47 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Подтвердить и создать дело'));
+    await tester.ensureVisible(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Подтвердить и создать дело'));
+    await tester.tap(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
 
     expect(api.uploadedPath, isNull);
     expect(find.text('Категория готова'), findsOneWidget);
+  });
+
+  testWidgets('category screen classifies confirms and creates case',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'user-1';
+    MobileCaseRuntime.confirmedText = 'Хочу подать на алименты на ребёнка';
+    final cases = _FakeCaseApi();
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => CategoryScreen(caseApi: cases),
+          ),
+          GoRoute(
+            path: '/case/details',
+            builder: (_, __) => const Scaffold(body: Text('Карточка дела')),
+          ),
+        ],
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(cases.classifiedText, 'Хочу подать на алименты на ребёнка');
+    expect(find.text('Брачно-семейные отношения'), findsOneWidget);
+    expect(find.text('Взыскание алиментов на ребёнка'), findsOneWidget);
+
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+
+    expect(cases.confirmedClassificationId, 'classification-1');
+    expect(cases.createdText, contains('family.alimony.child'));
+    expect(find.text('Карточка дела'), findsOneWidget);
   });
 
   testWidgets('chat sends messages through case API when case exists',
@@ -697,6 +730,60 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
 class _FakeCaseApi implements CaseApiPort {
   String? createdText;
   String? sentText;
+  String? classifiedText;
+  String? confirmedClassificationId;
+  String? overriddenCode;
+
+  @override
+  Future<CaseClassificationResult> classifyDispute({
+    required String ownerUserId,
+    required String text,
+  }) async {
+    classifiedText = text;
+    return const CaseClassificationResult(
+      id: 'classification-1',
+      categoryLabel: 'Брачно-семейные отношения',
+      subcategoryLabel: 'Взыскание алиментов на ребёнка',
+      subcategoryCode: 'family.alimony.child',
+      confidence: 0.92,
+      missingFacts: ['child_birth_date'],
+      alternatives: ['family.divorce'],
+      riskLevel: 'medium',
+      requiredHumanReview: false,
+    );
+  }
+
+  @override
+  Future<CaseClassificationResult> confirmClassification({
+    required String ownerUserId,
+    required String classificationId,
+  }) async {
+    confirmedClassificationId = classificationId;
+    return classifyDispute(
+      ownerUserId: ownerUserId,
+      text: MobileCaseRuntime.confirmedText,
+    );
+  }
+
+  @override
+  Future<CaseClassificationResult> overrideClassification({
+    required String ownerUserId,
+    required String classificationId,
+    required String subcategoryCode,
+  }) async {
+    overriddenCode = subcategoryCode;
+    return CaseClassificationResult(
+      id: classificationId,
+      categoryLabel: 'Семейные споры',
+      subcategoryLabel: subcategoryCode,
+      subcategoryCode: subcategoryCode,
+      confidence: 1,
+      missingFacts: const [],
+      alternatives: const [],
+      riskLevel: 'medium',
+      requiredHumanReview: false,
+    );
+  }
 
   @override
   Future<CaseListItem> createCase({
