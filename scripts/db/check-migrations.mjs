@@ -41,6 +41,10 @@ const required = [
   ['upload sessions table', /CREATE TABLE upload_sessions/],
   ['subscriptions table', /CREATE TABLE subscriptions/],
   ['provider configs table', /CREATE TABLE provider_configs/],
+  ['legal categories table', /CREATE TABLE legal_categories/],
+  ['case classifications table', /CREATE TABLE case_classifications/],
+  ['classification feedback table', /CREATE TABLE classification_feedback/],
+  ['classification jurisdiction KZ check', /jurisdiction text NOT NULL CHECK \(jurisdiction = 'KZ'\)/],
 ];
 
 for (const [label, pattern] of required) {

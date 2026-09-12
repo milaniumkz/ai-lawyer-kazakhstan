@@ -17,6 +17,53 @@ export type CaseClassification = {
   confidence: number;
 };
 
+export type LegalCategory = {
+  id: string;
+  code: string;
+  parentId?: string;
+  nameRu: string;
+  nameKk: string;
+  nameEn: string;
+  descriptionRu: string;
+  descriptionKk: string;
+  descriptionEn: string;
+  active: boolean;
+  highRisk: boolean;
+  sortOrder: number;
+  requiredFactSchema: Record<string, unknown>;
+  requiredDocumentRules: Record<string, unknown>;
+  clarificationQuestionTemplates: {
+    id: string;
+    type: 'text' | 'date' | 'money' | 'select';
+    questionRu: string;
+    questionKk: string;
+    questionEn: string;
+  }[];
+  defaultLegalRoute: 'civil' | 'administrative' | 'enforcement' | 'criminal_high_risk' | 'manual_review';
+  version: number;
+  keywords: string[];
+};
+
+export type StructuredClassification = {
+  language: 'ru' | 'kk' | 'en';
+  jurisdiction: 'KZ';
+  complexity: 'low' | 'medium' | 'high';
+  risk_level: 'low' | 'medium' | 'high';
+  urgency: 'low' | 'normal' | 'high';
+  category_code: string;
+  subcategory_code: string;
+  category_label: string;
+  subcategory_label: string;
+  confidence: number;
+  reasons: string[];
+  alternatives: { code: string; confidence: number; reason: string }[];
+  facts: Record<string, unknown>;
+  missing_facts: string[];
+  clarification_questions: LegalCategory['clarificationQuestionTemplates'];
+  risk_flags: string[];
+  required_human_review: boolean;
+};
+
 export const CASE_TAXONOMY: CaseTaxonomyItem[] = [
   {
     id: 'family',
@@ -272,6 +319,70 @@ export const CASE_TAXONOMY: CaseTaxonomyItem[] = [
   },
 ];
 
+const ROOT_GROUPS: Omit<LegalCategory, 'keywords'>[] = [
+  root('family', 'Семейные споры', 'Отбасы даулары', 'Family disputes', 10, 'civil'),
+  root('labor', 'Трудовые споры', 'Еңбек даулары', 'Labor disputes', 20, 'civil'),
+  root('civil.debt', 'Взыскание задолженности', 'Берешекті өндіру', 'Debt recovery', 30, 'civil'),
+  root('civil.contract', 'Договорные споры', 'Шарттық даулар', 'Contract disputes', 40, 'civil'),
+  root('consumer', 'Защита прав потребителей', 'Тұтынушы құқығын қорғау', 'Consumer protection', 50, 'civil'),
+  root('housing', 'Жилищные споры', 'Тұрғын үй даулары', 'Housing disputes', 60, 'civil'),
+  root('inheritance', 'Наследственные споры', 'Мұрагерлік даулар', 'Inheritance disputes', 70, 'civil'),
+  root('administrative', 'Административные обращения', 'Әкімшілік өтініштер', 'Administrative matters', 80, 'administrative'),
+  root('enforcement', 'Исполнительное производство', 'Атқарушылық іс жүргізу', 'Enforcement proceedings', 90, 'enforcement'),
+  root('banking', 'Банковские и финансовые споры', 'Банк және қаржы даулары', 'Banking and finance', 100, 'civil'),
+  root('business', 'Предпринимательские споры', 'Кәсіпкерлік даулар', 'Business disputes', 110, 'civil'),
+  root('personal_data', 'Персональные данные', 'Дербес деректер', 'Personal data', 120, 'administrative'),
+  root('criminal_high_risk', 'Высокорисковые ситуации', 'Жоғары тәуекел жағдайлары', 'High-risk matters', 130, 'criminal_high_risk', true),
+  root('clarification_required', 'Требуется уточнение', 'Нақтылау қажет', 'Clarification required', 999, 'manual_review'),
+];
+
+export const LEGAL_CATEGORIES: LegalCategory[] = [
+  ...ROOT_GROUPS.map((item) => ({ ...item, keywords: [] })),
+  cat('family.alimony.child', 'family', 'Взыскание алиментов на ребёнка', 'Балаға алимент өндіру', 'Child support', ['алимент', 'ребенок', 'ребёнок', 'дети', 'бала', 'балама', 'асырау'], ['child_birth_date', 'debtor_identity', 'income_info'], 11),
+  cat('family.alimony.spouse', 'family', 'Содержание супруга', 'Жұбайын асырау', 'Spousal support', ['содержание супруг', 'бывш', 'жұбай', 'супруг', 'супруга'], ['marriage_status', 'need_basis'], 12),
+  cat('family.alimony.adult_student', 'family', 'Алименты совершеннолетнему учащемуся', 'Кәмелетке толған студентке алимент', 'Adult student support', ['совершеннолетн', 'студент', 'учится', 'оқиды'], ['education_document'], 13),
+  cat('family.divorce', 'family', 'Расторжение брака', 'Некені бұзу', 'Divorce', ['развестись', 'развод', 'расторжение брака', 'ажырас'], ['marriage_date', 'children'], 14),
+  cat('family.property_division', 'family', 'Раздел имущества супругов', 'Ерлі-зайыптылар мүлкін бөлу', 'Marital property division', ['разделить квартир', 'раздел имущества', 'после развода', 'ортақ мүлік'], ['property_list', 'acquisition_date'], 15),
+  cat('family.paternity', 'family', 'Установление отцовства', 'Әкелікті анықтау', 'Paternity', ['отцовств', 'әкелік'], ['child_data', 'alleged_parent'], 16),
+  cat('family.child_residence', 'family', 'Место жительства ребёнка', 'Баланың тұрғылықты жері', 'Child residence', ['место жительства ребенка', 'с кем будет жить ребенок'], ['child_age', 'current_residence'], 17),
+  cat('family.child_communication', 'family', 'Порядок общения с ребёнком', 'Баламен араласу тәртібі', 'Child contact', ['общение с ребенком', 'видеться с ребенком'], ['current_contact'], 18),
+  cat('family.parental_rights', 'family', 'Родительские права', 'Ата-ана құқықтары', 'Parental rights', ['лишить родительских', 'ограничить родительские'], ['risk_to_child'], 19, true),
+  cat('family.other', 'family', 'Иной семейный спор', 'Өзге отбасылық дау', 'Other family dispute', ['семейн', 'брак'], ['family_relation'], 20),
+  cat('labor.dismissal_reinstatement', 'labor', 'Незаконное увольнение', 'Заңсыз жұмыстан шығару', 'Wrongful dismissal', ['незаконно увол', 'уволили', 'восстановить на работе', 'жұмыстан шығар'], ['dismissal_date', 'employer'], 21),
+  cat('labor.wage_arrears', 'labor', 'Невыплата зарплаты', 'Жалақы төлемеу', 'Wage arrears', ['не выплатил зарплат', 'зарплата', 'жалақы', 'айлық төлемеді'], ['employment_period', 'amount'], 22),
+  cat('labor.leave_compensation', 'labor', 'Компенсация отпуска', 'Демалыс өтемақысы', 'Leave compensation', ['отпуск', 'компенсация за отпуск'], ['employment_period'], 23),
+  cat('labor.workplace_injury', 'labor', 'Травма на работе', 'Өндірістік жарақат', 'Workplace injury', ['травма на работе', 'несчастный случай'], ['injury_date', 'medical_docs'], 24, true),
+  cat('labor.disciplinary_action', 'labor', 'Дисциплинарное взыскание', 'Тәртіптік жаза', 'Disciplinary action', ['выговор', 'дисциплинар'], ['order_date'], 25),
+  cat('labor.other', 'labor', 'Иной трудовой спор', 'Өзге еңбек дауы', 'Other labor dispute', ['работодатель', 'работник', 'еңбек'], ['employer'], 26),
+  cat('civil.debt.loan', 'civil.debt', 'Долг по расписке или займу', 'Қарызхат немесе қарыз бойынша берешек', 'Loan debt', ['расписк', 'займ', 'қарыз', 'не возвращает деньги'], ['loan_date', 'amount', 'debtor_identity'], 31),
+  cat('civil.debt.contract', 'civil.debt', 'Долг по договору', 'Шарт бойынша берешек', 'Contract debt', ['долг по договор', 'задолженность по договор'], ['contract_date', 'amount'], 32),
+  cat('civil.debt.unjust_enrichment', 'civil.debt', 'Неосновательное обогащение', 'Негізсіз баю', 'Unjust enrichment', ['ошибочно перевел', 'неосновательное'], ['transfer_date', 'amount'], 33),
+  cat('civil.debt.other', 'civil.debt', 'Иная задолженность', 'Өзге берешек', 'Other debt', ['должны деньги', 'мне должны деньги', 'берешек'], ['basis', 'amount', 'debtor_identity'], 34),
+  cat('civil.contract.work', 'civil.contract', 'Подряд и ремонт', 'Мердігерлік және жөндеу', 'Work contract', ['подрядчик', 'ремонт', 'не выполнил ремонт', 'работы'], ['contract_or_receipt', 'paid_amount'], 43),
+  cat('civil.contract.services', 'civil.contract', 'Услуги', 'Қызметтер', 'Services', ['услуг', 'исполнитель'], ['service_terms'], 42),
+  cat('consumer.goods', 'consumer', 'Бракованный товар', 'Ақаулы тауар', 'Defective goods', ['бракованный товар', 'магазин', 'товар', 'не принимает', 'ақаулы'], ['purchase_date', 'receipt'], 51),
+  cat('consumer.services', 'consumer', 'Некачественная услуга', 'Сапасыз қызмет', 'Poor service', ['некачественная услуга', 'услуга плохо'], ['service_date'], 52),
+  cat('consumer.refund', 'consumer', 'Возврат денег', 'Ақшаны қайтару', 'Refund', ['возврат денег', 'вернуть деньги'], ['payment_proof'], 53),
+  cat('consumer.warranty', 'consumer', 'Гарантия', 'Кепілдік', 'Warranty', ['гарант'], ['warranty_card'], 54),
+  cat('consumer.other', 'consumer', 'Иной потребительский спор', 'Өзге тұтынушылық дау', 'Other consumer matter', ['потребител'], ['seller'], 55),
+  cat('housing.eviction', 'housing', 'Выселение', 'Үйден шығару', 'Eviction', ['выселяют', 'выселен', 'шығарып жатыр'], ['housing_basis', 'notice_date'], 61, true),
+  cat('inheritance.acceptance_deadline', 'inheritance', 'Восстановление срока наследства', 'Мұраны қабылдау мерзімін қалпына келтіру', 'Inheritance deadline', ['пропустил срок принятия наследства', 'срок наследства'], ['death_date', 'reason_for_delay'], 71),
+  cat('administrative.state_body_inaction', 'administrative', 'Бездействие госоргана', 'Меморган әрекетсіздігі', 'State body inaction', ['госорган не отвечает', 'бездейств', 'өтінішке жауап жоқ'], ['application_date', 'state_body'], 82),
+  cat('administrative.fine', 'administrative', 'Административный штраф', 'Әкімшілік айыппұл', 'Administrative fine', ['штраф', 'коап', 'постановление'], ['fine_date'], 83),
+  cat('administrative.e_otinish', 'administrative', 'e-Otinish обращение', 'e-Otinish өтініші', 'e-Otinish', ['е-өтініш', 'e-otinish', 'еотиниш'], ['application_number'], 84),
+  cat('enforcement.bailiff_inaction', 'enforcement', 'Бездействие ЧСИ', 'ЖСО әрекетсіздігі', 'Bailiff inaction', ['чси не предпринимает', 'частный судебный исполнитель', 'судебный исполнитель'], ['enforcement_case_number'], 91),
+  cat('enforcement.seizure', 'enforcement', 'Арест имущества или счета', 'Мүлікке немесе шотқа тыйым', 'Seizure', ['арест счета', 'арест имущества'], ['seizure_date'], 92),
+  cat('banking.microfinance', 'banking', 'Спор с МФО', 'МҚҰ дауы', 'MFI dispute', ['мфо', 'микрофинанс', 'микрозайм', 'огромную задолженность'], ['loan_date', 'amount'], 102),
+  cat('banking.collection', 'banking', 'Коллекторы', 'Коллекторлар', 'Collections', ['коллектор'], ['collector_name'], 103, true),
+  cat('personal_data.disclosure', 'personal_data', 'Раскрытие персональных данных', 'Дербес деректерді жариялау', 'Personal data disclosure', ['персональные данные опубликовали', 'без согласия', 'деректерімді жариялады'], ['publication_source'], 122, true),
+  cat('criminal_high_risk.detention', 'criminal_high_risk', 'Задержание', 'Ұстау', 'Detention', ['меня задержали', 'задержали', 'ұстады'], ['detention_time', 'location'], 131, true),
+  cat('criminal_high_risk.suspect_accused', 'criminal_high_risk', 'Подозреваемый или обвиняемый', 'Күдікті немесе айыпталушы', 'Suspect or accused', ['подозреваем', 'обвиняем'], ['case_stage'], 132, true),
+  cat('criminal_high_risk.victim', 'criminal_high_risk', 'Потерпевший', 'Жәбірленуші', 'Victim', ['потерпевш', 'жәбірленуші'], ['incident_date'], 133, true),
+  cat('criminal_high_risk.fraud', 'criminal_high_risk', 'Мошенничество', 'Алаяқтық', 'Fraud', ['мошеннич', 'алаяқ'], ['incident_date', 'amount'], 134, true),
+  cat('criminal_high_risk.domestic_violence', 'criminal_high_risk', 'Домашнее насилие', 'Тұрмыстық зорлық-зомбылық', 'Domestic violence', ['муж угрожает', 'избивает', 'домашнее насилие', 'ұрады', 'қорқытады'], ['immediate_safety', 'police_report'], 135, true),
+  cat('clarification_required.other', 'clarification_required', 'Нужны уточнения', 'Нақтылау керек', 'Needs clarification', ['непонятно'], ['parties', 'goal', 'documents'], 1000),
+];
+
 export function classifyByTaxonomy(text: string): CaseClassification {
   const normalized = normalizeForClassification(text);
   const scores = CASE_TAXONOMY.filter((item) => item.id !== 'clarification_required')
@@ -292,6 +403,70 @@ export function classifyByTaxonomy(text: string): CaseClassification {
   };
 }
 
+export function classifyStructuredDispute(text: string): StructuredClassification {
+  const normalized = normalizeForClassification(text);
+  const language = detectLanguage(text);
+  const candidates = LEGAL_CATEGORIES.filter((item) => item.active && item.parentId && item.code !== 'clarification_required.other')
+    .map((item) => ({ item, score: scoreLegalCategory(normalized, item) }))
+    .filter((result) => result.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  const second = candidates[1];
+  const hasWeakSignal = !best || best.score < 1 || Boolean(second && best.score - second.score < 0.2);
+  const item = hasWeakSignal ? LEGAL_CATEGORIES.find((category) => category.code === 'clarification_required.other')! : best.item;
+  const parent = LEGAL_CATEGORIES.find((category) => category.code === item.parentId) ?? item;
+  const facts = extractClassificationFacts(normalized);
+  const riskFlags = detectRiskFlags(normalized, item);
+  const confidence = hasWeakSignal ? 0.52 : Number(Math.min(0.96, 0.58 + (best.score / 10)).toFixed(2));
+  const severeRisk = riskFlags.some((flag) => flag !== 'minor_involved');
+  const urgency = severeRisk || /сегодня|срочно|завтра|задержал|избивает|выселяют/.test(normalized) ? 'high' : 'normal';
+  const riskLevel = item.highRisk || severeRisk ? 'high' : confidence < 0.75 || riskFlags.includes('minor_involved') ? 'medium' : 'low';
+  const complexity = item.highRisk || confidence < 0.65 ? 'high' : confidence < 0.85 ? 'medium' : 'low';
+  const missing = item.requiredFactSchema.fields as string[];
+
+  return {
+    language,
+    jurisdiction: 'KZ',
+    complexity,
+    risk_level: riskLevel,
+    urgency,
+    category_code: parent.code,
+    subcategory_code: item.code,
+    category_label: parent.nameRu,
+    subcategory_label: item.nameRu,
+    confidence,
+    reasons: makeReasons(item, facts, hasWeakSignal),
+    alternatives: candidates
+      .filter((candidate) => candidate.item.code !== item.code)
+      .slice(0, Number(process.env.CATEGORY_MAX_ALTERNATIVES ?? 3))
+      .map((candidate) => ({
+        code: candidate.item.code,
+        confidence: Number(Math.min(0.88, 0.45 + candidate.score / 10).toFixed(2)),
+        reason: 'secondary_candidate_from_allowed_kz_tree',
+      })),
+    facts,
+    missing_facts: missing,
+    clarification_questions: item.clarificationQuestionTemplates,
+    risk_flags: riskFlags,
+    required_human_review: item.highRisk || item.defaultLegalRoute === 'criminal_high_risk',
+  };
+}
+
+export function getLegalCategory(code: string) {
+  return LEGAL_CATEGORIES.find((item) => item.code === code && item.active);
+}
+
+export function validateStructuredClassification(result: StructuredClassification) {
+  if (result.jurisdiction !== 'KZ') throw new Error('INVALID_JURISDICTION');
+  if (result.confidence < 0 || result.confidence > 1) throw new Error('INVALID_CONFIDENCE');
+  if (!getLegalCategory(result.category_code)) throw new Error('UNKNOWN_CATEGORY_CODE');
+  if (!getLegalCategory(result.subcategory_code)) throw new Error('UNKNOWN_SUBCATEGORY_CODE');
+  if (result.alternatives.some((item) => item.code === result.subcategory_code)) throw new Error('DUPLICATE_ALTERNATIVE');
+  const serialized = JSON.stringify(result).toLowerCase();
+  if (/\bрф\b|российск|рубл|инн|огрн/.test(serialized)) throw new Error('FORBIDDEN_FOREIGN_LEGAL_REFERENCE');
+  return result;
+}
+
 function scoreTaxonomyItem(text: string, item: CaseTaxonomyItem) {
   let score = 0;
   for (const keyword of item.keywords) {
@@ -306,6 +481,124 @@ function scoreTaxonomyItem(text: string, item: CaseTaxonomyItem) {
   }
   if (item.highRisk && score > 0) score += 0.8;
   return score;
+}
+
+function scoreLegalCategory(text: string, item: LegalCategory) {
+  let score = 0;
+  for (const keyword of item.keywords) {
+    const normalizedKeyword = normalizeForClassification(keyword);
+    if (normalizedKeyword && text.includes(normalizedKeyword)) score += normalizedKeyword.includes(' ') ? 2.2 : 1;
+  }
+  if (item.code === 'family.alimony.child' && /ребен|ребён|бала/.test(text) && /алимент|асырау/.test(text)) score += 2;
+  if (item.code === 'civil.debt.other' && /^мне должны деньги$|должны деньги/.test(text)) score += 1.2;
+  if (item.highRisk && score > 0) score += 1;
+  return score;
+}
+
+function detectLanguage(text: string): 'ru' | 'kk' | 'en' {
+  const lower = text.toLowerCase();
+  if (/[әғқңөұүһі]/.test(lower) || /\b(жалақы|бала|қарыз|өтініш|жұмыстан)\b/.test(lower)) return 'kk';
+  if (/\b(the|and|court|debt|worker)\b/.test(lower)) return 'en';
+  return 'ru';
+}
+
+function extractClassificationFacts(text: string) {
+  return {
+    minor_child: /ребен|ребён|дети|бала/.test(text),
+    money_claim: /деньг|долг|задолж|зарплат|жалақы|алимент|мфо|қарыз/.test(text),
+    state_body: /госорган|акимат|өтініш|меморган/.test(text),
+    violence_or_detention: /задержал|избивает|угрожает|ұстады|ұрады|қорқытады/.test(text),
+    document_goal: /иск|заявлен|жалоб|претенз|өтініш/.test(text) ? 'legal_document' : 'consultation',
+  };
+}
+
+function detectRiskFlags(text: string, item: LegalCategory) {
+  const flags: string[] = [];
+  if (/задержал|ұстады/.test(text)) flags.push('detention_or_criminal_process');
+  if (/избивает|угрожает|ұрады|қорқытады/.test(text)) flags.push('violence_or_immediate_safety');
+  if (/выселяют|выселен/.test(text)) flags.push('housing_loss_risk');
+  if (/ребен|ребён|бала/.test(text)) flags.push('minor_involved');
+  if (item.highRisk && !flags.includes('high_risk_category')) flags.push('high_risk_category');
+  return flags;
+}
+
+function makeReasons(item: LegalCategory, facts: Record<string, unknown>, weak: boolean) {
+  if (weak) return ['insufficient_or_ambiguous_facts', 'manual_or_clarification_required'];
+  const reasons = ['matched_allowed_kazakhstan_category_tree'];
+  if (facts.money_claim) reasons.push('money_or_support_claim_detected');
+  if (facts.minor_child) reasons.push('minor_child_detected');
+  if (facts.state_body) reasons.push('state_body_signal_detected');
+  if (facts.violence_or_detention) reasons.push('high_risk_signal_detected');
+  return reasons;
+}
+
+function root(
+  code: string,
+  nameRu: string,
+  nameKk: string,
+  nameEn: string,
+  sortOrder: number,
+  defaultLegalRoute: LegalCategory['defaultLegalRoute'],
+  highRisk = false,
+): Omit<LegalCategory, 'keywords'> {
+  return {
+    id: code,
+    code,
+    nameRu,
+    nameKk,
+    nameEn,
+    descriptionRu: nameRu,
+    descriptionKk: nameKk,
+    descriptionEn: nameEn,
+    active: true,
+    highRisk,
+    sortOrder,
+    requiredFactSchema: { fields: [] },
+    requiredDocumentRules: { documents: [] },
+    clarificationQuestionTemplates: [],
+    defaultLegalRoute,
+    version: 1,
+  };
+}
+
+function cat(
+  code: string,
+  parentId: string,
+  nameRu: string,
+  nameKk: string,
+  nameEn: string,
+  keywords: string[],
+  fields: string[],
+  sortOrder: number,
+  highRisk = false,
+): LegalCategory {
+  const route = parentId === 'criminal_high_risk' ? 'criminal_high_risk' : parentId === 'administrative' || parentId === 'personal_data' ? 'administrative' : parentId === 'enforcement' ? 'enforcement' : parentId === 'clarification_required' ? 'manual_review' : 'civil';
+  return {
+    id: code,
+    code,
+    parentId,
+    nameRu,
+    nameKk,
+    nameEn,
+    descriptionRu: nameRu,
+    descriptionKk: nameKk,
+    descriptionEn: nameEn,
+    active: true,
+    highRisk,
+    sortOrder,
+    requiredFactSchema: { fields },
+    requiredDocumentRules: { documents: [] },
+    clarificationQuestionTemplates: fields.slice(0, 3).map((field) => ({
+      id: field,
+      type: field.includes('date') ? 'date' : field.includes('amount') ? 'money' : 'text',
+      questionRu: `Уточните: ${field}`,
+      questionKk: `Нақтылаңыз: ${field}`,
+      questionEn: `Clarify: ${field}`,
+    })),
+    defaultLegalRoute: route,
+    version: 1,
+    keywords,
+  };
 }
 
 function normalizeForClassification(text: string) {

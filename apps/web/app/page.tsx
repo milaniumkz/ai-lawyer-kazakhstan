@@ -86,6 +86,24 @@ type ApiLegalAnswer = {
     retrievedAt?: string;
   };
 };
+type ApiClassification = {
+  id: string;
+  result: {
+    category_code: string;
+    subcategory_code: string;
+    category_label: string;
+    subcategory_label: string;
+    confidence: number;
+    reasons: string[];
+    alternatives: { code: string; confidence: number; reason: string }[];
+    missing_facts: string[];
+    clarification_questions: { id: string; questionRu: string }[];
+    risk_level: "low" | "medium" | "high";
+    risk_flags: string[];
+    required_human_review: boolean;
+  };
+  userConfirmed: boolean;
+};
 type ApiOtpResponse = {
   otpId: string;
   deliveryMode: "stub" | "sms" | "email";
@@ -435,6 +453,8 @@ export default function WebHome() {
   );
   const [transcriptJobId, setTranscriptJobId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Семейные споры");
+  const [classification, setClassification] = useState<ApiClassification | null>(null);
+  const [classificationBusy, setClassificationBusy] = useState(false);
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");
@@ -722,7 +742,7 @@ export default function WebHome() {
         },
         body: JSON.stringify({
           ownerUserId,
-          problemText: `${caseText}\nКатегория пользователя: ${selectedCategory}`,
+          problemText: `${caseText}\nКатегория: ${classification?.result.subcategory_code ?? selectedCategory}`,
         }),
       })) as ApiLegalCase;
       const next = mapCase(legalCase);
@@ -742,6 +762,87 @@ export default function WebHome() {
           ? `API ошибка: ${error.message}`
           : "Не удалось создать дело",
       );
+    }
+  }
+
+  async function classifyCurrentText() {
+    if (caseText.trim().length < 12) {
+      setSyncState("Опишите ситуацию подробнее");
+      return;
+    }
+    setClassificationBusy(true);
+    setSyncState("Определяю категорию через API...");
+    try {
+      const ownerUserId = await ensureUser();
+      const result = (await apiJson("/ai/classifications", {
+        method: "POST",
+        headers: { "x-user-id": ownerUserId },
+        body: JSON.stringify({ text: caseText }),
+      })) as ApiClassification;
+      setClassification(result);
+      setSelectedCategory(result.result.subcategory_label);
+      setSyncState(`Категория API: ${result.result.subcategory_label}`);
+      go("category");
+    } catch (error) {
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка классификации: ${error.message}`
+          : "Не удалось определить категорию",
+      );
+    } finally {
+      setClassificationBusy(false);
+    }
+  }
+
+  async function confirmCategoryAndCreateCase() {
+    if (!classification) {
+      await classifyCurrentText();
+      return;
+    }
+    setClassificationBusy(true);
+    try {
+      const ownerUserId = await ensureUser();
+      await apiJson(`/ai/classifications/${classification.id}/confirm`, {
+        method: "POST",
+        headers: {
+          "idempotency-key": nextClientId("web-category-confirm"),
+          "x-user-id": ownerUserId,
+        },
+      });
+      setSyncState("Категория подтверждена");
+      await addCase();
+    } catch (error) {
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка подтверждения категории: ${error.message}`
+          : "Не удалось подтвердить категорию",
+      );
+    } finally {
+      setClassificationBusy(false);
+    }
+  }
+
+  async function overrideCategory(code: string) {
+    if (!classification) return;
+    setClassificationBusy(true);
+    try {
+      const ownerUserId = await ensureUser();
+      const result = (await apiJson(`/ai/classifications/${classification.id}/override`, {
+        method: "POST",
+        headers: { "x-user-id": ownerUserId },
+        body: JSON.stringify({ subcategoryCode: code, reason: "manual web selection" }),
+      })) as ApiClassification;
+      setClassification(result);
+      setSelectedCategory(result.result.subcategory_label);
+      setSyncState(`Категория изменена: ${result.result.subcategory_label}`);
+    } catch (error) {
+      setSyncState(
+        error instanceof Error
+          ? `Ошибка ручного выбора: ${error.message}`
+          : "Не удалось изменить категорию",
+      );
+    } finally {
+      setClassificationBusy(false);
     }
   }
 
@@ -1157,7 +1258,7 @@ export default function WebHome() {
       setSyncState("Опишите ситуацию подробнее");
       return;
     }
-    go("category");
+    void classifyCurrentText();
   }
 
   function selectLegalTab(tab: string) {
@@ -2020,61 +2121,101 @@ export default function WebHome() {
     }
 
     if (view === "category") {
+      const currentClassification = classification?.result;
       return (
         <section className="contentPanel">
           <AppHeader
             title="Категория спора"
-            subtitle="AI определил категорию по описанию"
+            subtitle={
+              currentClassification
+                ? "AI определил категорию по подтвержденному тексту"
+                : "Нужен подтвержденный текст обращения"
+            }
             back="newCase"
           />
           <div className="categoryHero">
             <AuthMark />
-            <strong>Категория определена</strong>
+            <strong>
+              {classificationBusy
+                ? "Анализирую"
+                : currentClassification
+                  ? "Категория определена"
+                  : "Ожидает анализа"}
+            </strong>
             <AuthDivider />
             <h1>
-              {selectedCategory === "Семейные споры"
-                ? "Брачно-семейные отношения"
-                : selectedCategory}
+              {currentClassification?.category_label ?? selectedCategory}
             </h1>
             <button
               className="categoryPill"
-              onClick={() => setSelectedCategory("Семейные споры")}
+              disabled={!currentClassification}
+              onClick={() =>
+                setSyncState(
+                  currentClassification
+                    ? `Подкатегория: ${currentClassification.subcategory_code}`
+                    : "Сначала запустите анализ",
+                )
+              }
             >
-              ♙ Взыскание алиментов
+              ♙ {currentClassification?.subcategory_label ?? "Определить категорию"}
             </button>
             <p>
-              Уверенность: <b>92%</b>
+              Уверенность:{" "}
+              <b>
+                {currentClassification
+                  ? `${Math.round(currentClassification.confidence * 100)}%`
+                  : "0%"}
+              </b>
             </p>
           </div>
+          {currentClassification?.risk_level === "high" && (
+            <p className="hint">
+              ⚠ Высокий риск: требуется предупреждение и проверка юристом.
+            </p>
+          )}
           <AuthDivider />
           <p className="hint">Возможные альтернативы</p>
           <div className="categoryAlternatives">
-            {CATEGORY_ALTERNATIVES.map((type) => (
+            {(currentClassification?.alternatives.length
+              ? currentClassification.alternatives.map((item) => item.code)
+              : CATEGORY_ALTERNATIVES
+            ).map((type) => (
               <button
                 key={type}
                 onClick={() => {
-                  setSelectedCategory(type);
-                  setSyncState(`Категория выбрана: ${type}`);
+                  if (type.includes(".")) void overrideCategory(type);
+                  else {
+                    setSelectedCategory(type);
+                    setSyncState(`Категория выбрана: ${type}`);
+                  }
                 }}
               >
                 ◴ {type}
               </button>
             ))}
           </div>
+          {currentClassification?.missing_facts.length ? (
+            <p className="hint">
+              Не хватает данных: {currentClassification.missing_facts.join(", ")}
+            </p>
+          ) : null}
           <p className="hint">
-            ✦ На основании вашего описания система определила наиболее
-            подходящую категорию спора.
+            ✦{" "}
+            {currentClassification?.reasons.join(", ") ??
+              "Нажмите повторный анализ, если категория не появилась."}
           </p>
-          <button className="primary wide heroCta" onClick={addCase}>
-            ✧ Продолжить
+          <button
+            className="primary wide heroCta"
+            disabled={classificationBusy || !currentClassification}
+            onClick={confirmCategoryAndCreateCase}
+          >
+            {classificationBusy ? "Сохраняю..." : "✧ Продолжить"}
           </button>
           <button
             className="linkAction"
-            onClick={() =>
-              setSyncState("Откройте список альтернатив и выберите категорию")
-            }
+            onClick={() => void classifyCurrentText()}
           >
-            Изменить вручную
+            Повторить анализ
           </button>
         </section>
       );

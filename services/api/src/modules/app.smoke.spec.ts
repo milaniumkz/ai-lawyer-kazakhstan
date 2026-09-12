@@ -41,6 +41,14 @@ describe('AppModule HTTP smoke', () => {
       expect(body).toHaveLength(25);
       expect(body.some((item: { id: string; criteria: string[] }) => item.id === 'administrative_offense' && item.criteria.length > 0)).toBe(true);
     });
+    await request(app.getHttpServer()).get('/api/v1/legal-categories').expect(403);
+    await request(app.getHttpServer())
+      .get('/api/v1/legal-categories/tree')
+      .set('x-user-id', '00000000-0000-4000-8000-000000000001')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.some((item: { code: string; children: { code: string }[] }) => item.code === 'family' && item.children.some((child) => child.code === 'family.alimony.child'))).toBe(true);
+      });
   });
 
   it('covers identity, cases, documents, RAG, templates and billing routes', async () => {
@@ -70,6 +78,26 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-id', userId)
       .send({ ownerUserId: userId, problemText: 'Нужно взыскать долг по договору займа' })
       .expect(201);
+
+    const classification = await request(app.getHttpServer())
+      .post('/api/v1/ai/classifications')
+      .set('x-user-id', userId)
+      .send({ caseId: legalCase.body.id, text: 'Хочу подать на алименты на ребёнка' })
+      .expect(201);
+    expect(classification.body.result.subcategory_code).toBe('family.alimony.child');
+    await request(app.getHttpServer())
+      .post(`/api/v1/ai/classifications/${classification.body.id}/confirm`)
+      .set('x-user-id', userId)
+      .set('idempotency-key', 'confirm-smoke-1')
+      .expect(201)
+      .expect(({ body }) => expect(body.userConfirmed).toBe(true));
+    await request(app.getHttpServer())
+      .post(`/api/v1/ai/classifications/${classification.body.id}/override`)
+      .set('x-user-id', userId)
+      .send({ subcategoryCode: 'family.divorce', reason: 'manual smoke' })
+      .expect(201)
+      .expect(({ body }) => expect(body.result.subcategory_code).toBe('family.divorce'));
+    await request(app.getHttpServer()).get(`/api/v1/cases/${legalCase.body.id}/classification`).set('x-user-id', userId).expect(200);
 
     await request(app.getHttpServer()).get('/api/v1/cases').set('x-user-id', userId).expect(200);
     await request(app.getHttpServer())

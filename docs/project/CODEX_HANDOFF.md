@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: connect custom production domain and production secrets when access is provided.
+Следующая задача: finish classification gate. Backend/OpenAPI/migration/local tests now include `legal_categories`, `case_classifications`, `classification_feedback`, `/legal-categories`, `/ai/classifications`, clarifications, confirm and override. Web category screen calls classification API before case creation. Remaining work: full `npm run check`, browser smoke, Flutter parity, admin category CRUD and deployment.

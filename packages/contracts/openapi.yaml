@@ -308,6 +308,53 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CaseCategory"
+  /legal-categories:
+    get:
+      operationId: listLegalCategories
+      summary: List database-backed Kazakhstan legal categories
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Legal category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegalCategory"
+  /legal-categories/tree:
+    get:
+      operationId: listLegalCategoryTree
+      summary: List legal categories as a tree
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Legal category tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/LegalCategory"
+                    - type: object
+                      properties:
+                        children:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/LegalCategory"
   /cases/{caseId}:
     get:
       operationId: getCase
@@ -331,6 +378,171 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LegalCase"
+  /cases/{caseId}/classification:
+    get:
+      operationId: getCaseClassification
+      summary: Get latest classification for a case
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Case classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /ai/classifications:
+    post:
+      operationId: createClassification
+      summary: Classify confirmed voice or text into an allowed KZ dispute category
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassificationRequest"
+      responses:
+        "201":
+          description: Classification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /ai/classifications/{id}:
+    get:
+      operationId: getClassification
+      summary: Get classification by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Classification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /ai/classifications/{id}/clarifications:
+    post:
+      operationId: answerClassificationClarifications
+      summary: Save answers to category clarification questions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers:
+                  type: object
+      responses:
+        "201":
+          description: Updated classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /ai/classifications/{id}/confirm:
+    post:
+      operationId: confirmClassification
+      summary: Confirm proposed classification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: idempotency-key
+          schema:
+            type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: Confirmed classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /ai/classifications/{id}/override:
+    post:
+      operationId: overrideClassification
+      summary: Manually override classification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subcategoryCode]
+              properties:
+                subcategoryCode:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Updated classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
   /cases/{caseId}/messages:
     get:
       operationId: listMessages
@@ -1145,6 +1357,149 @@ components:
           type: array
           items:
             type: string
+    LegalCategory:
+      type: object
+      required: [id, code, nameRu, nameKk, nameEn, active, highRisk, sortOrder, requiredFactSchema, requiredDocumentRules, clarificationQuestionTemplates, defaultLegalRoute, version]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        parentId:
+          type: string
+        nameRu:
+          type: string
+        nameKk:
+          type: string
+        nameEn:
+          type: string
+        descriptionRu:
+          type: string
+        descriptionKk:
+          type: string
+        descriptionEn:
+          type: string
+        active:
+          type: boolean
+        highRisk:
+          type: boolean
+        sortOrder:
+          type: integer
+        requiredFactSchema:
+          type: object
+        requiredDocumentRules:
+          type: object
+        clarificationQuestionTemplates:
+          type: array
+          items:
+            type: object
+        defaultLegalRoute:
+          type: string
+        version:
+          type: integer
+    CreateClassificationRequest:
+      type: object
+      required: [text]
+      properties:
+        caseId:
+          type: string
+        conversationId:
+          type: string
+        inputMessageId:
+          type: string
+        text:
+          type: string
+          minLength: 4
+    StructuredClassificationResult:
+      type: object
+      required: [language, jurisdiction, complexity, risk_level, urgency, category_code, subcategory_code, category_label, subcategory_label, confidence, reasons, alternatives, facts, missing_facts, clarification_questions, risk_flags, required_human_review]
+      properties:
+        language:
+          type: string
+          enum: [ru, kk, en]
+        jurisdiction:
+          type: string
+          enum: [KZ]
+        complexity:
+          type: string
+          enum: [low, medium, high]
+        risk_level:
+          type: string
+          enum: [low, medium, high]
+        urgency:
+          type: string
+          enum: [low, normal, high]
+        category_code:
+          type: string
+        subcategory_code:
+          type: string
+        category_label:
+          type: string
+        subcategory_label:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reasons:
+          type: array
+          items:
+            type: string
+        alternatives:
+          type: array
+          items:
+            type: object
+            required: [code, confidence, reason]
+            properties:
+              code:
+                type: string
+              confidence:
+                type: number
+              reason:
+                type: string
+        facts:
+          type: object
+        missing_facts:
+          type: array
+          items:
+            type: string
+        clarification_questions:
+          type: array
+          items:
+            type: object
+        risk_flags:
+          type: array
+          items:
+            type: string
+        required_human_review:
+          type: boolean
+    CaseClassificationRecord:
+      type: object
+      required: [id, ownerUserId, result, userConfirmed, userOverridden, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerUserId:
+          type: string
+        caseId:
+          type: string
+        conversationId:
+          type: string
+        inputMessageId:
+          type: string
+        result:
+          $ref: "#/components/schemas/StructuredClassificationResult"
+        userConfirmed:
+          type: boolean
+        userOverridden:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        confirmedAt:
+          type: string
+          format: date-time
     CreateCaseRequest:
       type: object
       required: [ownerUserId, problemText]

@@ -37,9 +37,55 @@ export class CasesController {
     return this.cases.listCategories();
   }
 
+  @Get('legal-categories')
+  listLegalCategories(@Headers('x-user-id') userId?: string | string[]) {
+    assertUserId(userId);
+    return this.cases.listLegalCategories();
+  }
+
+  @Get('legal-categories/tree')
+  listLegalCategoryTree(@Headers('x-user-id') userId?: string | string[]) {
+    assertUserId(userId);
+    return this.cases.listLegalCategoryTree();
+  }
+
   @Get('cases/:caseId')
   getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.getCase(caseId, assertUserId(userId));
+  }
+
+  @Get('cases/:caseId/classification')
+  getCaseClassification(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.getCaseClassification(caseId, assertUserId(userId));
+  }
+
+  @Post('ai/classifications')
+  classifyDispute(
+    @Body() body: { caseId?: string; conversationId?: string; inputMessageId?: string; text: string },
+    @Headers('x-user-id') userId?: string | string[],
+  ) {
+    return this.cases.classifyDispute(body, assertUserId(userId));
+  }
+
+  @Get('ai/classifications/:id')
+  getClassification(@Param('id') id: string, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.getClassification(id, assertUserId(userId));
+  }
+
+  @Post('ai/classifications/:id/clarifications')
+  answerClarifications(@Param('id') id: string, @Body() body: { answers: Record<string, unknown> }, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.answerClarifications(id, body, assertUserId(userId));
+  }
+
+  @Post('ai/classifications/:id/confirm')
+  confirmClassification(@Param('id') id: string, @Headers('idempotency-key') idempotencyKey?: string, @Headers('x-user-id') userId?: string | string[]) {
+    void idempotencyKey;
+    return this.cases.confirmClassification(id, assertUserId(userId));
+  }
+
+  @Post('ai/classifications/:id/override')
+  overrideClassification(@Param('id') id: string, @Body() body: { subcategoryCode: string; reason?: string }, @Headers('x-user-id') userId?: string | string[]) {
+    return this.cases.overrideClassification(id, body, assertUserId(userId));
   }
 
   @Post('cases/:caseId/messages')
