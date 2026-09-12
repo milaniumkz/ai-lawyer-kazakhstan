@@ -2,7 +2,7 @@
 
 /* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 type View =
   | "onboarding"
@@ -2081,7 +2081,12 @@ export default function WebHome() {
                 title={authText.otpTitle}
                 subtitle={
                   phone
-                    ? `${authText.otpSent} ${phone}`
+                    ? (
+                        <>
+                          <span>{authText.otpSent}</span>
+                          <strong>{phone}</strong>
+                        </>
+                      )
                     : authText.otpFallback
                 }
               />
@@ -4118,7 +4123,7 @@ export default function WebHome() {
   );
 }
 
-function Header({ title, subtitle }: { title: string; subtitle: string }) {
+function Header({ title, subtitle }: { title: string; subtitle: ReactNode }) {
   return (
     <header className="panelHeader">
       <h2>{title}</h2>

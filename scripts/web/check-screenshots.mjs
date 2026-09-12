@@ -125,7 +125,7 @@ async function main() {
             phone: view === 'otp' ? '+7 707 123 45 67' : '+7',
             otp: view === 'otp' ? '481259' : '',
             otpId: view === 'otp' ? '00000000-0000-4000-8000-000000000004' : '',
-            otpHint: view === 'otp' ? 'SMS-код для теста: 481259' : '',
+            otpHint: '',
             authUserId: isPublic ? '' : '00000000-0000-4000-8000-000000000001',
             profileComplete: !isPublic,
             remoteCaseId: isPublic ? '' : '00000000-0000-4000-8000-000000000017',

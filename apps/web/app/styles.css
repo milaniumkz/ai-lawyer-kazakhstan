@@ -21,6 +21,7 @@
     min-height: calc(100vh - 8px);
     border: 0;
     background: #020912;
+    padding: 7px 5px;
   }
   .appShell[data-view="otp"] .appStatus,
   .appShell[data-view="otp"] .bottomNav {
@@ -31,7 +32,8 @@
     align-content: start;
     gap: 8px;
     padding: 27px 38px 28px;
-    border: 0;
+    border: 1px solid var(--gold);
+    border-radius: 20px;
     box-shadow: none;
     overflow: hidden;
     position: relative;
@@ -57,7 +59,7 @@
     margin: 0;
     text-align: center;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 32px;
+    font-size: 20px;
     font-weight: 400;
     line-height: 1;
   }
@@ -82,7 +84,7 @@
   }
   .appShell[data-view="otp"] .panelHeader h2 {
     margin: 0 0 12px;
-    font-size: 36px;
+    font-size: 32px;
     line-height: 1.02;
     white-space: nowrap;
   }
@@ -90,8 +92,18 @@
     max-width: 300px;
     margin: 0 auto;
     color: #b6bfca;
-    font-size: 21px;
+    font-size: 16px;
     line-height: 1.22;
+  }
+  .appShell[data-view="otp"] .panelHeader p span,
+  .appShell[data-view="otp"] .panelHeader p strong {
+    display: block;
+  }
+  .appShell[data-view="otp"] .panelHeader p strong {
+    margin-top: 4px;
+    color: var(--gold-strong);
+    font-size: 17px;
+    font-weight: 400;
   }
   .appShell[data-view="otp"] .panelHeader p::after {
     content: "";
@@ -104,11 +116,9 @@
   }
   .appShell[data-view="otp"] .recordMeta.otpHint {
     display: block;
-    position: absolute;
-    top: 347px;
-    left: 50%;
+    justify-self: center;
     width: fit-content;
-    margin: 0;
+    margin: -9px 0 4px;
     border: 1px solid rgba(216, 163, 60, 0.44);
     border-radius: 999px;
     background: rgba(216, 163, 60, 0.08);
@@ -116,7 +126,6 @@
     color: var(--gold-strong);
     font-size: 11px;
     line-height: 1;
-    transform: translateX(-50%);
   }
   .appShell[data-view="otp"] .otpInput {
     position: absolute;
@@ -128,10 +137,10 @@
   .appShell[data-view="otp"] .otpBoxes {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 9px;
-    margin: 0 -3px 18px;
+    margin: 0 -3px 20px;
   }
   .appShell[data-view="otp"] .otpBoxes span {
-    min-height: 58px;
+    min-height: 55px;
     border-color: #d8a33c;
     border-radius: 9px;
     background: rgba(6, 17, 29, 0.58);
@@ -152,13 +161,13 @@
     font-weight: 400;
   }
   .appShell[data-view="otp"] .heroCta {
-    min-height: 66px;
+    min-height: 64px;
     width: 100%;
     margin-bottom: 27px;
     border-radius: 14px;
     background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
     color: #07111d;
-    font-size: 25px;
+    font-size: 22px;
     font-weight: 400;
     box-shadow: inset 0 1px 0 rgba(255, 246, 194, 0.78), 0 10px 28px rgba(5, 10, 18, 0.18);
   }
@@ -169,7 +178,62 @@
   .appShell[data-view="otp"] .linkAction {
     width: 100%;
     color: var(--gold-strong);
-    font-size: 26px;
+    font-size: 20px;
+  }
+  @media (max-height: 760px) {
+    .appShell[data-view="otp"] .authPanel {
+      gap: 6px;
+      min-height: 675px;
+      padding-top: 25px;
+      padding-bottom: 14px;
+    }
+    .appShell[data-view="otp"] .screenHeader {
+      margin-bottom: 20px;
+    }
+    .appShell[data-view="otp"] .authMark {
+      width: 136px;
+      height: 136px;
+      margin-bottom: 8px;
+    }
+    .appShell[data-view="otp"] .panelHeader {
+      margin-bottom: 19px;
+    }
+    .appShell[data-view="otp"] .panelHeader h2 {
+      margin-bottom: 9px;
+    }
+    .appShell[data-view="otp"] .recordMeta.otpHint {
+      position: absolute;
+      top: 335px;
+      left: 50%;
+      border-color: rgba(216, 163, 60, 0.26);
+      background: rgba(2, 9, 18, 0.38);
+      padding: 3px 8px;
+      font-size: 9px;
+      opacity: .78;
+      margin: 0;
+      transform: translateX(-50%);
+    }
+    .appShell[data-view="otp"] .otpBoxes {
+      margin-bottom: 14px;
+    }
+    .appShell[data-view="otp"] .otpBoxes span {
+      min-height: 56px;
+    }
+    .appShell[data-view="otp"] .hint {
+      margin-bottom: 27px;
+    }
+    .appShell[data-view="otp"] .heroCta {
+      min-height: 64px;
+      margin-bottom: 22px;
+    }
+    .appShell[data-view="otp"] .goldDivider {
+      margin-bottom: 10px;
+    }
+    .appShell[data-view="otp"] .linkAction {
+      min-height: 28px;
+      padding: 0;
+      font-size: 21px;
+    }
   }
 
   .appShell[data-view="register"] {

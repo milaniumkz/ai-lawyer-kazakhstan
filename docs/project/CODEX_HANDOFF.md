@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `17 chat` is closed at 3.91% and local chat/API smoke passed. The current queue starts with `25 help` at 5.06%, then `16 case` at 4.88%, `22 profile` at 4.77%, `08 category` at 4.27%, `07 newCase` at 4.23%, `23 settings` at 4.05% and `14 claimSend` at 4.00%.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `04 otp` regression is recovered at 3.19% and local OTP smoke passed. The current queue starts with `25 help` at 5.06%, then `22 profile` at 4.77%, `08 category` at 4.27%, `07 newCase` at 4.23%, `23 settings` at 4.05% and `14 claimSend` at 4.00%.
