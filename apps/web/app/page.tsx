@@ -159,6 +159,7 @@ type SavedState = {
   budgetAlerts: boolean;
   tasks: TaskItem[];
   selectedCategory: string;
+  classification: ApiClassification | null;
   authUserId: string;
   phone: string;
   otp: string;
@@ -612,6 +613,7 @@ export default function WebHome() {
         setBudgetAlerts(saved.budgetAlerts);
       if (saved.tasks?.length) setTasks(saved.tasks);
       if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
+      if (saved.classification) setClassification(saved.classification);
       if (saved.authUserId) setAuthUserId(saved.authUserId);
       if (saved.phone) setPhone(saved.phone);
       if (saved.otp) setOtp(saved.otp);
@@ -658,6 +660,7 @@ export default function WebHome() {
       budgetAlerts,
       tasks,
       selectedCategory,
+      classification,
       authUserId,
       phone,
       otp,
@@ -694,6 +697,7 @@ export default function WebHome() {
     budgetAlerts,
     tasks,
     selectedCategory,
+    classification,
     authUserId,
     phone,
     otp,

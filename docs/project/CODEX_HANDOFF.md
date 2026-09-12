@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `22 profile` is closed at 2.36% and local profile smoke passed. The current queue starts with `08 category` at 4.27%, then `07 newCase` at 4.23%, `23 settings` at 4.05% and `14 claimSend` at 4.00%.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `08 category` is closed at 3.62% and local category smoke passed. The current queue starts with `07 newCase` at 4.23%, then `23 settings` at 4.05% and `14 claimSend` at 4.00%.
