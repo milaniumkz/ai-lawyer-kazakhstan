@@ -15,6 +15,7 @@ export const apiPaths = [
   "/admin/legal-categories/change-requests/{id}/approve",
   "/admin/legal-categories/change-requests/{id}/reject",
   "/admin/providers",
+  "/admin/subscriptions/payments/manual",
   "/ai/classifications",
   "/ai/classifications/{id}",
   "/ai/classifications/{id}/clarifications",

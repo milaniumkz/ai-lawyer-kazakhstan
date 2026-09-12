@@ -9,4 +9,5 @@ export interface BillingRepository {
   upsertProvider(input: ProviderConfig): Promise<ProviderConfig>;
   listProviders(): Promise<ProviderConfig[]>;
   listPaymentHistory(userId: string): Promise<PaymentHistoryRecord[]>;
+  createPayment(input: Omit<PaymentHistoryRecord, 'id' | 'createdAt'>): Promise<PaymentHistoryRecord>;
 }

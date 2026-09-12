@@ -91,6 +91,17 @@ export class PostgresBillingRepository implements BillingRepository {
     );
     return result.rows.map(mapPaymentHistory);
   }
+
+  async createPayment(input: Omit<PaymentHistoryRecord, 'id' | 'createdAt'>) {
+    const result = await this.db.query<PaymentHistoryRow>(
+      `INSERT INTO subscription_payments
+        (user_id, plan, provider, amount_kzt, status, external_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [input.userId, input.plan, input.provider, input.amountKzt, input.status, input.externalId ?? null],
+    );
+    return mapPaymentHistory(result.rows[0]!);
+  }
 }
 
 interface SubscriptionRow {

@@ -96,6 +96,50 @@ export class BillingService {
     };
   }
 
+  async createManualPayment(input: {
+    userId: string;
+    plan: SubscriptionPlan;
+    amountKzt: number;
+    externalId?: string;
+  }) {
+    const planDefinition = PLANS.find((item) => item.plan === input.plan);
+    if (!planDefinition) throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND');
+    if (!input.userId) throw new BadRequestException('USER_REQUIRED');
+    if (!Number.isFinite(input.amountKzt) || input.amountKzt < 0) throw new BadRequestException('PAYMENT_AMOUNT_INVALID');
+
+    const current = await this.getSubscription(input.userId);
+    const nextSubscription: SubscriptionRecord = {
+      ...current,
+      plan: input.plan,
+      monthlyLimitKzt: planDefinition.monthlyLimitKzt,
+    };
+    if (this.repository) {
+      await this.repository.upsertSubscription(nextSubscription);
+      return this.repository.createPayment({
+        userId: input.userId,
+        plan: input.plan,
+        provider: 'manual',
+        amountKzt: input.amountKzt,
+        status: 'paid',
+        externalId: input.externalId,
+      });
+    }
+
+    this.subscriptions.set(input.userId, nextSubscription);
+    const payment: PaymentHistoryRecord = {
+      id: randomUUID(),
+      userId: input.userId,
+      plan: input.plan,
+      provider: 'manual',
+      amountKzt: input.amountKzt,
+      status: 'paid',
+      externalId: input.externalId,
+      createdAt: new Date().toISOString(),
+    };
+    this.payments.set(input.userId, [payment, ...(this.payments.get(input.userId) ?? [])]);
+    return payment;
+  }
+
   async setProvider(input: ProviderConfig) {
     if (this.repository) return this.repository.upsertProvider(input);
     this.providers.set(input.provider, input);

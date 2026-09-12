@@ -142,6 +142,28 @@ async function expectPublicApiDemo() {
     failures.push('/api/v1/subscriptions/payment-intent did not return provider blocker');
   }
 
+  const manualPayment = await apiJson('/admin/subscriptions/payments/manual', {
+    method: 'POST',
+    headers: { 'x-user-role': 'admin' },
+    body: JSON.stringify({
+      userId,
+      plan: 'standard',
+      amountKzt: 7990,
+      externalId: `public-manual-${Date.now()}`,
+    }),
+  });
+  if (manualPayment?.provider !== 'manual' || manualPayment?.status !== 'paid') failures.push('/api/v1/admin/subscriptions/payments/manual did not create paid manual receipt');
+
+  const updatedPaymentHistory = await apiJson('/subscriptions/payment-history', {
+    headers: { 'x-user-id': userId },
+  });
+  if (!Array.isArray(updatedPaymentHistory) || !updatedPaymentHistory.some((item) => item.id === manualPayment?.id)) failures.push('/api/v1/subscriptions/payment-history did not include manual receipt');
+
+  const updatedSubscription = await apiJson('/subscriptions/current', {
+    headers: { 'x-user-id': userId },
+  });
+  if (updatedSubscription?.plan !== 'standard' || updatedSubscription?.monthlyLimitKzt !== 10000) failures.push('/api/v1/subscriptions/current did not reflect manual paid plan');
+
   const legalCase = await apiJson('/cases', {
     method: 'POST',
     headers: { 'idempotency-key': `public-demo-${Date.now()}`, 'x-user-id': userId },

@@ -83,6 +83,29 @@ describe('PostgresBillingRepository persistence contract', () => {
     expect(query).toHaveBeenCalledWith(expect.stringContaining('FROM subscription_payments'), ['user-1']);
     expect(payments[0].amountKzt).toBe(7990);
   });
+
+  it('creates manual payment receipt', async () => {
+    const { db, query } = createDbMock(paymentRow());
+    const repository = new PostgresBillingRepository(db);
+
+    await repository.createPayment({
+      userId: 'user-1',
+      plan: 'standard',
+      provider: 'manual',
+      amountKzt: 7990,
+      status: 'paid',
+      externalId: 'receipt-1',
+    });
+
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO subscription_payments'), [
+      'user-1',
+      'standard',
+      'manual',
+      7990,
+      'paid',
+      'receipt-1',
+    ]);
+  });
 });
 
 function createDbMock(row: unknown) {

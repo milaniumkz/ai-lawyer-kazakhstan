@@ -83,6 +83,20 @@ describe('AppModule HTTP smoke', () => {
       .expect(({ body }) => {
         expect(body).toMatchObject({ status: 'provider_required', blocker: 'PAYMENT_PROVIDER_REQUIRED', amountKzt: 7990 });
       });
+    await request(app.getHttpServer())
+      .post('/api/v1/admin/subscriptions/payments/manual')
+      .set('x-user-role', 'admin')
+      .send({ userId, plan: 'standard', amountKzt: 7990, externalId: 'smoke-receipt-1' })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({ userId, plan: 'standard', provider: 'manual', status: 'paid', amountKzt: 7990 });
+      });
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/payment-history').set('x-user-id', userId).expect(200).expect(({ body }) => {
+      expect(body.some((item: { externalId?: string }) => item.externalId === 'smoke-receipt-1')).toBe(true);
+    });
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/current').set('x-user-id', userId).expect(200).expect(({ body }) => {
+      expect(body).toMatchObject({ plan: 'standard', monthlyLimitKzt: 10000 });
+    });
 
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
@@ -430,6 +444,7 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/subscriptions/plans').expect(403);
     await request(app.getHttpServer()).get('/api/v1/subscriptions/payment-history').expect(403);
     await request(app.getHttpServer()).post('/api/v1/subscriptions/payment-intent').send({ plan: 'standard' }).expect(403);
+    await request(app.getHttpServer()).post('/api/v1/admin/subscriptions/payments/manual').send({ userId, plan: 'standard', amountKzt: 7990 }).expect(403);
     await request(app.getHttpServer()).post('/api/v1/auth/logout-all').send({ userId }).expect(403);
     await request(app.getHttpServer()).post('/api/v1/profiles').set('x-user-id', 'other-user').send({ userId, type: 'person', displayName: 'Mismatch' }).expect(403);
 

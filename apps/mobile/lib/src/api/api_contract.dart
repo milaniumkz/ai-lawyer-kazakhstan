@@ -16,6 +16,7 @@ abstract final class ApiContract {
   static const adminLegalCategoriesChangeRequestsIdApprove = '/admin/legal-categories/change-requests/{id}/approve';
   static const adminLegalCategoriesChangeRequestsIdReject = '/admin/legal-categories/change-requests/{id}/reject';
   static const adminProviders = '/admin/providers';
+  static const adminSubscriptionsPaymentsManual = '/admin/subscriptions/payments/manual';
   static const aiClassifications = '/ai/classifications';
   static const aiClassificationsId = '/ai/classifications/{id}';
   static const aiClassificationsIdClarifications = '/ai/classifications/{id}/clarifications';

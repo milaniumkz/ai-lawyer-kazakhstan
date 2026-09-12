@@ -54,6 +54,23 @@ describe('BillingService', () => {
     });
   });
 
+  it('creates manual payment receipt and updates subscription plan', async () => {
+    const service = new BillingService();
+
+    const payment = await service.createManualPayment({
+      userId: 'user-1',
+      plan: 'standard',
+      amountKzt: 7990,
+      externalId: 'receipt-1',
+    });
+    const history = await service.listPaymentHistory('user-1');
+    const budget = await service.budgetStatus('user-1');
+
+    expect(payment).toMatchObject({ provider: 'manual', status: 'paid', amountKzt: 7990 });
+    expect(history).toHaveLength(1);
+    expect(budget).toMatchObject({ plan: 'standard', monthlyLimitKzt: 10000 });
+  });
+
   it('uses configured repository for persistent billing flow', async () => {
     const repository = createRepositoryMock();
     const service = new BillingService(repository);
@@ -78,6 +95,10 @@ describe('BillingService', () => {
     expect(repository.incrementUsage).toHaveBeenCalledWith({ userId: 'user-1', amountKzt: 25 });
     expect(repository.findSubscription).toHaveBeenCalled();
     await expect(service.listPaymentHistory('user-1')).resolves.toHaveLength(1);
+
+    await service.createManualPayment({ userId: 'user-1', plan: 'expert', amountKzt: 24900 });
+    expect(repository.upsertSubscription).toHaveBeenCalledWith(expect.objectContaining({ plan: 'expert', monthlyLimitKzt: 35000 }));
+    expect(repository.createPayment).toHaveBeenCalledWith(expect.objectContaining({ provider: 'manual', status: 'paid' }));
   });
 });
 
@@ -123,5 +144,12 @@ function createRepositoryMock(): jest.Mocked<BillingRepository> {
         createdAt: '2026-09-04T00:00:00.000Z',
       },
     ]),
+    createPayment: jest.fn().mockImplementation((payment) =>
+      Promise.resolve({
+        id: 'payment-2',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        ...payment,
+      }),
+    ),
   };
 }

@@ -29,6 +29,15 @@ export class BillingController {
     return this.billing.createPaymentIntent(assertUserId(userId), body.plan);
   }
 
+  @Post('admin/subscriptions/payments/manual')
+  createManualPayment(
+    @Body() body: { userId: string; plan: 'free' | 'standard' | 'expert'; amountKzt: number; externalId?: string },
+    @Headers('x-user-role') userRole?: string | string[],
+  ) {
+    assertAdminRole(userRole);
+    return this.billing.createManualPayment(body);
+  }
+
   @Post('usage/ai')
   recordUsage(@Body() body: Omit<AiUsageEvent, 'id' | 'createdAt'>, @Headers('x-user-role') userRole?: string | string[]) {
     assertAdminRole(userRole);

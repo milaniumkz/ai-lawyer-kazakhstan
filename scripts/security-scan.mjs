@@ -98,6 +98,7 @@ const adminOperations = new Set([
   'POST /usage/ai',
   'GET /admin/providers',
   'POST /admin/providers',
+  'POST /admin/subscriptions/payments/manual',
   'GET /admin/documents/review-queue',
   'POST /admin/documents/{documentId}/ocr-confirm',
   'POST /admin/documents/{documentId}/reject',

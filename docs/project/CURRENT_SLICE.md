@@ -2,22 +2,21 @@
 
 ## Срез
 
-Subscription/payment adapter hardening.
+Admin manual payment receipt import.
 
 ## Статус
 
-DONE -> deployed to public server; migration `0009` applied; public smoke passed.
+READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
 
 ## Scope
 
-- `/api/v1/subscriptions/plans` returns user-scoped plan definitions.
-- `/api/v1/subscriptions/payment-history` returns current user's stored payment receipts from `subscription_payments`.
-- `/api/v1/subscriptions/payment-intent` returns a documented `PAYMENT_PROVIDER_REQUIRED` blocker until production provider env is configured.
-- PostgreSQL migration `0009_subscription_payments.sql` adds payment history storage.
-- Web and Flutter subscription screens load plans/history from API and call the payment-intent blocker.
-- Admin shell can load subscription plans for operations visibility.
-- API, repository, web, admin, Flutter and public release smoke scripts cover the new routes.
+- `/api/v1/admin/subscriptions/payments/manual` imports a verified manual payment receipt.
+- Admin route requires `x-user-role: admin|superadmin`.
+- Service updates the user's subscription plan/monthly limit and writes a `paid` manual receipt.
+- PostgreSQL repository inserts into `subscription_payments`.
+- Admin shell has a userId field and button to add a standard manual payment.
+- API, repository and public release smoke scripts cover receipt import and payment-history visibility.
 
 ## Следующий шаг
 
-Next vertical slice: continue remaining web pixel screens above the 4% threshold or harden admin manual payment receipt import.
+Deploy manual payment receipt import to the public server, run public smoke, then continue remaining web pixel screens above the 4% threshold.

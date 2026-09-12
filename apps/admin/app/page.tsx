@@ -72,6 +72,7 @@ export default function AdminHome() {
   const [documentQueue, setDocumentQueue] = useState<AdminDocument[]>([]);
   const [draftCode, setDraftCode] = useState('family.admin_review_test');
   const [draftName, setDraftName] = useState('Админская тестовая категория');
+  const [paymentUserId, setPaymentUserId] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -361,6 +362,30 @@ export default function AdminHome() {
     }
   }
 
+  async function createManualSubscriptionPayment() {
+    if (!paymentUserId.trim()) {
+      setSubscriptionOpsStatus('Укажите userId для manual payment');
+      return;
+    }
+    setBusy(true);
+    try {
+      const payment = (await apiJson('/admin/subscriptions/payments/manual', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: paymentUserId.trim(),
+          plan: 'standard',
+          amountKzt: 7990,
+          externalId: `manual-${Date.now()}`,
+        }),
+      })) as { id: string; status: string; amountKzt: number };
+      setSubscriptionOpsStatus(`Manual payment ${payment.status}: ₸ ${payment.amountKzt}; id=${payment.id.slice(0, 8)}`);
+    } catch (error) {
+      setSubscriptionOpsStatus(error instanceof Error ? `Manual payment error: ${error.message}` : 'Manual payment error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function loadDocumentReviewQueue() {
     setBusy(true);
     try {
@@ -560,6 +585,8 @@ export default function AdminHome() {
         <small>{providerStatus}</small>
         <button disabled={busy} onClick={() => { void loadSubscriptionPlans(); }}>Загрузить subscription plans</button>
         <small>{subscriptionOpsStatus}</small>
+        <input value={paymentUserId} onChange={(event) => setPaymentUserId(event.target.value)} placeholder="userId для manual payment" />
+        <button disabled={busy} onClick={() => { void createManualSubscriptionPayment(); }}>Добавить manual payment</button>
         <div className="pills">
           {budgetControls.map((item) => (
             <span key={item}>{item}</span>

@@ -1448,6 +1448,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProviderConfig"
+  /admin/subscriptions/payments/manual:
+    post:
+      operationId: createManualSubscriptionPayment
+      summary: Import verified manual subscription payment receipt
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, plan, amountKzt]
+              properties:
+                userId:
+                  type: string
+                plan:
+                  type: string
+                  enum: [free, standard, expert]
+                amountKzt:
+                  type: number
+                externalId:
+                  type: string
+      responses:
+        "201":
+          description: Imported manual payment receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentHistoryRecord"
 components:
   schemas:
     HealthResponse:

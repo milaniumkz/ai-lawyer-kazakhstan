@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: continue remaining web pixel screens above the 4% threshold or harden admin manual payment receipt import. Subscription/payment hardening is deployed and public-smoked: `0009_subscription_payments.sql` exists on server, plans/history/payment-intent blocker pass `release-check:server`.
+Следующая задача: deploy admin manual payment receipt import and run public `release-check:server`, then continue remaining web pixel screens above the 4% threshold. Local gate is complete for `/admin/subscriptions/payments/manual`.
