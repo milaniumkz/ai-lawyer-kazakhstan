@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy subscription/payment hardening, apply migration `0009_subscription_payments.sql`, run public `release-check:server`, then continue remaining web pixel screens above the 4% threshold. Local gate is complete for user-scoped plans/history/payment-intent blocker across API, web, Flutter and admin.
+Следующая задача: continue remaining web pixel screens above the 4% threshold or harden admin manual payment receipt import. Subscription/payment hardening is deployed and public-smoked: `0009_subscription_payments.sql` exists on server, plans/history/payment-intent blocker pass `release-check:server`.

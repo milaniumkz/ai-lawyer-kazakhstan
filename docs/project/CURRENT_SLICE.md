@@ -6,7 +6,7 @@ Subscription/payment adapter hardening.
 
 ## Статус
 
-READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
+DONE -> deployed to public server; migration `0009` applied; public smoke passed.
 
 ## Scope
 
@@ -20,4 +20,4 @@ READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
 
 ## Следующий шаг
 
-Deploy subscription/payment hardening to the public server, apply migration `0009`, run public smoke, then continue remaining web pixel screens above the 4% threshold.
+Next vertical slice: continue remaining web pixel screens above the 4% threshold or harden admin manual payment receipt import.
