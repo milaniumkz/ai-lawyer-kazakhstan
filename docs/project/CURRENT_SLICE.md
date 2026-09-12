@@ -6,7 +6,7 @@ Web biometric screen pixel completion.
 
 ## Статус
 
-READY_FOR_COMMIT -> local visual/function gates passed.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -15,6 +15,7 @@ READY_FOR_COMMIT -> local visual/function gates passed.
 - The screen has the reference-style top title/back action, Face ID mark, CTA spacing and no auth bottom nav.
 - `Включить` persists the local biometric flag; `Позже` routes to the authenticated home screen.
 - Current web pixel status: 14 screens at or below 4%, 11 screens still above threshold.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-biometric-screen-final.tar.gz`.
 
 ## Следующий шаг
 
