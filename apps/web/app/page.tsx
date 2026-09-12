@@ -588,6 +588,7 @@ export default function WebHome() {
         setTheme(saved.theme);
       if (saved.language === "RU" || saved.language === "KZ" || saved.language === "EN")
         setLanguage(saved.language);
+      if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
       if (saved.documents?.length) setDocuments(saved.documents);
@@ -2562,8 +2563,28 @@ export default function WebHome() {
           </div>
           <div className="messages">
             {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={message.role}>
-                {message.text}
+              <div key={`${message.role}-${index}`} className={`messageRow ${message.role}`}>
+                {message.role === "assistant" && <span className="messageAvatar">⚖</span>}
+                <div className="messageBubble">
+                  <span className="messageTime">
+                    {message.role === "user" ? "10:31" : index === 0 ? "10:28" : "10:34"}
+                  </span>
+                  {message.text}
+                  {message.role === "assistant" && index === 0 && (
+                    <div className="citationCard">
+                      <b>❝ Статья 272 ГК РК</b>
+                      <p>Обязательства должны исполняться надлежащим образом в соответствии с условиями обязательства.</p>
+                      <button onClick={() => go("legalSearch")}>Источник ↗</button>
+                    </div>
+                  )}
+                  {message.role === "assistant" && index === 2 && (
+                    <button className="attachmentCard" onClick={() => go("claimDraft")}>
+                      <span>▤</span>
+                      <b>Претензия.pdf</b>
+                      <em>PDF · 246 КБ</em>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

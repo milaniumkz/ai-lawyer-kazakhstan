@@ -80,12 +80,47 @@ async function main() {
     for (const target of targets) {
       const page = await browser.newPage({ viewport: { width: target.width, height: target.height } });
       await page.addInitScript(({ theme, view, isPublic }) => {
+        const seededCases = isPublic
+          ? []
+          : [
+              {
+                id: '2024-0015',
+                title: 'Взыскание долга',
+                type: 'Гражданское право',
+                status: 'В работе',
+                date: '12.09.2026',
+                progress: 72,
+              },
+            ];
+        const seededMessages = isPublic
+          ? []
+          : [
+              {
+                role: 'assistant',
+                text: 'Здравствуйте, Дмитрий! Я изучил материалы по вашему делу о взыскании долга. Ниже — ключевые выводы и правовые основания.',
+              },
+              {
+                role: 'user',
+                text: 'Можем ли мы взыскать неустойку за просрочку платежа по договору?',
+              },
+              {
+                role: 'assistant',
+                text: 'Да, можем. Для взыскания нужны договор, расчет просрочки и подтвержденные источники права РК.',
+              },
+              {
+                role: 'assistant',
+                text: 'Дальнейшие шаги: направим претензию должнику, при отсутствии ответа подготовим иск и приложим расчет.',
+              },
+            ];
         window.localStorage.clear();
         window.localStorage.setItem(
           'ai-lawyer-web-state',
           JSON.stringify({
             theme,
             view,
+            cases: seededCases,
+            activeCaseId: seededCases[0]?.id ?? '',
+            messages: seededMessages,
             language: 'RU',
             phone: view === 'otp' ? '+7 707 123 45 67' : '+7',
             otp: view === 'otp' ? '481259' : '',
@@ -93,6 +128,7 @@ async function main() {
             otpHint: view === 'otp' ? 'SMS-код для теста: 481259' : '',
             authUserId: isPublic ? '' : '00000000-0000-4000-8000-000000000001',
             profileComplete: !isPublic,
+            remoteCaseId: isPublic ? '' : '00000000-0000-4000-8000-000000000017',
             firstName: isPublic ? '' : 'Дмитрий',
             lastName: isPublic ? '' : 'Штрахов',
             city: isPublic ? '' : 'Астана',

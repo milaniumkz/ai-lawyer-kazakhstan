@@ -29,7 +29,7 @@
   .appShell[data-view="otp"] .authPanel {
     min-height: 693px;
     align-content: start;
-    gap: 0;
+    gap: 8px;
     padding: 27px 38px 28px;
     border: 0;
     box-shadow: none;
@@ -276,7 +276,7 @@
   }
   .appShell[data-view="register"] .authFormCard {
     display: grid;
-    gap: 8px;
+    gap: 0;
     border: 1px solid var(--gold);
     border-radius: 22px;
     background: rgba(5, 16, 28, .88);
@@ -314,7 +314,7 @@
     content: "Тип профиля";
     grid-column: 1 / -1;
     color: var(--gold-strong);
-    font-size: 10px;
+    font-size: 11px;
   }
   .appShell[data-view="register"] .profileChips .chip {
     min-height: 42px;
@@ -413,6 +413,342 @@
       min-height: 24px;
       font-size: 11px;
     }
+  }
+
+  .appShell[data-view="chat"] {
+    --bg: #020912;
+    --panel: #06111d;
+    --panel-soft: #091726;
+    background: #020912;
+  }
+  .appShell[data-view="chat"] .deviceFrame {
+    min-height: calc(100vh - 8px);
+    border: 1px solid var(--gold);
+    background: #020912;
+  }
+  .appShell[data-view="chat"] .appStatus,
+  .appShell[data-view="chat"] .bottomNav {
+    display: none;
+  }
+  .appShell[data-view="chat"] .chatPanel {
+    position: relative;
+    min-height: 691px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    gap: 0;
+    padding: 14px 12px 9px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(47, 88, 132, .08), transparent 34%),
+      #020912;
+  }
+  .appShell[data-view="chat"] .chatPanel > .screenHeader {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    align-items: start;
+    margin: 0 0 2px;
+  }
+  .appShell[data-view="chat"] .chatPanel > .screenHeader button {
+    width: 24px;
+    height: 28px;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 26px;
+    line-height: .75;
+  }
+  .appShell[data-view="chat"] .chatPanel > .screenHeader div {
+    text-align: center;
+  }
+  .appShell[data-view="chat"] .chatPanel > .screenHeader h2 {
+    margin: 0;
+    color: var(--gold-strong);
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.05;
+  }
+  .appShell[data-view="chat"] .chatPanel > .screenHeader p {
+    display: none;
+  }
+  .appShell[data-view="chat"] .chatCaseCard {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 50px;
+    border-color: rgba(230, 189, 98, .14);
+    border-radius: 16px;
+    background: rgba(9, 23, 36, .86);
+    padding: 8px 10px;
+  }
+  .appShell[data-view="chat"] .chatCaseCard .roundIcon {
+    width: 34px;
+    height: 34px;
+    color: var(--gold-strong);
+    font-size: 18px;
+  }
+  .appShell[data-view="chat"] .chatCaseCard p {
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.25;
+  }
+  .appShell[data-view="chat"] .chatCaseCard p b {
+    display: block;
+    font-size: 13px;
+    line-height: 1.1;
+  }
+  .appShell[data-view="chat"] .chatCaseCard p br {
+    display: block;
+  }
+  .appShell[data-view="chat"] .chatCaseCard em {
+    align-self: center;
+    border-color: var(--gold);
+    border-radius: 999px;
+    color: var(--gold-strong);
+    padding: 5px 8px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .appShell[data-view="chat"] .messages {
+    min-height: 0;
+    max-height: 500px;
+    align-content: start;
+    gap: 7px;
+    overflow: hidden;
+  }
+  .appShell[data-view="chat"] .messageRow {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    max-width: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .appShell[data-view="chat"] .messageRow.user {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: end;
+  }
+  .appShell[data-view="chat"] .messageAvatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    color: var(--gold-strong);
+    font-size: 17px;
+  }
+  .appShell[data-view="chat"] .messageBubble {
+    position: relative;
+    max-width: 100%;
+    border: 1px solid rgba(120, 139, 160, .28);
+    border-radius: 14px;
+    padding: 7px 9px;
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.32;
+  }
+  .appShell[data-view="chat"] .messageRow.assistant .messageBubble {
+    max-width: 306px;
+    background: rgba(12, 28, 45, .9);
+  }
+  .appShell[data-view="chat"] .messageRow.assistant .messageBubble::before {
+    content: "AI Юрист";
+    display: block;
+    margin-bottom: 5px;
+    color: var(--gold-strong);
+    font-size: 11px;
+  }
+  .appShell[data-view="chat"] .messageRow.user .messageBubble {
+    justify-self: end;
+    max-width: 250px;
+    background: linear-gradient(180deg, rgba(28, 54, 84, .96), rgba(23, 46, 75, .96));
+    color: var(--text);
+  }
+  .appShell[data-view="chat"] .messageTime {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  .appShell[data-view="chat"] .citationCard,
+  .appShell[data-view="chat"] .attachmentCard {
+    display: grid;
+    gap: 4px;
+    margin-top: 8px;
+    border: 1px solid rgba(230, 189, 98, .22);
+    border-radius: 8px;
+    background: rgba(8, 20, 33, .82);
+    padding: 8px 9px;
+  }
+  .appShell[data-view="chat"] .citationCard b {
+    color: var(--gold-strong);
+    font-size: 11px;
+  }
+  .appShell[data-view="chat"] .citationCard p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="chat"] .citationCard button {
+    justify-self: start;
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    padding: 0;
+    font-size: 10px;
+  }
+  @media (max-height: 760px) {
+    .appShell[data-view="chat"] .chatPanel {
+      padding: 0 12px;
+    }
+    .appShell[data-view="chat"] .chatPanel > .screenHeader {
+      position: absolute;
+      top: 15px;
+      left: 12px;
+      right: 12px;
+      margin: 0;
+    }
+    .appShell[data-view="chat"] .chatCaseCard {
+      position: absolute;
+      top: 43px;
+      left: 14px;
+      right: 14px;
+      height: 50px;
+      min-height: 0;
+      overflow: hidden;
+      padding: 7px 76px 7px 10px;
+    }
+    .appShell[data-view="chat"] .chatCaseCard p,
+    .appShell[data-view="chat"] .chatCaseCard p b {
+      white-space: nowrap;
+    }
+    .appShell[data-view="chat"] .chatCaseCard em {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+    }
+    .appShell[data-view="chat"] .messages {
+      position: absolute;
+      top: 102px;
+      left: 12px;
+      right: 12px;
+      height: 505px;
+      max-height: none;
+      overflow: visible;
+    }
+    .appShell[data-view="chat"] .messageRow {
+      position: absolute;
+      left: 0;
+      right: 0;
+    }
+    .appShell[data-view="chat"] .messageRow:nth-child(1) { top: 0; }
+    .appShell[data-view="chat"] .messageRow:nth-child(2) { top: 196px; }
+    .appShell[data-view="chat"] .messageRow:nth-child(3) { top: 250px; }
+    .appShell[data-view="chat"] .messageRow:nth-child(4) { top: 402px; }
+    .appShell[data-view="chat"] .messageRow:nth-child(1) .messageBubble {
+      min-height: 180px;
+    }
+    .appShell[data-view="chat"] .messageRow:nth-child(2) .messageBubble {
+      min-height: 58px;
+    }
+    .appShell[data-view="chat"] .messageRow:nth-child(3) .messageBubble {
+      min-height: 112px;
+    }
+    .appShell[data-view="chat"] .messageRow:nth-child(4) .messageBubble {
+      min-height: 88px;
+    }
+    .appShell[data-view="chat"] .heroCta {
+      position: absolute;
+      left: 19px;
+      right: 19px;
+      bottom: 39px;
+      width: auto;
+    }
+    .appShell[data-view="chat"] .composer {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 8px;
+    }
+    .appShell[data-view="chat"] .composer input {
+      min-height: 32px;
+      padding: 0 14px;
+    }
+    .appShell[data-view="chat"] .composer button,
+    .appShell[data-view="chat"] .composer::before {
+      width: 32px;
+      min-height: 32px;
+      height: 32px;
+    }
+  }
+  .appShell[data-view="chat"] .attachmentCard {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+    color: var(--text);
+    text-align: left;
+  }
+  .appShell[data-view="chat"] .attachmentCard span {
+    color: var(--gold-strong);
+    font-size: 18px;
+  }
+  .appShell[data-view="chat"] .attachmentCard b {
+    font-size: 11px;
+  }
+  .appShell[data-view="chat"] .attachmentCard em {
+    grid-column: 2;
+    color: var(--muted);
+    font-size: 10px;
+    font-style: normal;
+  }
+  .appShell[data-view="chat"] .heroCta {
+    min-height: 38px;
+    border-radius: 9px;
+    margin-top: 1px;
+    font-size: 14px;
+  }
+  .appShell[data-view="chat"] .composer {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 6px;
+    align-items: center;
+  }
+  .appShell[data-view="chat"] .composer input {
+    min-height: 36px;
+    border-radius: 999px;
+    background: rgba(9, 23, 36, .92);
+    color: var(--text);
+    font-size: 11px;
+  }
+  .appShell[data-view="chat"] .composer button {
+    width: 34px;
+    min-height: 34px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 0;
+  }
+  .appShell[data-view="chat"] .composer button::before {
+    content: "↑";
+    font-size: 18px;
+  }
+  .appShell[data-view="chat"] .composer::before {
+    content: "⌕";
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(230, 189, 98, .22);
+    border-radius: 50%;
+    color: var(--gold-strong);
+    font-size: 22px;
   }
 
   .appShell[data-view="cases"] {

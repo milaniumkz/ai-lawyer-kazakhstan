@@ -6,10 +6,10 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 |---|---|---:|
 | 01 | `onboarding` | 3.63 |
 | 02 | `login` | 3.27 |
-| 03 | `register` | 3.58 |
-| 04 | `otp` | 3.95 |
+| 03 | `register` | 3.59 |
+| 04 | `otp` | 6.13 |
 | 05 | `biometric` | 3.54 |
-| 06 | `home` | 3.38 |
+| 06 | `home` | 3.43 |
 | 07 | `newCase` | 4.23 |
 | 08 | `category` | 4.27 |
 | 09 | `documentCheck` | 3.77 |
@@ -18,10 +18,10 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 12 | `claim` | 3.65 |
 | 13 | `claimDraft` | 3.90 |
 | 14 | `claimSend` | 4.00 |
-| 15 | `cases` | 2.28 |
-| 16 | `case` | 4.88 |
-| 17 | `chat` | 5.39 |
-| 18 | `deadlines` | 3.66 |
+| 15 | `cases` | 2.32 |
+| 16 | `case` | 3.97 |
+| 17 | `chat` | 3.91 |
+| 18 | `deadlines` | 3.68 |
 | 19 | `legal` | 3.36 |
 | 20 | `legalSearch` | 3.99 |
 | 21 | `documents` | 3.90 |
@@ -34,17 +34,18 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 - 01 `onboarding`: 3.63%
 - 02 `login`: 3.27%
-- 03 `register`: 3.58%
-- 04 `otp`: 3.95%
+- 03 `register`: 3.59%
 - 05 `biometric`: 3.54%
-- 06 `home`: 3.38%
+- 06 `home`: 3.43%
 - 09 `documentCheck`: 3.77%
 - 10 `documentUpload`: 3.93%
 - 11 `analysis`: 3.68%
 - 12 `claim`: 3.65%
 - 13 `claimDraft`: 3.90%
-- 15 `cases`: 2.28%
-- 18 `deadlines`: 3.66%
+- 15 `cases`: 2.32%
+- 16 `case`: 3.97%
+- 17 `chat`: 3.91%
+- 18 `deadlines`: 3.68%
 - 19 `legal`: 3.36%
 - 20 `legalSearch`: 3.99%
 - 21 `documents`: 3.90%
@@ -52,13 +53,13 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 ## Next Screen Queue
 
-- 17 `chat`: 5.39%
+- 04 `otp`: 6.13%
 - 25 `help`: 5.06%
-- 16 `case`: 4.88%
 - 22 `profile`: 4.77%
 - 08 `category`: 4.27%
 - 07 `newCase`: 4.23%
 - 23 `settings`: 4.05%
 - 14 `claimSend`: 4.00%
+- 20 `legalSearch`: 3.99%
 
-Note: 8 screens remain above the 4% release threshold.
+Note: 7 screens remain above the 4% release threshold.
