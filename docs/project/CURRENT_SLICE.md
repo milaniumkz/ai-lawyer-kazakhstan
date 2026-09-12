@@ -6,7 +6,7 @@ Taxonomy change request detail/audit.
 
 ## Статус
 
-READY_FOR_DEPLOY -> change request detail endpoint/UI implemented locally; deploy and public smoke pending.
+DONE -> change request detail endpoint/UI deployed; public smoke passed.
 
 ## Scope
 
@@ -17,4 +17,4 @@ READY_FOR_DEPLOY -> change request detail endpoint/UI implemented locally; deplo
 
 ## Следующий шаг
 
-Deploy detail/audit endpoint and run public smoke.
+Next vertical slice: choose next RC gap from documents/evidence admin queue or subscription/budget hardening.

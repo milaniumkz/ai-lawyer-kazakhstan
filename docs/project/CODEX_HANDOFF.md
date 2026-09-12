@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy taxonomy change detail/audit. Implemented locally: `GET /admin/legal-categories/change-requests/:id`, admin detail panel, API smoke/RBAC, public release smoke update. `npm run check` and `npm run build` passed; Docker CLI is unavailable.
+Следующая задача: choose next RC gap from documents/evidence admin queue or subscription/budget hardening. Taxonomy change detail/audit is deployed and public-smoked: `GET /admin/legal-categories/change-requests/:id` returns payload/status/requestedBy.
