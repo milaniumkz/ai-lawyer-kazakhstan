@@ -14,6 +14,7 @@
 - Xcode team: `Z3NZN92Y7P`.
 - Current validation: build `1.0.1 (4)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings uploaded to App Store Connect on 2026-09-12; Apple build status is `VALID` for Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
+- Uploaded metadata: RU App Store text/appInfo/copyright uploaded via `xcrun altool --app-store-text` and verified by download.
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: select the processed build in App Store Connect, TestFlight check, privacy manifest review, native iOS screenshots and reviewer notes.
+- Required before submission/review: select the processed build in App Store Connect, TestFlight check, privacy questionnaire/review, native iOS screenshots and reviewer notes.

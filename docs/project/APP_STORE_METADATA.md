@@ -11,11 +11,12 @@
 
 ## RU Listing Draft
 
-- Subtitle: `Юридический помощник для Казахстана`
+- Subtitle: `Юрист для Казахстана`
 - Promotional text: `Создавайте дела, загружайте документы, проверяйте нормы права РК и готовьте черновики обращений с контролем источников.`
 - Description: `AI Юрист помогает пользователю структурировать правовой вопрос по законодательству Республики Казахстан: пройти телефонную авторизацию, создать дело голосом или текстом, загрузить документы, проверить распознанный текст, получить ответ с источниками и подготовить черновик досудебной претензии. Внешние государственные сервисы и платежи работают только через официальные адаптеры или честный assisted/manual режим. Приложение не заменяет юриста и направляет высокорисковые вопросы на экспертную проверку.`
 - Keywords: `юрист,Казахстан,право,документы,суд,претензия,закон,консультация`
 - What's new: `Release candidate для внутреннего тестирования: авторизация по телефону, профиль, дела, чат, документы, OCR-review, поиск норм права РК, досудебная претензия и подписка в local/adapter режиме.`
+- App Store Connect upload status: RU listing/appInfo/copyright text uploaded and verified by download.
 
 ## KK Listing Draft
 
@@ -55,4 +56,5 @@
 
 - App Store Connect build selection is still manual/external.
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
+- RU metadata fields are already uploaded; screenshots, privacy questionnaire and reviewer contact still need manual App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.

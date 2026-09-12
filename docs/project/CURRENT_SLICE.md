@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store branded iOS processing check.
+App Store RU metadata upload.
 
 ## Статус
 
-DONE -> build `1.0.1 (4)` is `VALID`.
+DONE -> RU text metadata uploaded and verified.
 
 ## Scope
 
@@ -43,6 +43,9 @@ DONE -> build `1.0.1 (4)` is `VALID`.
 - `xcrun altool --validate-app` passed with no errors.
 - `xcrun altool --upload-app` succeeded with Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID` for Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
+- App Store Connect app: Apple ID `6810983647`, bundle `kz.milanium.lawyer`, app version state `PREPARE_FOR_SUBMISSION`.
+- `xcrun altool --app-store-text --upload` wrote RU description, keywords, promotional text, support URL, marketing URL and copyright.
+- Download verification confirmed RU appInfo name `AI Юрист`, subtitle `Юрист для Казахстана`, and privacy policy URL.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -55,4 +58,4 @@ DONE -> build `1.0.1 (4)` is `VALID`.
 
 ## Следующий шаг
 
-Next vertical slice: select build `1.0.1 (4)` in App Store Connect/TestFlight and continue metadata entry.
+Next vertical slice: select build `1.0.1 (4)` in App Store Connect/TestFlight, upload screenshots and complete privacy/reviewer fields.
