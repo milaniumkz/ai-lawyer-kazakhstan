@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy safe taxonomy CRUD/versioning. Implemented locally: `legal_category_change_requests`, admin list/create/approve/reject endpoints, DB-first category listing and admin UI controls. `npm run check` and `npm run build` passed; Docker CLI is unavailable.
+Следующая задача: admin hardening for taxonomy change audit/detail view or move to the next RC gap. Safe taxonomy CRUD/versioning is deployed and public-smoked: migration 0008 applied, public release check passed, DB has approved change request and 90 legal categories.

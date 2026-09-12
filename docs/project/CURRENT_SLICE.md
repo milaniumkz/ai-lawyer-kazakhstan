@@ -6,7 +6,7 @@ Safe taxonomy CRUD/versioning.
 
 ## Статус
 
-READY_FOR_DEPLOY -> safe taxonomy change requests implemented locally; deploy and public smoke pending.
+DONE -> safe taxonomy change requests deployed; public smoke passed.
 
 ## Scope
 
@@ -20,4 +20,4 @@ READY_FOR_DEPLOY -> safe taxonomy change requests implemented locally; deploy an
 
 ## Следующий шаг
 
-Deploy safe taxonomy change requests, apply migration 0008, run public smoke.
+Next vertical slice: admin hardening for taxonomy changes audit/detail view or move to next RC gap.
