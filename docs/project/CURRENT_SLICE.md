@@ -2,11 +2,11 @@
 
 ## Срез
 
-RC11 QA release bundle.
+RC11 current deploy archive.
 
 ## Статус
 
-DONE -> uploaded to public server artifact storage.
+DONE -> installed on public server.
 
 ## Scope
 
@@ -18,11 +18,20 @@ DONE -> uploaded to public server artifact storage.
 - Included APK SHA-256: `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`.
 - Server artifact path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`.
 - Server checksum matches local SHA-256.
+- Current deploy archive built from latest HEAD: `/tmp/ai-lawyer-kz-rc11-current.tar.gz`.
+- Current deploy archive SHA-256: `98d143e017be62893a9b963d203e77ee570a44b0c40bb9eb3ed4d0f63c672524`.
+- Current server deploy path: `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.11-current.tar.gz`.
+- Current archive installed into `/opt/ai-lawyer-kz/app`.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
+- Server install health passed.
+- Server `npm run test:audit` found 0 vulnerabilities.
 - `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after artifact upload.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after current archive install.
+- Direct public mobile login smoke passed at `390x844`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Следующий шаг
 
-Next vertical slice: continue store/TestFlight preparation or upload/install a fresh deploy archive if web/API changes are made.
+Next vertical slice: continue App Store/TestFlight processing checks, then rebuild/deploy only if Apple feedback or QA smoke finds a concrete issue.

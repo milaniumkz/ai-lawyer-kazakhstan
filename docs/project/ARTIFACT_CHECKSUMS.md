@@ -29,3 +29,5 @@ Generated on 2026-09-07.
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`v0.1.0-rc.11`) | `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f` |
 | `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz` | `e74f48069554b853ca76b1c7d8467c05ad569492d983e4bee96bce2f2e2444db` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz` | `e74f48069554b853ca76b1c7d8467c05ad569492d983e4bee96bce2f2e2444db` |
+| `/tmp/ai-lawyer-kz-rc11-current.tar.gz` | `98d143e017be62893a9b963d203e77ee570a44b0c40bb9eb3ed4d0f63c672524` |
+| `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.11-current.tar.gz` | `98d143e017be62893a9b963d203e77ee570a44b0c40bb9eb3ed4d0f63c672524` |
