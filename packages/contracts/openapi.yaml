@@ -1018,6 +1018,90 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Document"
+  /admin/documents/review-queue:
+    get:
+      operationId: adminDocumentReviewQueue
+      summary: Admin document OCR and failed processing review queue
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "200":
+          description: Documents requiring admin review
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+  /admin/documents/{documentId}/ocr-confirm:
+    post:
+      operationId: adminConfirmOcr
+      summary: Admin confirms OCR fields and marks document ready
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fields:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        "201":
+          description: Ready document metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+  /admin/documents/{documentId}/reject:
+    post:
+      operationId: adminRejectDocument
+      summary: Admin rejects a failed or invalid document processing result
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Rejected document metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
   /evidence:
     post:
       operationId: createEvidenceFolder

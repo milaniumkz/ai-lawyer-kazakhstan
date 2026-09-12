@@ -2,19 +2,21 @@
 
 ## Срез
 
-Taxonomy change request detail/audit.
+Documents/evidence admin review queue.
 
 ## Статус
 
-DONE -> change request detail endpoint/UI deployed; public smoke passed.
+READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
 
 ## Scope
 
-- `/api/v1/admin/legal-categories/change-requests/:id` detail endpoint.
-- Admin UI opens first request details and renders id/action/category/status/requestedBy/reviewedBy/reason/payload.
-- API smoke covers RBAC and detail response.
-- Public release smoke covers approved request details.
+- `/api/v1/admin/documents/review-queue` lists documents requiring OCR/manual admin review.
+- `/api/v1/admin/documents/:documentId/ocr-confirm` confirms OCR fields and marks the document ready.
+- `/api/v1/admin/documents/:documentId/reject` rejects invalid/quarantined documents with a reason.
+- Admin UI loads the real document queue and can confirm/reject the first queued document through API.
+- API smoke covers RBAC, queue listing, admin OCR confirm and admin reject.
+- Public release smoke script now covers the same deployed endpoints.
 
 ## Следующий шаг
 
-Next vertical slice: choose next RC gap from documents/evidence admin queue or subscription/budget hardening.
+Deploy document review queue to the public server, run `release-check:server`, record evidence, then continue with subscription/budget hardening.

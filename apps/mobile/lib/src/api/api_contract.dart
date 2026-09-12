@@ -7,6 +7,9 @@ abstract final class ApiContract {
   static const adminClassificationsReviewQueue = '/admin/classifications/review-queue';
   static const adminClassificationsIdConfirm = '/admin/classifications/{id}/confirm';
   static const adminClassificationsIdOverride = '/admin/classifications/{id}/override';
+  static const adminDocumentsReviewQueue = '/admin/documents/review-queue';
+  static const adminDocumentsDocumentIdOcrConfirm = '/admin/documents/{documentId}/ocr-confirm';
+  static const adminDocumentsDocumentIdReject = '/admin/documents/{documentId}/reject';
   static const adminLegalCategories = '/admin/legal-categories';
   static const adminLegalCategoriesChangeRequests = '/admin/legal-categories/change-requests';
   static const adminLegalCategoriesChangeRequestsId = '/admin/legal-categories/change-requests/{id}';

@@ -47,6 +47,17 @@ export class PostgresDocumentsRepository implements DocumentsRepository {
     return result.rows.map(mapDocument);
   }
 
+  async listDocumentsForAdminReview(limit: number) {
+    const result = await this.db.query<DocumentRow>(
+      `SELECT * FROM files
+       WHERE status IN ('ocr_review_required', 'quarantined', 'rejected')
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [limit],
+    );
+    return result.rows.map(mapDocument);
+  }
+
   async updateDocumentOcr(input: { documentId: string; fields: Record<string, string>; status: DocumentRecord['status'] }) {
     const result = await this.db.query<DocumentRow>(
       'UPDATE files SET extracted_fields = $2, status = $3 WHERE id = $1 RETURNING *',

@@ -46,12 +46,20 @@ type ChangeRequest = {
   createdAt: string;
   reviewedAt?: string;
 };
+type AdminDocument = {
+  id: string;
+  caseId: string;
+  fileName: string;
+  status: string;
+  extractedFields: Record<string, string>;
+};
 
 export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
   const [providerStatus, setProviderStatus] = useState('Provider status не загружен');
   const [legalStatus, setLegalStatus] = useState('Legal source import не запускался');
   const [usageStatus, setUsageStatus] = useState('AI usage ledger не записывался');
+  const [documentQueueStatus, setDocumentQueueStatus] = useState('Document review queue не загружена');
   const [categoryStatus, setCategoryStatus] = useState('Категории не загружены');
   const [reviewStatus, setReviewStatus] = useState('Очередь классификаций не загружена');
   const [changeStatus, setChangeStatus] = useState('Change requests не загружены');
@@ -59,6 +67,7 @@ export default function AdminHome() {
   const [reviewQueue, setReviewQueue] = useState<ClassificationRecord[]>([]);
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
   const [selectedChangeRequest, setSelectedChangeRequest] = useState<ChangeRequest | null>(null);
+  const [documentQueue, setDocumentQueue] = useState<AdminDocument[]>([]);
   const [draftCode, setDraftCode] = useState('family.admin_review_test');
   const [draftName, setDraftName] = useState('Админская тестовая категория');
   const [busy, setBusy] = useState(false);
@@ -338,6 +347,61 @@ export default function AdminHome() {
     }
   }
 
+  async function loadDocumentReviewQueue() {
+    setBusy(true);
+    try {
+      const queue = (await apiJson('/admin/documents/review-queue')) as AdminDocument[];
+      setDocumentQueue(queue);
+      setDocumentQueueStatus(`Document queue: ${queue.length}; first=${queue[0]?.status ?? 'none'}`);
+    } catch (error) {
+      setDocumentQueueStatus(error instanceof Error ? `Document queue API error: ${error.message}` : 'Document queue API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmFirstDocumentOcr() {
+    const item = documentQueue[0];
+    if (!item) {
+      setDocumentQueueStatus('Нет документов для OCR confirm');
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = (await apiJson(`/admin/documents/${item.id}/ocr-confirm`, {
+        method: 'POST',
+        body: JSON.stringify({ fields: { ...item.extractedFields, adminReviewed: 'true' } }),
+      })) as AdminDocument;
+      setDocumentQueue((current) => current.map((document) => (document.id === updated.id ? updated : document)));
+      setDocumentQueueStatus(`OCR confirmed: ${updated.fileName}`);
+    } catch (error) {
+      setDocumentQueueStatus(error instanceof Error ? `OCR confirm API error: ${error.message}` : 'OCR confirm API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rejectFirstDocument() {
+    const item = documentQueue[0];
+    if (!item) {
+      setDocumentQueueStatus('Нет документов для reject');
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = (await apiJson(`/admin/documents/${item.id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'admin_review_rejected' }),
+      })) as AdminDocument;
+      setDocumentQueue((current) => current.map((document) => (document.id === updated.id ? updated : document)));
+      setDocumentQueueStatus(`Rejected: ${updated.fileName}`);
+    } catch (error) {
+      setDocumentQueueStatus(error instanceof Error ? `Reject API error: ${error.message}` : 'Reject API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="shell">
       <section className="hero">
@@ -435,6 +499,18 @@ export default function AdminHome() {
       <section className="notice">
         <strong>Documents/evidence</strong>
         <span>Файлы проходят allowlist, duplicate hash check и OCR-review. Antivirus/storage production adapters остаются external blockers.</span>
+        <button disabled={busy} onClick={() => { void loadDocumentReviewQueue(); }}>Загрузить document queue</button>
+        <small>{documentQueueStatus}</small>
+        <div className="queue">
+          {documentQueue.slice(0, 5).map((item) => (
+            <div key={item.id}>
+              <strong>{item.fileName}</strong>
+              <span>{item.status} · case {item.caseId.slice(0, 8)}</span>
+            </div>
+          ))}
+        </div>
+        <button disabled={busy} onClick={() => { void confirmFirstDocumentOcr(); }}>Confirm OCR первой</button>
+        <button disabled={busy} onClick={() => { void rejectFirstDocument(); }}>Reject первой</button>
         <div className="pills">
           {documentStatuses.map((status) => (
             <span key={status}>{status}</span>

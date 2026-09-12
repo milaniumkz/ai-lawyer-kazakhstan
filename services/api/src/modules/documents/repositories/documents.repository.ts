@@ -7,6 +7,7 @@ export interface DocumentsRepository {
   findDocumentById(id: string): Promise<DocumentRecord | undefined>;
   findDocumentBySha256(sha256: string): Promise<DocumentRecord | undefined>;
   listDocuments(caseId: string): Promise<DocumentRecord[]>;
+  listDocumentsForAdminReview(limit: number): Promise<DocumentRecord[]>;
   updateDocumentOcr(input: { documentId: string; fields: Record<string, string>; status: DocumentRecord['status'] }): Promise<DocumentRecord>;
   createEvidenceFolder(input: Omit<EvidenceFolder, 'id' | 'createdAt'>): Promise<EvidenceFolder>;
   listEvidence(caseId: string): Promise<EvidenceFolder[]>;

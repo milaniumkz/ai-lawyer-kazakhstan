@@ -90,6 +90,34 @@ export class DocumentsService {
     return document;
   }
 
+  async adminListDocumentReviewQueue() {
+    if (this.repository) return this.repository.listDocumentsForAdminReview(50);
+    return [...this.documents.values()]
+      .filter((document) => ['ocr_review_required', 'quarantined', 'rejected'].includes(document.status))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 50);
+  }
+
+  async adminConfirmOcr(documentId: string, fields: Record<string, string>) {
+    const document = this.repository ? await this.repository.findDocumentById(documentId) : this.documents.get(documentId);
+    if (!document) throw new NotFoundException('DOCUMENT_NOT_FOUND');
+    const nextFields = Object.keys(fields ?? {}).length ? fields : document.extractedFields;
+    if (this.repository) return this.repository.updateDocumentOcr({ documentId, fields: nextFields, status: 'ready' });
+    document.extractedFields = nextFields;
+    document.status = 'ready';
+    return document;
+  }
+
+  async adminRejectDocument(documentId: string, reason?: string) {
+    const document = this.repository ? await this.repository.findDocumentById(documentId) : this.documents.get(documentId);
+    if (!document) throw new NotFoundException('DOCUMENT_NOT_FOUND');
+    const fields = { ...document.extractedFields, adminReviewStatus: 'rejected', adminReviewReason: reason ?? 'admin_rejected' };
+    if (this.repository) return this.repository.updateDocumentOcr({ documentId, fields, status: 'rejected' });
+    document.extractedFields = fields;
+    document.status = 'rejected';
+    return document;
+  }
+
   async createEvidenceFolder(input: { caseId: string; title: string; documentIds?: string[] }, ownerUserId?: string) {
     await this.assertCaseOwner(input.caseId, ownerUserId);
     if (!input.title) throw new BadRequestException('EVIDENCE_TITLE_REQUIRED');

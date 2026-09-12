@@ -127,6 +127,34 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-id', userId)
       .send({ uploadSessionId: upload.body.id, sha256: 'smoke-hash-1' })
       .expect(201);
+    await request(app.getHttpServer()).get('/api/v1/admin/documents/review-queue').expect(403);
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/documents/review-queue')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body.some((item: { id: string; status: string }) => item.id === document.body.id && item.status === 'ocr_review_required')).toBe(true));
+    const rejectUpload = await request(app.getHttpServer())
+      .post('/api/v1/files/upload-sessions')
+      .set('x-user-id', userId)
+      .send({ caseId: legalCase.body.id, fileName: 'bad-scan.pdf', mimeType: 'application/pdf', sizeBytes: 2048 })
+      .expect(201);
+    const rejectDocument = await request(app.getHttpServer())
+      .post('/api/v1/files/complete')
+      .set('x-user-id', userId)
+      .send({ uploadSessionId: rejectUpload.body.id, sha256: 'smoke-hash-reject-1' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/v1/admin/documents/${rejectDocument.body.id}/reject`)
+      .set('x-user-role', 'admin')
+      .send({ reason: 'smoke rejected' })
+      .expect(201)
+      .expect(({ body }) => expect(body).toMatchObject({ id: rejectDocument.body.id, status: 'rejected' }));
+    await request(app.getHttpServer())
+      .post(`/api/v1/admin/documents/${document.body.id}/ocr-confirm`)
+      .set('x-user-role', 'admin')
+      .send({ fields: { amount: '150000', adminReviewed: 'true' } })
+      .expect(201)
+      .expect(({ body }) => expect(body).toMatchObject({ id: document.body.id, status: 'ready' }));
     await request(app.getHttpServer())
       .post(`/api/v1/documents/${document.body.id}/ocr-confirm`)
       .set('x-user-id', userId)

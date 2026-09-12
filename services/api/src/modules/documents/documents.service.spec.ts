@@ -103,6 +103,26 @@ describe('DocumentsService', () => {
     expect(repository.updateDocumentOcr).toHaveBeenCalledWith({ documentId: 'doc-1', fields: { amount: '150000' }, status: 'ready' });
     expect(repository.createEvidenceFolder).toHaveBeenCalled();
   });
+
+  it('uses repository for admin document review actions', async () => {
+    const repository = createRepositoryMock();
+    const service = new DocumentsService(repository);
+
+    const queue = await service.adminListDocumentReviewQueue();
+    const confirmed = await service.adminConfirmOcr('doc-1', { amount: '200000' });
+    const rejected = await service.adminRejectDocument('doc-1', 'bad scan');
+
+    expect(queue).toHaveLength(1);
+    expect(repository.listDocumentsForAdminReview).toHaveBeenCalledWith(50);
+    expect(repository.updateDocumentOcr).toHaveBeenCalledWith({ documentId: 'doc-1', fields: { amount: '200000' }, status: 'ready' });
+    expect(confirmed.status).toBe('ready');
+    expect(repository.updateDocumentOcr).toHaveBeenCalledWith({
+      documentId: 'doc-1',
+      fields: expect.objectContaining({ adminReviewReason: 'bad scan', adminReviewStatus: 'rejected' }),
+      status: 'rejected',
+    });
+    expect(rejected.status).toBe('rejected');
+  });
 });
 
 function createRepositoryMock(): jest.Mocked<DocumentsRepository> {
@@ -134,7 +154,10 @@ function createRepositoryMock(): jest.Mocked<DocumentsRepository> {
     findDocumentById: jest.fn().mockResolvedValue(document),
     findDocumentBySha256: jest.fn().mockResolvedValue(undefined),
     listDocuments: jest.fn().mockResolvedValue([document]),
-    updateDocumentOcr: jest.fn().mockResolvedValue({ ...document, status: 'ready', extractedFields: { amount: '150000' } }),
+    listDocumentsForAdminReview: jest.fn().mockResolvedValue([document]),
+    updateDocumentOcr: jest
+      .fn()
+      .mockImplementation(({ fields, status }) => Promise.resolve({ ...document, status, extractedFields: fields })),
     createEvidenceFolder: jest.fn().mockImplementation((folder) =>
       Promise.resolve({
         id: 'evidence-1',

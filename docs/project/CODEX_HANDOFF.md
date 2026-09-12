@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: choose next RC gap from documents/evidence admin queue or subscription/budget hardening. Taxonomy change detail/audit is deployed and public-smoked: `GET /admin/legal-categories/change-requests/:id` returns payload/status/requestedBy.
+Следующая задача: deploy documents/evidence admin review queue, run public `release-check:server`, record evidence, then continue subscription/budget hardening. Local gate for document review queue is complete: `npm run check`, `npm run build`, contract/security/API/admin tests passed; Docker CLI is unavailable locally.

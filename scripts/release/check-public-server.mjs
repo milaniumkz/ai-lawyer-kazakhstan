@@ -214,6 +214,40 @@ async function expectPublicApiDemo() {
     return;
   }
 
+  const adminDocumentQueue = await apiJson('/admin/documents/review-queue', {
+    headers: { 'x-user-role': 'admin' },
+  });
+  if (!Array.isArray(adminDocumentQueue) || !adminDocumentQueue.some((item) => item.id === document.id)) failures.push('/api/v1/admin/documents/review-queue did not include new OCR document');
+
+  const adminReadyDocument = await apiJson(`/admin/documents/${document.id}/ocr-confirm`, {
+    method: 'POST',
+    headers: { 'x-user-role': 'admin' },
+    body: JSON.stringify({ fields: { documentTitle: 'Расписка', amount: '1250000', adminReviewed: 'true' } }),
+  });
+  if (adminReadyDocument?.status !== 'ready') failures.push('/api/v1/admin/documents/{documentId}/ocr-confirm did not mark document ready');
+
+  const rejectUpload = await apiJson('/files/upload-sessions', {
+    method: 'POST',
+    headers: { 'x-user-id': userId },
+    body: JSON.stringify({
+      caseId: legalCase.id,
+      fileName: 'bad-scan.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 2000,
+    }),
+  });
+  const rejectDocument = await apiJson('/files/complete', {
+    method: 'POST',
+    headers: { 'x-user-id': userId },
+    body: JSON.stringify({ uploadSessionId: rejectUpload.id, sha256: `public-reject-${Date.now()}` }),
+  });
+  const rejected = await apiJson(`/admin/documents/${rejectDocument.id}/reject`, {
+    method: 'POST',
+    headers: { 'x-user-role': 'admin' },
+    body: JSON.stringify({ reason: 'public release rejected' }),
+  });
+  if (rejected?.status !== 'rejected') failures.push('/api/v1/admin/documents/{documentId}/reject did not reject document');
+
   await apiJson(`/documents/${document.id}/ocr-confirm`, {
     method: 'POST',
     headers: { 'x-user-id': userId },
