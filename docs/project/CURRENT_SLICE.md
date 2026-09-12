@@ -2,21 +2,20 @@
 
 ## Срез
 
-Web biometric screen pixel completion.
+Web login screen pixel completion.
 
 ## Статус
 
-DONE -> deployed to public server; public smoke passed.
+READY_FOR_COMMIT -> local visual/function gates passed.
 
 ## Scope
 
-- Screen `05 biometric` now matches the dark PNG reference under the `<=4%` pixel threshold.
-- Web mobile `mobile-ref-390` diff for `05 biometric`: 7.22% -> 3.54%.
-- The screen has the reference-style top title/back action, Face ID mark, CTA spacing and no auth bottom nav.
-- `Включить` persists the local biometric flag; `Позже` routes to the authenticated home screen.
-- Current web pixel status: 14 screens at or below 4%, 11 screens still above threshold.
-- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-biometric-screen-final.tar.gz`.
+- Screen `02 login` now matches the dark PNG reference under the `<=4%` pixel threshold.
+- Web mobile `mobile-ref-390` diff for `02 login`: 6.75% -> 3.27%.
+- The screen uses the reference welcome layout: back action, RU/KZ/EN switcher, login/register tabs and action rows.
+- Phone login remains real: the phone row keeps `+7` normalization and calls `/api/v1/auth/register`; registration and biometric rows route to their screens.
+- Current web pixel status: 15 screens at or below 4%, 10 screens still above threshold.
 
 ## Следующий шаг
 
-Next vertical slice: close `02 login` from 6.75% to the `<=4%` pixel threshold.
+Next vertical slice: close `04 otp` from 6.71% to the `<=4%` pixel threshold.

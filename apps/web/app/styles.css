@@ -2018,7 +2018,7 @@ button { cursor: pointer; }
 
 .loginPanel {
   align-content: start;
-  gap: 16px;
+  gap: 18px;
   padding-top: 36px;
 }
 
@@ -2027,14 +2027,20 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 2px;
+  margin-bottom: 30px;
 }
 
-.loginTopBar strong {
+.loginBackButton {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(218, 165, 66, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
   color: var(--gold-strong);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 54px;
+  line-height: 1;
 }
 
 .loginFlow {
@@ -2062,11 +2068,11 @@ button { cursor: pointer; }
 
 .phoneField {
   display: grid;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--panel-soft) 86%, transparent);
-  padding: 14px 16px;
+  gap: 4px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .phoneField small {
@@ -2080,7 +2086,7 @@ button { cursor: pointer; }
   border: 0;
   background: transparent;
   padding: 0;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .phoneField input:focus {
@@ -2095,6 +2101,50 @@ button { cursor: pointer; }
 .authStatusPill {
   border-radius: 18px;
   line-height: 1.45;
+}
+
+.loginPhoneRow {
+  grid-template-columns: 58px minmax(0, 1fr) 28px;
+}
+
+.loginPhoneRow > button {
+  border: 0;
+  background: transparent;
+  color: var(--gold-strong);
+  font-size: 44px;
+  line-height: 1;
+}
+
+.loginOr {
+  display: grid;
+  grid-template-columns: minmax(40px, 1fr) auto minmax(40px, 1fr);
+  align-items: center;
+  gap: 16px;
+  color: color-mix(in srgb, var(--gold) 72%, transparent);
+  font-size: 18px;
+}
+
+.loginOr span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.loginOr em {
+  font-style: normal;
+}
+
+.loginRegisterHint {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 18px;
+}
+
+.loginRegisterHint button {
+  border: 0;
+  background: transparent;
+  color: var(--gold-strong);
+  font-size: inherit;
 }
 
 .brandMark {
@@ -3792,37 +3842,84 @@ button:disabled {
   .deviceFrame { overflow: visible; }
   .homeScreen, .contentPanel { min-height: 100vh; padding: 34px 18px 118px; }
   .loginPanel {
-    padding: 28px 24px 36px;
-  }
-  .loginPanel .authMark {
-    width: min(46vw, 176px);
-    margin-bottom: 8px;
+    min-height: 693px;
+    gap: 18px;
+    padding: 31px 24px 34px;
+    overflow: hidden;
   }
   .loginPanel .panelHeader {
     text-align: center;
   }
   .loginPanel .panelHeader h2 {
-    font-size: 36px;
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 43px;
     line-height: 1.02;
+    white-space: nowrap;
   }
   .loginPanel .panelHeader p {
     max-width: 330px;
     margin-inline: auto;
-    font-size: 15px;
+    font-size: 22px;
+    line-height: 1.42;
   }
   .loginPanel .languageTabs {
-    min-width: 136px;
+    min-width: 126px;
+    border-radius: 16px;
   }
   .loginPanel .languageTabs button {
     min-height: 38px;
     padding: 6px 8px;
+    font-size: 14px;
+  }
+  .loginTopBar {
+    margin-bottom: 52px;
+  }
+  .loginBackButton {
+    width: 54px;
+    height: 54px;
+    font-size: 50px;
+  }
+  .loginPanel .authTabs {
+    margin: 8px 18px 16px;
+    border-radius: 18px;
+  }
+  .loginPanel .authTabs button {
+    min-height: 50px;
+    font-size: 18px;
+  }
+  .loginPanel .authActionRow {
+    min-height: 70px;
+    border-radius: 18px;
+    padding: 12px 18px;
+    gap: 14px;
+  }
+  .loginPanel .authActionRow span {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+    font-size: 24px;
+  }
+  .loginPanel .authActionRow strong {
+    font-size: 21px;
+  }
+  .loginPanel .authActionRow em {
+    font-size: 36px;
+  }
+  .loginPanel .goldDivider {
+    margin: -3px auto 6px;
+    width: 180px;
+  }
+  .loginPanel .loginOr {
+    margin: 0 4px;
+    font-size: 14px;
   }
   .loginFlow span {
     padding: 9px 6px;
     font-size: 11px;
   }
   .phoneField input {
-    font-size: 24px;
+    font-size: 20px;
   }
   .loginSubmit {
     min-height: 66px;

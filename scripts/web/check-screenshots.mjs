@@ -37,7 +37,7 @@ const screens = [
   ['25', 'help'],
 ];
 const themes = ['dark', 'light'];
-const publicViews = new Set(['onboarding', 'login', 'otp', 'register']);
+const publicViews = new Set(['onboarding', 'login', 'otp', 'register', 'biometric']);
 const targets = screens.flatMap(([index, view]) =>
   themes
     .filter((theme) => theme === 'dark' || Number(index) <= 20)

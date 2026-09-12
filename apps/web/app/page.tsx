@@ -551,7 +551,7 @@ export default function WebHome() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const publicViews: View[] = ["onboarding", "login", "otp", "register"];
+    const publicViews: View[] = ["onboarding", "login", "otp", "register", "biometric"];
     if (!authUserId && !publicViews.includes(view)) {
       setView("login");
       return;
@@ -711,7 +711,7 @@ export default function WebHome() {
   );
 
   function go(nextView: View) {
-    const publicViews: View[] = ["onboarding", "login", "otp", "register"];
+    const publicViews: View[] = ["onboarding", "login", "otp", "register", "biometric"];
     if (!authUserId && !publicViews.includes(nextView)) {
       setView("login");
       return;
@@ -1876,7 +1876,9 @@ export default function WebHome() {
           {view === "login" && (
             <>
               <div className="loginTopBar">
-                <strong>{authText.brand}</strong>
+                <button className="loginBackButton" onClick={() => go("onboarding")} aria-label="Назад">
+                  ‹
+                </button>
                 <div className="languageTabs">
                   {(["RU", "KZ", "EN"] as const).map((item) => (
                     <button
@@ -1892,48 +1894,53 @@ export default function WebHome() {
                   ))}
                 </div>
               </div>
-              <AuthMark />
               <Header
-                title={authText.loginTitle}
-                subtitle={authText.loginSubtitle}
+                title="Добро пожаловать"
+                subtitle="Войдите или создайте аккаунт, чтобы сохранить дела, документы и сроки"
               />
               <AuthDivider />
-              <div className="loginFlow">
-                <span className="active">{authText.steps[0]}</span>
-                <span>{authText.steps[1]}</span>
-                <span>{authText.steps[2]}</span>
+              <div className="authTabs">
+                <button className="active" onClick={() => setSyncState("Режим входа по номеру телефона")}>
+                  Вход
+                </button>
+                <button onClick={() => go("register")}>Регистрация</button>
               </div>
-              <label className="phoneField">
-                <small>{authText.phoneLabel}</small>
-                <input
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder={authText.phonePlaceholder}
-                  value={phone}
-                  onFocus={() => {
-                    if (!phone) setPhone("+7");
+              <div className="authActionRow loginPhoneRow">
+                <span>☏</span>
+                <label className="phoneField">
+                  <small>{authText.phoneLabel}</small>
+                  <input
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder={authText.phonePlaceholder}
+                    value={phone}
+                    onFocus={() => {
+                      if (!phone) setPhone("+7");
+                    }}
+                    onChange={(event) =>
+                      setPhone(normalizeKzPhoneInput(event.target.value))
+                    }
+                  />
+                </label>
+                <button
+                  aria-label={authText.smsButton}
+                  onClick={() => {
+                    void startAuth();
                   }}
-                  onChange={(event) =>
-                    setPhone(normalizeKzPhoneInput(event.target.value))
-                  }
-                />
-              </label>
-              <button
-                className="primary wide heroCta loginSubmit"
-                onClick={() => {
-                  void startAuth();
-                }}
-              >
-                {syncState.includes("Отправляю OTP") ? authText.sending : authText.smsButton}
-              </button>
-              <AuthDivider />
+                >
+                  ›
+                </button>
+              </div>
               <AuthActionRow
-                icon="⌗"
-                label={authText.biometric}
-                onClick={() => go("biometric")}
+                icon="✉"
+                label="Войти по e-mail"
+                onClick={() => setSyncState("E-mail вход подключается через auth adapter")}
               />
-              <p className="authStatusPill">
-                {authText.newAccountHint}
+              <div className="loginOr"><span></span><em>или</em><span></span></div>
+              <AuthActionRow icon="⌗" label={authText.biometric} onClick={() => go("biometric")} />
+              <AuthDivider />
+              <p className="loginRegisterHint">
+                Нет аккаунта? <button onClick={() => go("register")}>Зарегистрироваться</button>
               </p>
             </>
           )}
