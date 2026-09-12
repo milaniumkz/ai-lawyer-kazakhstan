@@ -6,7 +6,7 @@ Web help screen pixel completion.
 
 ## Статус
 
-DONE locally -> ready for public deploy.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -15,6 +15,9 @@ DONE locally -> ready for public deploy.
 - Help mobile layout now uses the reference compact header/search, quick actions, online support card, help section rows and profile bottom nav.
 - Help actions remain functional: search clear, quick action state, support request creation and help section state persist locally.
 - Current web pixel status: 20 screens at or below 4%, 5 screens still above threshold.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-help-screen-final.tar.gz`.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Public Playwright smoke confirmed search clear, quick action state, support request state and help section state.
 - `npm run check` and root `npm run build` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
