@@ -1,5 +1,5 @@
 import { DatabaseService } from '../../../common/database/database.service';
-import { PostgresBillingRepository, mapProvider, mapSubscription, mapUsageEvent } from './postgres-billing.repository';
+import { PostgresBillingRepository, mapPaymentHistory, mapProvider, mapSubscription, mapUsageEvent } from './postgres-billing.repository';
 
 describe('PostgresBillingRepository mapping', () => {
   it('maps numeric subscription and usage amounts', () => {
@@ -13,6 +13,10 @@ describe('PostgresBillingRepository mapping', () => {
       enabled: false,
       killSwitchReason: 'budget',
     });
+  });
+
+  it('maps payment history rows', () => {
+    expect(mapPaymentHistory(paymentRow())).toMatchObject({ userId: 'user-1', plan: 'standard', amountKzt: 7990, status: 'paid' });
   });
 });
 
@@ -69,6 +73,16 @@ describe('PostgresBillingRepository persistence contract', () => {
 
     expect(query).toHaveBeenCalledWith(expect.stringContaining('ON CONFLICT (provider)'), ['stub', false, 'manual']);
   });
+
+  it('lists payment history scoped by user', async () => {
+    const { db, query } = createDbMock(paymentRow());
+    const repository = new PostgresBillingRepository(db);
+
+    const payments = await repository.listPaymentHistory('user-1');
+
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('FROM subscription_payments'), ['user-1']);
+    expect(payments[0].amountKzt).toBe(7990);
+  });
 });
 
 function createDbMock(row: unknown) {
@@ -103,6 +117,19 @@ function usageRow() {
     complexity: 'low',
     risk: 'low',
     correlation_id: 'corr-1',
+    created_at: new Date('2026-09-04T00:00:00.000Z'),
+  };
+}
+
+function paymentRow() {
+  return {
+    id: 'payment-1',
+    user_id: 'user-1',
+    plan: 'standard' as const,
+    provider: 'manual',
+    amount_kzt: '7990.00',
+    status: 'paid' as const,
+    external_id: 'receipt-1',
     created_at: new Date('2026-09-04T00:00:00.000Z'),
   };
 }

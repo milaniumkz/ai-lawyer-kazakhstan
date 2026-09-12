@@ -23,6 +23,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   var plan = 'Free';
   var percent = 0;
   var ttsDisabled = false;
+  List<SubscriptionPlanItem> plans = const [];
+  List<PaymentHistoryItem> payments = const [];
 
   @override
   void initState() {
@@ -38,14 +40,36 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
     try {
       final current = await billingApi.current(AuthRuntime.userId);
+      final nextPlans = await billingApi.plans(AuthRuntime.userId);
+      final nextPayments = await billingApi.paymentHistory(AuthRuntime.userId);
       setState(() {
         plan = current.plan;
         percent = current.percent;
         ttsDisabled = current.ttsDisabled;
-        status = 'Лимиты загружены из API';
+        plans = nextPlans;
+        payments = nextPayments;
+        status = 'Лимиты и история загружены из API';
       });
     } catch (error) {
       setState(() => status = 'Подписка API ошибка: $error');
+    }
+  }
+
+  Future<void> startPayment(String targetPlan) async {
+    if (AuthRuntime.userId.isEmpty) {
+      setState(() => status = 'Войдите, чтобы открыть оплату');
+      return;
+    }
+    try {
+      final result =
+          await billingApi.createPaymentIntent(AuthRuntime.userId, targetPlan);
+      if (!mounted) return;
+      setState(() {
+        status =
+            '${result.blocker}: ${result.amountKzt} ₸. Подключите payment provider env.';
+      });
+    } catch (error) {
+      setState(() => status = 'Оплата API ошибка: $error');
     }
   }
 
@@ -83,12 +107,38 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     .titleLarge
                     ?.copyWith(color: AppColors.goldDark)),
             const SizedBox(height: 10),
-            const _PlanCard('Базовый', '0 ₸', '5 консультаций · 2 документа'),
-            const _PlanCard('Профессиональный', '7 990 ₸ / мес',
-                '100 консультаций · 30 документов · доступ к эксперту',
-                selected: true),
-            const _PlanCard('Годовой', '79 900 ₸ / год',
-                'Все функции Professional · приоритетная поддержка'),
+            ...(plans.isNotEmpty
+                    ? plans
+                    : const [
+                        SubscriptionPlanItem(
+                            plan: 'free',
+                            title: 'Базовый',
+                            priceKzt: 0,
+                            documentLimit: 2,
+                            voiceMinutes: 15,
+                            expertReview: false),
+                        SubscriptionPlanItem(
+                            plan: 'standard',
+                            title: 'Профессиональный',
+                            priceKzt: 7990,
+                            documentLimit: 30,
+                            voiceMinutes: 180,
+                            expertReview: true),
+                        SubscriptionPlanItem(
+                            plan: 'expert',
+                            title: 'Эксперт',
+                            priceKzt: 24900,
+                            documentLimit: 100,
+                            voiceMinutes: 600,
+                            expertReview: true),
+                      ])
+                .map((item) => _PlanCard(
+                      item.title,
+                      item.priceKzt == 0 ? '0 ₸' : '${item.priceKzt} ₸ / мес',
+                      '${item.documentLimit} документов · ${item.voiceMinutes} минут · ${item.expertReview ? 'эксперт' : 'self-service'}',
+                      selected: item.plan == 'standard',
+                      onTap: () => startPayment(item.plan),
+                    )),
             const SizedBox(height: 12),
             Card(
               child: Padding(
@@ -104,6 +154,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         'AI расходы: $percent% · TTS ${ttsDisabled ? 'выключен' : 'доступен'}'),
                     const SizedBox(height: 8),
                     const Text('AI расходы считаются без персональных данных.'),
+                    const SizedBox(height: 8),
+                    Text(payments.isEmpty
+                        ? 'История платежей пуста'
+                        : payments
+                            .map((item) =>
+                                '${item.plan}: ${item.amountKzt} ₸ (${item.status})')
+                            .join(' · ')),
                   ],
                 ),
               ),
@@ -205,12 +262,13 @@ class _UsageCard extends StatelessWidget {
 
 class _PlanCard extends StatelessWidget {
   const _PlanCard(this.title, this.price, this.description,
-      {this.selected = false});
+      {this.selected = false, this.onTap});
 
   final String title;
   final String price;
   final String description;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -220,6 +278,7 @@ class _PlanCard extends StatelessWidget {
         side: BorderSide(color: selected ? AppColors.gold : Colors.transparent),
       ),
       child: ListTile(
+        onTap: onTap,
         title: Text(title),
         subtitle: Text(description),
         trailing: Text(price),
@@ -240,8 +299,51 @@ class BillingStatus {
   final bool ttsDisabled;
 }
 
+class SubscriptionPlanItem {
+  const SubscriptionPlanItem({
+    required this.plan,
+    required this.title,
+    required this.priceKzt,
+    required this.documentLimit,
+    required this.voiceMinutes,
+    required this.expertReview,
+  });
+
+  final String plan;
+  final String title;
+  final int priceKzt;
+  final int documentLimit;
+  final int voiceMinutes;
+  final bool expertReview;
+}
+
+class PaymentHistoryItem {
+  const PaymentHistoryItem({
+    required this.plan,
+    required this.amountKzt,
+    required this.status,
+  });
+
+  final String plan;
+  final num amountKzt;
+  final String status;
+}
+
+class PaymentIntentResult {
+  const PaymentIntentResult({
+    required this.blocker,
+    required this.amountKzt,
+  });
+
+  final String blocker;
+  final num amountKzt;
+}
+
 abstract class BillingApiPort {
   Future<BillingStatus> current(String userId);
+  Future<List<SubscriptionPlanItem>> plans(String userId);
+  Future<List<PaymentHistoryItem>> paymentHistory(String userId);
+  Future<PaymentIntentResult> createPaymentIntent(String userId, String plan);
 }
 
 class HttpBillingApi implements BillingApiPort {
@@ -270,6 +372,81 @@ class HttpBillingApi implements BillingApiPort {
       plan: body['plan'] as String? ?? 'Free',
       percent: body['percent'] as int? ?? 0,
       ttsDisabled: body['ttsDisabled'] as bool? ?? false,
+    );
+  }
+
+  @override
+  Future<List<SubscriptionPlanItem>> plans(String userId) async {
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl${ApiContract.basePath}${ApiContract.subscriptionsPlans}'),
+      headers: {
+        'x-user-id': userId,
+        'x-correlation-id': 'mobile-billing-plans',
+      },
+    );
+    final body = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const HttpException('subscription plans failed');
+    }
+    return (body as List<dynamic>).map((item) {
+      final row = item as Map<String, dynamic>;
+      return SubscriptionPlanItem(
+        plan: row['plan'] as String,
+        title: row['title'] as String,
+        priceKzt: row['priceKzt'] as int,
+        documentLimit: row['documentLimit'] as int,
+        voiceMinutes: row['voiceMinutes'] as int,
+        expertReview: row['expertReview'] as bool,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<List<PaymentHistoryItem>> paymentHistory(String userId) async {
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl${ApiContract.basePath}${ApiContract.subscriptionsPaymentHistory}'),
+      headers: {
+        'x-user-id': userId,
+        'x-correlation-id': 'mobile-billing-payments'
+      },
+    );
+    final body = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const HttpException('payment history failed');
+    }
+    return (body as List<dynamic>).map((item) {
+      final row = item as Map<String, dynamic>;
+      return PaymentHistoryItem(
+        plan: row['plan'] as String,
+        amountKzt: row['amountKzt'] as num,
+        status: row['status'] as String,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<PaymentIntentResult> createPaymentIntent(
+      String userId, String plan) async {
+    final response = await http.post(
+      Uri.parse(
+          '$baseUrl${ApiContract.basePath}${ApiContract.subscriptionsPaymentIntent}'),
+      headers: {
+        'content-type': 'application/json',
+        'x-user-id': userId,
+        'x-correlation-id': 'mobile-billing-payment-intent',
+      },
+      body: jsonEncode({'plan': plan}),
+    );
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+          '${body['message'] ?? body['error'] ?? 'payment failed'}');
+    }
+    return PaymentIntentResult(
+      blocker: body['blocker'] as String,
+      amountKzt: body['amountKzt'] as num,
     );
   }
 }

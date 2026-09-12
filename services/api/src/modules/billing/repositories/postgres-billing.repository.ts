@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../common/database/database.service';
-import { AiUsageEvent, ProviderConfig, SubscriptionRecord } from '../billing.types';
+import { AiUsageEvent, PaymentHistoryRecord, ProviderConfig, SubscriptionRecord } from '../billing.types';
 import { BillingRepository } from './billing.repository';
 
 @Injectable()
@@ -80,6 +80,17 @@ export class PostgresBillingRepository implements BillingRepository {
     const result = await this.db.query<ProviderConfigRow>('SELECT * FROM provider_configs ORDER BY provider ASC');
     return result.rows.map(mapProvider);
   }
+
+  async listPaymentHistory(userId: string) {
+    const result = await this.db.query<PaymentHistoryRow>(
+      `SELECT * FROM subscription_payments
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [userId],
+    );
+    return result.rows.map(mapPaymentHistory);
+  }
 }
 
 interface SubscriptionRow {
@@ -110,6 +121,17 @@ interface ProviderConfigRow {
   provider: string;
   enabled: boolean;
   kill_switch_reason?: string | null;
+}
+
+interface PaymentHistoryRow {
+  id: string;
+  user_id: string;
+  plan: PaymentHistoryRecord['plan'];
+  provider: string;
+  amount_kzt: string | number;
+  status: PaymentHistoryRecord['status'];
+  external_id?: string | null;
+  created_at: Date;
 }
 
 export function mapSubscription(row: SubscriptionRow): SubscriptionRecord {
@@ -145,5 +167,18 @@ export function mapProvider(row: ProviderConfigRow): ProviderConfig {
     provider: row.provider,
     enabled: row.enabled,
     killSwitchReason: row.kill_switch_reason ?? undefined,
+  };
+}
+
+export function mapPaymentHistory(row: PaymentHistoryRow): PaymentHistoryRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    plan: row.plan,
+    provider: row.provider,
+    amountKzt: Number(row.amount_kzt),
+    status: row.status,
+    externalId: row.external_id ?? undefined,
+    createdAt: row.created_at.toISOString(),
   };
 }

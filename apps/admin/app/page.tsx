@@ -53,12 +53,14 @@ type AdminDocument = {
   status: string;
   extractedFields: Record<string, string>;
 };
+type SubscriptionPlan = { plan: string; title: string; priceKzt: number };
 
 export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
   const [providerStatus, setProviderStatus] = useState('Provider status не загружен');
   const [legalStatus, setLegalStatus] = useState('Legal source import не запускался');
   const [usageStatus, setUsageStatus] = useState('AI usage ledger не записывался');
+  const [subscriptionOpsStatus, setSubscriptionOpsStatus] = useState('Subscription plans не проверялись');
   const [documentQueueStatus, setDocumentQueueStatus] = useState('Document review queue не загружена');
   const [categoryStatus, setCategoryStatus] = useState('Категории не загружены');
   const [reviewStatus, setReviewStatus] = useState('Очередь классификаций не загружена');
@@ -347,6 +349,18 @@ export default function AdminHome() {
     }
   }
 
+  async function loadSubscriptionPlans() {
+    setBusy(true);
+    try {
+      const plans = (await apiJson('/subscriptions/plans')) as SubscriptionPlan[];
+      setSubscriptionOpsStatus(`Plans=${plans.length}; standard=₸ ${plans.find((item) => item.plan === 'standard')?.priceKzt ?? 0}`);
+    } catch (error) {
+      setSubscriptionOpsStatus(error instanceof Error ? `Subscription ops error: ${error.message}` : 'Subscription ops error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function loadDocumentReviewQueue() {
     setBusy(true);
     try {
@@ -544,6 +558,8 @@ export default function AdminHome() {
         <small>{usageStatus}</small>
         <button disabled={busy} onClick={() => { void toggleStubProvider(); }}>Переключить provider kill switch</button>
         <small>{providerStatus}</small>
+        <button disabled={busy} onClick={() => { void loadSubscriptionPlans(); }}>Загрузить subscription plans</button>
+        <small>{subscriptionOpsStatus}</small>
         <div className="pills">
           {budgetControls.map((item) => (
             <span key={item}>{item}</span>

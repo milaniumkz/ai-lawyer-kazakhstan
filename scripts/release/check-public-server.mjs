@@ -123,6 +123,25 @@ async function expectPublicApiDemo() {
     return;
   }
 
+  const subscriptionPlans = await apiJson('/subscriptions/plans', {
+    headers: { 'x-user-id': userId },
+  });
+  if (!Array.isArray(subscriptionPlans) || !subscriptionPlans.some((item) => item.plan === 'standard')) failures.push('/api/v1/subscriptions/plans did not return standard plan');
+
+  const paymentHistory = await apiJson('/subscriptions/payment-history', {
+    headers: { 'x-user-id': userId },
+  });
+  if (!Array.isArray(paymentHistory)) failures.push('/api/v1/subscriptions/payment-history did not return an array');
+
+  const paymentIntent = await apiJson('/subscriptions/payment-intent', {
+    method: 'POST',
+    headers: { 'x-user-id': userId },
+    body: JSON.stringify({ plan: 'standard' }),
+  });
+  if (paymentIntent?.blocker !== 'PAYMENT_PROVIDER_REQUIRED' || paymentIntent?.status !== 'provider_required') {
+    failures.push('/api/v1/subscriptions/payment-intent did not return provider blocker');
+  }
+
   const legalCase = await apiJson('/cases', {
     method: 'POST',
     headers: { 'idempotency-key': `public-demo-${Date.now()}`, 'x-user-id': userId },

@@ -40,6 +40,7 @@ const required = [
   ['case idempotency keys table', /CREATE TABLE case_idempotency_keys/],
   ['upload sessions table', /CREATE TABLE upload_sessions/],
   ['subscriptions table', /CREATE TABLE subscriptions/],
+  ['subscription payments table', /CREATE TABLE subscription_payments/],
   ['provider configs table', /CREATE TABLE provider_configs/],
   ['legal categories table', /CREATE TABLE legal_categories/],
   ['case classifications table', /CREATE TABLE case_classifications/],

@@ -633,17 +633,17 @@ void main() {
     expect(find.textContaining('AI расходы: 72%'), findsOneWidget);
   });
 
-  testWidgets('subscription payment button shows blocker dialog',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SubscriptionScreen()));
-
-    await tester.scrollUntilVisible(
-        find.text('Управление оплатой недоступно в stub mode'), 220);
-    await tester.tap(find.text('Управление оплатой недоступно в stub mode'));
+  testWidgets('subscription payment button calls API blocker', (tester) async {
+    AuthRuntime.userId = 'user-1';
+    await tester.pumpWidget(
+        MaterialApp(home: SubscriptionScreen(billingApi: _FakeBillingApi())));
     await tester.pumpAndSettle();
 
-    expect(find.text('Оплата недоступна'), findsOneWidget);
-    expect(find.textContaining('Payment provider'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Профессиональный'), 220);
+    await tester.tap(find.text('Профессиональный'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('PAYMENT_PROVIDER_REQUIRED'), findsOneWidget);
   });
 
   testWidgets('settings exports and deletes account through API',
@@ -952,6 +952,44 @@ class _FakeBillingApi implements BillingApiPort {
         plan: 'RC Internal',
         percent: 72,
         ttsDisabled: false,
+      );
+
+  @override
+  Future<List<SubscriptionPlanItem>> plans(String userId) async => const [
+        SubscriptionPlanItem(
+          plan: 'free',
+          title: 'Базовый',
+          priceKzt: 0,
+          documentLimit: 2,
+          voiceMinutes: 15,
+          expertReview: false,
+        ),
+        SubscriptionPlanItem(
+          plan: 'standard',
+          title: 'Профессиональный',
+          priceKzt: 7990,
+          documentLimit: 30,
+          voiceMinutes: 180,
+          expertReview: true,
+        ),
+      ];
+
+  @override
+  Future<List<PaymentHistoryItem>> paymentHistory(String userId) async =>
+      const [
+        PaymentHistoryItem(
+          plan: 'standard',
+          amountKzt: 7990,
+          status: 'paid',
+        ),
+      ];
+
+  @override
+  Future<PaymentIntentResult> createPaymentIntent(
+          String userId, String plan) async =>
+      const PaymentIntentResult(
+        blocker: 'PAYMENT_PROVIDER_REQUIRED',
+        amountKzt: 7990,
       );
 }
 

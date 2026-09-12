@@ -1,16 +1,22 @@
 import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { AiUsageEvent, BudgetThreshold, ProviderConfig, SubscriptionRecord } from './billing.types';
+import { AiUsageEvent, BudgetThreshold, PaymentHistoryRecord, ProviderConfig, SubscriptionPlan, SubscriptionPlanDefinition, SubscriptionRecord } from './billing.types';
 import { BILLING_REPOSITORY } from './repositories/billing-repository.provider';
 import { BillingRepository } from './repositories/billing.repository';
 
 const THRESHOLDS: BudgetThreshold[] = [70, 85, 100];
+const PLANS: SubscriptionPlanDefinition[] = [
+  { plan: 'free', title: 'Базовый', priceKzt: 0, monthlyLimitKzt: 0, documentLimit: 2, voiceMinutes: 15, expertReview: false },
+  { plan: 'standard', title: 'Профессиональный', priceKzt: 7990, monthlyLimitKzt: 10000, documentLimit: 30, voiceMinutes: 180, expertReview: true },
+  { plan: 'expert', title: 'Эксперт', priceKzt: 24900, monthlyLimitKzt: 35000, documentLimit: 100, voiceMinutes: 600, expertReview: true },
+];
 
 @Injectable()
 export class BillingService {
   private readonly subscriptions = new Map<string, SubscriptionRecord>();
   private readonly usageEvents: AiUsageEvent[] = [];
   private readonly providers = new Map<string, ProviderConfig>([['stub', { provider: 'stub', enabled: true }]]);
+  private readonly payments = new Map<string, PaymentHistoryRecord[]>();
 
   constructor(@Optional() @Inject(BILLING_REPOSITORY) private readonly repository?: BillingRepository) {}
 
@@ -65,6 +71,28 @@ export class BillingService {
       percent,
       triggeredThresholds: THRESHOLDS.filter((threshold) => percent >= threshold),
       ttsDisabled: percent >= 100,
+    };
+  }
+
+  listPlans() {
+    return PLANS;
+  }
+
+  async listPaymentHistory(userId: string) {
+    if (this.repository) return this.repository.listPaymentHistory(userId);
+    return this.payments.get(userId) ?? [];
+  }
+
+  async createPaymentIntent(userId: string, plan: SubscriptionPlan) {
+    const planDefinition = PLANS.find((item) => item.plan === plan);
+    if (!planDefinition) throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND');
+    await this.getSubscription(userId);
+    return {
+      status: 'provider_required',
+      plan,
+      amountKzt: planDefinition.priceKzt,
+      blocker: 'PAYMENT_PROVIDER_REQUIRED',
+      message: 'Production payment provider is not configured. Use PAYMENT_PROVIDER_* env and adapter before accepting real payments.',
     };
   }
 

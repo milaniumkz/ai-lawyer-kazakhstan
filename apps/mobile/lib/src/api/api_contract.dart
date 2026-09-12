@@ -49,6 +49,9 @@ abstract final class ApiContract {
   static const ragAnswer = '/rag/answer';
   static const sessions = '/sessions';
   static const subscriptionsCurrent = '/subscriptions/current';
+  static const subscriptionsPaymentHistory = '/subscriptions/payment-history';
+  static const subscriptionsPaymentIntent = '/subscriptions/payment-intent';
+  static const subscriptionsPlans = '/subscriptions/plans';
   static const templates = '/templates';
   static const usageAi = '/usage/ai';
   static const voiceTranscripts = '/voice/transcripts';

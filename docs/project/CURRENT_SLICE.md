@@ -2,21 +2,22 @@
 
 ## Срез
 
-Documents/evidence admin review queue.
+Subscription/payment adapter hardening.
 
 ## Статус
 
-DONE -> deployed to public server; public smoke passed.
+READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
 
 ## Scope
 
-- `/api/v1/admin/documents/review-queue` lists documents requiring OCR/manual admin review.
-- `/api/v1/admin/documents/:documentId/ocr-confirm` confirms OCR fields and marks the document ready.
-- `/api/v1/admin/documents/:documentId/reject` rejects invalid/quarantined documents with a reason.
-- Admin UI loads the real document queue and can confirm/reject the first queued document through API.
-- API smoke covers RBAC, queue listing, admin OCR confirm and admin reject.
-- Public release smoke script now covers the same deployed endpoints.
+- `/api/v1/subscriptions/plans` returns user-scoped plan definitions.
+- `/api/v1/subscriptions/payment-history` returns current user's stored payment receipts from `subscription_payments`.
+- `/api/v1/subscriptions/payment-intent` returns a documented `PAYMENT_PROVIDER_REQUIRED` blocker until production provider env is configured.
+- PostgreSQL migration `0009_subscription_payments.sql` adds payment history storage.
+- Web and Flutter subscription screens load plans/history from API and call the payment-intent blocker.
+- Admin shell can load subscription plans for operations visibility.
+- API, repository, web, admin, Flutter and public release smoke scripts cover the new routes.
 
 ## Следующий шаг
 
-Next vertical slice: subscription/budget hardening or continue remaining web pixel screens above the 4% threshold.
+Deploy subscription/payment hardening to the public server, apply migration `0009`, run public smoke, then continue remaining web pixel screens above the 4% threshold.

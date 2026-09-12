@@ -172,6 +172,25 @@ type SavedState = {
   profileComplete: boolean;
 };
 
+type SubscriptionPlan = {
+  plan: string;
+  title: string;
+  priceKzt: number;
+  monthlyLimitKzt: number;
+  documentLimit: number;
+  voiceMinutes: number;
+  expertReview: boolean;
+};
+
+type PaymentHistoryItem = {
+  id: string;
+  plan: string;
+  provider: string;
+  amountKzt: number;
+  status: string;
+  createdAt: string;
+};
+
 type Language = "RU" | "KZ" | "EN";
 
 function normalizeKzPhoneInput(value: string) {
@@ -473,6 +492,8 @@ export default function WebHome() {
   const [subscriptionStatus, setSubscriptionStatus] = useState(
     "Лимиты обновятся после входа",
   );
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("");
@@ -1327,11 +1348,15 @@ export default function WebHome() {
   async function loadSubscription() {
     try {
       const userId = await ensureUser();
-      const budget = await apiJson("/subscriptions/current", {
-        headers: { "x-user-id": userId },
-      });
+      const [budget, plans, payments] = await Promise.all([
+        apiJson("/subscriptions/current", { headers: { "x-user-id": userId } }),
+        apiJson("/subscriptions/plans", { headers: { "x-user-id": userId } }),
+        apiJson("/subscriptions/payment-history", { headers: { "x-user-id": userId } }),
+      ]);
+      setSubscriptionPlans(plans);
+      setPaymentHistory(payments);
       setSubscriptionStatus(
-        `Тариф ${budget.plan}, расход ${budget.percent}%, TTS ${budget.ttsDisabled ? "выключен" : "доступен"}`,
+        `Тариф ${budget.plan}, расход ${budget.percent}%, платежей: ${payments.length}, TTS ${budget.ttsDisabled ? "выключен" : "доступен"}`,
       );
       setSyncState("Подписка обновлена из API");
     } catch (error) {
@@ -1340,6 +1365,26 @@ export default function WebHome() {
         error instanceof Error
           ? `Подписка: ${error.message}`
           : "Ошибка подписки",
+      );
+    }
+  }
+
+  async function startSubscriptionPayment(plan: string) {
+    try {
+      const userId = await ensureUser();
+      const result = await apiJson("/subscriptions/payment-intent", {
+        method: "POST",
+        headers: { "x-user-id": userId },
+        body: JSON.stringify({ plan }),
+      });
+      setSubscriptionStatus(
+        `${result.blocker}: ${result.plan}, ${result.amountKzt} ₸. Подключите payment provider env для реальной оплаты.`,
+      );
+      setSyncState("Оплата остановлена честным provider blocker");
+    } catch (error) {
+      setSubscriptionStatus("Не удалось создать платеж");
+      setSyncState(
+        error instanceof Error ? `Оплата: ${error.message}` : "Ошибка оплаты",
       );
     }
   }
@@ -3569,26 +3614,34 @@ export default function WebHome() {
           </div>
           <h3 className="goldSection">Выберите план</h3>
           <div className="planCards">
-            {[
-              "Базовый|0 ₸|5 консультаций · 2 документа",
-              "Профессиональный|7 990 ₸ / мес|100 консультаций · 30 документов · доступ к эксперту",
-              "Годовой|79 900 ₸ / год|Все функции Professional · приоритетная поддержка",
-            ].map((row, index) => {
-              const [title, price, desc] = row.split("|");
+            {(subscriptionPlans.length
+              ? subscriptionPlans
+              : [
+                  { plan: "free", title: "Базовый", priceKzt: 0, monthlyLimitKzt: 0, documentLimit: 2, voiceMinutes: 15, expertReview: false },
+                  { plan: "standard", title: "Профессиональный", priceKzt: 7990, monthlyLimitKzt: 10000, documentLimit: 30, voiceMinutes: 180, expertReview: true },
+                  { plan: "expert", title: "Эксперт", priceKzt: 24900, monthlyLimitKzt: 35000, documentLimit: 100, voiceMinutes: 600, expertReview: true },
+                ]).map((plan) => {
+              const desc = [
+                `${plan.documentLimit} документов`,
+                `${plan.voiceMinutes} минут голоса`,
+                plan.expertReview ? "доступ к эксперту" : "самостоятельный режим",
+              ];
               return (
                 <button
-                  className={index === 1 ? "active" : ""}
-                  key={title}
-                  onClick={loadSubscription}
+                  className={plan.plan === "standard" ? "active" : ""}
+                  key={plan.plan}
+                  onClick={() => {
+                    void startSubscriptionPayment(plan.plan);
+                  }}
                 >
-                  <b>{title}</b>
-                  <em>{price}</em>
+                  <b>{plan.title}</b>
+                  <em>{plan.priceKzt ? `${plan.priceKzt.toLocaleString("ru-KZ")} ₸ / мес` : "0 ₸"}</em>
                   <small>
-                    {desc.split(" · ").map((item) => (
+                    {desc.map((item) => (
                       <span key={item}>✓ {item}</span>
                     ))}
                   </small>
-                  {index === 1 && <i>Рекомендуем</i>}
+                  {plan.plan === "standard" && <i>Рекомендуем</i>}
                 </button>
               );
             })}
@@ -3596,6 +3649,11 @@ export default function WebHome() {
           <div className="analysisBox">
             <strong>Подписка</strong>
             <p>{subscriptionStatus}</p>
+            <small>
+              {paymentHistory.length
+                ? paymentHistory.map((item) => `${item.plan}: ${item.amountKzt} ₸ (${item.status})`).join(" · ")
+                : "История платежей пуста или provider еще не подключен"}
+            </small>
           </div>
           <button className="primary wide" onClick={loadSubscription}>
             Управление подпиской

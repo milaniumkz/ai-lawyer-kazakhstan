@@ -1309,6 +1309,72 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BudgetStatus"
+  /subscriptions/plans:
+    get:
+      operationId: listSubscriptionPlans
+      summary: List available subscription plans
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscription plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlanDefinition"
+  /subscriptions/payment-history:
+    get:
+      operationId: listPaymentHistory
+      summary: List current user's payment history from stored provider/manual receipts
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentHistoryRecord"
+  /subscriptions/payment-intent:
+    post:
+      operationId: createPaymentIntent
+      summary: Start subscription payment through configured payment adapter
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan]
+              properties:
+                plan:
+                  type: string
+                  enum: [free, standard, expert]
+      responses:
+        "201":
+          description: Payment adapter result or documented blocker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentIntentResult"
   /usage/ai:
     post:
       operationId: recordAiUsage
@@ -2242,6 +2308,66 @@ components:
             enum: [70, 85, 100]
         ttsDisabled:
           type: boolean
+    SubscriptionPlanDefinition:
+      type: object
+      required: [plan, title, priceKzt, monthlyLimitKzt, documentLimit, voiceMinutes, expertReview]
+      properties:
+        plan:
+          type: string
+          enum: [free, standard, expert]
+        title:
+          type: string
+        priceKzt:
+          type: number
+        monthlyLimitKzt:
+          type: number
+        documentLimit:
+          type: integer
+        voiceMinutes:
+          type: integer
+        expertReview:
+          type: boolean
+    PaymentHistoryRecord:
+      type: object
+      required: [id, userId, plan, provider, amountKzt, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        plan:
+          type: string
+          enum: [free, standard, expert]
+        provider:
+          type: string
+        amountKzt:
+          type: number
+        status:
+          type: string
+          enum: [pending, paid, failed, refunded, provider_required]
+        externalId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    PaymentIntentResult:
+      type: object
+      required: [status, plan, amountKzt, blocker, message]
+      properties:
+        status:
+          type: string
+          enum: [provider_required]
+        plan:
+          type: string
+          enum: [free, standard, expert]
+        amountKzt:
+          type: number
+        blocker:
+          type: string
+          enum: [PAYMENT_PROVIDER_REQUIRED]
+        message:
+          type: string
     AiUsageInput:
       type: object
       required: [userId, provider, modelAlias, inputUnits, outputUnits, durationMs, estimatedCostKzt, complexity, risk, correlationId]

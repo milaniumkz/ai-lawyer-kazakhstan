@@ -71,6 +71,18 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/sessions').set('x-user-id', userId).expect(200);
     await request(app.getHttpServer()).get('/api/v1/profiles').set('x-user-id', userId).expect(200);
     await request(app.getHttpServer()).get('/api/v1/subscriptions/current').set('x-user-id', userId).expect(200);
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/plans').set('x-user-id', userId).expect(200).expect(({ body }) => {
+      expect(body.map((item: { plan: string }) => item.plan)).toEqual(['free', 'standard', 'expert']);
+    });
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/payment-history').set('x-user-id', userId).expect(200).expect([]);
+    await request(app.getHttpServer())
+      .post('/api/v1/subscriptions/payment-intent')
+      .set('x-user-id', userId)
+      .send({ plan: 'standard' })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({ status: 'provider_required', blocker: 'PAYMENT_PROVIDER_REQUIRED', amountKzt: 7990 });
+      });
 
     const legalCase = await request(app.getHttpServer())
       .post('/api/v1/cases')
@@ -415,6 +427,9 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/sessions').expect(403);
     await request(app.getHttpServer()).get('/api/v1/profiles').expect(403);
     await request(app.getHttpServer()).get('/api/v1/subscriptions/current').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/plans').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/subscriptions/payment-history').expect(403);
+    await request(app.getHttpServer()).post('/api/v1/subscriptions/payment-intent').send({ plan: 'standard' }).expect(403);
     await request(app.getHttpServer()).post('/api/v1/auth/logout-all').send({ userId }).expect(403);
     await request(app.getHttpServer()).post('/api/v1/profiles').set('x-user-id', 'other-user').send({ userId, type: 'person', displayName: 'Mismatch' }).expect(403);
 

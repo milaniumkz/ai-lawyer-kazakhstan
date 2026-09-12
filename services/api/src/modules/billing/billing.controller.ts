@@ -13,6 +13,22 @@ export class BillingController {
     return this.billing.budgetStatus(assertUserId(userId));
   }
 
+  @Get('subscriptions/plans')
+  plans(@Headers('x-user-id') userId?: string | string[]) {
+    assertUserId(userId);
+    return this.billing.listPlans();
+  }
+
+  @Get('subscriptions/payment-history')
+  paymentHistory(@Headers('x-user-id') userId?: string | string[]) {
+    return this.billing.listPaymentHistory(assertUserId(userId));
+  }
+
+  @Post('subscriptions/payment-intent')
+  paymentIntent(@Body() body: { plan: 'free' | 'standard' | 'expert' }, @Headers('x-user-id') userId?: string | string[]) {
+    return this.billing.createPaymentIntent(assertUserId(userId), body.plan);
+  }
+
   @Post('usage/ai')
   recordUsage(@Body() body: Omit<AiUsageEvent, 'id' | 'createdAt'>, @Headers('x-user-role') userRole?: string | string[]) {
     assertAdminRole(userRole);

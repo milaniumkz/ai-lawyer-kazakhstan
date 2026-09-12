@@ -42,6 +42,18 @@ describe('BillingService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
+  it('returns plans and payment provider blocker without fake payment success', async () => {
+    const service = new BillingService();
+
+    expect(service.listPlans()).toHaveLength(3);
+    expect(await service.listPaymentHistory('user-1')).toEqual([]);
+    await expect(service.createPaymentIntent('user-1', 'standard')).resolves.toMatchObject({
+      status: 'provider_required',
+      blocker: 'PAYMENT_PROVIDER_REQUIRED',
+      amountKzt: 7990,
+    });
+  });
+
   it('uses configured repository for persistent billing flow', async () => {
     const repository = createRepositoryMock();
     const service = new BillingService(repository);
@@ -65,6 +77,7 @@ describe('BillingService', () => {
     expect(repository.createUsageEvent).toHaveBeenCalled();
     expect(repository.incrementUsage).toHaveBeenCalledWith({ userId: 'user-1', amountKzt: 25 });
     expect(repository.findSubscription).toHaveBeenCalled();
+    await expect(service.listPaymentHistory('user-1')).resolves.toHaveLength(1);
   });
 });
 
@@ -99,5 +112,16 @@ function createRepositoryMock(): jest.Mocked<BillingRepository> {
     findProvider: jest.fn().mockResolvedValue({ provider: 'stub', enabled: true }),
     upsertProvider: jest.fn().mockImplementation((provider) => Promise.resolve(provider)),
     listProviders: jest.fn().mockResolvedValue([{ provider: 'stub', enabled: true }]),
+    listPaymentHistory: jest.fn().mockResolvedValue([
+      {
+        id: 'payment-1',
+        userId: 'user-1',
+        plan: 'standard',
+        provider: 'manual',
+        amountKzt: 7990,
+        status: 'paid',
+        createdAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]),
   };
 }

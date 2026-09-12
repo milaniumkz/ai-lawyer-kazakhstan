@@ -1,4 +1,4 @@
-import { AiUsageEvent, ProviderConfig, SubscriptionRecord } from '../billing.types';
+import { AiUsageEvent, PaymentHistoryRecord, ProviderConfig, SubscriptionRecord } from '../billing.types';
 
 export interface BillingRepository {
   findSubscription(userId: string): Promise<SubscriptionRecord | undefined>;
@@ -8,4 +8,5 @@ export interface BillingRepository {
   findProvider(provider: string): Promise<ProviderConfig | undefined>;
   upsertProvider(input: ProviderConfig): Promise<ProviderConfig>;
   listProviders(): Promise<ProviderConfig[]>;
+  listPaymentHistory(userId: string): Promise<PaymentHistoryRecord[]>;
 }

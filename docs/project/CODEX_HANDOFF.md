@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: subscription/budget hardening or remaining web pixel screens above the 4% threshold. Documents/evidence admin review queue is deployed and public-smoked: `/admin/documents/review-queue`, admin OCR confirm and admin reject are covered by `release-check:server`.
+Следующая задача: deploy subscription/payment hardening, apply migration `0009_subscription_payments.sql`, run public `release-check:server`, then continue remaining web pixel screens above the 4% threshold. Local gate is complete for user-scoped plans/history/payment-intent blocker across API, web, Flutter and admin.
