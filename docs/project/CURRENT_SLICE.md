@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store Connect processing check.
+App Store Connect metadata package.
 
 ## Статус
 
-DONE -> uploaded build status is `VALID`.
+DONE -> review metadata draft prepared.
 
 ## Scope
 
@@ -24,6 +24,8 @@ DONE -> uploaded build status is `VALID`.
 - Current archive installed into `/opt/ai-lawyer-kz/app`.
 - App Store Connect Delivery UUID: `22621fff-471e-4689-9fcf-51a2684d5563`.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
+- App Store metadata draft prepared in `docs/project/APP_STORE_METADATA.md`.
+- Release notes and store submission guide updated with the current iOS state.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -36,4 +38,4 @@ DONE -> uploaded build status is `VALID`.
 
 ## Следующий шаг
 
-Next vertical slice: prepare App Store Connect review metadata/screenshots and TestFlight notes, then select the processed build in App Store Connect.
+Next vertical slice: generate/review App Store screenshot assets, then select the processed build and fill metadata in App Store Connect.

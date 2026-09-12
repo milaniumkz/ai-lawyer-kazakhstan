@@ -14,11 +14,12 @@ AI-Юрист Қазақстан RC foundation тіркеу, профиль, і�
 
 AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls. RC4 closes placeholder buttons in mobile/web and refreshes the public test web deployment.
 
-RC11 adds branded Android/iOS launcher icons and iOS launch assets, refreshes Android release APK evidence, and keeps the web mobile dark design matrix at 25/25 screens under the 4% pixel threshold.
+RC11 adds branded Android/iOS launcher icons and iOS launch assets, refreshes Android release APK evidence, confirms the uploaded iOS build is `VALID` in App Store Connect, and keeps the web mobile dark design matrix at 25/25 screens under the 4% pixel threshold.
 
 ## Limitations
 
 - Not a production launch.
 - Government integrations are assisted/stub unless official access is provided.
 - Legal templates and rules require human legal approval.
-- Android production signing and iOS App Store export are blocked by missing credentials.
+- Android production signing is blocked by missing keystore/Play Console access.
+- iOS App Store review submission still requires App Store Connect metadata, screenshots, support/privacy/terms URLs and manual build selection.
