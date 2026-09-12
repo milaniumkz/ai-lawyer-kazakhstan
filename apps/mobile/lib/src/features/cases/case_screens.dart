@@ -962,6 +962,7 @@ class HttpCaseApi implements CaseApiPort {
         'x-correlation-id': 'mobile-category-confirm',
         'x-user-id': ownerUserId,
       },
+      body: jsonEncode({}),
     );
     return classificationFromResponse(response);
   }
