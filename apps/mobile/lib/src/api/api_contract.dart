@@ -9,6 +9,7 @@ abstract final class ApiContract {
   static const adminClassificationsIdOverride = '/admin/classifications/{id}/override';
   static const adminLegalCategories = '/admin/legal-categories';
   static const adminLegalCategoriesChangeRequests = '/admin/legal-categories/change-requests';
+  static const adminLegalCategoriesChangeRequestsId = '/admin/legal-categories/change-requests/{id}';
   static const adminLegalCategoriesChangeRequestsIdApprove = '/admin/legal-categories/change-requests/{id}/approve';
   static const adminLegalCategoriesChangeRequestsIdReject = '/admin/legal-categories/change-requests/{id}/reject';
   static const adminProviders = '/admin/providers';

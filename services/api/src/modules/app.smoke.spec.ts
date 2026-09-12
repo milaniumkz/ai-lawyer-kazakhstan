@@ -300,6 +300,7 @@ describe('AppModule HTTP smoke', () => {
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').expect(403);
     await request(app.getHttpServer()).get('/api/v1/admin/providers').expect(403);
     await request(app.getHttpServer()).get('/api/v1/admin/legal-categories').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/admin/legal-categories/change-requests/00000000-0000-4000-8000-000000000000').expect(403);
     await request(app.getHttpServer()).post('/api/v1/admin/classifications/00000000-0000-4000-8000-000000000000/confirm').expect(403);
     await request(app.getHttpServer()).post('/api/v1/legal-sources/manual-import').send({}).expect(403);
     await request(app.getHttpServer()).post('/api/v1/usage/ai').send({}).expect(403);
@@ -336,6 +337,11 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-role', 'admin')
       .expect(200)
       .expect(({ body }) => expect(body.some((item: { id: string; status: string }) => item.id === createRequest.body.id && item.status === 'pending')).toBe(true));
+    await request(app.getHttpServer())
+      .get(`/api/v1/admin/legal-categories/change-requests/${createRequest.body.id}`)
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ id: createRequest.body.id, categoryCode, status: 'pending' }));
     await request(app.getHttpServer())
       .post(`/api/v1/admin/legal-categories/change-requests/${createRequest.body.id}/approve`)
       .set('x-user-role', 'admin')

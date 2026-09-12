@@ -121,6 +121,12 @@ export class CasesService {
     return [...this.categoryChangeRequests.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100);
   }
 
+  async adminGetLegalCategoryChangeRequest(id: string) {
+    const request = await this.findLegalCategoryChangeRequest(id);
+    if (!request) throw new NotFoundException('CATEGORY_CHANGE_REQUEST_NOT_FOUND');
+    return request;
+  }
+
   async adminApproveLegalCategoryChangeRequest(id: string, reviewedBy: string) {
     const request = await this.findLegalCategoryChangeRequest(id);
     if (!request) throw new NotFoundException('CATEGORY_CHANGE_REQUEST_NOT_FOUND');

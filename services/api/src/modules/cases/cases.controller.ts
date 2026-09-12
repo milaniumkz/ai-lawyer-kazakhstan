@@ -71,6 +71,12 @@ export class CasesController {
     return this.cases.adminListLegalCategoryChangeRequests();
   }
 
+  @Get('admin/legal-categories/change-requests/:id')
+  adminGetLegalCategoryChangeRequest(@Param('id') id: string, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminGetLegalCategoryChangeRequest(id);
+  }
+
   @Post('admin/legal-categories/change-requests/:id/approve')
   adminApproveLegalCategoryChangeRequest(@Param('id') id: string, @Headers('x-user-role') userRole?: string | string[]) {
     assertAdminRole(userRole);

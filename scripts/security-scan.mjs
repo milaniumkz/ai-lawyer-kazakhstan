@@ -101,6 +101,7 @@ const adminOperations = new Set([
   'GET /admin/legal-categories',
   'GET /admin/legal-categories/change-requests',
   'POST /admin/legal-categories/change-requests',
+  'GET /admin/legal-categories/change-requests/{id}',
   'POST /admin/legal-categories/change-requests/{id}/approve',
   'POST /admin/legal-categories/change-requests/{id}/reject',
   'GET /admin/classifications/review-queue',

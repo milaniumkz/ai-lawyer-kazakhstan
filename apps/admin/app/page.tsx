@@ -40,6 +40,11 @@ type ChangeRequest = {
   categoryCode: string;
   payload: Record<string, unknown>;
   status: 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  requestedBy: string;
+  reviewedBy?: string;
+  createdAt: string;
+  reviewedAt?: string;
 };
 
 export default function AdminHome() {
@@ -53,6 +58,7 @@ export default function AdminHome() {
   const [categories, setCategories] = useState<LegalCategory[]>([]);
   const [reviewQueue, setReviewQueue] = useState<ClassificationRecord[]>([]);
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
+  const [selectedChangeRequest, setSelectedChangeRequest] = useState<ChangeRequest | null>(null);
   const [draftCode, setDraftCode] = useState('family.admin_review_test');
   const [draftName, setDraftName] = useState('Админская тестовая категория');
   const [busy, setBusy] = useState(false);
@@ -266,6 +272,24 @@ export default function AdminHome() {
     }
   }
 
+  async function openFirstChangeRequest() {
+    const item = changeRequests[0];
+    if (!item) {
+      setChangeStatus('Нет change request для открытия');
+      return;
+    }
+    setBusy(true);
+    try {
+      const details = (await apiJson(`/admin/legal-categories/change-requests/${item.id}`)) as ChangeRequest;
+      setSelectedChangeRequest(details);
+      setChangeStatus(`Открыты детали: ${details.categoryCode}`);
+    } catch (error) {
+      setChangeStatus(error instanceof Error ? `Detail API error: ${error.message}` : 'Detail API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function reviewFirstChangeRequest(action: 'approve' | 'reject') {
     const item = changeRequests.find((request) => request.status === 'pending');
     if (!item) {
@@ -383,6 +407,7 @@ export default function AdminHome() {
         <button disabled={busy} onClick={() => { void createCategoryChangeRequest(); }}>Создать create request</button>
         <button disabled={busy} onClick={() => { void createCategoryUpdateRequest(); }}>Создать update request</button>
         <button disabled={busy} onClick={() => { void loadChangeRequests(); }}>Загрузить change requests</button>
+        <button disabled={busy} onClick={() => { void openFirstChangeRequest(); }}>Открыть детали первой</button>
         <small>{changeStatus}</small>
         <div className="queue">
           {changeRequests.slice(0, 5).map((item) => (
@@ -392,6 +417,18 @@ export default function AdminHome() {
             </div>
           ))}
         </div>
+        {selectedChangeRequest ? (
+          <pre className="detailPanel">{JSON.stringify({
+            id: selectedChangeRequest.id,
+            action: selectedChangeRequest.action,
+            categoryCode: selectedChangeRequest.categoryCode,
+            status: selectedChangeRequest.status,
+            requestedBy: selectedChangeRequest.requestedBy,
+            reviewedBy: selectedChangeRequest.reviewedBy,
+            reason: selectedChangeRequest.reason,
+            payload: selectedChangeRequest.payload,
+          }, null, 2)}</pre>
+        ) : null}
         <button disabled={busy} onClick={() => { void reviewFirstChangeRequest('approve'); }}>Approve pending</button>
         <button disabled={busy} onClick={() => { void reviewFirstChangeRequest('reject'); }}>Reject pending</button>
       </section>

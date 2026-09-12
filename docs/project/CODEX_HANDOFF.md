@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: admin hardening for taxonomy change audit/detail view or move to the next RC gap. Safe taxonomy CRUD/versioning is deployed and public-smoked: migration 0008 applied, public release check passed, DB has approved change request and 90 legal categories.
+Следующая задача: deploy taxonomy change detail/audit. Implemented locally: `GET /admin/legal-categories/change-requests/:id`, admin detail panel, API smoke/RBAC, public release smoke update. `npm run check` and `npm run build` passed; Docker CLI is unavailable.

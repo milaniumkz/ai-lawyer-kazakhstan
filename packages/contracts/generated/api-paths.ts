@@ -8,6 +8,7 @@ export const apiPaths = [
   "/admin/classifications/{id}/override",
   "/admin/legal-categories",
   "/admin/legal-categories/change-requests",
+  "/admin/legal-categories/change-requests/{id}",
   "/admin/legal-categories/change-requests/{id}/approve",
   "/admin/legal-categories/change-requests/{id}/reject",
   "/admin/providers",

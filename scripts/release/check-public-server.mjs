@@ -182,6 +182,13 @@ async function expectPublicApiDemo() {
   });
   if (!Array.isArray(changeRequests) || !changeRequests.some((item) => item.id === changeRequest?.id)) failures.push('/api/v1/admin/legal-categories/change-requests did not list created request');
 
+  const changeDetails = changeRequest?.id
+    ? await apiJson(`/admin/legal-categories/change-requests/${changeRequest.id}`, {
+        headers: { 'x-user-role': 'admin' },
+      })
+    : undefined;
+  if (changeDetails?.id !== changeRequest?.id || changeDetails?.status !== 'approved') failures.push('/api/v1/admin/legal-categories/change-requests/{id} did not return approved request details');
+
   const upload = await apiJson('/files/upload-sessions', {
     method: 'POST',
     headers: { 'x-user-id': userId },

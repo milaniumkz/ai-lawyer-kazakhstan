@@ -311,6 +311,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LegalCategoryChangeRequest"
+  /admin/legal-categories/change-requests/{id}:
+    get:
+      operationId: adminGetLegalCategoryChangeRequest
+      summary: Get legal category change request details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "200":
+          description: Legal category change request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCategoryChangeRequest"
   /admin/legal-categories/change-requests/{id}/approve:
     post:
       operationId: adminApproveLegalCategoryChangeRequest

@@ -145,8 +145,16 @@ body {
   font-size: 13px;
 }
 
-.tokens {
+.tokens,
+.detailPanel {
   overflow: auto;
   margin-top: 16px;
   padding: 16px;
+}
+
+.detailPanel {
+  max-height: 260px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--gold) 8%);
 }
