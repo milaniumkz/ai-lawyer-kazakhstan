@@ -122,7 +122,11 @@ async function main() {
             activeCaseId: seededCases[0]?.id ?? '',
             messages: seededMessages,
             language: 'RU',
-            caseText: view === 'category' ? 'Нужно взыскать алименты на ребенка после развода.' : '',
+            caseText: view === 'category' || view === 'newCase' ? 'Я хочу подать на алименты и подготовить иск в суд...' : '',
+            recording: view === 'newCase',
+            paused: false,
+            recordingSeconds: view === 'newCase' ? 47 : 0,
+            speechStatus: view === 'newCase' ? 'Live распознавание включено' : '',
             selectedCategory: view === 'category' ? 'Брачно-семейные отношения' : 'Семейные споры',
             classification: view === 'category' ? {
               id: '00000000-0000-4000-8000-000000000008',

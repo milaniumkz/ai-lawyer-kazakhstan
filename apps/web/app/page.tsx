@@ -150,6 +150,10 @@ type SavedState = {
   cases: CaseItem[];
   activeCaseId: string;
   caseText: string;
+  recording: boolean;
+  paused: boolean;
+  recordingSeconds: number;
+  speechStatus: string;
   documents: DocumentItem[];
   messages: Message[];
   profileType: string;
@@ -593,6 +597,11 @@ export default function WebHome() {
       if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
+      if (typeof saved.recording === "boolean") setRecording(saved.recording);
+      if (typeof saved.paused === "boolean") setPaused(saved.paused);
+      if (typeof saved.recordingSeconds === "number")
+        setRecordingSeconds(saved.recordingSeconds);
+      if (saved.speechStatus) setSpeechStatus(saved.speechStatus);
       if (saved.documents?.length) setDocuments(saved.documents);
       if (saved.messages?.length) setMessages(saved.messages);
       if (saved.profileType) setProfileType(saved.profileType);
@@ -651,6 +660,10 @@ export default function WebHome() {
       cases,
       activeCaseId,
       caseText,
+      recording,
+      paused,
+      recordingSeconds,
+      speechStatus,
       documents,
       messages,
       profileType,
@@ -688,6 +701,10 @@ export default function WebHome() {
     cases,
     activeCaseId,
     caseText,
+    recording,
+    paused,
+    recordingSeconds,
+    speechStatus,
     documents,
     messages,
     profileType,
@@ -1536,6 +1553,17 @@ export default function WebHome() {
   function pauseRecording() {
     const recorder = mediaRecorderRef.current;
     if (!recorder) {
+      if (recording) {
+        setPaused((value) => {
+          const next = !value;
+          setSpeechStatus(
+            next ? "Live распознавание на паузе" : "Live распознавание включено",
+          );
+          setSyncState(next ? "Запись на паузе" : "Запись продолжена");
+          return next;
+        });
+        return;
+      }
       void startRecording();
       return;
     }
@@ -1581,6 +1609,11 @@ export default function WebHome() {
     setSyncState("Запись завершена, сохраняю аудио...");
     try {
       const blob = await stopRecordingAndGetBlob();
+      if ((!blob || blob.size === 0) && caseText.trim()) {
+        setSyncState("Текст сохранен без аудиофайла");
+        go("category");
+        return;
+      }
       if (!blob || blob.size === 0)
         throw new Error("Пустая запись: попробуйте еще раз");
       const extension =
