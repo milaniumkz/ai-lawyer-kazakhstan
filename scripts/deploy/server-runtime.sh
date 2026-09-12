@@ -85,6 +85,17 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
+if command -v psql >/dev/null 2>&1 && sudo -u postgres psql -d ai_lawyer_kz -tAc "SELECT 1" >/dev/null 2>&1; then
+  if [ "$(sudo -u postgres psql -d ai_lawyer_kz -tAc "SELECT to_regclass('public.subscription_payments') IS NOT NULL;")" != "t" ]; then
+    sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
+      -f "$APP_ROOT/app/infra/db/migrations/0009_subscription_payments.sql"
+    sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 <<'SQL'
+GRANT SELECT, INSERT, UPDATE, DELETE ON subscription_payments TO ai_lawyer_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO ai_lawyer_app;
+SQL
+  fi
+fi
+
 mkdir -p /etc/ai-lawyer-kz/tls
 if [ ! -f /etc/ai-lawyer-kz/tls/selfsigned.crt ] || [ ! -f /etc/ai-lawyer-kz/tls/selfsigned.key ]; then
   openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
