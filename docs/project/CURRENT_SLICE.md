@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store branded iOS upload.
+App Store branded iOS processing check.
 
 ## Статус
 
-DONE -> build `1.0.1 (4)` uploaded, Apple processing status pending.
+DONE -> build `1.0.1 (4)` is `VALID`.
 
 ## Scope
 
@@ -42,7 +42,7 @@ DONE -> build `1.0.1 (4)` uploaded, Apple processing status pending.
 - New IPA `Info.plist` confirms `CFBundleShortVersionString=1.0.1`, `CFBundleVersion=4`, bundle id `kz.milanium.lawyer`, minimum iOS `15.0`, and Microphone/Photo Library/Speech Recognition purpose strings.
 - `xcrun altool --validate-app` passed with no errors.
 - `xcrun altool --upload-app` succeeded with Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
-- `xcrun altool --build-status` for the new Delivery UUID hung without returning status; processing remains pending to re-check.
+- `xcrun altool --build-status` returned `BUILD-STATUS: VALID` for Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -55,4 +55,4 @@ DONE -> build `1.0.1 (4)` uploaded, Apple processing status pending.
 
 ## Следующий шаг
 
-Next vertical slice: re-check App Store Connect processing for Delivery UUID `ef3eedcd-a218-425e-b0a3-49089327a5a5`, then select the processed build if valid.
+Next vertical slice: select build `1.0.1 (4)` in App Store Connect/TestFlight and continue metadata entry.

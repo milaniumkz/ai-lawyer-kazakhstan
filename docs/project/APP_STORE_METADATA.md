@@ -7,7 +7,7 @@
 - SKU/application domain: Kazakhstan legal assistant
 - Uploaded build: `1.0.1 (4)`
 - Delivery UUID: `ef3eedcd-a218-425e-b0a3-49089327a5a5`
-- Apple processing status: upload succeeded; processing status check pending
+- Apple processing status: `VALID`
 
 ## RU Listing Draft
 
