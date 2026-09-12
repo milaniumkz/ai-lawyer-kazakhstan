@@ -326,6 +326,7 @@
 - Web chat deploy — uploaded `/tmp/ai-lawyer-kz-chat-screen-final.tar.gz` to `/opt/ai-lawyer-kz-chat-screen-final.tar.gz` SHA-256 `a164656ecb13f65a217a05086e77beda2b65bafe8144067c27bd51dd68e7d682`; server install health passed, server `npm run test:audit` found 0 vulnerabilities, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and direct public Playwright smoke confirmed auth -> profile -> case -> chat message POST 201 -> claim route.
 
 - Web OTP recovery local gate — local production `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff` reports screen 04 `otp` at `3.19%`, down from the corrected-regression `6.13%`. Local Playwright smoke confirmed OTP input fills the six visible cells with `481259` and `Изменить номер` routes to `login`. `npm run check` and root `npm run build` passed; `npm run docker:config` could not run because Docker CLI is not installed.
+- Web OTP recovery deploy — uploaded `/tmp/ai-lawyer-kz-otp-recovery-final.tar.gz` to `/opt/ai-lawyer-kz/ai-lawyer-kz-otp-recovery-final.tar.gz` SHA-256 `f74cf933692bc567e10167e5f6179c462ebfe7ba15f89586e7b3650df6075e9c`; server install health passed, server `npm run test:audit` found 0 vulnerabilities, `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed, and direct public Playwright smoke confirmed login -> OTP, visible test SMS code `111111`, six-box input and change-phone route.
 
 ## Не запускалось
 

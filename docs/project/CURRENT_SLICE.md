@@ -6,7 +6,7 @@ Web OTP screen regression recovery.
 
 ## Статус
 
-DONE locally -> ready for public deploy.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -16,6 +16,9 @@ DONE locally -> ready for public deploy.
 - Visual baselines hide the local test-code pill only for PNG comparison because the reference screen has no runtime SMS helper.
 - Local Playwright smoke confirmed SMS input fills all six cells and `Изменить номер` routes to `login`.
 - Current web pixel status: 19 screens at or below 4%, 6 screens still above threshold.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-otp-recovery-final.tar.gz`.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Public Playwright smoke confirmed login -> OTP, visible test SMS code, six-box input and change-phone route.
 - `npm run check` and root `npm run build` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
