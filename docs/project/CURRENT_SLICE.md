@@ -6,7 +6,7 @@ Web OTP screen pixel completion.
 
 ## Статус
 
-READY_FOR_COMMIT -> local visual/function gates passed.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -16,6 +16,7 @@ READY_FOR_COMMIT -> local visual/function gates passed.
 - The screen has the reference top title/back action, visible test SMS code, SMS code cells, countdown, confirm CTA and no bottom nav.
 - `Код из SMS` input fills the six visible cells; `Изменить номер` returns to login; confirm still calls `/api/v1/auth/otp/verify`.
 - Current web pixel status: 16 screens at or below 4%, 9 screens still above threshold.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-otp-visible-code-final.tar.gz`.
 
 ## Следующий шаг
 
