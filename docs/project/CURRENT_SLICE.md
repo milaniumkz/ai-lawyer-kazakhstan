@@ -6,7 +6,7 @@ Web register screen pixel completion.
 
 ## Статус
 
-READY -> local gate passed; pending public deploy.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -16,8 +16,10 @@ READY -> local gate passed; pending public deploy.
 - The CTA now matches the design label `Создать аккаунт` while still calling `/api/v1/profiles`.
 - Local Playwright smoke confirmed input, profile type toggle, API submit to `/api/v1/profiles`, success route to `home`, and login-link route.
 - Current web pixel status: 17 screens at or below 4%, 8 screens still above threshold.
-- `npm run check` and `npm run build` passed; `npm run docker:config` is blocked locally because Docker CLI is not installed.
+- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-register-screen-final.tar.gz`.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Public Playwright smoke confirmed phone -> OTP -> register -> `/api/v1/profiles` 201 -> home.
 
 ## Следующий шаг
 
-Next vertical slice: deploy `03 register`, then close `17 chat` from 5.39% to the `<=4%` pixel threshold.
+Next vertical slice: close `17 chat` from 5.39% to the `<=4%` pixel threshold.
