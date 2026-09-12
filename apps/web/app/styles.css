@@ -180,6 +180,7 @@
   }
   .appShell[data-view="register"] .deviceFrame {
     min-height: calc(100vh - 8px);
+    border: 0;
     background: #020912;
   }
   .appShell[data-view="register"] .appStatus,
@@ -187,22 +188,37 @@
     display: none;
   }
   .appShell[data-view="register"] .authPanel {
+    position: relative;
     min-height: 693px;
     align-content: start;
     gap: 0;
-    padding: 24px 26px 14px;
+    padding: 32px 26px 14px;
+    border: 0;
+    box-shadow: none;
     overflow: hidden;
   }
-  .appShell[data-view="register"] .screenHeader {
+  .appShell[data-view="register"] .authPanel::before {
+    content: "";
+    position: absolute;
+    inset: 82px 0 auto;
+    height: 238px;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 35%, rgba(240, 184, 73, .28) 0 2px, transparent 3px),
+      repeating-radial-gradient(ellipse at 50% 100%, transparent 0 58px, rgba(223, 171, 72, .08) 59px 60px, transparent 61px 76px);
+    opacity: .72;
+  }
+  .appShell[data-view="register"] .authPanel > * {
     position: relative;
-    display: block;
-    margin: 0 0 10px;
-    text-align: center;
+    z-index: 1;
+  }
+  .appShell[data-view="register"] .screenHeader {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    align-items: center;
+    margin: 0 0 8px;
   }
   .appShell[data-view="register"] .screenHeader button {
-    position: absolute;
-    left: -8px;
-    top: -7px;
     width: 28px;
     height: 34px;
     border: 0;
@@ -213,51 +229,81 @@
   }
   .appShell[data-view="register"] .screenHeader h2 {
     margin: 0;
+    text-align: center;
     color: var(--gold-strong);
-    font-size: 24px;
+    font-size: 34px;
     font-weight: 400;
     line-height: 1.05;
   }
   .appShell[data-view="register"] .screenHeader h2::after {
     content: "◇";
     display: block;
-    margin-top: 3px;
+    margin-top: 4px;
     color: var(--gold);
     font-size: 12px;
     line-height: 1;
   }
   .appShell[data-view="register"] .screenHeader p {
-    display: block;
-    max-width: 230px;
-    margin: 7px auto 0;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.25;
+    display: none;
   }
   .appShell[data-view="register"] .authMark {
-    width: 92px;
-    height: 92px;
-    margin: 0 auto 4px;
+    width: 96px;
+    height: 96px;
+    margin: 6px auto 5px;
   }
   .appShell[data-view="register"] .authMark span {
-    font-size: 38px;
+    width: 66%;
+    background:
+      radial-gradient(circle, rgba(255, 228, 154, .14), transparent 48%),
+      rgba(6, 17, 29, .34);
+    color: var(--gold-strong);
+    font-size: 33px;
+    box-shadow: none;
+  }
+  .appShell[data-view="register"] .panelHeader {
+    margin: 0;
+    text-align: center;
+  }
+  .appShell[data-view="register"] .panelHeader h2 {
+    display: none;
+  }
+  .appShell[data-view="register"] .panelHeader p {
+    max-width: 340px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.25;
   }
   .appShell[data-view="register"] .authFormCard {
     display: grid;
-    gap: 7px;
+    gap: 8px;
     border: 1px solid var(--gold);
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--panel-soft) 84%, transparent);
-    padding: 15px 17px 14px;
+    border-radius: 22px;
+    background: rgba(5, 16, 28, .88);
+    padding: 16px 17px 20px;
   }
-  .appShell[data-view="register"] .authFormCard input {
-    min-height: 39px;
-    border-color: rgba(230, 189, 98, .28);
-    border-radius: 7px;
-    background: rgba(7, 18, 31, .72);
-    padding: 9px 13px;
-    font-size: 12px;
+  .appShell[data-view="register"] .registerInputRow {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    min-height: 45px;
+    border-color: rgba(114, 130, 145, .5);
+    border: 1px solid rgba(114, 130, 145, .5);
+    border-radius: 12px;
+    background: rgba(9, 23, 36, .9);
+    padding: 0 13px;
+  }
+  .appShell[data-view="register"] .registerInputRow span {
+    color: var(--gold-strong);
+    font-size: 19px;
+    line-height: 1;
+  }
+  .appShell[data-view="register"] .registerInputRow input {
+    min-height: 43px;
+    border: 0;
+    background: transparent;
+    padding: 0 0 0 3px;
+    font-size: 15px;
   }
   .appShell[data-view="register"] .profileChips {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -271,38 +317,102 @@
     font-size: 10px;
   }
   .appShell[data-view="register"] .profileChips .chip {
-    min-height: 35px;
-    border-radius: 7px;
+    min-height: 42px;
+    border-radius: 12px;
     padding: 6px 4px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .appShell[data-view="register"] .toggle {
     align-items: start;
-    min-height: 40px;
-    margin: 4px 0 6px;
+    min-height: 48px;
+    margin: 7px 0;
     color: var(--text);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.25;
   }
   .appShell[data-view="register"] .toggle input {
-    width: 20px;
-    height: 20px;
-    min-height: 20px;
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
     margin-top: 0;
     accent-color: var(--gold);
   }
   .appShell[data-view="register"] .heroCta {
-    min-height: 49px;
-    border-radius: 10px;
+    min-height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ffe08d 0%, #d89f32 52%, #ffe799 100%);
     font-size: 16px;
     font-weight: 600;
   }
-  .appShell[data-view="register"] .authFormCard + .linkAction {
+  .appShell[data-view="register"] .authFormCard .goldDivider {
+    width: 245px;
+    margin: 18px auto 0;
+  }
+  .appShell[data-view="register"] .authFormCard .linkAction {
     width: 100%;
-    min-height: 34px;
-    margin-top: 7px;
+    min-height: 28px;
+    padding: 2px 0 0;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 14px;
+  }
+
+  @media (max-height: 760px) {
+    .appShell[data-view="register"] .authPanel {
+      padding-top: 20px;
+    }
+    .appShell[data-view="register"] .panelHeader {
+      order: 3;
+      margin: 0 0 8px;
+    }
+    .appShell[data-view="register"] .authMark {
+      order: 2;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 8px;
+    }
+    .appShell[data-view="register"] .authMark span {
+      font-size: 34px;
+    }
+    .appShell[data-view="register"] .authFormCard {
+      order: 4;
+      gap: 6px;
+      border-radius: 16px;
+      padding: 13px 17px 13px;
+    }
+    .appShell[data-view="register"] .registerInputRow {
+      min-height: 38px;
+      border-radius: 7px;
+    }
+    .appShell[data-view="register"] .registerInputRow input {
+      min-height: 36px;
+      font-size: 12px;
+    }
+    .appShell[data-view="register"] .profileChips .chip {
+      min-height: 35px;
+      border-radius: 7px;
+      font-size: 10px;
+    }
+    .appShell[data-view="register"] .toggle {
+      min-height: 38px;
+      margin: 3px 0 5px;
+      font-size: 11px;
+    }
+    .appShell[data-view="register"] .toggle input {
+      width: 20px;
+      height: 20px;
+      min-height: 20px;
+    }
+    .appShell[data-view="register"] .heroCta {
+      min-height: 48px;
+      border-radius: 10px;
+    }
+    .appShell[data-view="register"] .authFormCard .goldDivider {
+      margin-top: 8px;
+    }
+    .appShell[data-view="register"] .authFormCard .linkAction {
+      min-height: 24px;
+      font-size: 11px;
+    }
   }
 
   .appShell[data-view="cases"] {

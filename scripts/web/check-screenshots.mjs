@@ -93,10 +93,10 @@ async function main() {
             otpHint: view === 'otp' ? 'SMS-код для теста: 481259' : '',
             authUserId: isPublic ? '' : '00000000-0000-4000-8000-000000000001',
             profileComplete: !isPublic,
-            firstName: 'Дмитрий',
-            lastName: 'Штрахов',
-            city: 'Астана',
-            profileName: 'Дмитрий Штрахов',
+            firstName: isPublic ? '' : 'Дмитрий',
+            lastName: isPublic ? '' : 'Штрахов',
+            city: isPublic ? '' : 'Астана',
+            profileName: isPublic ? '' : 'Дмитрий Штрахов',
           }),
         );
       }, { theme: target.theme, view: target.hash.slice(1), isPublic: publicViews.has(target.hash.slice(1)) });

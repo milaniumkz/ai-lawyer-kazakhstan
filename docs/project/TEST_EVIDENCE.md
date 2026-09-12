@@ -320,6 +320,7 @@
 - Production Android signing — blocked, production keystore is not provided.
 - Custom production domain setup — blocked until DNS is provided; trusted HTTPS test endpoint is available at `https://89-207-250-217.sslip.io`.
 - Production external secrets — blocked until SMS/payment/storage/government provider credentials are provided.
+- Web register screen local gate — local production `WEB_BASE_URL=http://127.0.0.1:3011 npm run test:web-screenshots:strict` captured 180 screenshots; `npm run test:web-pixel-diff` reports screen 03 `register` at `3.58%`, down from `5.71%`. Local Playwright smoke confirmed first/last/middle/city input, profile type toggle, `/api/v1/profiles` submit, success route to `home`, and existing-account route to `login`. `npm run check` and `npm run build` passed; `npm run docker:config` could not run because Docker CLI is not installed.
 
 ## Не запускалось
 

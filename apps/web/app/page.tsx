@@ -275,7 +275,7 @@ const AUTH_I18N: Record<
     newAccountHint: "Новый аккаунт создается только после подтверждения SMS-кода.",
     languageStatus: "Язык интерфейса",
     registerTitle: "Заполните анкету",
-    registerSubtitle: "Первый вход: данные нужны для документов и дел",
+    registerSubtitle: "Создайте аккаунт и начните работу с юридическим помощником",
     lastName: "Фамилия",
     firstName: "Имя",
     middleName: "Отчество",
@@ -283,7 +283,7 @@ const AUTH_I18N: Record<
     iinBin: "ИИН/БИН, если нужно",
     iinBinInvalid: "ИИН/БИН должен состоять из 12 цифр и проходить проверку РК. Оставьте поле пустым, если он не нужен.",
     consent: "Я принимаю условия и согласен на обработку данных",
-    finishRegister: "✧ Завершить регистрацию",
+    finishRegister: "✧ Создать аккаунт",
     alreadyHaveAccount: "Уже есть аккаунт? Войти",
     otpTitle: "Введите код из SMS",
     otpSent: "Мы отправили код на номер",
@@ -1962,43 +1962,65 @@ export default function WebHome() {
           )}
           {view === "register" && (
             <>
-              <AuthMark />
+              <div className="screenHeader registerTop">
+                <button onClick={() => go("login")} aria-label="Назад">
+                  ‹
+                </button>
+                <h2>Регистрация</h2>
+                <span />
+              </div>
               <Header
                 title={authText.registerTitle}
                 subtitle={authText.registerSubtitle}
               />
+              <AuthMark />
               <div className="authFormCard">
-                <input
-                  placeholder={authText.lastName}
-                  value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
-                />
-                <input
-                  placeholder={authText.firstName}
-                  value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
-                />
-                <input
-                  placeholder={authText.middleName}
-                  value={middleName}
-                  onChange={(event) => setMiddleName(event.target.value)}
-                />
-                <input
-                  placeholder={authText.city}
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                />
-                <input
-                  placeholder={authText.iinBin}
-                  value={profileId}
-                  inputMode="numeric"
-                  maxLength={12}
-                  onChange={(event) =>
-                    setProfileId(
-                      event.target.value.replace(/\D/g, "").slice(0, 12),
-                    )
-                  }
-                />
+                <label className="registerInputRow">
+                  <span>♙</span>
+                  <input
+                    placeholder={authText.firstName}
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                  />
+                </label>
+                <label className="registerInputRow">
+                  <span>♙</span>
+                  <input
+                    placeholder={authText.lastName}
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                  />
+                </label>
+                <label className="registerInputRow">
+                  <span>✦</span>
+                  <input
+                    placeholder={authText.middleName}
+                    value={middleName}
+                    onChange={(event) => setMiddleName(event.target.value)}
+                  />
+                </label>
+                <label className="registerInputRow">
+                  <span>⌂</span>
+                  <input
+                    placeholder={authText.city}
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                  />
+                </label>
+                <label className="registerInputRow">
+                  <span>№</span>
+                  <input
+                    placeholder={authText.iinBin}
+                    value={profileId}
+                    inputMode="numeric"
+                    maxLength={12}
+                    onChange={(event) =>
+                      setProfileId(
+                        event.target.value.replace(/\D/g, "").slice(0, 12),
+                      )
+                    }
+                  />
+                </label>
                 {profileIdInvalid && (
                   <small className="fieldError">{authText.iinBinInvalid}</small>
                 )}
@@ -2030,10 +2052,11 @@ export default function WebHome() {
                 >
                   {authText.finishRegister}
                 </button>
+                <AuthDivider />
+                <button className="linkAction" onClick={() => go("login")}>
+                  {authText.alreadyHaveAccount}
+                </button>
               </div>
-              <button className="linkAction" onClick={() => go("login")}>
-                {authText.alreadyHaveAccount}
-              </button>
             </>
           )}
           {view === "otp" && (
