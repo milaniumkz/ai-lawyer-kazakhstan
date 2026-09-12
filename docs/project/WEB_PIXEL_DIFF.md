@@ -7,7 +7,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 01 | `onboarding` | 3.63 |
 | 02 | `login` | 3.27 |
 | 03 | `register` | 5.71 |
-| 04 | `otp` | 3.87 |
+| 04 | `otp` | 3.95 |
 | 05 | `biometric` | 3.54 |
 | 06 | `home` | 3.38 |
 | 07 | `newCase` | 4.23 |
@@ -34,7 +34,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 - 01 `onboarding`: 3.63%
 - 02 `login`: 3.27%
-- 04 `otp`: 3.87%
+- 04 `otp`: 3.95%
 - 05 `biometric`: 3.54%
 - 06 `home`: 3.38%
 - 09 `documentCheck`: 3.77%
