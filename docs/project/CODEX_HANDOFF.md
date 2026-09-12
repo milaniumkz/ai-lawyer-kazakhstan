@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `23 settings` is closed at 1.91% and local settings smoke passed. The current queue starts with `14 claimSend` at rounded 4.00%, then near-threshold polish screens if needed.
+Следующая задача: deploy the completed `14 claimSend` screen, then continue near-threshold polish if requested. Current web pixel report has all 25 dark mobile reference screens at or below 4%; highest remaining margins start with `20 legalSearch` at 3.99% and `16 case` at 3.97%.

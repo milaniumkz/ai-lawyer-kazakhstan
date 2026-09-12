@@ -2,27 +2,23 @@
 
 ## Срез
 
-Web settings screen pixel completion.
+Web claim send screen pixel completion.
 
 ## Статус
 
-DONE -> deployed to public server; public smoke passed.
+DONE locally -> ready for commit/deploy.
 
 ## Scope
 
-- Screen `23 settings` now matches the dark PNG reference under the `<=4%` pixel threshold.
-- Web mobile `mobile-ref-390` diff for `23 settings`: 4.05% -> 1.91%.
-- Settings layout now uses the compact reference-style header, grouped rows, small toggles and profile bottom navigation.
-- Settings actions remain functional: theme switch persists, voice alert toggle persists, privacy masking toggle persists, language action reports state.
-- Current web pixel status: 24 screens at or below 4%, 1 screen still above/at rounded threshold.
-- Public HTTPS server was refreshed from `/tmp/ai-lawyer-kz-settings-screen-final.tar.gz`.
-- Archive SHA-256: `b26a9dcade6b51ca78df176bf9be5d96dd58ba72eba69174d1bde3f294845a1e`.
-- Server install health passed, server `npm run test:audit` found 0 vulnerabilities.
-- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
-- Public Playwright smoke confirmed theme switch, persisted toggles and language action.
+- Screen `14 claimSend` now matches the dark PNG reference under the `<=4%` pixel threshold with margin.
+- Web mobile `mobile-ref-390` diff for `14 claimSend`: 4.003% -> 3.852% (`3.85%` in report).
+- Attachment download control now matches the PNG as a gold inline icon instead of a white square.
+- Claim-send state is persisted: generated claim readiness and user-confirmed send status survive reloads.
+- Claim-send actions remain functional: channel selection, contact edit, message edit, send confirmation and draft save all update real local state.
+- Current web pixel status: 25 screens at or below 4%, 0 screens above threshold.
 - `npm run check` and root `npm run build` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Следующий шаг
 
-Next vertical slice: close `14 claimSend` from rounded 4.00% to clearly below the `<=4%` pixel threshold, then deploy the latest web bundle.
+Next vertical slice: deploy `14 claimSend`, then continue near-threshold polish starting with `20 legalSearch` at 3.99% if more visual margin is required.

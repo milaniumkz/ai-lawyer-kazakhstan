@@ -6493,6 +6493,14 @@ button:disabled {
   .appShell[data-view="claimSend"] .attachmentRow b {
     font-weight: 700;
   }
+  .appShell[data-view="claimSend"] .attachmentRow button {
+    border: 0;
+    background: transparent;
+    color: var(--gold-strong);
+    font-size: 22px;
+    line-height: 1;
+    box-shadow: none;
+  }
   .appShell[data-view="claimSend"] input {
     min-height: 38px;
     margin-bottom: 8px;

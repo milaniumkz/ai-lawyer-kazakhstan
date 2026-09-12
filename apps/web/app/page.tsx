@@ -172,6 +172,8 @@ type SavedState = {
   remoteCaseId: string;
   remoteDocumentId: string;
   generatedClaimBody: string;
+  claimReady: boolean;
+  sent: boolean;
   claimSendContact: string;
   claimSendMessage: string;
   helpStatus: string;
@@ -632,6 +634,8 @@ export default function WebHome() {
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
       if (saved.generatedClaimBody)
         setGeneratedClaimBody(saved.generatedClaimBody);
+      if (typeof saved.claimReady === "boolean") setClaimReady(saved.claimReady);
+      if (typeof saved.sent === "boolean") setSent(saved.sent);
       if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
       if (saved.claimSendMessage) setClaimSendMessage(saved.claimSendMessage);
       if (saved.helpStatus) setHelpStatus(saved.helpStatus);
@@ -682,6 +686,8 @@ export default function WebHome() {
       remoteCaseId,
       remoteDocumentId,
       generatedClaimBody,
+      claimReady,
+      sent,
       claimSendContact,
       claimSendMessage,
       helpStatus,
@@ -723,6 +729,8 @@ export default function WebHome() {
     remoteCaseId,
     remoteDocumentId,
     generatedClaimBody,
+    claimReady,
+    sent,
     claimSendContact,
     claimSendMessage,
     helpStatus,
