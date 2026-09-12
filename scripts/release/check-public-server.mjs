@@ -356,6 +356,10 @@ function canConnect(port) {
 
 await expectPublicWebBundle();
 await expectHttp('/admin');
+await expectHttp('/privacy');
+await expectHttp('/terms');
+await expectHttp('/support');
+await expectHttp('/delete-account');
 await expectHealth('/api/v1/health', 'api');
 await expectHealth('/ai/health', 'ai');
 await expectPublicApiDemo();

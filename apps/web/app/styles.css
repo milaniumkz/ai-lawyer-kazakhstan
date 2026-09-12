@@ -2344,6 +2344,68 @@ button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 .fileInput { display: none; }
 
+.storePage {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(230, 189, 98, 0.12), transparent 32rem),
+    #06111d;
+  color: #f8f4ec;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.storePageCard {
+  width: min(760px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(13, 26, 40, 0.92);
+  box-shadow: var(--shadow);
+  padding: clamp(24px, 5vw, 48px);
+}
+
+.storePageBadge {
+  display: inline-flex;
+  border: 1px solid rgba(230, 189, 98, 0.42);
+  border-radius: 999px;
+  color: var(--gold-strong);
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.storePage h1 {
+  margin: 18px 0 14px;
+  color: var(--gold-strong);
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.04;
+}
+
+.storePage h2 {
+  margin: 28px 0 10px;
+  color: #f8f4ec;
+  font-size: 20px;
+}
+
+.storePage p,
+.storePage li {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.storePage a {
+  color: var(--gold-strong);
+}
+
+.storePageLink {
+  display: inline-flex;
+  margin-top: 22px;
+  border: 1px solid rgba(230, 189, 98, 0.48);
+  border-radius: 14px;
+  padding: 13px 16px;
+  text-decoration: none;
+}
+
 .appShell {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(420px, 620px) minmax(280px, 360px);

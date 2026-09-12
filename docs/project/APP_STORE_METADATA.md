@@ -37,10 +37,11 @@
 
 ## Required URLs
 
-- Support URL: required before review submission.
-- Privacy Policy URL: required before review submission.
-- Terms URL: required before review submission.
-- Account deletion/data export URL or in-app instructions: required before review submission.
+- Support URL: `https://89-207-250-217.sslip.io/support`
+- Privacy Policy URL: `https://89-207-250-217.sslip.io/privacy`
+- Terms URL: `https://89-207-250-217.sslip.io/terms`
+- Account deletion/data export URL: `https://89-207-250-217.sslip.io/delete-account`
+- Replace these RC URLs with the custom production domain when DNS is provided.
 
 ## Screenshot Set
 
@@ -53,5 +54,5 @@
 ## Submission Blockers
 
 - App Store Connect build selection is still manual/external.
-- Metadata fields, screenshots, privacy questionnaire, support/privacy/terms URLs and reviewer contact must be completed in App Store Connect.
+- Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.

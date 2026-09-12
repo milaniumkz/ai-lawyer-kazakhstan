@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store screenshot assets.
+App Store public support/legal URLs.
 
 ## Статус
 
-DONE -> iPhone 6.7 screenshot prep set generated.
+IN PROGRESS -> web pages implemented, checks pending.
 
 ## Scope
 
@@ -28,6 +28,8 @@ DONE -> iPhone 6.7 screenshot prep set generated.
 - Release notes and store submission guide updated with the current iOS state.
 - App Store screenshot prep set generated in `docs/project/app-store-screenshots/iphone-67-dark`.
 - 8 PNG screenshots are `1290x2796` and include login, home, voice intake, category, chat, documents, legal search and subscription.
+- Web public pages added for `/privacy`, `/terms`, `/support` and `/delete-account`.
+- Public release-check now verifies these pages return HTTP 200.
 - `node scripts/release/check-rc-status.mjs` passed before tagging.
 - `npm run release:bundle -- v0.1.0-rc.11` passed.
 - `npm run deploy:package -- /tmp/ai-lawyer-kz-rc11-current.tar.gz` passed and included full check/build gates.
@@ -40,4 +42,4 @@ DONE -> iPhone 6.7 screenshot prep set generated.
 
 ## Следующий шаг
 
-Next vertical slice: capture native iOS screenshots or fill App Store Connect metadata and select the processed build.
+Next vertical slice: deploy the public support/legal URLs and verify them on the server, then continue App Store Connect metadata entry.
