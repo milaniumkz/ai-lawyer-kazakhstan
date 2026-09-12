@@ -20,12 +20,30 @@ const budgetControls = ['70%', '85%', '100%', 'kill switch', 'TTS disable'];
 
 type AuditEvent = { id: string; action: string; correlationId: string; createdAt: string };
 type ProviderConfig = { provider: string; enabled: boolean; killSwitchReason?: string };
+type LegalCategory = { code: string; nameRu: string; children?: LegalCategory[] };
+type ClassificationRecord = {
+  id: string;
+  ownerUserId: string;
+  result: {
+    category_label: string;
+    subcategory_label: string;
+    subcategory_code: string;
+    confidence: number;
+    missing_facts: string[];
+    risk_level: string;
+  };
+  userConfirmed: boolean;
+};
 
 export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
   const [providerStatus, setProviderStatus] = useState('Provider status не загружен');
   const [legalStatus, setLegalStatus] = useState('Legal source import не запускался');
   const [usageStatus, setUsageStatus] = useState('AI usage ledger не записывался');
+  const [categoryStatus, setCategoryStatus] = useState('Категории не загружены');
+  const [reviewStatus, setReviewStatus] = useState('Очередь классификаций не загружена');
+  const [categories, setCategories] = useState<LegalCategory[]>([]);
+  const [reviewQueue, setReviewQueue] = useState<ClassificationRecord[]>([]);
   const [busy, setBusy] = useState(false);
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -103,6 +121,72 @@ export default function AdminHome() {
     }
   }
 
+  async function loadCategoryTree() {
+    setBusy(true);
+    try {
+      const tree = (await apiJson('/admin/legal-categories')) as LegalCategory[];
+      setCategories(tree);
+      const children = tree.reduce((sum, item) => sum + (item.children?.length ?? 0), 0);
+      setCategoryStatus(`Категории: ${tree.length} разделов, ${children} подкатегорий`);
+    } catch (error) {
+      setCategoryStatus(error instanceof Error ? `Category API error: ${error.message}` : 'Category API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadReviewQueue() {
+    setBusy(true);
+    try {
+      const queue = (await apiJson('/admin/classifications/review-queue')) as ClassificationRecord[];
+      setReviewQueue(queue);
+      setReviewStatus(`Очередь: ${queue.length}; first=${queue[0]?.result.subcategory_code ?? 'none'}`);
+    } catch (error) {
+      setReviewStatus(error instanceof Error ? `Review API error: ${error.message}` : 'Review API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmFirstClassification() {
+    const item = reviewQueue[0];
+    if (!item) {
+      setReviewStatus('Нет классификаций для подтверждения');
+      return;
+    }
+    setBusy(true);
+    try {
+      const confirmed = (await apiJson(`/admin/classifications/${item.id}/confirm`, { method: 'POST' })) as ClassificationRecord;
+      setReviewQueue((current) => current.map((record) => (record.id === confirmed.id ? confirmed : record)));
+      setReviewStatus(`Подтверждено: ${confirmed.result.subcategory_code}`);
+    } catch (error) {
+      setReviewStatus(error instanceof Error ? `Confirm API error: ${error.message}` : 'Confirm API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function expertOverrideFirstClassification() {
+    const item = reviewQueue[0];
+    if (!item) {
+      setReviewStatus('Нет классификаций для экспертного исправления');
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = (await apiJson(`/admin/classifications/${item.id}/override`, {
+        method: 'POST',
+        body: JSON.stringify({ subcategoryCode: 'family.divorce', reason: 'admin expert review smoke' }),
+      })) as ClassificationRecord;
+      setReviewQueue((current) => current.map((record) => (record.id === updated.id ? updated : record)));
+      setReviewStatus(`Эксперт исправил: ${updated.result.subcategory_code}`);
+    } catch (error) {
+      setReviewStatus(error instanceof Error ? `Override API error: ${error.message}` : 'Override API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function recordAiUsageFixture() {
     setBusy(true);
     try {
@@ -166,6 +250,29 @@ export default function AdminHome() {
             <span key={status}>{status}</span>
           ))}
         </div>
+      </section>
+      <section className="notice">
+        <strong>Category review</strong>
+        <span>Категории и классификации читаются через admin RBAC; экспертные правки пишутся в feedback.</span>
+        <button disabled={busy} onClick={() => { void loadCategoryTree(); }}>Загрузить категории</button>
+        <small>{categoryStatus}</small>
+        <div className="pills">
+          {categories.slice(0, 8).map((category) => (
+            <span key={category.code}>{category.nameRu}</span>
+          ))}
+        </div>
+        <button disabled={busy} onClick={() => { void loadReviewQueue(); }}>Загрузить review queue</button>
+        <small>{reviewStatus}</small>
+        <div className="queue">
+          {reviewQueue.slice(0, 5).map((item) => (
+            <div key={item.id}>
+              <strong>{item.result.subcategory_label}</strong>
+              <span>{Math.round(item.result.confidence * 100)}% · {item.result.risk_level} · {item.userConfirmed ? 'confirmed' : 'pending'}</span>
+            </div>
+          ))}
+        </div>
+        <button disabled={busy} onClick={() => { void confirmFirstClassification(); }}>Подтвердить первую</button>
+        <button disabled={busy} onClick={() => { void expertOverrideFirstClassification(); }}>Expert override первой</button>
       </section>
       <section className="notice">
         <strong>Documents/evidence</strong>

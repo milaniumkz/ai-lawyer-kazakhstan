@@ -241,6 +241,111 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AuditEvent"
+  /admin/legal-categories:
+    get:
+      operationId: adminListLegalCategoryTree
+      summary: Admin list legal categories as a review tree
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "200":
+          description: Admin legal category tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/LegalCategory"
+                    - type: object
+                      properties:
+                        children:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/LegalCategory"
+  /admin/classifications/review-queue:
+    get:
+      operationId: adminClassificationReviewQueue
+      summary: Admin review queue for unconfirmed, high-risk or incomplete classifications
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "200":
+          description: Classification records requiring admin or expert review
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseClassificationRecord"
+  /admin/classifications/{id}/confirm:
+    post:
+      operationId: adminConfirmClassification
+      summary: Admin confirms a classification after review
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "201":
+          description: Confirmed classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
+  /admin/classifications/{id}/override:
+    post:
+      operationId: adminOverrideClassification
+      summary: Admin or expert corrects a classification and records expert feedback
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subcategoryCode]
+              properties:
+                subcategoryCode:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Expert-corrected classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseClassificationRecord"
   /cases:
     get:
       operationId: listCases

@@ -98,6 +98,10 @@ const adminOperations = new Set([
   'POST /usage/ai',
   'GET /admin/providers',
   'POST /admin/providers',
+  'GET /admin/legal-categories',
+  'GET /admin/classifications/review-queue',
+  'POST /admin/classifications/{id}/confirm',
+  'POST /admin/classifications/{id}/override',
 ]);
 
 for (const [path, pathItem] of Object.entries(openapi.paths ?? {})) {

@@ -85,6 +85,17 @@ describe('AppModule HTTP smoke', () => {
       .send({ caseId: legalCase.body.id, text: 'Хочу подать на алименты на ребёнка' })
       .expect(201);
     expect(classification.body.result.subcategory_code).toBe('family.alimony.child');
+    await request(app.getHttpServer()).get('/api/v1/admin/classifications/review-queue').expect(403);
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/classifications/review-queue')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body.some((item: { id: string }) => item.id === classification.body.id)).toBe(true));
+    await request(app.getHttpServer())
+      .post(`/api/v1/admin/classifications/${classification.body.id}/confirm`)
+      .set('x-user-role', 'admin')
+      .expect(201)
+      .expect(({ body }) => expect(body.userConfirmed).toBe(true));
     await request(app.getHttpServer())
       .post(`/api/v1/ai/classifications/${classification.body.id}/confirm`)
       .set('x-user-id', userId)
@@ -288,10 +299,17 @@ describe('AppModule HTTP smoke', () => {
   it('enforces admin role on admin operations', async () => {
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').expect(403);
     await request(app.getHttpServer()).get('/api/v1/admin/providers').expect(403);
+    await request(app.getHttpServer()).get('/api/v1/admin/legal-categories').expect(403);
+    await request(app.getHttpServer()).post('/api/v1/admin/classifications/00000000-0000-4000-8000-000000000000/confirm').expect(403);
     await request(app.getHttpServer()).post('/api/v1/legal-sources/manual-import').send({}).expect(403);
     await request(app.getHttpServer()).post('/api/v1/usage/ai').send({}).expect(403);
 
     await request(app.getHttpServer()).get('/api/v1/admin/audit-events').set('x-user-role', 'admin').expect(200);
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/legal-categories')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body.some((item: { code: string }) => item.code === 'family')).toBe(true));
     await request(app.getHttpServer())
       .post('/api/v1/admin/providers')
       .set('x-user-role', 'admin')

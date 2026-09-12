@@ -117,6 +117,24 @@ body {
   color: var(--gold-dark);
 }
 
+.queue {
+  display: grid;
+  gap: 8px;
+}
+
+.queue div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.queue span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .tokens {
   overflow: auto;
   margin-top: 16px;

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
+import { assertAdminRole } from '../../common/admin-rbac';
 import { assertSameUser, assertUserId } from '../../common/user-context';
 import { CasesService } from './cases.service';
 
@@ -49,6 +50,12 @@ export class CasesController {
     return this.cases.listLegalCategoryTree();
   }
 
+  @Get('admin/legal-categories')
+  adminListLegalCategoryTree(@Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.listLegalCategoryTree();
+  }
+
   @Get('cases/:caseId')
   getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.getCase(caseId, assertUserId(userId));
@@ -86,6 +93,24 @@ export class CasesController {
   @Post('ai/classifications/:id/override')
   overrideClassification(@Param('id') id: string, @Body() body: { subcategoryCode: string; reason?: string }, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.overrideClassification(id, body, assertUserId(userId));
+  }
+
+  @Get('admin/classifications/review-queue')
+  adminClassificationReviewQueue(@Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminListClassificationReviewQueue();
+  }
+
+  @Post('admin/classifications/:id/confirm')
+  adminConfirmClassification(@Param('id') id: string, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminConfirmClassification(id);
+  }
+
+  @Post('admin/classifications/:id/override')
+  adminOverrideClassification(@Param('id') id: string, @Body() body: { subcategoryCode: string; reason?: string }, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminOverrideClassification(id, body);
   }
 
   @Post('cases/:caseId/messages')

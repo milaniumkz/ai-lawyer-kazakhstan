@@ -139,6 +139,39 @@ export class CasesService {
 
   async overrideClassification(id: string, input: { subcategoryCode: string; reason?: string }, ownerUserId: string) {
     const record = await this.getClassification(id, ownerUserId);
+    return this.applyClassificationOverride(record, input, 'user');
+  }
+
+  async adminListClassificationReviewQueue() {
+    if (this.db && process.env.DATABASE_URL) {
+      const result = await this.db.query<ClassificationRow>(
+        `SELECT * FROM case_classifications
+         WHERE user_confirmed = false OR risk_level = 'high' OR jsonb_array_length(missing_facts) > 0
+         ORDER BY created_at DESC
+         LIMIT 50`,
+      );
+      return result.rows.map(mapClassificationRow);
+    }
+    return [...this.classifications.values()]
+      .filter((item) => !item.userConfirmed || item.result.risk_level === 'high' || item.result.missing_facts.length > 0)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 50);
+  }
+
+  async adminConfirmClassification(id: string) {
+    const record = await this.findClassification(id);
+    if (!record) throw new NotFoundException('CLASSIFICATION_NOT_FOUND');
+    if (record.userConfirmed) return record;
+    return this.persistClassification({ ...record, userConfirmed: true, confirmedAt: new Date().toISOString() });
+  }
+
+  async adminOverrideClassification(id: string, input: { subcategoryCode: string; reason?: string }) {
+    const record = await this.findClassification(id);
+    if (!record) throw new NotFoundException('CLASSIFICATION_NOT_FOUND');
+    return this.applyClassificationOverride(record, input, 'expert');
+  }
+
+  private async applyClassificationOverride(record: ClassificationRecord, input: { subcategoryCode: string; reason?: string }, source: 'user' | 'expert') {
     const category = getLegalCategory(input.subcategoryCode);
     if (!category?.parentId) throw new BadRequestException('UNKNOWN_SUBCATEGORY_CODE');
     const parent = getLegalCategory(category.parentId);
@@ -153,7 +186,7 @@ export class CasesService {
         subcategory_label: category.nameRu,
         confidence: 1,
         alternatives: record.result.alternatives.filter((item) => item.code !== category.code),
-        reasons: ['user_manual_override', input.reason ?? 'user_selected_category'],
+        reasons: [source === 'expert' ? 'expert_manual_override' : 'user_manual_override', input.reason ?? `${source}_selected_category`],
         required_human_review: category.highRisk || category.defaultLegalRoute === 'criminal_high_risk',
         risk_level: category.highRisk ? 'high' : record.result.risk_level,
         risk_flags: category.highRisk ? [...new Set([...record.result.risk_flags, 'high_risk_category'])] : record.result.risk_flags,
@@ -163,7 +196,15 @@ export class CasesService {
       confirmedAt: new Date().toISOString(),
     };
     const stored = await this.persistClassification(updated);
-    const feedbackRecord: ClassificationFeedbackRecord = { id: randomUUID(), classificationId: id, ownerUserId, source: 'user', correctedCategoryCode: category.code, reason: input.reason, createdAt: new Date().toISOString() };
+    const feedbackRecord: ClassificationFeedbackRecord = {
+      id: randomUUID(),
+      classificationId: record.id,
+      ownerUserId: record.ownerUserId,
+      source,
+      correctedCategoryCode: category.code,
+      reason: input.reason,
+      createdAt: new Date().toISOString(),
+    };
     await this.persistFeedback(feedbackRecord);
     return stored;
   }

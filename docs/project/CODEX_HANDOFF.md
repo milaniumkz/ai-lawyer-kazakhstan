@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: implement admin category CRUD and review queues. Classification gate is deployed: PostgreSQL has `legal_categories`, `case_classifications`, `classification_feedback`; public smoke passed for `/legal-categories/tree`, `/ai/classifications`, confirm and case creation. Web and Flutter category screens call classification API before case creation.
+Следующая задача: deploy admin category review queue, then implement safe taxonomy CRUD/versioning. Admin review queue is implemented locally with `/admin/legal-categories`, `/admin/classifications/review-queue`, admin confirm and expert override; `npm run check` passed. Classification gate is already deployed and public-smoked.

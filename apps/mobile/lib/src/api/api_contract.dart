@@ -4,6 +4,10 @@ abstract final class ApiContract {
   static const account = '/account';
   static const accountExport = '/account/export';
   static const adminAuditEvents = '/admin/audit-events';
+  static const adminClassificationsReviewQueue = '/admin/classifications/review-queue';
+  static const adminClassificationsIdConfirm = '/admin/classifications/{id}/confirm';
+  static const adminClassificationsIdOverride = '/admin/classifications/{id}/override';
+  static const adminLegalCategories = '/admin/legal-categories';
   static const adminProviders = '/admin/providers';
   static const aiClassifications = '/ai/classifications';
   static const aiClassificationsId = '/ai/classifications/{id}';

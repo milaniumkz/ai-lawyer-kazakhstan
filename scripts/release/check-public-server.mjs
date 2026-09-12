@@ -186,8 +186,8 @@ async function expectPublicApiDemo() {
       templateId,
       caseId: legalCase.id,
       fields: {
-        claimantName: 'ООО Альфа',
-        respondentName: 'ООО Бета',
+        claimantName: 'ТОО Альфа KZ',
+        respondentName: 'ТОО Бета KZ',
         claimAmount: '1250000',
         claimReason: 'договор займа',
         deadlineDate: '2026-10-01',
