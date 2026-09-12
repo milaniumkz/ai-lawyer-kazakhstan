@@ -6,7 +6,7 @@ Admin category review queue.
 
 ## Статус
 
-READY_FOR_DEPLOY -> admin review API/UI implemented locally; deploy and public smoke pending.
+DONE -> admin review API/UI deployed; public smoke passed.
 
 ## Scope
 
@@ -19,4 +19,4 @@ READY_FOR_DEPLOY -> admin review API/UI implemented locally; deploy and public s
 
 ## Следующий шаг
 
-Deploy admin review queue, run public smoke, then implement safe taxonomy CRUD/versioning.
+Implement safe taxonomy CRUD/versioning.

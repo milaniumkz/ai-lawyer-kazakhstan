@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy admin category review queue, then implement safe taxonomy CRUD/versioning. Admin review queue is implemented locally with `/admin/legal-categories`, `/admin/classifications/review-queue`, admin confirm and expert override; `npm run check` passed. Classification gate is already deployed and public-smoked.
+Следующая задача: implement safe taxonomy CRUD/versioning. Admin review queue is deployed and public-smoked with `/admin/legal-categories`, `/admin/classifications/review-queue`, admin confirm and expert override. Classification gate is deployed and public-smoked.
