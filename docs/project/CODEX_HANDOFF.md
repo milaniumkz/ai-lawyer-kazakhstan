@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. The runner now seeds authenticated profile state for protected screens, so the current honest queue starts with `05 biometric` at 7.22%, then `02 login` at 6.75%, `04 otp` at 6.71%, `03 register` at 5.71%, `17 chat` at 5.39%, `25 help` at 5.06%, `16 case` at 4.88% and `22 profile` at 4.77%.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `05 biometric` is closed at 3.54% and its buttons were smoked. The current queue starts with `02 login` at 6.75%, then `04 otp` at 6.71%, `03 register` at 5.71%, `17 chat` at 5.39%, `25 help` at 5.06%, `16 case` at 4.88%, `22 profile` at 4.77% and `08 category` at 4.27%.

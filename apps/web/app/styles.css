@@ -658,6 +658,7 @@
   }
   .appShell[data-view="biometric"] .deviceFrame {
     min-height: calc(100vh - 8px);
+    border: 0;
     background:
       radial-gradient(circle at 50% 26%, rgba(209, 160, 74, 0.1), transparent 32%),
       #020912;
@@ -670,13 +671,16 @@
     min-height: 685px;
     align-content: start;
     gap: 0;
-    padding: 28px 20px 34px;
+    padding: 22px 20px 34px;
+    border: 0;
+    box-shadow: none;
     overflow: hidden;
   }
   .appShell[data-view="biometric"] .screenHeader {
     grid-template-columns: 40px minmax(0, 1fr) 40px;
     align-items: center;
-    margin-bottom: 28px;
+    margin-bottom: 18px;
+    display: grid;
   }
   .appShell[data-view="biometric"] .screenHeader button {
     width: 36px;
@@ -696,20 +700,89 @@
     display: none;
   }
   .appShell[data-view="biometric"] .authMark {
-    width: 238px;
-    margin: 0 auto 26px;
+    width: 246px;
+    margin: 0 auto 30px;
     border-color: rgba(209, 160, 74, 0.76);
     background:
-      radial-gradient(circle, rgba(255, 228, 154, 0.12), transparent 40%),
-      repeating-radial-gradient(circle, transparent 0 11px, rgba(216, 161, 58, 0.15) 12px 13px);
-    box-shadow: 0 0 0 34px rgba(216, 161, 58, 0.04), inset 0 0 38px rgba(230, 189, 98, 0.08);
+      radial-gradient(circle, rgba(255, 228, 154, 0.14), transparent 38%),
+      repeating-radial-gradient(circle, transparent 0 12px, rgba(216, 161, 58, 0.14) 13px 14px);
+    box-shadow:
+      0 0 0 52px rgba(216, 161, 58, 0.025),
+      inset 0 0 42px rgba(230, 189, 98, 0.08);
   }
   .appShell[data-view="biometric"] .authMark span {
+    position: relative;
     width: 52%;
     background: transparent;
     color: var(--gold-strong);
-    font-size: 58px;
     box-shadow: none;
+  }
+  .appShell[data-view="biometric"] .biometricMark span i {
+    position: absolute;
+    width: 31px;
+    height: 31px;
+    border-color: var(--gold-strong);
+    border-style: solid;
+  }
+  .appShell[data-view="biometric"] .biometricMark span i:nth-child(1) {
+    top: 10px;
+    left: 8px;
+    border-width: 7px 0 0 7px;
+    border-radius: 14px 0 0;
+  }
+  .appShell[data-view="biometric"] .biometricMark span i:nth-child(2) {
+    top: 10px;
+    right: 8px;
+    border-width: 7px 7px 0 0;
+    border-radius: 0 14px 0 0;
+  }
+  .appShell[data-view="biometric"] .biometricMark span i:nth-child(3) {
+    bottom: 10px;
+    left: 8px;
+    border-width: 0 0 7px 7px;
+    border-radius: 0 0 0 14px;
+  }
+  .appShell[data-view="biometric"] .biometricMark span i:nth-child(4) {
+    right: 8px;
+    bottom: 10px;
+    border-width: 0 7px 7px 0;
+    border-radius: 0 0 14px;
+  }
+  .appShell[data-view="biometric"] .biometricMark span b {
+    position: absolute;
+    top: 55px;
+    width: 8px;
+    height: 24px;
+    border-radius: 8px;
+    background: var(--gold-strong);
+  }
+  .appShell[data-view="biometric"] .biometricMark span b:nth-of-type(1) {
+    left: 54px;
+  }
+  .appShell[data-view="biometric"] .biometricMark span b:nth-of-type(2) {
+    right: 54px;
+  }
+  .appShell[data-view="biometric"] .biometricMark span em {
+    position: absolute;
+    left: 50%;
+    bottom: 38px;
+    width: 52px;
+    height: 34px;
+    border-bottom: 7px solid var(--gold-strong);
+    border-radius: 0 0 48px 48px;
+    transform: translateX(-50%);
+  }
+  .appShell[data-view="biometric"] .biometricMark span::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 55px;
+    width: 18px;
+    height: 48px;
+    border-right: 7px solid var(--gold-strong);
+    border-bottom: 7px solid var(--gold-strong);
+    border-radius: 0 0 14px;
+    transform: translateX(-50%);
   }
   .appShell[data-view="biometric"] .panelHeader {
     margin-bottom: 0;
@@ -717,7 +790,7 @@
   }
   .appShell[data-view="biometric"] .panelHeader h2 {
     margin-bottom: 17px;
-    font-size: 33px;
+    font-size: 34px;
     line-height: 1.02;
     white-space: nowrap;
   }
@@ -725,12 +798,12 @@
     max-width: 350px;
     margin: 0 auto 8px;
     color: var(--muted);
-    font-size: 17px;
-    line-height: 1.28;
+    font-size: 18px;
+    line-height: 1.32;
   }
   .appShell[data-view="biometric"] .goldDivider {
     width: 170px;
-    margin: 0 auto 12px;
+    margin: 0 auto 16px;
   }
   .appShell[data-view="biometric"] .heroCta {
     width: calc(100% - 50px);

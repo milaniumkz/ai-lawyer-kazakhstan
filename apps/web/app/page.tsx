@@ -170,6 +170,7 @@ type SavedState = {
   middleName: string;
   city: string;
   profileComplete: boolean;
+  biometricEnabled: boolean;
 };
 
 type SubscriptionPlan = {
@@ -598,6 +599,8 @@ export default function WebHome() {
       if (saved.city) setCity(saved.city);
       if (typeof saved.profileComplete === "boolean")
         setProfileComplete(saved.profileComplete);
+      if (typeof saved.biometricEnabled === "boolean")
+        setBiometricEnabled(saved.biometricEnabled);
       if (typeof saved.maskPii === "boolean") setMaskPii(saved.maskPii);
       if (typeof saved.budgetAlerts === "boolean")
         setBudgetAlerts(saved.budgetAlerts);
@@ -655,6 +658,7 @@ export default function WebHome() {
       middleName,
       city,
       profileComplete,
+      biometricEnabled,
     };
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
   }, [
@@ -685,6 +689,7 @@ export default function WebHome() {
     middleName,
     city,
     profileComplete,
+    biometricEnabled,
   ]);
 
   useEffect(() => {
@@ -1793,6 +1798,22 @@ export default function WebHome() {
     );
   }
 
+  function BiometricMark() {
+    return (
+      <div className="authMark biometricMark" aria-hidden="true">
+        <span>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <b></b>
+          <b></b>
+          <em></em>
+        </span>
+      </div>
+    );
+  }
+
   function AuthDivider() {
     return (
       <div className="goldDivider">
@@ -2052,7 +2073,14 @@ export default function WebHome() {
           )}
           {view === "biometric" && (
             <>
-              <AuthMark icon="⌗" />
+              <div className="screenHeader biometricTop">
+                <button onClick={() => go("login")} aria-label="Назад">
+                  ‹
+                </button>
+                <h2>Быстрый вход</h2>
+                <span />
+              </div>
+              <BiometricMark />
               <Header
                 title={authText.biometricTitle}
                 subtitle={authText.biometricSubtitle}
@@ -2069,7 +2097,7 @@ export default function WebHome() {
               </button>
               <button
                 className="wide outlineGold"
-                onClick={() => go("profile")}
+                onClick={() => go("home")}
               >
                 {authText.later}
               </button>
