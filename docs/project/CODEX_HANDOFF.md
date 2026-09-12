@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy admin manual payment receipt import and run public `release-check:server`, then continue remaining web pixel screens above the 4% threshold. Local gate is complete for `/admin/subscriptions/payments/manual`.
+Следующая задача: continue remaining web pixel screens above the 4% threshold. Admin manual payment import is deployed and public-smoked: `/admin/subscriptions/payments/manual` writes a paid manual receipt, history returns it, and `/subscriptions/current` reflects the paid plan.
