@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `02 login` is closed at 3.27% and local button smoke passed. The current queue starts with `04 otp` at 6.71%, then `03 register` at 5.71%, `17 chat` at 5.39%, `25 help` at 5.06%, `16 case` at 4.88%, `22 profile` at 4.77%, `08 category` at 4.27% and `07 newCase` at 4.23%.
+Следующая задача: close remaining web pixel screens one by one using the corrected visual runner. Screen `04 otp` is closed at 3.87% and local button/input smoke passed. The current queue starts with `03 register` at 5.71%, then `17 chat` at 5.39%, `25 help` at 5.06%, `16 case` at 4.88%, `22 profile` at 4.77%, `08 category` at 4.27%, `07 newCase` at 4.23% and `23 settings` at 4.05%.

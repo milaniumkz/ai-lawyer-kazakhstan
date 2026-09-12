@@ -160,6 +160,10 @@ type SavedState = {
   tasks: TaskItem[];
   selectedCategory: string;
   authUserId: string;
+  phone: string;
+  otp: string;
+  otpId: string;
+  otpHint: string;
   remoteCaseId: string;
   remoteDocumentId: string;
   generatedClaimBody: string;
@@ -607,6 +611,10 @@ export default function WebHome() {
       if (saved.tasks?.length) setTasks(saved.tasks);
       if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
       if (saved.authUserId) setAuthUserId(saved.authUserId);
+      if (saved.phone) setPhone(saved.phone);
+      if (saved.otp) setOtp(saved.otp);
+      if (saved.otpId) setOtpId(saved.otpId);
+      if (saved.otpHint) setOtpHint(saved.otpHint);
       if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
       if (saved.generatedClaimBody)
@@ -648,6 +656,10 @@ export default function WebHome() {
       tasks,
       selectedCategory,
       authUserId,
+      phone,
+      otp,
+      otpId,
+      otpHint,
       remoteCaseId,
       remoteDocumentId,
       generatedClaimBody,
@@ -679,6 +691,10 @@ export default function WebHome() {
     tasks,
     selectedCategory,
     authUserId,
+    phone,
+    otp,
+    otpId,
+    otpHint,
     remoteCaseId,
     remoteDocumentId,
     generatedClaimBody,
@@ -2022,6 +2038,20 @@ export default function WebHome() {
           )}
           {view === "otp" && (
             <>
+              <div className="screenHeader otpTop">
+                <button
+                  onClick={() => {
+                    setOtp("");
+                    setOtpId("");
+                    go("login");
+                  }}
+                  aria-label="Назад"
+                >
+                  ‹
+                </button>
+                <h2>Подтверждение</h2>
+                <span />
+              </div>
               <AuthMark />
               <Header
                 title={authText.otpTitle}

@@ -19,6 +19,7 @@
   }
   .appShell[data-view="otp"] .deviceFrame {
     min-height: calc(100vh - 8px);
+    border: 0;
     background: #020912;
   }
   .appShell[data-view="otp"] .appStatus,
@@ -29,19 +30,20 @@
     min-height: 693px;
     align-content: start;
     gap: 0;
-    padding: 31px 38px 28px;
+    padding: 27px 38px 28px;
+    border: 0;
+    box-shadow: none;
     overflow: hidden;
   }
   .appShell[data-view="otp"] .screenHeader {
     position: relative;
     display: block;
-    margin: 0 0 32px;
-    text-align: center;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    align-items: center;
+    margin: 0 0 28px;
   }
   .appShell[data-view="otp"] .screenHeader button {
-    position: absolute;
-    left: -8px;
-    top: 0;
     width: 28px;
     height: 38px;
     border: 0;
@@ -52,8 +54,9 @@
   }
   .appShell[data-view="otp"] .screenHeader h2 {
     margin: 0;
+    text-align: center;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 31px;
+    font-size: 32px;
     font-weight: 400;
     line-height: 1;
   }
@@ -61,9 +64,9 @@
     display: none;
   }
   .appShell[data-view="otp"] .authMark {
-    width: 152px;
-    height: 156px;
-    margin: 0 auto 7px;
+    width: 148px;
+    height: 150px;
+    margin: 0 auto 12px;
     border: 0;
     border-radius: 50%;
     background: url("/design-assets/otp-scale-art-dark.png") center / contain no-repeat;
@@ -73,12 +76,12 @@
     display: none;
   }
   .appShell[data-view="otp"] .panelHeader {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     text-align: center;
   }
   .appShell[data-view="otp"] .panelHeader h2 {
     margin: 0 0 12px;
-    font-size: 35px;
+    font-size: 36px;
     line-height: 1.02;
     white-space: nowrap;
   }
@@ -86,23 +89,20 @@
     max-width: 300px;
     margin: 0 auto;
     color: #b6bfca;
-    font-size: 27px;
-    line-height: 1.32;
+    font-size: 21px;
+    line-height: 1.22;
+  }
+  .appShell[data-view="otp"] .panelHeader p::after {
+    content: "";
+    display: block;
+    margin-top: 5px;
+    color: var(--gold-strong);
   }
   .appShell[data-view="otp"] .panelHeader p::first-line {
     color: #b6bfca;
   }
   .appShell[data-view="otp"] .recordMeta.otpHint {
-    display: block;
-    width: fit-content;
-    margin: 0 auto 14px;
-    border: 1px solid rgba(216, 163, 60, 0.55);
-    border-radius: 999px;
-    background: rgba(216, 163, 60, 0.12);
-    padding: 8px 14px;
-    color: var(--gold-strong);
-    font-size: 15px;
-    line-height: 1;
+    display: none;
   }
   .appShell[data-view="otp"] .otpInput {
     position: absolute;
@@ -114,10 +114,10 @@
   .appShell[data-view="otp"] .otpBoxes {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 9px;
-    margin: 0 0 18px;
+    margin: 0 -3px 18px;
   }
   .appShell[data-view="otp"] .otpBoxes span {
-    min-height: 57px;
+    min-height: 58px;
     border-color: #d8a33c;
     border-radius: 9px;
     background: rgba(6, 17, 29, 0.58);
@@ -128,7 +128,7 @@
     line-height: 1;
   }
   .appShell[data-view="otp"] .hint {
-    margin: 0 auto 23px;
+    margin: 0 auto 22px;
     color: #b6bfca;
     font-size: 16px;
     line-height: 1.2;
@@ -138,9 +138,9 @@
     font-weight: 400;
   }
   .appShell[data-view="otp"] .heroCta {
-    min-height: 64px;
+    min-height: 66px;
     width: 100%;
-    margin-bottom: 34px;
+    margin-bottom: 27px;
     border-radius: 14px;
     background: linear-gradient(180deg, #f4cf70 0%, #d49a31 100%);
     color: #07111d;
@@ -150,7 +150,7 @@
   }
   .appShell[data-view="otp"] .goldDivider {
     width: 260px;
-    margin: 0 auto 21px;
+    margin: 0 auto 15px;
   }
   .appShell[data-view="otp"] .linkAction {
     width: 100%;

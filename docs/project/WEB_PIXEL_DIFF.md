@@ -7,7 +7,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 | 01 | `onboarding` | 3.63 |
 | 02 | `login` | 3.27 |
 | 03 | `register` | 5.71 |
-| 04 | `otp` | 6.71 |
+| 04 | `otp` | 3.87 |
 | 05 | `biometric` | 3.54 |
 | 06 | `home` | 3.38 |
 | 07 | `newCase` | 4.23 |
@@ -34,6 +34,7 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 - 01 `onboarding`: 3.63%
 - 02 `login`: 3.27%
+- 04 `otp`: 3.87%
 - 05 `biometric`: 3.54%
 - 06 `home`: 3.38%
 - 09 `documentCheck`: 3.77%
@@ -50,7 +51,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 
 ## Next Screen Queue
 
-- 04 `otp`: 6.71%
 - 03 `register`: 5.71%
 - 17 `chat`: 5.39%
 - 25 `help`: 5.06%
@@ -58,5 +58,6 @@ Generated from dark PNG references and web `mobile-ref-390` baselines.
 - 22 `profile`: 4.77%
 - 08 `category`: 4.27%
 - 07 `newCase`: 4.23%
+- 23 `settings`: 4.05%
 
-Note: 10 screens remain above the 4% release threshold.
+Note: 9 screens remain above the 4% release threshold.
