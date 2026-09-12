@@ -268,6 +268,103 @@ paths:
                           type: array
                           items:
                             $ref: "#/components/schemas/LegalCategory"
+  /admin/legal-categories/change-requests:
+    get:
+      operationId: adminListLegalCategoryChangeRequests
+      summary: List legal category change requests
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "200":
+          description: Legal category change requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegalCategoryChangeRequest"
+    post:
+      operationId: adminCreateLegalCategoryChangeRequest
+      summary: Create a safe legal category change request
+      parameters:
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLegalCategoryChangeRequest"
+      responses:
+        "201":
+          description: Created pending change request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCategoryChangeRequest"
+  /admin/legal-categories/change-requests/{id}/approve:
+    post:
+      operationId: adminApproveLegalCategoryChangeRequest
+      summary: Approve and apply a legal category change request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      responses:
+        "201":
+          description: Approved change request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCategoryChangeRequest"
+  /admin/legal-categories/change-requests/{id}/reject:
+    post:
+      operationId: adminRejectLegalCategoryChangeRequest
+      summary: Reject a legal category change request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-user-role
+          required: true
+          schema:
+            type: string
+            enum: [admin, superadmin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Rejected change request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCategoryChangeRequest"
   /admin/classifications/review-queue:
     get:
       operationId: adminClassificationReviewQueue
@@ -1502,6 +1599,84 @@ components:
           type: string
         version:
           type: integer
+    LegalCategoryChangePayload:
+      type: object
+      properties:
+        code:
+          type: string
+        parentCode:
+          type: string
+        nameRu:
+          type: string
+        nameKk:
+          type: string
+        nameEn:
+          type: string
+        descriptionRu:
+          type: string
+        descriptionKk:
+          type: string
+        descriptionEn:
+          type: string
+        active:
+          type: boolean
+        highRisk:
+          type: boolean
+        sortOrder:
+          type: integer
+        requiredFactSchema:
+          type: object
+        requiredDocumentRules:
+          type: object
+        clarificationQuestionTemplates:
+          type: array
+          items:
+            type: object
+        defaultLegalRoute:
+          type: string
+          enum: [civil, administrative, enforcement, criminal_high_risk, manual_review]
+    CreateLegalCategoryChangeRequest:
+      type: object
+      required: [action, categoryCode, payload]
+      properties:
+        action:
+          type: string
+          enum: [create, update]
+        categoryCode:
+          type: string
+        payload:
+          $ref: "#/components/schemas/LegalCategoryChangePayload"
+        reason:
+          type: string
+    LegalCategoryChangeRequest:
+      type: object
+      required: [id, action, categoryCode, payload, status, requestedBy, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [create, update]
+        categoryCode:
+          type: string
+        payload:
+          $ref: "#/components/schemas/LegalCategoryChangePayload"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        reason:
+          type: string
+        requestedBy:
+          type: string
+        reviewedBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: string
+          format: date-time
     CreateClassificationRequest:
       type: object
       required: [text]

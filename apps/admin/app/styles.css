@@ -95,6 +95,16 @@ body {
   font-weight: 800;
 }
 
+.notice input {
+  width: min(520px, 100%);
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 12px;
+}
+
 .notice button:disabled {
   opacity: 0.64;
 }

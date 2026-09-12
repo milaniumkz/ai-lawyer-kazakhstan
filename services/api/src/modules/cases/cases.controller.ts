@@ -56,6 +56,33 @@ export class CasesController {
     return this.cases.listLegalCategoryTree();
   }
 
+  @Post('admin/legal-categories/change-requests')
+  adminCreateLegalCategoryChangeRequest(
+    @Body() body: LegalCategoryChangeRequestBody,
+    @Headers('x-user-role') userRole?: string | string[],
+  ) {
+    assertAdminRole(userRole);
+    return this.cases.adminCreateLegalCategoryChangeRequest(body, Array.isArray(userRole) ? userRole[0] : userRole ?? 'admin');
+  }
+
+  @Get('admin/legal-categories/change-requests')
+  adminListLegalCategoryChangeRequests(@Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminListLegalCategoryChangeRequests();
+  }
+
+  @Post('admin/legal-categories/change-requests/:id/approve')
+  adminApproveLegalCategoryChangeRequest(@Param('id') id: string, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminApproveLegalCategoryChangeRequest(id, Array.isArray(userRole) ? userRole[0] : userRole ?? 'admin');
+  }
+
+  @Post('admin/legal-categories/change-requests/:id/reject')
+  adminRejectLegalCategoryChangeRequest(@Param('id') id: string, @Body() body: { reason?: string }, @Headers('x-user-role') userRole?: string | string[]) {
+    assertAdminRole(userRole);
+    return this.cases.adminRejectLegalCategoryChangeRequest(id, body?.reason, Array.isArray(userRole) ? userRole[0] : userRole ?? 'admin');
+  }
+
   @Get('cases/:caseId')
   getCase(@Param('caseId') caseId: string, @Headers('x-user-id') userId?: string | string[]) {
     return this.cases.getCase(caseId, assertUserId(userId));
@@ -158,3 +185,26 @@ function languageField(field?: MultipartField): 'ru' | 'kk' | 'en' | undefined {
   const value = stringField(field);
   return value === 'ru' || value === 'kk' || value === 'en' ? value : undefined;
 }
+
+type LegalCategoryChangeRequestBody = {
+  action: 'create' | 'update';
+  categoryCode: string;
+  payload: {
+    code?: string;
+    parentCode?: string;
+    nameRu?: string;
+    nameKk?: string;
+    nameEn?: string;
+    descriptionRu?: string;
+    descriptionKk?: string;
+    descriptionEn?: string;
+    active?: boolean;
+    highRisk?: boolean;
+    sortOrder?: number;
+    requiredFactSchema?: Record<string, unknown>;
+    requiredDocumentRules?: Record<string, unknown>;
+    clarificationQuestionTemplates?: Record<string, unknown>[];
+    defaultLegalRoute?: 'civil' | 'administrative' | 'enforcement' | 'criminal_high_risk' | 'manual_review';
+  };
+  reason?: string;
+};

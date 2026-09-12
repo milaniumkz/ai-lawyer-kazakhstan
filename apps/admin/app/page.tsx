@@ -34,6 +34,13 @@ type ClassificationRecord = {
   };
   userConfirmed: boolean;
 };
+type ChangeRequest = {
+  id: string;
+  action: 'create' | 'update';
+  categoryCode: string;
+  payload: Record<string, unknown>;
+  status: 'pending' | 'approved' | 'rejected';
+};
 
 export default function AdminHome() {
   const [auditStatus, setAuditStatus] = useState('Audit events не загружены');
@@ -42,8 +49,12 @@ export default function AdminHome() {
   const [usageStatus, setUsageStatus] = useState('AI usage ledger не записывался');
   const [categoryStatus, setCategoryStatus] = useState('Категории не загружены');
   const [reviewStatus, setReviewStatus] = useState('Очередь классификаций не загружена');
+  const [changeStatus, setChangeStatus] = useState('Change requests не загружены');
   const [categories, setCategories] = useState<LegalCategory[]>([]);
   const [reviewQueue, setReviewQueue] = useState<ClassificationRecord[]>([]);
+  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
+  const [draftCode, setDraftCode] = useState('family.admin_review_test');
+  const [draftName, setDraftName] = useState('Админская тестовая категория');
   const [busy, setBusy] = useState(false);
 
   async function apiJson(path: string, init?: RequestInit) {
@@ -187,6 +198,96 @@ export default function AdminHome() {
     }
   }
 
+  async function createCategoryChangeRequest() {
+    setBusy(true);
+    try {
+      const request = (await apiJson('/admin/legal-categories/change-requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'create',
+          categoryCode: draftCode,
+          reason: 'admin safe taxonomy request',
+          payload: {
+            code: draftCode,
+            parentCode: 'family',
+            nameRu: draftName,
+            nameKk: draftName,
+            nameEn: draftCode,
+            descriptionRu: draftName,
+            descriptionKk: draftName,
+            descriptionEn: draftCode,
+            defaultLegalRoute: 'civil',
+            requiredFactSchema: { fields: ['parties', 'goal'] },
+          },
+        }),
+      })) as ChangeRequest;
+      setChangeRequests((current) => [request, ...current]);
+      setChangeStatus(`Создана заявка: ${request.id.slice(0, 8)}`);
+    } catch (error) {
+      setChangeStatus(error instanceof Error ? `Change API error: ${error.message}` : 'Change API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createCategoryUpdateRequest() {
+    setBusy(true);
+    try {
+      const request = (await apiJson('/admin/legal-categories/change-requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'update',
+          categoryCode: 'family.alimony.child',
+          reason: 'admin safe label update request',
+          payload: {
+            descriptionRu: 'Взыскание алиментов на ребёнка: обновлено через безопасную заявку',
+          },
+        }),
+      })) as ChangeRequest;
+      setChangeRequests((current) => [request, ...current]);
+      setChangeStatus(`Update заявка: ${request.id.slice(0, 8)}`);
+    } catch (error) {
+      setChangeStatus(error instanceof Error ? `Change API error: ${error.message}` : 'Change API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadChangeRequests() {
+    setBusy(true);
+    try {
+      const requests = (await apiJson('/admin/legal-categories/change-requests')) as ChangeRequest[];
+      setChangeRequests(requests);
+      setChangeStatus(`Change requests: ${requests.length}; first=${requests[0]?.status ?? 'none'}`);
+    } catch (error) {
+      setChangeStatus(error instanceof Error ? `Change API error: ${error.message}` : 'Change API error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reviewFirstChangeRequest(action: 'approve' | 'reject') {
+    const item = changeRequests.find((request) => request.status === 'pending');
+    if (!item) {
+      setChangeStatus('Нет pending change request');
+      return;
+    }
+    setBusy(true);
+    try {
+      const reviewed = (await apiJson(`/admin/legal-categories/change-requests/${item.id}/${action}`, {
+        method: 'POST',
+        ...(action === 'reject' ? { body: JSON.stringify({ reason: 'admin rejected from UI' }) } : {}),
+      })) as ChangeRequest;
+      setChangeRequests((current) => current.map((request) => (request.id === reviewed.id ? reviewed : request)));
+      setChangeStatus(`${action === 'approve' ? 'Approved' : 'Rejected'}: ${reviewed.categoryCode}`);
+      if (action === 'approve') void loadCategoryTree();
+    } catch (error) {
+      setChangeStatus(error instanceof Error ? `Review change error: ${error.message}` : 'Review change error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function recordAiUsageFixture() {
     setBusy(true);
     try {
@@ -273,6 +374,26 @@ export default function AdminHome() {
         </div>
         <button disabled={busy} onClick={() => { void confirmFirstClassification(); }}>Подтвердить первую</button>
         <button disabled={busy} onClick={() => { void expertOverrideFirstClassification(); }}>Expert override первой</button>
+      </section>
+      <section className="notice">
+        <strong>Taxonomy changes</strong>
+        <span>Изменения taxonomy проходят через pending request; approve применяет БД и повышает version.</span>
+        <input value={draftCode} onChange={(event) => setDraftCode(event.target.value)} aria-label="Код категории" />
+        <input value={draftName} onChange={(event) => setDraftName(event.target.value)} aria-label="Название категории" />
+        <button disabled={busy} onClick={() => { void createCategoryChangeRequest(); }}>Создать create request</button>
+        <button disabled={busy} onClick={() => { void createCategoryUpdateRequest(); }}>Создать update request</button>
+        <button disabled={busy} onClick={() => { void loadChangeRequests(); }}>Загрузить change requests</button>
+        <small>{changeStatus}</small>
+        <div className="queue">
+          {changeRequests.slice(0, 5).map((item) => (
+            <div key={item.id}>
+              <strong>{item.categoryCode}</strong>
+              <span>{item.action} · {item.status}</span>
+            </div>
+          ))}
+        </div>
+        <button disabled={busy} onClick={() => { void reviewFirstChangeRequest('approve'); }}>Approve pending</button>
+        <button disabled={busy} onClick={() => { void reviewFirstChangeRequest('reject'); }}>Reject pending</button>
       </section>
       <section className="notice">
         <strong>Documents/evidence</strong>

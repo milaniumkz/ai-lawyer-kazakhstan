@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: implement safe taxonomy CRUD/versioning. Admin review queue is deployed and public-smoked with `/admin/legal-categories`, `/admin/classifications/review-queue`, admin confirm and expert override. Classification gate is deployed and public-smoked.
+Следующая задача: deploy safe taxonomy CRUD/versioning. Implemented locally: `legal_category_change_requests`, admin list/create/approve/reject endpoints, DB-first category listing and admin UI controls. `npm run check` and `npm run build` passed; Docker CLI is unavailable.

@@ -2,21 +2,22 @@
 
 ## Срез
 
-Admin category review queue.
+Safe taxonomy CRUD/versioning.
 
 ## Статус
 
-DONE -> admin review API/UI deployed; public smoke passed.
+READY_FOR_DEPLOY -> safe taxonomy change requests implemented locally; deploy and public smoke pending.
 
 ## Scope
 
-- `/api/v1/admin/legal-categories` under admin RBAC.
-- `/api/v1/admin/classifications/review-queue` for unconfirmed, high-risk or incomplete classifications.
-- `/api/v1/admin/classifications/:id/confirm`.
-- `/api/v1/admin/classifications/:id/override` with expert feedback source.
-- Admin UI buttons load categories, load review queue, confirm first item and run expert override.
-- Release check no longer uses РФ legal entity form strings.
+- `legal_category_change_requests` migration.
+- `/api/v1/admin/legal-categories/change-requests` list/create.
+- `/api/v1/admin/legal-categories/change-requests/:id/approve`.
+- `/api/v1/admin/legal-categories/change-requests/:id/reject`.
+- DB-first category listing with local fallback.
+- Admin UI create/update request, list, approve and reject actions.
+- Release smoke covers safe taxonomy create/approve.
 
 ## Следующий шаг
 
-Implement safe taxonomy CRUD/versioning.
+Deploy safe taxonomy change requests, apply migration 0008, run public smoke.

@@ -141,6 +141,47 @@ async function expectPublicApiDemo() {
   });
   if (!Array.isArray(categories) || categories.length < 25) failures.push('/api/v1/case-categories did not return taxonomy');
 
+  const adminCategories = await apiJson('/admin/legal-categories', {
+    headers: { 'x-user-role': 'admin' },
+  });
+  if (!Array.isArray(adminCategories) || adminCategories.length < 10) failures.push('/api/v1/admin/legal-categories did not return category tree');
+
+  const adminCategoryCode = `family.public_release_${Date.now()}`;
+  const changeRequest = await apiJson('/admin/legal-categories/change-requests', {
+    method: 'POST',
+    headers: { 'x-user-role': 'admin' },
+    body: JSON.stringify({
+      action: 'create',
+      categoryCode: adminCategoryCode,
+      reason: 'public release safe taxonomy check',
+      payload: {
+        code: adminCategoryCode,
+        parentCode: 'family',
+        nameRu: 'Публичная проверочная категория',
+        nameKk: 'Жария тексеру санаты',
+        nameEn: 'Public release category',
+        descriptionRu: 'Публичная проверочная категория',
+        descriptionKk: 'Жария тексеру санаты',
+        descriptionEn: 'Public release category',
+        defaultLegalRoute: 'civil',
+      },
+    }),
+  });
+  if (!changeRequest?.id || changeRequest.status !== 'pending') failures.push('/api/v1/admin/legal-categories/change-requests did not create pending request');
+
+  const approvedChange = changeRequest?.id
+    ? await apiJson(`/admin/legal-categories/change-requests/${changeRequest.id}/approve`, {
+        method: 'POST',
+        headers: { 'x-user-role': 'admin' },
+      })
+    : undefined;
+  if (approvedChange?.status !== 'approved') failures.push('/api/v1/admin/legal-categories/change-requests/{id}/approve did not approve request');
+
+  const changeRequests = await apiJson('/admin/legal-categories/change-requests', {
+    headers: { 'x-user-role': 'admin' },
+  });
+  if (!Array.isArray(changeRequests) || !changeRequests.some((item) => item.id === changeRequest?.id)) failures.push('/api/v1/admin/legal-categories/change-requests did not list created request');
+
   const upload = await apiJson('/files/upload-sessions', {
     method: 'POST',
     headers: { 'x-user-id': userId },

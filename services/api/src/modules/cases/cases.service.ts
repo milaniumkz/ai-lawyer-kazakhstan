@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { DatabaseService } from '../../common/database/database.service';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
-import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, classifyStructuredDispute, getLegalCategory, validateStructuredClassification, StructuredClassification } from './case-taxonomy';
+import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, classifyStructuredDispute, getLegalCategory, validateStructuredClassification, LegalCategory, StructuredClassification } from './case-taxonomy';
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
 
@@ -18,6 +18,8 @@ export class CasesService {
   private readonly transcripts = new Map<string, TranscriptJob>();
   private readonly classifications = new Map<string, ClassificationRecord>();
   private readonly feedback = new Map<string, ClassificationFeedbackRecord>();
+  private readonly legalCategories = new Map<string, LegalCategory>(LEGAL_CATEGORIES.map((item) => [item.code, { ...item }]));
+  private readonly categoryChangeRequests = new Map<string, LegalCategoryChangeRequestRecord>();
   private readonly idempotency = new Map<string, LegalCaseRecord>();
 
   constructor(
@@ -77,15 +79,61 @@ export class CasesService {
     return CASE_TAXONOMY;
   }
 
-  listLegalCategories() {
-    return LEGAL_CATEGORIES.map(stripCategoryInternals);
+  async listLegalCategories() {
+    if (this.db && process.env.DATABASE_URL) {
+      const result = await this.db.query<LegalCategoryRow>(
+        `SELECT child.*, parent.code AS parent_code
+         FROM legal_categories child
+         LEFT JOIN legal_categories parent ON parent.id = child.parent_id
+         ORDER BY child.sort_order ASC, child.code ASC`,
+      );
+      return result.rows.map(mapLegalCategoryRow);
+    }
+    return [...this.legalCategories.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code)).map(stripCategoryInternals);
   }
 
-  listLegalCategoryTree() {
-    const categories = this.listLegalCategories();
+  async listLegalCategoryTree() {
+    const categories = await this.listLegalCategories();
     return categories
       .filter((item) => !item.parentId)
       .map((root) => ({ ...root, children: categories.filter((item) => item.parentId === root.code) }));
+  }
+
+  async adminCreateLegalCategoryChangeRequest(input: LegalCategoryChangeRequestInput, requestedBy: string) {
+    const request = this.validateCategoryChangeRequest(input, requestedBy);
+    this.categoryChangeRequests.set(request.id, request);
+    if (this.db && process.env.DATABASE_URL) {
+      await this.db.query(
+        `INSERT INTO legal_category_change_requests
+          (id, action, category_code, payload, status, reason, requested_by, created_at)
+         VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)`,
+        [request.id, request.action, request.categoryCode, JSON.stringify(request.payload), request.status, request.reason ?? null, request.requestedBy, request.createdAt],
+      );
+    }
+    return request;
+  }
+
+  async adminListLegalCategoryChangeRequests() {
+    if (this.db && process.env.DATABASE_URL) {
+      const result = await this.db.query<LegalCategoryChangeRequestRow>('SELECT * FROM legal_category_change_requests ORDER BY created_at DESC LIMIT 100');
+      return result.rows.map(mapLegalCategoryChangeRequestRow);
+    }
+    return [...this.categoryChangeRequests.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100);
+  }
+
+  async adminApproveLegalCategoryChangeRequest(id: string, reviewedBy: string) {
+    const request = await this.findLegalCategoryChangeRequest(id);
+    if (!request) throw new NotFoundException('CATEGORY_CHANGE_REQUEST_NOT_FOUND');
+    if (request.status !== 'pending') return request;
+    await this.applyLegalCategoryChangeRequest(request);
+    return this.markLegalCategoryChangeRequest(request, 'approved', reviewedBy);
+  }
+
+  async adminRejectLegalCategoryChangeRequest(id: string, reason: string | undefined, reviewedBy: string) {
+    const request = await this.findLegalCategoryChangeRequest(id);
+    if (!request) throw new NotFoundException('CATEGORY_CHANGE_REQUEST_NOT_FOUND');
+    if (request.status !== 'pending') return request;
+    return this.markLegalCategoryChangeRequest({ ...request, reason: reason ?? request.reason }, 'rejected', reviewedBy);
   }
 
   async classifyDispute(input: { caseId?: string; conversationId?: string; inputMessageId?: string; text: string }, ownerUserId: string) {
@@ -396,6 +444,172 @@ export class CasesService {
     }
     return record;
   }
+
+  private validateCategoryChangeRequest(input: LegalCategoryChangeRequestInput, requestedBy: string): LegalCategoryChangeRequestRecord {
+    if (input.action !== 'create' && input.action !== 'update') throw new BadRequestException('CATEGORY_ACTION_NOT_ALLOWED');
+    const payload = input.payload ?? {};
+    const code = input.action === 'create' ? payload.code : input.categoryCode;
+    if (!code || !/^[a-z][a-z0-9]*(\.[a-z0-9_]+)+$/.test(code)) throw new BadRequestException('CATEGORY_CODE_INVALID');
+    if (input.action === 'create') {
+      if (!payload.parentCode) throw new BadRequestException('CATEGORY_PARENT_REQUIRED');
+      for (const field of ['nameRu', 'nameKk', 'nameEn', 'descriptionRu', 'descriptionKk', 'descriptionEn', 'defaultLegalRoute'] as const) {
+        if (!payload[field]) throw new BadRequestException(`CATEGORY_${field}_REQUIRED`);
+      }
+    }
+    if (payload.defaultLegalRoute && !['civil', 'administrative', 'enforcement', 'criminal_high_risk', 'manual_review'].includes(payload.defaultLegalRoute)) {
+      throw new BadRequestException('CATEGORY_ROUTE_INVALID');
+    }
+    return {
+      id: randomUUID(),
+      action: input.action,
+      categoryCode: code,
+      payload,
+      status: 'pending',
+      reason: input.reason,
+      requestedBy,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  private async findLegalCategoryChangeRequest(id: string) {
+    if (this.db && process.env.DATABASE_URL) {
+      const result = await this.db.query<LegalCategoryChangeRequestRow>('SELECT * FROM legal_category_change_requests WHERE id = $1', [id]);
+      return result.rows[0] ? mapLegalCategoryChangeRequestRow(result.rows[0]) : undefined;
+    }
+    return this.categoryChangeRequests.get(id);
+  }
+
+  private async applyLegalCategoryChangeRequest(request: LegalCategoryChangeRequestRecord) {
+    if (!this.db || !process.env.DATABASE_URL) {
+      this.applyLocalLegalCategoryChangeRequest(request);
+      return;
+    }
+    if (request.action === 'create') {
+      const parent = await this.db.query<{ id: string }>('SELECT id FROM legal_categories WHERE code = $1 AND active = true', [request.payload.parentCode]);
+      if (!parent.rows[0]) throw new BadRequestException('CATEGORY_PARENT_NOT_FOUND');
+      await this.db.query(
+        `INSERT INTO legal_categories (
+          code, parent_id, name_ru, name_kk, name_en, description_ru, description_kk, description_en,
+          active, high_risk, sort_order, required_fact_schema, required_document_rules,
+          clarification_question_templates, default_legal_route, version
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb, $15, 1)`,
+        [
+          request.payload.code,
+          parent.rows[0].id,
+          request.payload.nameRu,
+          request.payload.nameKk,
+          request.payload.nameEn,
+          request.payload.descriptionRu,
+          request.payload.descriptionKk,
+          request.payload.descriptionEn,
+          request.payload.active ?? true,
+          request.payload.highRisk ?? false,
+          request.payload.sortOrder ?? 500,
+          JSON.stringify(request.payload.requiredFactSchema ?? {}),
+          JSON.stringify(request.payload.requiredDocumentRules ?? {}),
+          JSON.stringify(request.payload.clarificationQuestionTemplates ?? []),
+          request.payload.defaultLegalRoute,
+        ],
+      );
+      return;
+    }
+    const result = await this.db.query(
+      `UPDATE legal_categories SET
+        name_ru = COALESCE($2, name_ru),
+        name_kk = COALESCE($3, name_kk),
+        name_en = COALESCE($4, name_en),
+        description_ru = COALESCE($5, description_ru),
+        description_kk = COALESCE($6, description_kk),
+        description_en = COALESCE($7, description_en),
+        active = COALESCE($8, active),
+        high_risk = COALESCE($9, high_risk),
+        sort_order = COALESCE($10, sort_order),
+        required_fact_schema = COALESCE($11::jsonb, required_fact_schema),
+        required_document_rules = COALESCE($12::jsonb, required_document_rules),
+        clarification_question_templates = COALESCE($13::jsonb, clarification_question_templates),
+        default_legal_route = COALESCE($14, default_legal_route),
+        version = version + 1,
+        updated_at = now()
+       WHERE code = $1`,
+      [
+        request.categoryCode,
+        request.payload.nameRu ?? null,
+        request.payload.nameKk ?? null,
+        request.payload.nameEn ?? null,
+        request.payload.descriptionRu ?? null,
+        request.payload.descriptionKk ?? null,
+        request.payload.descriptionEn ?? null,
+        request.payload.active ?? null,
+        request.payload.highRisk ?? null,
+        request.payload.sortOrder ?? null,
+        request.payload.requiredFactSchema ? JSON.stringify(request.payload.requiredFactSchema) : null,
+        request.payload.requiredDocumentRules ? JSON.stringify(request.payload.requiredDocumentRules) : null,
+        request.payload.clarificationQuestionTemplates ? JSON.stringify(request.payload.clarificationQuestionTemplates) : null,
+        request.payload.defaultLegalRoute ?? null,
+      ],
+    );
+    if (result.rowCount === 0) throw new BadRequestException('CATEGORY_NOT_FOUND');
+  }
+
+  private applyLocalLegalCategoryChangeRequest(request: LegalCategoryChangeRequestRecord) {
+    if (request.action === 'create') {
+      if (!request.payload.parentCode || !this.legalCategories.has(request.payload.parentCode)) throw new BadRequestException('CATEGORY_PARENT_NOT_FOUND');
+      this.legalCategories.set(request.payload.code!, {
+        id: randomUUID(),
+        code: request.payload.code!,
+        parentId: request.payload.parentCode,
+        nameRu: request.payload.nameRu!,
+        nameKk: request.payload.nameKk!,
+        nameEn: request.payload.nameEn!,
+        descriptionRu: request.payload.descriptionRu!,
+        descriptionKk: request.payload.descriptionKk!,
+        descriptionEn: request.payload.descriptionEn!,
+        active: request.payload.active ?? true,
+        highRisk: request.payload.highRisk ?? false,
+        sortOrder: request.payload.sortOrder ?? 500,
+        requiredFactSchema: request.payload.requiredFactSchema ?? {},
+        requiredDocumentRules: request.payload.requiredDocumentRules ?? {},
+        clarificationQuestionTemplates: request.payload.clarificationQuestionTemplates as LegalCategory['clarificationQuestionTemplates'] ?? [],
+        defaultLegalRoute: request.payload.defaultLegalRoute!,
+        version: 1,
+        keywords: [],
+      });
+      return;
+    }
+    const existing = this.legalCategories.get(request.categoryCode);
+    if (!existing) throw new BadRequestException('CATEGORY_NOT_FOUND');
+    this.legalCategories.set(request.categoryCode, {
+      ...existing,
+      nameRu: request.payload.nameRu ?? existing.nameRu,
+      nameKk: request.payload.nameKk ?? existing.nameKk,
+      nameEn: request.payload.nameEn ?? existing.nameEn,
+      descriptionRu: request.payload.descriptionRu ?? existing.descriptionRu,
+      descriptionKk: request.payload.descriptionKk ?? existing.descriptionKk,
+      descriptionEn: request.payload.descriptionEn ?? existing.descriptionEn,
+      active: request.payload.active ?? existing.active,
+      highRisk: request.payload.highRisk ?? existing.highRisk,
+      sortOrder: request.payload.sortOrder ?? existing.sortOrder,
+      requiredFactSchema: request.payload.requiredFactSchema ?? existing.requiredFactSchema,
+      requiredDocumentRules: request.payload.requiredDocumentRules ?? existing.requiredDocumentRules,
+      clarificationQuestionTemplates: request.payload.clarificationQuestionTemplates as LegalCategory['clarificationQuestionTemplates'] ?? existing.clarificationQuestionTemplates,
+      defaultLegalRoute: request.payload.defaultLegalRoute ?? existing.defaultLegalRoute,
+      version: existing.version + 1,
+    });
+  }
+
+  private async markLegalCategoryChangeRequest(request: LegalCategoryChangeRequestRecord, status: 'approved' | 'rejected', reviewedBy: string) {
+    const updated = { ...request, status, reviewedBy, reviewedAt: new Date().toISOString() };
+    this.categoryChangeRequests.set(updated.id, updated);
+    if (this.db && process.env.DATABASE_URL) {
+      await this.db.query(
+        `UPDATE legal_category_change_requests
+         SET status = $2, reason = $3, reviewed_by = $4, reviewed_at = $5
+         WHERE id = $1`,
+        [updated.id, updated.status, updated.reason ?? null, updated.reviewedBy ?? null, updated.reviewedAt ?? null],
+      );
+    }
+    return updated;
+  }
 }
 
 type ClassificationRecord = {
@@ -421,6 +635,44 @@ type ClassificationFeedbackRecord = {
   createdAt: string;
 };
 
+type LegalCategoryChangeRequestInput = {
+  action: 'create' | 'update';
+  categoryCode: string;
+  payload: LegalCategoryChangePayload;
+  reason?: string;
+};
+
+type LegalCategoryChangePayload = {
+  code?: string;
+  parentCode?: string;
+  nameRu?: string;
+  nameKk?: string;
+  nameEn?: string;
+  descriptionRu?: string;
+  descriptionKk?: string;
+  descriptionEn?: string;
+  active?: boolean;
+  highRisk?: boolean;
+  sortOrder?: number;
+  requiredFactSchema?: Record<string, unknown>;
+  requiredDocumentRules?: Record<string, unknown>;
+  clarificationQuestionTemplates?: Record<string, unknown>[];
+  defaultLegalRoute?: 'civil' | 'administrative' | 'enforcement' | 'criminal_high_risk' | 'manual_review';
+};
+
+type LegalCategoryChangeRequestRecord = {
+  id: string;
+  action: 'create' | 'update';
+  categoryCode: string;
+  payload: LegalCategoryChangePayload;
+  status: 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  requestedBy: string;
+  reviewedBy?: string;
+  createdAt: string;
+  reviewedAt?: string;
+};
+
 type ClassificationRow = {
   id: string;
   owner_user_id: string;
@@ -444,6 +696,39 @@ type ClassificationRow = {
   user_overridden: boolean;
   created_at: Date;
   confirmed_at: Date | null;
+};
+
+type LegalCategoryRow = {
+  id: string;
+  code: string;
+  parent_code: string | null;
+  name_ru: string;
+  name_kk: string;
+  name_en: string;
+  description_ru: string;
+  description_kk: string;
+  description_en: string;
+  active: boolean;
+  high_risk: boolean;
+  sort_order: number;
+  required_fact_schema: Record<string, unknown>;
+  required_document_rules: Record<string, unknown>;
+  clarification_question_templates: LegalCategory['clarificationQuestionTemplates'];
+  default_legal_route: LegalCategory['defaultLegalRoute'];
+  version: number;
+};
+
+type LegalCategoryChangeRequestRow = {
+  id: string;
+  action: 'create' | 'update';
+  category_code: string;
+  payload: LegalCategoryChangePayload;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string | null;
+  requested_by: string;
+  reviewed_by: string | null;
+  created_at: Date;
+  reviewed_at: Date | null;
 };
 
 function mapClassificationRow(row: ClassificationRow): ClassificationRecord {
@@ -478,6 +763,43 @@ function mapClassificationRow(row: ClassificationRow): ClassificationRecord {
     userOverridden: row.user_overridden,
     createdAt: row.created_at.toISOString(),
     confirmedAt: row.confirmed_at?.toISOString(),
+  };
+}
+
+function mapLegalCategoryRow(row: LegalCategoryRow): Omit<LegalCategory, 'keywords'> {
+  return {
+    id: row.id,
+    code: row.code,
+    parentId: row.parent_code ?? undefined,
+    nameRu: row.name_ru,
+    nameKk: row.name_kk,
+    nameEn: row.name_en,
+    descriptionRu: row.description_ru,
+    descriptionKk: row.description_kk,
+    descriptionEn: row.description_en,
+    active: row.active,
+    highRisk: row.high_risk,
+    sortOrder: row.sort_order,
+    requiredFactSchema: row.required_fact_schema,
+    requiredDocumentRules: row.required_document_rules,
+    clarificationQuestionTemplates: row.clarification_question_templates,
+    defaultLegalRoute: row.default_legal_route,
+    version: row.version,
+  };
+}
+
+function mapLegalCategoryChangeRequestRow(row: LegalCategoryChangeRequestRow): LegalCategoryChangeRequestRecord {
+  return {
+    id: row.id,
+    action: row.action,
+    categoryCode: row.category_code,
+    payload: row.payload,
+    status: row.status,
+    reason: row.reason ?? undefined,
+    requestedBy: row.requested_by,
+    reviewedBy: row.reviewed_by ?? undefined,
+    createdAt: row.created_at.toISOString(),
+    reviewedAt: row.reviewed_at?.toISOString(),
   };
 }
 

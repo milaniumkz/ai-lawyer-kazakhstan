@@ -310,6 +310,59 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-role', 'admin')
       .expect(200)
       .expect(({ body }) => expect(body.some((item: { code: string }) => item.code === 'family')).toBe(true));
+    const categoryCode = `family.admin_smoke_${Date.now()}`;
+    const createRequest = await request(app.getHttpServer())
+      .post('/api/v1/admin/legal-categories/change-requests')
+      .set('x-user-role', 'admin')
+      .send({
+        action: 'create',
+        categoryCode,
+        reason: 'admin smoke create',
+        payload: {
+          code: categoryCode,
+          parentCode: 'family',
+          nameRu: 'Админская категория',
+          nameKk: 'Админ санаты',
+          nameEn: 'Admin category',
+          descriptionRu: 'Админская категория',
+          descriptionKk: 'Админ санаты',
+          descriptionEn: 'Admin category',
+          defaultLegalRoute: 'civil',
+        },
+      })
+      .expect(201);
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/legal-categories/change-requests')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body.some((item: { id: string; status: string }) => item.id === createRequest.body.id && item.status === 'pending')).toBe(true));
+    await request(app.getHttpServer())
+      .post(`/api/v1/admin/legal-categories/change-requests/${createRequest.body.id}/approve`)
+      .set('x-user-role', 'admin')
+      .expect(201)
+      .expect(({ body }) => expect(body.status).toBe('approved'));
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/legal-categories')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => expect(body.some((item: { children?: { code: string }[] }) => item.children?.some((child) => child.code === categoryCode))).toBe(true));
+    const updateRequest = await request(app.getHttpServer())
+      .post('/api/v1/admin/legal-categories/change-requests')
+      .set('x-user-role', 'admin')
+      .send({ action: 'update', categoryCode, reason: 'admin smoke update', payload: { nameRu: 'Админская категория v2' } })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/v1/admin/legal-categories/change-requests/${updateRequest.body.id}/approve`)
+      .set('x-user-role', 'admin')
+      .expect(201);
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/legal-categories')
+      .set('x-user-role', 'admin')
+      .expect(200)
+      .expect(({ body }) => {
+        const child = body.flatMap((item: { children?: { code: string; nameRu: string; version: number }[] }) => item.children ?? []).find((item: { code: string }) => item.code === categoryCode);
+        expect(child).toMatchObject({ nameRu: 'Админская категория v2', version: 2 });
+      });
     await request(app.getHttpServer())
       .post('/api/v1/admin/providers')
       .set('x-user-role', 'admin')
