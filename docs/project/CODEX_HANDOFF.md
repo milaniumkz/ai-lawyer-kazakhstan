@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: refresh release bundle/checksums or continue Flutter parity/release packaging. Current web pixel report has all 25 dark mobile reference screens at or below 4%. Latest Android release APK is `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, package `kz.milanium.lawyer`, SHA-256 `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`. iOS no-codesign release build passed with bundle `kz.milanium.lawyer`, version `0.1.0 (3)`.
+Следующая задача: upload RC11 bundle/archive to the public server or continue store/TestFlight preparation. Current web pixel report has all 25 dark mobile reference screens at or below 4%. Latest Android release APK is `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, package `kz.milanium.lawyer`, SHA-256 `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`. RC11 QA bundle is `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`, SHA-256 `e74f48069554b853ca76b1c7d8467c05ad569492d983e4bee96bce2f2e2444db`.
