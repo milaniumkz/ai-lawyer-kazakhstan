@@ -146,4 +146,4 @@
 
 ## Следующая задача
 
-Следующая задача: deploy documents/evidence admin review queue, run public `release-check:server`, record evidence, then continue subscription/budget hardening. Local gate for document review queue is complete: `npm run check`, `npm run build`, contract/security/API/admin tests passed; Docker CLI is unavailable locally.
+Следующая задача: subscription/budget hardening or remaining web pixel screens above the 4% threshold. Documents/evidence admin review queue is deployed and public-smoked: `/admin/documents/review-queue`, admin OCR confirm and admin reject are covered by `release-check:server`.

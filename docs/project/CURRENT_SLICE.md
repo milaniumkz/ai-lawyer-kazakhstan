@@ -6,7 +6,7 @@ Documents/evidence admin review queue.
 
 ## Статус
 
-READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
+DONE -> deployed to public server; public smoke passed.
 
 ## Scope
 
@@ -19,4 +19,4 @@ READY_FOR_DEPLOY -> local gate passed; Docker gate unavailable locally.
 
 ## Следующий шаг
 
-Deploy document review queue to the public server, run `release-check:server`, record evidence, then continue with subscription/budget hardening.
+Next vertical slice: subscription/budget hardening or continue remaining web pixel screens above the 4% threshold.
