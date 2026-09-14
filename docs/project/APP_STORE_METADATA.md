@@ -5,9 +5,9 @@
 - App name: `AI Юрист`
 - Bundle ID: `kz.milanium.lawyer`
 - SKU/application domain: Kazakhstan legal assistant
-- Uploaded build: `1.0.1 (4)`
-- Delivery UUID: `ef3eedcd-a218-425e-b0a3-49089327a5a5`
-- Apple processing status: `VALID`
+- Uploaded build: `1.0.1 (5)`
+- Delivery UUID: `95e24444-4153-4fdb-85ae-bcaf835548b1`
+- Apple processing status: uploaded successfully; post-upload build-status request timed out locally, App Store Connect processing must be checked in the portal.
 
 ## RU Listing Draft
 
@@ -54,7 +54,7 @@
 
 ## Submission Blockers
 
-- App Store Connect build selection is still manual/external.
+- App Store Connect build selection is still manual/external after build `1.0.1 (5)` processing appears in the portal.
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
 - RU metadata fields are already uploaded; screenshots, privacy questionnaire and reviewer contact still need manual App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.

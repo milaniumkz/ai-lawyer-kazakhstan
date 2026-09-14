@@ -2,11 +2,11 @@
 
 ## Срез
 
-App Store RU metadata upload.
+Server web refresh + App Store build upload.
 
 ## Статус
 
-DONE -> RU text metadata uploaded and verified.
+DONE -> public web refreshed safely and iOS build uploaded to App Store Connect.
 
 ## Scope
 
@@ -55,7 +55,19 @@ DONE -> RU text metadata uploaded and verified.
 - `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed after current archive install.
 - Direct public mobile login smoke passed at `390x844`.
 - Docker config is blocked locally because Docker CLI is not installed.
+- Current web update archive: `/tmp/ai-lawyer-kz-current-web-update.tar.gz`.
+- Current web update SHA-256: `bda5694a2ce03485b7394c71c46498a7e5fbf0a6518d9971831239c2c526fcc2`.
+- Server archive path: `/opt/ai-lawyer-kz/ai-lawyer-kz-current-web-update.tar.gz`.
+- Server install health passed and server `npm run test:audit` found 0 vulnerabilities.
+- Public HTTPS release check passed after install.
+- Direct public URL smoke passed for `/`, `/privacy`, `/terms`, `/support`, `/delete-account`.
+- iOS IPA built with `flutter build ipa --release --build-name=1.0.1 --build-number=5`.
+- iOS IPA SHA-256: `660e17b6fe0c224747357512fbd2ecbdc8e98600f65d996119c0268d2206d585`.
+- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `5`, iOS `15.0`, and Microphone/Photo Library/Speech Recognition purpose strings.
+- `xcrun altool --validate-app` passed with no errors.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `95e24444-4153-4fdb-85ae-bcaf835548b1`.
+- Follow-up `xcrun altool --build-status` request timed out locally; build processing/selection must be checked in App Store Connect.
 
 ## Следующий шаг
 
-Next vertical slice: select build `1.0.1 (4)` in App Store Connect/TestFlight, upload screenshots and complete privacy/reviewer fields.
+Next vertical slice: check App Store Connect processing for build `1.0.1 (5)`, select the processed build in TestFlight/App Review, upload screenshots and complete privacy/reviewer fields.
