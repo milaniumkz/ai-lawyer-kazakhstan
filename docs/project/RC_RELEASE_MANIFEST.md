@@ -2,7 +2,7 @@
 
 Release: `v0.1.0-rc.11`
 
-Date: 2026-09-14
+Date: 2026-09-21
 
 ## Scope
 
@@ -33,7 +33,7 @@ Date: 2026-09-14
 - Source tag: `v0.1.0-rc.11`
 - QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`
 - Android APK SHA-256: `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`
-- iOS bundle id: `kz.milanium.lawyer`, latest uploaded version `1.0.1 (5)`.
+- iOS bundle id: `kz.milanium.lawyer`, latest uploaded version `1.0.1 (6)`.
 
 ## Not Production Until
 

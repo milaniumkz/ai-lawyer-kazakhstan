@@ -12,7 +12,7 @@
 - Bundle ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
 - Xcode team: `Z3NZN92Y7P`.
-- Current validation/upload: build `1.0.1 (5)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings validated and uploaded to App Store Connect on 2026-09-14; Delivery UUID `95e24444-4153-4fdb-85ae-bcaf835548b1`. Apple accepted the upload; the follow-up build-status request timed out locally, so processing/selection must be checked in App Store Connect.
+- Current validation/upload: build `1.0.1 (6)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings validated and uploaded to App Store Connect on 2026-09-21; Delivery UUID `d42bc057-b4de-4156-8b02-39165a84057a`. Apple accepted the upload; the follow-up build-status request timed out locally, so processing/selection must be checked in App Store Connect.
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
 - Uploaded metadata: RU App Store text/appInfo/copyright uploaded via `xcrun altool --app-store-text` and verified by download.
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.

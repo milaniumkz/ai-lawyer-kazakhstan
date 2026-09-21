@@ -2,11 +2,11 @@
 
 ## Срез
 
-Server web refresh + App Store build upload.
+App Store build upload.
 
 ## Статус
 
-DONE -> public web refreshed safely and iOS build uploaded to App Store Connect.
+DONE -> iOS build uploaded to App Store Connect.
 
 ## Scope
 
@@ -67,7 +67,13 @@ DONE -> public web refreshed safely and iOS build uploaded to App Store Connect.
 - `xcrun altool --validate-app` passed with no errors.
 - `xcrun altool --upload-app` succeeded with Delivery UUID `95e24444-4153-4fdb-85ae-bcaf835548b1`.
 - Follow-up `xcrun altool --build-status` request timed out locally; build processing/selection must be checked in App Store Connect.
+- iOS IPA rebuilt with `flutter build ipa --release --build-name=1.0.1 --build-number=6`.
+- iOS IPA SHA-256: `db79fcad2fbffd3d6907982fe2aa102f328fd4840ff5a55866a41297c75fd983`.
+- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `6`, iOS `15.0`, and Microphone/Photo Library/Speech Recognition purpose strings.
+- `xcrun altool --validate-app` passed with no errors.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `d42bc057-b4de-4156-8b02-39165a84057a`.
+- Follow-up `xcrun altool --build-status` request timed out locally; build processing/selection must be checked in App Store Connect.
 
 ## Следующий шаг
 
-Next vertical slice: check App Store Connect processing for build `1.0.1 (5)`, select the processed build in TestFlight/App Review, upload screenshots and complete privacy/reviewer fields.
+Next vertical slice: check App Store Connect processing for build `1.0.1 (6)`, select the processed build in TestFlight/App Review, upload screenshots and complete privacy/reviewer fields.
