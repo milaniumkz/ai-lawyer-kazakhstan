@@ -76,6 +76,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$APP_ROOT/app/services/ai/app
+EnvironmentFile=-/etc/ai-lawyer-ai.env
 Environment=PYTHONPATH=$APP_ROOT/app/services/ai/app
 ExecStart=$APP_ROOT/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always

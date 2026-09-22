@@ -2,14 +2,19 @@
 
 ## Срез
 
-App Store build upload.
+OpenAI integration.
 
 ## Статус
 
-DONE -> iOS build uploaded to App Store Connect.
+IN_PROGRESS -> backend and AI-service OpenAI provider implemented; deploy verification in progress.
 
 ## Scope
 
+- OpenAI provider added for backend `/api/v1/rag/answer`.
+- OpenAI provider added for AI-service `/ai/rag/safe-answer`.
+- OpenAI calls are guarded by official-source confirmation and use `store=false`.
+- Keys are read only from runtime env: `AI_API_KEY` or `OPENAI_API_KEY`.
+- `.env.example`, deploy runtime and AI model routing docs updated.
 - Release manifest moved to `v0.1.0-rc.11`.
 - Source tag `v0.1.0-rc.11` created from commit `cd12274`.
 - QA release bundle built: `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`.
@@ -76,4 +81,4 @@ DONE -> iOS build uploaded to App Store Connect.
 
 ## Следующий шаг
 
-Next vertical slice: check App Store Connect processing for build `1.0.1 (6)`, select the processed build in TestFlight/App Review, upload screenshots and complete privacy/reviewer fields.
+Next vertical slice: finish OpenAI server deploy smoke, then check App Store Connect processing for build `1.0.1 (6)`.

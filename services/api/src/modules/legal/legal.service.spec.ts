@@ -17,6 +17,17 @@ const fragment = {
 };
 
 describe('LegalService', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    jest.restoreAllMocks();
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
   it('imports official source and confirms matching citation', async () => {
     const service = new LegalService();
     const imported = await service.importFragment(fragment);
@@ -60,6 +71,42 @@ describe('LegalService', () => {
     expect(repository.importFragment).toHaveBeenCalledWith(expect.objectContaining({ checksum: expect.any(String), embeddingVersion: 'stub-v1' }));
     expect(repository.findFragmentByOfficialId).toHaveBeenCalledWith(fragment.officialId);
     expect(repository.searchFragments).toHaveBeenCalledWith('долга');
+  });
+
+  it('uses OpenAI only after an official source is confirmed', async () => {
+    process.env.AI_PROVIDER = 'openai';
+    process.env.AI_API_KEY = 'test-key';
+    process.env.AI_COMPLEX_MODEL = 'gpt-test';
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ output_text: 'Ответ по источнику\nИсточник: https://adilet.zan.kz/rus/docs/test' }),
+    } as Response);
+    const service = new LegalService();
+    await service.importFragment(fragment);
+
+    const result = await service.answer('долга');
+
+    expect(result).toMatchObject({ status: 'confirmed', aiProvider: 'openai', modelId: 'gpt-test' });
+    expect(result.message).toContain('Источник:');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.openai.com/v1/responses',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer test-key' }),
+      }),
+    );
+  });
+
+  it('does not call OpenAI without an official source', async () => {
+    process.env.AI_PROVIDER = 'openai';
+    process.env.AI_API_KEY = 'test-key';
+    const fetchMock = jest.spyOn(global, 'fetch');
+    const service = new LegalService();
+
+    const result = await service.answer('нет источника');
+
+    expect(result.status).toBe('insufficient_authoritative_sources');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

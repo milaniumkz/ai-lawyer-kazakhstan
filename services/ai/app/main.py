@@ -44,12 +44,17 @@ class OcrResponse(BaseModel):
 
 class RagRequest(BaseModel):
     has_confirmed_source: bool = False
+    query: str = ""
+    source_text: str = ""
+    source_url: str = ""
 
 
 class RagResponse(BaseModel):
     status: str
     message: str
     required_action: str | None = None
+    provider: str | None = None
+    model_id: str | None = None
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -71,5 +76,10 @@ def ocr(request: OcrRequest) -> OcrResponse:
 
 @app.post("/rag/safe-answer", response_model=RagResponse)
 def rag_safe_answer(request: RagRequest) -> RagResponse:
-    result = safe_answer(request.has_confirmed_source)
+    result = safe_answer(
+        request.has_confirmed_source,
+        query=request.query,
+        source_text=request.source_text,
+        source_url=request.source_url,
+    )
     return RagResponse(**result.__dict__)

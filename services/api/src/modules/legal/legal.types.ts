@@ -26,4 +26,6 @@ export interface CitationValidationResult {
   message: string;
   requiredAction?: 'clarify_or_human_review';
   fragment?: LegalSourceFragment;
+  aiProvider?: string;
+  modelId?: string;
 }

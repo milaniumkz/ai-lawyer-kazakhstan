@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from classifier import ClassificationRequest, classify_text
 from ocr import OcrRequest, ocr_stub
@@ -29,6 +30,20 @@ class AiClassifierTest(unittest.TestCase):
 
         self.assertEqual(result.status, "insufficient_authoritative_sources")
         self.assertEqual(result.required_action, "clarify_or_human_review")
+
+    @patch.dict("os.environ", {"AI_PROVIDER": "openai", "AI_API_KEY": "test-key", "AI_COMPLEX_MODEL": "gpt-test"})
+    @patch("rag._openai_answer", return_value={"message": "Ответ\nИсточник: https://adilet.zan.kz/test", "model_id": "gpt-test"})
+    def test_rag_uses_openai_only_with_confirmed_source(self, _mock_openai: object) -> None:
+        result = safe_answer(
+            True,
+            query="взыскание долга",
+            source_text="Официальный фрагмент",
+            source_url="https://adilet.zan.kz/test",
+        )
+
+        self.assertEqual(result.status, "confirmed")
+        self.assertEqual(result.provider, "openai")
+        self.assertEqual(result.model_id, "gpt-test")
 
 
 if __name__ == "__main__":

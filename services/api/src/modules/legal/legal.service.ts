@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { CitationValidationResult, LegalSourceFragment } from './legal.types';
+import { generateOpenAiLegalAnswer, isOpenAiLegalEnabled } from './openai-legal.adapter';
 import { LEGAL_REPOSITORY } from './repositories/legal-repository.provider';
 import { LegalRepository } from './repositories/legal.repository';
 
@@ -51,6 +52,26 @@ export class LegalService {
   async answer(query: string) {
     const matches = await this.search(query);
     if (!matches.length) return insufficient();
+    if (isOpenAiLegalEnabled()) {
+      try {
+        const generated = await generateOpenAiLegalAnswer({ query, fragment: matches[0] });
+        return {
+          status: 'confirmed',
+          message: generated.message,
+          fragment: matches[0],
+          aiProvider: generated.provider,
+          modelId: generated.modelId,
+        };
+      } catch {
+        return {
+          status: 'confirmed',
+          message:
+            'Найден подтвержденный официальный источник. AI-провайдер временно недоступен, поэтому вывод требует ручной проверки применимости к фактам.',
+          fragment: matches[0],
+          requiredAction: 'clarify_or_human_review',
+        };
+      }
+    }
     return {
       status: 'confirmed',
       message: 'Найден подтвержденный официальный источник. Итоговый вывод требует проверки применимости к фактам.',
