@@ -38,3 +38,5 @@ Generated on 2026-09-07.
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-current-web-update.tar.gz` | `bda5694a2ce03485b7394c71c46498a7e5fbf0a6518d9971831239c2c526fcc2` |
 | `apps/mobile/build/ios/ipa/AI Юрист.ipa` (`1.0.1+5`) | `660e17b6fe0c224747357512fbd2ecbdc8e98600f65d996119c0268d2206d585` |
 | `apps/mobile/build/ios/ipa/AI Юрист.ipa` (`1.0.1+6`) | `db79fcad2fbffd3d6907982fe2aa102f328fd4840ff5a55866a41297c75fd983` |
+| `/tmp/ai-lawyer-kz-openai-integration-v2.tar.gz` | `c246be7046eb43f8d1974f80bfece33ab927271ebec329b8e981f30b962ebbd6` |
+| `/opt/ai-lawyer-kz/ai-lawyer-kz-openai-integration-v2.tar.gz` | `c246be7046eb43f8d1974f80bfece33ab927271ebec329b8e981f30b962ebbd6` |

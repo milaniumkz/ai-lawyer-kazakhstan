@@ -6,7 +6,7 @@ OpenAI integration.
 
 ## Статус
 
-IN_PROGRESS -> backend and AI-service OpenAI provider implemented; deploy verification in progress.
+DONE -> backend and AI-service OpenAI provider implemented, deployed and publicly smoke-tested.
 
 ## Scope
 
@@ -15,6 +15,13 @@ IN_PROGRESS -> backend and AI-service OpenAI provider implemented; deploy verifi
 - OpenAI calls are guarded by official-source confirmation and use `store=false`.
 - Keys are read only from runtime env: `AI_API_KEY` or `OPENAI_API_KEY`.
 - `.env.example`, deploy runtime and AI model routing docs updated.
+- Deploy archive: `/tmp/ai-lawyer-kz-openai-integration-v2.tar.gz`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-openai-integration-v2.tar.gz`.
+- SHA-256: `c246be7046eb43f8d1974f80bfece33ab927271ebec329b8e981f30b962ebbd6`.
+- Server env configured through `/etc/ai-lawyer-api.env` and `/etc/ai-lawyer-ai.env`.
+- Server install health passed; `ai-lawyer-api`, `ai-lawyer-ai` and `nginx` are active.
+- Public smoke confirmed `/api/v1/rag/answer` returns `aiProvider=openai`, `modelId=gpt-5` and a source-backed answer.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
 - Release manifest moved to `v0.1.0-rc.11`.
 - Source tag `v0.1.0-rc.11` created from commit `cd12274`.
 - QA release bundle built: `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`.
@@ -81,4 +88,4 @@ IN_PROGRESS -> backend and AI-service OpenAI provider implemented; deploy verifi
 
 ## Следующий шаг
 
-Next vertical slice: finish OpenAI server deploy smoke, then check App Store Connect processing for build `1.0.1 (6)`.
+Next vertical slice: rotate the exposed OpenAI key in the OpenAI dashboard, update server env with the replacement key, then check App Store Connect processing for build `1.0.1 (6)`.
