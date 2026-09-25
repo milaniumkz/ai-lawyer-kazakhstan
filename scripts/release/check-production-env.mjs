@@ -78,7 +78,7 @@ for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'FIELD_ENCRYPTION_
 if (json) {
   console.log(JSON.stringify({
     ok: failures.length === 0,
-    source: envFileArg ? path.resolve(envFileArg.split('=')[1]) : 'process.env',
+    source: envFileArg ? 'env-file' : 'process.env',
     checked: required.length + 7,
     failures,
   }, null, 2));

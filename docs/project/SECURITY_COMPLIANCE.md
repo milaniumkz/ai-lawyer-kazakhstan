@@ -9,7 +9,7 @@
 - Legal actions require preview, explicit confirmation, idempotency key and audit event.
 - API errors use the standard safe envelope with `correlationId`.
 - Product source is scanned for obvious hardcoded secrets, unresolved TODO/FIXME/HACK markers and forbidden РФ legal tokens.
-- Production release is blocked unless `scripts/release/check-production-env.mjs` confirms HTTPS public URLs, PostgreSQL persistence, real secrets and non-stub integration modes; `--env-file=... --json` may be used for server runtime files without printing secret values.
+- Production release is blocked unless `scripts/release/check-production-env.mjs` confirms HTTPS public URLs, PostgreSQL persistence, real secrets and non-stub integration modes; `--env-file=... --json` may be used for server runtime files without printing secret values or runtime file paths.
 
 ## Threat Model
 
