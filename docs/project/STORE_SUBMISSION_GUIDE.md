@@ -11,6 +11,7 @@
 - Signing check: `npm run android:signing-check` must pass before Google Play upload; it intentionally fails while the AAB is signed by Android Debug certificate.
 - Production blocker: upload keystore and Play Console access are not provided; current APK/AAB are not production-signed.
 - Required before submission: production-signed AAB, privacy/data safety, screenshots, support URL, privacy URL, data deletion URL, AI disclosure.
+- Combined blocker report: `npm run release:blockers`.
 
 ## iOS
 
