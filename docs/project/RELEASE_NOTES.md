@@ -1,6 +1,6 @@
 # Release Notes Draft
 
-Release candidate: `v0.1.0-rc.14`.
+Release candidate: `v0.1.0-rc.15`.
 
 ## RU
 
@@ -14,7 +14,7 @@ AI-Юрист Қазақстан RC foundation тіркеу, профиль, і�
 
 AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls. RC4 closes placeholder buttons in mobile/web and refreshes the public test web deployment.
 
-RC14 refreshes the release bundle after adding the combined release-blocker report. The bundle includes the current APK, Play-prep AAB, docs, OpenAPI, source archive and release blocker tooling.
+RC15 refreshes the release bundle after adding production env-file validation for prepared server runtime files. The bundle includes the current APK, Play-prep AAB, docs, OpenAPI, source archive and release blocker tooling.
 
 ## Limitations
 
