@@ -176,7 +176,7 @@ const tokenNeedles = [
   ['mobile reference case list', mobileCases, '_ReferenceCaseListTile'],
   ['mobile case detail hero', mobileCases, '_CaseDetailHero'],
   ['mobile chat document button', mobileCases, 'Сформировать документ'],
-  ['mobile reference calendar', mobileLegal, '_ReferenceCalendar'],
+  ['mobile empty deadlines calendar', mobileLegal, '_EmptyDeadlinesCalendar'],
   ['mobile deadlines auto card', mobileLegal, 'Сроки рассчитываются автоматически'],
   ['web popular queries', webCss, '.popularQueries'],
   ['web profile hero', webCss, '.profileHero'],

@@ -212,6 +212,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-deadlines')));
     await tester.pumpAndSettle();
     expect(find.text('Календарь и сроки'), findsOneWidget);
+    expect(find.text('Календарь пуст'), findsOneWidget);
+    expect(find.text('Нет рассчитанных сроков'), findsOneWidget);
+    expect(find.textContaining('15 мая 2024'), findsNothing);
+    expect(find.textContaining('Подать иск'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
     await tester.pumpAndSettle();

@@ -2,18 +2,19 @@
 
 ## Срез
 
-Flutter documents recent uploads real-data parity.
+Flutter deadlines real-data parity.
 
 ## Статус
 
-DONE -> Flutter documents screen no longer shows invented recent files.
+DONE -> Flutter deadlines screen no longer shows invented legal deadline dates.
 
 ## Scope
 
-- Flutter documents screen now shows `Файлы не загружены` until a file is saved through Documents API.
-- After upload, recent uploads display the actual `saved.fileName`.
-- Removed hardcoded `Свидетельство_о_браке.pdf` and `Справка_о_доходах.jpg`.
-- Widget test blocks the removed hardcoded file names and verifies uploaded `claim.pdf` appears from the fake API result.
+- Flutter deadlines screen now shows an empty calendar until a case has confirmed dates.
+- Removed hardcoded May 2024 calendar and fake deadline events.
+- Deadline card now clearly says dates appear only after case creation and confirmed input dates.
+- Design source gate now checks `_EmptyDeadlinesCalendar`.
+- Widget test blocks the removed `15 мая 2024` and `Подать иск` entries.
 - `npm run check` passed.
 - Focused `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test test/home_screen_test.dart` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
@@ -98,4 +99,4 @@ DONE -> Flutter documents screen no longer shows invented recent files.
 
 ## Следующий шаг
 
-Next vertical slice: remove fixed legal deadline dates from Flutter legal/deadlines UI and replace them with confirmed-source or explicit empty states.
+Next vertical slice: rebuild Android release APK after the Flutter real-data parity fixes and update release checksums.
