@@ -5,8 +5,9 @@
 - Application ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
 - Current release artifact: temporary-signed APK at `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`, SHA-256 `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c`.
+- Current Play-prep artifact: debug-signed AAB at `apps/mobile/build/app/outputs/bundle/release/app-release.aab`, SHA-256 `c1e679e519f41ed397080a50adc4f5819968cc967a1dfb0b4934b5499c8548df`.
 - Verified package: `kz.milanium.lawyer`, version `0.1.0 (3)`, min SDK `24`, target SDK `36`, permissions `RECORD_AUDIO` and `INTERNET`.
-- Production blocker: upload keystore and Play Console access are not provided.
+- Production blocker: upload keystore and Play Console access are not provided; current APK/AAB are not production-signed.
 - Required before submission: AAB, privacy/data safety, screenshots, support URL, privacy URL, data deletion URL, AI disclosure.
 
 ## iOS
