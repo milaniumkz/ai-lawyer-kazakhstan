@@ -2,24 +2,20 @@
 
 ## Срез
 
-Public web seeded-flow smoke and server refresh.
+Flutter case detail real-data parity.
 
 ## Статус
 
-DONE -> Public web has a repeatable seeded browser smoke and the server is refreshed from current HEAD.
+DONE -> Flutter case detail no longer shows invented amounts, dates, participants or document counts.
 
 ## Scope
 
-- Added `npm run test:web-public-smoke` for public browser checks across profile, case, documents, subscription, claim send and help.
-- Public smoke verifies empty/real-data states and blocks regressions with invented case amount, dates, documents, subscription usage and fake contacts.
+- Flutter `CaseDetailsScreen` now stores the selected API case in `MobileCaseRuntime.selectCase`.
+- Case detail title/status/category come from the selected API case.
+- Amounts, participants, document counts and key dates show explicit empty states unless present in real data.
+- Widget test now blocks regressions for `1 250 000`, fake April dates and fake document totals.
 - `npm run check` passed.
-- `npm run build --workspace apps/web` passed.
-- `npm run deploy:package -- /tmp/ai-lawyer-kz-public-flow-smoke.tar.gz` passed with full check/build gates.
-- Deploy archive SHA-256: `893f25706025e4ef787c5aa0a6b5679a4efd380d1c9f442e764dab77141d430f`.
-- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-public-flow-smoke.tar.gz`.
-- Server install health passed and server `npm run test:audit` found 0 vulnerabilities.
-- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
-- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run test:web-public-smoke` passed.
+- Focused `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test test/home_screen_test.dart` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -102,4 +98,4 @@ DONE -> Public web has a repeatable seeded browser smoke and the server is refre
 
 ## Следующий шаг
 
-Next vertical slice: continue removing remaining local-only/fake UI fallbacks and bring Flutter parity for any web real-data fixes found by public smoke.
+Next vertical slice: continue scanning Flutter screens for remaining invented dates/default data and replace them with API-backed or explicit empty/blocker states.

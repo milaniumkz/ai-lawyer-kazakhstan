@@ -156,7 +156,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                 _ReferenceCaseListTile(
                   item: item,
                   onTap: () {
-                    MobileCaseRuntime.activeCaseId = item.id;
+                    MobileCaseRuntime.selectCase(item);
                     context.go('/case/details');
                   },
                 ),
@@ -340,7 +340,7 @@ class _CaseDetailHero extends StatelessWidget {
               Text(
                   MobileCaseRuntime.activeCaseId.isEmpty
                       ? 'Нет выбранного дела'
-                      : 'Дело из БД',
+                      : MobileCaseRuntime.activeCaseTitle,
                   style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 4),
               Text(MobileCaseRuntime.activeCaseId.isEmpty
@@ -360,12 +360,21 @@ class _CaseMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const metrics = [
-      (Icons.menu_book_outlined, 'Категория', 'Договоры и долги'),
-      (Icons.gavel_outlined, 'Стадия', 'Досудебная подготовка'),
+    final hasCase = MobileCaseRuntime.activeCaseId.isNotEmpty;
+    final metrics = [
+      (
+        Icons.menu_book_outlined,
+        'Категория',
+        hasCase ? MobileCaseRuntime.activeCaseSubtitle : 'Не загружена из БД'
+      ),
+      (
+        Icons.gavel_outlined,
+        'Статус',
+        hasCase ? MobileCaseRuntime.activeCaseStatus : 'Нет выбранного дела'
+      ),
       (Icons.account_balance_outlined, 'Маршрут', 'Assisted mode'),
-      (Icons.calendar_month_outlined, 'Срок', '15 мая 2024'),
-      (Icons.donut_large_outlined, 'Готовность', '65%'),
+      (Icons.calendar_month_outlined, 'Срок', 'Нет подтвержденного срока'),
+      (Icons.donut_large_outlined, 'Готовность', hasCase ? 'Из API' : '0%'),
     ];
     return Wrap(
       spacing: 8,
@@ -412,20 +421,31 @@ class _DetailsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasCase = MobileCaseRuntime.activeCaseId.isNotEmpty;
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: const [
+      children: [
         _InfoCard(
             title: 'Участники дела',
-            body: 'Истец: ООО «Альфа»\nОтветчик: ООО «Бета»'),
+            body: hasCase
+                ? 'Участники не внесены в базу по этому делу'
+                : 'Откройте дело из списка API/БД'),
         _InfoCard(
             title: 'Сумма и требования',
-            body: 'Основной долг 1 250 000 ₸\nИтого 1 375 000 ₸'),
-        _InfoCard(title: 'Документы', body: 'Всего: 12\nТребуют внимания: 2'),
+            body: hasCase
+                ? 'Сумма не указана в данных дела'
+                : 'Нет выбранного дела'),
+        _InfoCard(
+            title: 'Документы',
+            body: hasCase
+                ? 'Документы загружаются на экране документов'
+                : 'Нет выбранного дела'),
         _InfoCard(
             title: 'Ключевые даты',
-            body: 'Претензия: 18 апр 2024\nПодача в суд: 22 мая 2024'),
+            body: hasCase
+                ? 'Подтвержденные даты не указаны'
+                : 'Нет выбранного дела'),
       ],
     );
   }
@@ -872,6 +892,9 @@ abstract class CaseApiPort {
 
 abstract final class MobileCaseRuntime {
   static String activeCaseId = '';
+  static String activeCaseTitle = '';
+  static String activeCaseSubtitle = '';
+  static String activeCaseStatus = '';
   static String confirmedText = '';
   static String draftCaseId = 'draft-initial';
   static String createdDraftCaseId = '';
@@ -883,11 +906,24 @@ abstract final class MobileCaseRuntime {
     draftCaseId = 'draft-${DateTime.now().microsecondsSinceEpoch}';
     createdDraftCaseId = '';
     activeCaseId = '';
+    activeCaseTitle = '';
+    activeCaseSubtitle = '';
+    activeCaseStatus = '';
     confirmedText = '';
+  }
+
+  static void selectCase(CaseListItem item) {
+    activeCaseId = item.id;
+    activeCaseTitle = item.title;
+    activeCaseSubtitle = item.subtitle;
+    activeCaseStatus = item.status;
   }
 
   static void markCreated(String caseId) {
     activeCaseId = caseId;
+    activeCaseTitle = 'Дело из БД';
+    activeCaseSubtitle = 'Создано из подтвержденного текста';
+    activeCaseStatus = '● В работе';
     createdDraftCaseId = draftCaseId;
   }
 }

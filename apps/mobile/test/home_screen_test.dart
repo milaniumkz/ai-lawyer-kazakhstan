@@ -20,6 +20,9 @@ void main() {
     AuthRuntime.displayName = 'Тестовый пользователь';
     AuthRuntime.profileComplete = false;
     MobileCaseRuntime.activeCaseId = '';
+    MobileCaseRuntime.activeCaseTitle = '';
+    MobileCaseRuntime.activeCaseSubtitle = '';
+    MobileCaseRuntime.activeCaseStatus = '';
     MobileCaseRuntime.confirmedText = '';
     MobileCaseRuntime.draftCaseId = 'draft-initial';
     MobileCaseRuntime.createdDraftCaseId = '';
@@ -250,6 +253,14 @@ void main() {
     await tester.tap(find.text('Дело из API').first);
     await tester.pumpAndSettle();
     expect(find.text('Карточка дела'), findsOneWidget);
+    expect(find.text('Дело из API'), findsOneWidget);
+    expect(find.text('Сумма не указана в данных дела'), findsOneWidget);
+    expect(find.text('Документы загружаются на экране документов'),
+        findsOneWidget);
+    expect(find.text('Подтвержденные даты не указаны'), findsOneWidget);
+    expect(find.textContaining('1 250 000'), findsNothing);
+    expect(find.textContaining('18 апр'), findsNothing);
+    expect(find.textContaining('Всего: 12'), findsNothing);
     expect(find.text('Продолжить работу'), findsOneWidget);
   });
 
