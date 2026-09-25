@@ -8,6 +8,7 @@
 - Uploaded build: `1.0.1 (7)`
 - Delivery UUID: `275d979b-9e7c-425e-891f-53b708797f1c`
 - Apple processing status: `BUILD-STATUS: VALID`.
+- Selected App Store version: `1.0` (`44a3b72a-b7ec-4e71-a664-86f7254ae56e`) is linked to build `275d979b-9e7c-425e-891f-53b708797f1c`.
 
 ## RU Listing Draft
 
@@ -54,7 +55,6 @@
 
 ## Submission Blockers
 
-- App Store Connect build selection is still manual/external after build `1.0.1 (6)` processing appears in the portal.
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
 - RU metadata fields are already uploaded; screenshots, privacy questionnaire and reviewer contact still need manual App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.

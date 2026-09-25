@@ -2,11 +2,11 @@
 
 ## Срез
 
-iOS App Store build upload after Flutter real-data fixes.
+App Store build selection after Flutter real-data fixes.
 
 ## Статус
 
-DONE -> iOS IPA `1.0.1 (7)` built, validated, uploaded and marked VALID by App Store Connect.
+DONE -> App Store version `1.0` now has build `1.0.1 (7)` selected.
 
 ## Scope
 
@@ -19,6 +19,9 @@ DONE -> iOS IPA `1.0.1 (7)` built, validated, uploaded and marked VALID by App S
 - `xcrun altool --validate-app` passed with no errors.
 - `xcrun altool --upload-app` succeeded with Delivery UUID `275d979b-9e7c-425e-891f-53b708797f1c`.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
+- App Store Connect API listed app `6810983647`, appStoreVersion `44a3b72a-b7ec-4e71-a664-86f7254ae56e`, state `PREPARE_FOR_SUBMISSION`.
+- App Store Connect API attached build `275d979b-9e7c-425e-891f-53b708797f1c` to version `1.0` via `PATCH /v1/appStoreVersions/{id}/relationships/build`.
+- Follow-up API read confirms selected build `275d979b-9e7c-425e-891f-53b708797f1c`, processingState `VALID`.
 - Previous `npm run check` passed before the iOS build.
 - Docker config is blocked locally because Docker CLI is not installed.
 
@@ -102,4 +105,4 @@ DONE -> iOS IPA `1.0.1 (7)` built, validated, uploaded and marked VALID by App S
 
 ## Следующий шаг
 
-Next vertical slice: update App Store/TestFlight selection in the portal and continue review metadata/privacy questionnaire.
+Next vertical slice: complete App Store privacy questionnaire, reviewer notes and native screenshot upload.
