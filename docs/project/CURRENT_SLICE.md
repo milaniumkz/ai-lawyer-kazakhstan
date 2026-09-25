@@ -2,23 +2,23 @@
 
 ## Срез
 
-Flutter legal/RAG AI progress parity.
+Flutter pretrial claim AI progress parity.
 
 ## Статус
 
-DONE -> Flutter mobile legal/RAG screen now shows source-backed AI progress before answer use.
+DONE -> Flutter mobile pretrial claim screen now uses real-data AI progress before draft generation.
 
 ## Scope
 
-- Mobile legal screen title changed to `AI поиск нормы`.
-- Added RAG progress card, 5-stage rail and AI/user chat bubbles.
-- AI shows official-source search, citation validation, no-source fallback and answer readiness step-by-step.
-- Citation validation remains an explicit tap action before the answer reaches 100%.
+- Removed invented default respondent/amount/reason values from the claim builder.
+- Added blocker: claim draft generation requires a real current `caseId` and filled claimant/respondent/amount/reason fields.
+- Added claim progress card, 5-stage rail and AI preparation guidance.
+- Draft creation still goes through the real workflow API adapter before opening the draft screen.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `7718845e9720f25059db9b73f25ed875be751af07dd2ba3f77136f7194cc2d23`.
+- APK SHA-256: `520050f0337c9500cf692e52c6e60bd606abf71797b37cea732a196a79b7400a`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +101,4 @@ DONE -> Flutter mobile legal/RAG screen now shows source-backed AI progress befo
 
 ## Следующий шаг
 
-Next vertical slice: apply the same AI-guided progress to legal workflow / pretrial claim screens.
+Next vertical slice: apply the same real-data AI progress to claim draft/send confirmation screens.
