@@ -15,8 +15,9 @@
 - Current validation/upload: build `1.0.1 (7)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings validated and uploaded to App Store Connect on 2026-09-25; Delivery UUID `275d979b-9e7c-425e-891f-53b708797f1c`. Apple returned `BUILD-STATUS: VALID`.
 - Current build selection: App Store Connect API attached build `275d979b-9e7c-425e-891f-53b708797f1c` to App Store version `1.0` (`44a3b72a-b7ec-4e71-a664-86f7254ae56e`).
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
+- Prepared app privacy questionnaire: `docs/project/APP_STORE_PRIVACY_QUESTIONNAIRE.md`.
 - Uploaded metadata: RU App Store text/appInfo/copyright uploaded via `xcrun altool --app-store-text` and verified by download.
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.
 - Native screenshot evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png` captured from iPhone 17 Pro Max simulator after installing `build/ios/iphonesimulator/Runner.app`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: TestFlight check, privacy questionnaire/review, full native iOS screenshot set and reviewer notes.
+- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect, full native iOS screenshot set and reviewer contact/notes.

@@ -37,6 +37,13 @@
 
 `This is a Kazakhstan-focused legal assistant release candidate. Use phone login with the on-screen local RC SMS code. First-time users must complete profile fields before home access. Voice intake uses real microphone permission and records audio before transcript/classification flow. Government/payment/SMS production integrations are intentionally adapter/manual fallback until official credentials are provided. The app includes source guardrails and high-risk escalation and does not claim to replace licensed legal advice.`
 
+## App Privacy Draft
+
+- Prepared questionnaire source: `docs/project/APP_STORE_PRIVACY_QUESTIONNAIRE.md`.
+- Tracking / IDFA / third-party advertising: `No`.
+- Linked data to disclose: phone number, optional email, name, optional address/contact details, customer support, user content, audio data, optional photos/files and internal user ID.
+- RC exclusions: no location, contacts, health, browsing history, outside-app search history, advertising data, third-party analytics/crash SDK data or production purchases.
+
 ## Required URLs
 
 - Support URL: `https://89-207-250-217.sslip.io/support`
@@ -57,5 +64,5 @@
 ## Submission Blockers
 
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
-- RU metadata fields are already uploaded; screenshots, privacy questionnaire and reviewer contact still need manual App Store Connect entry.
+- RU metadata fields are already uploaded; privacy questionnaire draft is prepared; screenshots, privacy questionnaire publication and reviewer contact still need App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.
