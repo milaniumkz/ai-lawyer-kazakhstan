@@ -8,6 +8,7 @@
 - Current Play-prep artifact: debug-signed AAB at `apps/mobile/build/app/outputs/bundle/release/app-release.aab`, SHA-256 `c1e679e519f41ed397080a50adc4f5819968cc967a1dfb0b4934b5499c8548df`.
 - Verified package: `kz.milanium.lawyer`, version `0.1.0 (3)`, min SDK `24`, target SDK `36`, permissions `RECORD_AUDIO` and `INTERNET`.
 - Production signing path: copy `apps/mobile/android/key.properties.example` to ignored `apps/mobile/android/key.properties`, point `storeFile` to the real upload keystore, then rebuild `flutter build appbundle --release`.
+- Signing check: `npm run android:signing-check` must pass before Google Play upload; it intentionally fails while the AAB is signed by Android Debug certificate.
 - Production blocker: upload keystore and Play Console access are not provided; current APK/AAB are not production-signed.
 - Required before submission: production-signed AAB, privacy/data safety, screenshots, support URL, privacy URL, data deletion URL, AI disclosure.
 
