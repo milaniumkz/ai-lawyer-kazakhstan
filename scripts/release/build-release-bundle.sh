@@ -20,6 +20,9 @@ cp docs/project/SERVER_DEPLOYMENT.md "$OUT_DIR/docs/"
 cp docs/project/ARTIFACT_CHECKSUMS.md "$OUT_DIR/docs/"
 cp packages/contracts/openapi.yaml "$OUT_DIR/contracts/"
 cp apps/mobile/build/app/outputs/flutter-apk/app-release.apk "$OUT_DIR/mobile/"
+if [[ -f apps/mobile/build/app/outputs/bundle/release/app-release.aab ]]; then
+  cp apps/mobile/build/app/outputs/bundle/release/app-release.aab "$OUT_DIR/mobile/"
+fi
 
 git archive --format=tar.gz -o "$OUT_DIR/source/ai-lawyer-kz-$VERSION-source.tar.gz" "$VERSION"
 find "$OUT_DIR" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 shasum -a 256 > "$OUT_DIR/SHA256SUMS"

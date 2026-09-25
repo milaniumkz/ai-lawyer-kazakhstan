@@ -1,8 +1,8 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.11`
+Release: `v0.1.0-rc.12`
 
-Date: 2026-09-21
+Date: 2026-09-26
 
 ## Scope
 
@@ -10,7 +10,7 @@ Date: 2026-09-21
 - Admin web app.
 - NestJS API with PostgreSQL persistence.
 - FastAPI AI service in local/stub provider mode.
-- Flutter Android debug/release APKs, branded mobile icons/launch assets and iOS App Store Connect/upload evidence.
+- Flutter Android debug/release APKs, Play-prep AAB, branded mobile icons/launch assets and iOS App Store Connect/upload evidence.
 - Cloud server test deployment with Nginx, systemd, UFW and PostgreSQL backups.
 - Interactive mobile/web RC flows with covered button actions in local/stub mode.
 
@@ -30,10 +30,11 @@ Date: 2026-09-21
 
 ## Source Archive
 
-- Source tag: `v0.1.0-rc.11`
-- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.11-release-bundle.tar.gz`
-- Android APK SHA-256: `0383765b24ac3097e844f81b04c6c48be74bb9078fa7a8e3d75f4b9a9d7b9b8f`
-- iOS bundle id: `kz.milanium.lawyer`, latest uploaded version `1.0.1 (6)`.
+- Source tag: `v0.1.0-rc.12`
+- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.12-release-bundle.tar.gz`
+- Android APK SHA-256: `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c`
+- Android AAB SHA-256: `c1e679e519f41ed397080a50adc4f5819968cc967a1dfb0b4934b5499c8548df` (debug-signed test artifact until upload keystore is provided).
+- iOS bundle id: `kz.milanium.lawyer`, latest selected App Store Connect build `1.0.1 (8)`.
 
 ## Not Production Until
 
@@ -41,4 +42,5 @@ Date: 2026-09-21
 - Production secrets are provided through runtime secret storage.
 - SMS/payment/storage/government integrations receive official credentials.
 - Legal templates and source ingestion are formally approved.
-- App Store Connect processing/build selection/review submission, metadata, screenshots and reviewer notes are completed.
+- App Store reviewer contact phone, privacy questionnaire publication and review submission are completed.
+- Google Play upload keystore and Play Console access are provided.
