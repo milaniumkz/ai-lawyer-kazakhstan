@@ -47,3 +47,4 @@ Generated on 2026-09-07.
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-draft-reset`) | `b04a311d8b2cc74e8c6c273055e81c6818bc9f6892b4eb5efe82f7c6a4e49cf2` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-category-ai-interview`) | `f67b2059e6907ebdb6994644307ac31ef560946859d4f7b097b2774f008cd559` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-documents-ai-review`) | `a53978fb90c239f58a373c56764ee86934e14f0f01b76acbb6283b19fd0e7754` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-legal-rag-ai-progress`) | `7718845e9720f25059db9b73f25ed875be751af07dd2ba3f77136f7194cc2d23` |

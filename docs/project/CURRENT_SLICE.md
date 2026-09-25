@@ -2,23 +2,23 @@
 
 ## Срез
 
-Flutter documents AI review parity.
+Flutter legal/RAG AI progress parity.
 
 ## Статус
 
-DONE -> Flutter mobile documents/OCR screen now uses AI-guided progress before analysis.
+DONE -> Flutter mobile legal/RAG screen now shows source-backed AI progress before answer use.
 
 ## Scope
 
-- Mobile documents screen title changed to `AI проверка документов`.
-- Added document progress card, 5-stage rail and AI chat/request bubbles.
-- AI asks for concrete documents, then OCR confirmation, then analysis.
-- `Анализировать документы` now blocks until upload/OCR is confirmed instead of jumping ahead.
+- Mobile legal screen title changed to `AI поиск нормы`.
+- Added RAG progress card, 5-stage rail and AI/user chat bubbles.
+- AI shows official-source search, citation validation, no-source fallback and answer readiness step-by-step.
+- Citation validation remains an explicit tap action before the answer reaches 100%.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `a53978fb90c239f58a373c56764ee86934e14f0f01b76acbb6283b19fd0e7754`.
+- APK SHA-256: `7718845e9720f25059db9b73f25ed875be751af07dd2ba3f77136f7194cc2d23`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +101,4 @@ DONE -> Flutter mobile documents/OCR screen now uses AI-guided progress before a
 
 ## Следующий шаг
 
-Next vertical slice: apply the same AI-guided progress to legal/RAG answers so citations and no-source fallback are visible step-by-step.
+Next vertical slice: apply the same AI-guided progress to legal workflow / pretrial claim screens.
