@@ -21,6 +21,31 @@ function summarizeOutput(text) {
   return lines.slice(-12).join('\n');
 }
 
+function parseJsonOutput(text) {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return null;
+    try {
+      return JSON.parse(text.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractBlockers(check) {
+  const text = check.ok ? check.stdout : `${check.stdout}\n${check.stderr}`;
+  const json = parseJsonOutput(text);
+  if (Array.isArray(json?.blockers)) return json.blockers;
+  if (Array.isArray(json?.failures)) return json.failures;
+  if (json?.message) return [json.message];
+  return check.ok ? [] : summarizeOutput(text).split('\n').filter(Boolean);
+}
+
 const productionEnvArgs = ['scripts/release/check-production-env.mjs', '--json'];
 if (process.env.RELEASE_BLOCKERS_ENV_FILE) {
   productionEnvArgs.push(`--env-file=${process.env.RELEASE_BLOCKERS_ENV_FILE}`);
@@ -36,13 +61,17 @@ const checks = [
 
 const report = {
   ok: checks.every((check) => check.ok),
-  checks: checks.map((check) => ({
-    name: check.name,
-    ok: check.ok,
-    exitCode: check.exitCode,
-    source: check.name === 'productionEnv' && process.env.RELEASE_BLOCKERS_ENV_FILE ? 'env-file' : undefined,
-    summary: summarizeOutput(check.ok ? check.stdout : `${check.stdout}\n${check.stderr}`),
-  })),
+  checks: checks.map((check) => {
+    const text = check.ok ? check.stdout : `${check.stdout}\n${check.stderr}`;
+    return {
+      name: check.name,
+      ok: check.ok,
+      exitCode: check.exitCode,
+      source: check.name === 'productionEnv' && process.env.RELEASE_BLOCKERS_ENV_FILE ? 'env-file' : undefined,
+      blockers: extractBlockers(check),
+      summary: summarizeOutput(text),
+    };
+  }),
 };
 
 console.log(JSON.stringify(report, null, 2));
