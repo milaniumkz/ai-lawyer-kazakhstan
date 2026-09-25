@@ -2,26 +2,24 @@
 
 ## Срез
 
-Web case/document empty-state deploy.
+Public web seeded-flow smoke and server refresh.
 
 ## Статус
 
-DONE -> Public web now avoids invented case/document/deadline samples and is deployed.
+DONE -> Public web has a repeatable seeded browser smoke and the server is refreshed from current HEAD.
 
 ## Scope
 
-- Web case details now show only profile/case/documents/tasks from current state, not fake amount or dates.
-- Web documents screen now shows upload/API empty states instead of hardcoded files.
-- Web document check/analysis now uses generic required-doc blockers and real uploaded document counts.
-- Web chat attachment appears only after a generated claim exists.
-- Web screenshot seed no longer uses real personal names.
+- Added `npm run test:web-public-smoke` for public browser checks across profile, case, documents, subscription, claim send and help.
+- Public smoke verifies empty/real-data states and blocks regressions with invented case amount, dates, documents, subscription usage and fake contacts.
 - `npm run check` passed.
 - `npm run build --workspace apps/web` passed.
-- `npm run deploy:package -- /tmp/ai-lawyer-kz-web-empty-states.tar.gz` passed with full check/build gates.
-- Deploy archive SHA-256: `361b80cd0884925fd94ba7a53d5e8bc0a56e4d230a91fae112fe544321595337`.
-- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-web-empty-states.tar.gz`.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-public-flow-smoke.tar.gz` passed with full check/build gates.
+- Deploy archive SHA-256: `893f25706025e4ef787c5aa0a6b5679a4efd380d1c9f442e764dab77141d430f`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-public-flow-smoke.tar.gz`.
 - Server install health passed and server `npm run test:audit` found 0 vulnerabilities.
 - `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run test:web-public-smoke` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -104,4 +102,4 @@ DONE -> Public web now avoids invented case/document/deadline samples and is dep
 
 ## Следующий шаг
 
-Next vertical slice: browser smoke all public web flows after auth/profile seed, then close remaining UI regressions.
+Next vertical slice: continue removing remaining local-only/fake UI fallbacks and bring Flutter parity for any web real-data fixes found by public smoke.
