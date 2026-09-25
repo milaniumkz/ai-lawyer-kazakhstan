@@ -21,11 +21,16 @@ function summarizeOutput(text) {
   return lines.slice(-12).join('\n');
 }
 
+const productionEnvArgs = ['scripts/release/check-production-env.mjs', '--json'];
+if (process.env.RELEASE_BLOCKERS_ENV_FILE) {
+  productionEnvArgs.push(`--env-file=${process.env.RELEASE_BLOCKERS_ENV_FILE}`);
+}
+
 const checks = [
   run('androidSigning', 'npm', ['run', 'android:signing-check', '--silent']),
   run('appStoreReadiness', 'npm', ['run', 'app-store:readiness', '--silent']),
   run('appStoreReviewPlan', 'npm', ['run', 'app-store:review-plan', '--silent']),
-  run('productionEnv', 'npm', ['run', 'release-check:production-env', '--silent']),
+  run('productionEnv', 'node', productionEnvArgs),
   run('dockerConfigAvailable', 'npm', ['run', 'docker:config', '--silent']),
 ];
 
@@ -35,6 +40,7 @@ const report = {
     name: check.name,
     ok: check.ok,
     exitCode: check.exitCode,
+    source: check.name === 'productionEnv' && process.env.RELEASE_BLOCKERS_ENV_FILE ? 'env-file' : undefined,
     summary: summarizeOutput(check.ok ? check.stdout : `${check.stdout}\n${check.stderr}`),
   })),
 };
