@@ -159,7 +159,7 @@ void main() {
       ['/documents', 'Документы и доказательства'],
       ['/documents/analysis', 'Анализ документов'],
       ['/deadlines', 'Календарь и сроки'],
-      ['/legal', 'Официальные источники РК'],
+      ['/legal', 'AI поиск нормы'],
       ['/workflow/pretrial-claim', 'Формирование претензии'],
       ['/workflow/pretrial-claim/draft', 'Проект досудебной претензии'],
       ['/workflow/pretrial-claim/send', 'Отправка претензии'],
@@ -265,23 +265,36 @@ void main() {
   });
 
   testWidgets('shows legal citation guardrails screen', (tester) async {
+    await setLargeViewport(tester);
     final api = _FakeLegalApi();
     await tester
         .pumpWidget(MaterialApp(home: LegalSourcesScreen(legalApi: api)));
 
-    expect(find.text('Официальные источники РК'), findsOneWidget);
+    expect(find.text('AI поиск нормы'), findsOneWidget);
+    expect(find.textContaining('RAG · этап'), findsOneWidget);
+    expect(find.textContaining('Нет подтвержденной нормы без источника'),
+        findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Citation Validator'),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Citation Validator'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Найти норму'));
     await tester.pumpAndSettle();
     expect(find.text('Норма найдена'), findsOneWidget);
+    expect(find.textContaining('Источник подтвержден'), findsOneWidget);
     expect(api.answeredQuery, 'взыскание долга по расписке');
 
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Citation Validator'),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Citation Validator'));
     await tester.pumpAndSettle();
-    expect(find.text('Цитата проверена API'), findsOneWidget);
+    expect(find.text('Цитата проверена API'), findsWidgets);
     expect(api.validatedFragmentId, 'fragment-1');
   });
 

@@ -25,6 +25,35 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
   var answer = 'Введите вопрос и нажмите найти норму.';
   LegalAnswerFragment? fragment;
 
+  int progressValue() {
+    if (busy) return 45;
+    if (fragment != null) return answer.contains('Цитата проверена') ? 100 : 82;
+    if (searched) return 64;
+    return 18;
+  }
+
+  List<({String title, bool done})> ragStages() => [
+        (title: '1. Вопрос', done: queryController.text.trim().isNotEmpty),
+        (title: '2. Источники', done: searched),
+        (title: '3. Проверка', done: fragment != null),
+        (title: '4. Цитата', done: answer.contains('Цитата проверена')),
+        (title: '5. Ответ', done: searched && !busy),
+      ];
+
+  String nextAiStep() {
+    if (busy) return 'Ищу официальные источники РК и сверяю применимость.';
+    if (!searched) {
+      return 'Введите вопрос. Я отвечу только при наличии подтвержденного официального источника.';
+    }
+    if (fragment == null) {
+      return 'Нет подтвержденной нормы. Нужна ручная проверка или уточнение вопроса.';
+    }
+    if (!answer.contains('Цитата проверена')) {
+      return 'Источник найден. Проверьте цитату перед использованием в документе.';
+    }
+    return 'Цитата проверена. Ответ можно использовать как источник для проекта документа.';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -82,11 +111,27 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Официальные источники РК',
+              'AI поиск нормы',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(color: AppColors.goldDark),
+            ),
+            const SizedBox(height: 16),
+            _RagProgressCard(
+              progress: progressValue(),
+              subtitle: fragment == null
+                  ? 'Официальные источники РК · проверка обязательна'
+                  : 'Источник найден · ${fragment!.sourceUrl}',
+            ),
+            const SizedBox(height: 12),
+            _RagStageRail(items: ragStages()),
+            const SizedBox(height: 12),
+            _RagChatCard(
+              question: queryController.text.trim(),
+              step: nextAiStep(),
+              answer: answer,
+              hasSource: fragment != null,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -384,6 +429,154 @@ class _SafeRefusalCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RagProgressCard extends StatelessWidget {
+  const _RagProgressCard({required this.progress, required this.subtitle});
+
+  final int progress;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.gold),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    child: Text(
+                        'RAG · этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
+                Text('$progress%',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: AppColors.goldDark)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress / 100),
+            const SizedBox(height: 8),
+            Text(subtitle),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RagStageRail extends StatelessWidget {
+  const _RagStageRail({required this.items});
+
+  final List<({String title, bool done})> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          Chip(
+            avatar: Icon(
+              item.done ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+            ),
+            label: Text(item.title),
+            side:
+                BorderSide(color: item.done ? AppColors.gold : Colors.white24),
+          ),
+      ],
+    );
+  }
+}
+
+class _RagChatCard extends StatelessWidget {
+  const _RagChatCard({
+    required this.question,
+    required this.step,
+    required this.answer,
+    required this.hasSource,
+  });
+
+  final String question;
+  final String step;
+  final String answer;
+  final bool hasSource;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _RagBubble(
+          title: 'Вы',
+          text: question.isEmpty ? 'Вопрос еще не введен.' : question,
+          user: true,
+        ),
+        _RagBubble(
+          title: 'AI Юрист',
+          text: step,
+          footer: hasSource
+              ? 'Источник подтвержден'
+              : 'Нет подтвержденной нормы без источника',
+        ),
+        if (answer.isNotEmpty)
+          _RagBubble(
+            title: hasSource ? 'Ответ с источником' : 'Guardrail',
+            text: answer,
+          ),
+      ],
+    );
+  }
+}
+
+class _RagBubble extends StatelessWidget {
+  const _RagBubble({
+    required this.title,
+    required this.text,
+    this.footer,
+    this.user = false,
+  });
+
+  final String title;
+  final String text;
+  final String? footer;
+  final bool user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
+      child: Card(
+        color: user ? AppColors.gold.withValues(alpha: 0.12) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      color: AppColors.gold, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text(text),
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                Text(footer!, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ],
+          ),
         ),
       ),
     );
