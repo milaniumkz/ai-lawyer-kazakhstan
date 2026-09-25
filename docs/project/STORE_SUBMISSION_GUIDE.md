@@ -17,5 +17,6 @@
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
 - Uploaded metadata: RU App Store text/appInfo/copyright uploaded via `xcrun altool --app-store-text` and verified by download.
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.
+- Native screenshot evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png` captured from iPhone 17 Pro Max simulator after installing `build/ios/iphonesimulator/Runner.app`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: TestFlight check, privacy questionnaire/review, native iOS screenshots and reviewer notes.
+- Required before submission/review: TestFlight check, privacy questionnaire/review, full native iOS screenshot set and reviewer notes.

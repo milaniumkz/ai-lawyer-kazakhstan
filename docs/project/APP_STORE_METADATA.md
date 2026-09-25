@@ -48,10 +48,11 @@
 ## Screenshot Set
 
 - Prepared iPhone 6.7" dark set: `docs/project/app-store-screenshots/iphone-67-dark`, 8 PNG files at `1290x2796`.
+- Native iOS simulator evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png`, iPhone 17 Pro Max simulator, `1320x2868`.
 - iPhone 6.7": login, home voice, case intake, category, chat, documents, legal search, subscription.
 - iPhone 6.5": same set if App Store Connect requires fallback size.
 - iPad: not required unless iPad support is enabled.
-- Final public submission should use native iOS simulator/device screenshots after TestFlight smoke.
+- Final public submission still needs the full native iOS screenshot set after TestFlight smoke.
 
 ## Submission Blockers
 

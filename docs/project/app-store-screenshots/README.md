@@ -24,3 +24,11 @@ All PNG files are `1290x2796`.
 - These are review-prep screenshots for App Store Connect upload.
 - They use the validated dark mobile web layout, not static design PNGs as UI.
 - Native Flutter screenshots should still be captured from a real iOS simulator/device before final public App Store submission.
+
+## Native iOS Simulator Evidence
+
+Directory: `docs/project/app-store-screenshots/ios-simulator-native`
+
+| File | Device | Size | SHA-256 |
+|---|---|---:|---|
+| `01-login-native.png` | iPhone 17 Pro Max simulator, iOS 26.0 | `1320x2868` | `7eb82a27605d0dab4082158a9fabce9fdf4e54b8bafb30c1804a87225364b5d5` |
