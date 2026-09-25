@@ -2,23 +2,24 @@
 
 ## Срез
 
-Flutter claim draft/send confirmation parity.
+Flutter profile/settings/subscription real-data parity.
 
 ## Статус
 
-DONE -> Flutter mobile claim draft/send screens now use explicit confirmation and assisted-send status.
+DONE -> Flutter profile/settings/subscription/help screens now avoid invented personal/payment data.
 
 ## Scope
 
-- Claim draft screen now shows progress, stage rail and user confirmation blocker before send.
-- Claim send screen now requires a real recipient contact before recording send status.
-- Send channel is selectable and updates local state.
-- Fake recipient/contact/file-size data was removed; send remains assisted/manual instead of pretending official delivery.
+- Login starts with only `+7`, no invented phone number.
+- Registration/profile city/address defaults are empty; profile completion is calculated from actual entered/API state.
+- Profile hero no longer invents a person name or confirmed status.
+- Subscription usage cards now reflect Billing API state instead of fixed fake counts/date.
+- Help topics are selectable and support remains adapter/manual.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `f224df5fdda193bd77ae10cd704b497e643ee8ea46209b3894a68eaa32b3164c`.
+- APK SHA-256: `732b46cee502eae1aed33057b2b45a3bc4c9ffc33caff91eb04c8ae5581df817`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +102,4 @@ DONE -> Flutter mobile claim draft/send screens now use explicit confirmation an
 
 ## Следующий шаг
 
-Next vertical slice: apply the same real-data AI progress to profile/settings/subscription/help screens.
+Next vertical slice: web/mobile auth and profile parity pass, then public deploy.

@@ -50,3 +50,4 @@ Generated on 2026-09-07.
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-legal-rag-ai-progress`) | `7718845e9720f25059db9b73f25ed875be751af07dd2ba3f77136f7194cc2d23` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-pretrial-claim-ai-progress`) | `520050f0337c9500cf692e52c6e60bd606abf71797b37cea732a196a79b7400a` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-claim-draft-send-confirmation`) | `f224df5fdda193bd77ae10cd704b497e643ee8ea46209b3894a68eaa32b3164c` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-profile-subscription-real-data`) | `732b46cee502eae1aed33057b2b45a3bc4c9ffc33caff91eb04c8ae5581df817` |
