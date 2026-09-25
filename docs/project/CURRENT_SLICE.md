@@ -2,24 +2,24 @@
 
 ## Срез
 
-Web auth/profile/subscription real-data parity deploy.
+Web case/document empty-state deploy.
 
 ## Статус
 
-DONE -> Public web now avoids invented profile/subscription/claim-send data and is deployed.
+DONE -> Public web now avoids invented case/document/deadline samples and is deployed.
 
 ## Scope
 
-- Web claim-send starts without fake recipient/contact/file size and records only assisted/manual status.
-- Web claim generation no longer sends fake claimant/amount/deadline values; profile is required.
-- Web profile no longer invents a person name or confirmed status; completion is calculated from actual state.
-- Web subscription hero/usage no longer shows fixed fake plan/date/counts.
-- Help support wording is manual/adapter, without fake online SLA.
+- Web case details now show only profile/case/documents/tasks from current state, not fake amount or dates.
+- Web documents screen now shows upload/API empty states instead of hardcoded files.
+- Web document check/analysis now uses generic required-doc blockers and real uploaded document counts.
+- Web chat attachment appears only after a generated claim exists.
+- Web screenshot seed no longer uses real personal names.
 - `npm run check` passed.
 - `npm run build --workspace apps/web` passed.
-- `npm run deploy:package -- /tmp/ai-lawyer-kz-web-real-data-parity.tar.gz` passed with full check/build gates.
-- Deploy archive SHA-256: `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8`.
-- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-web-real-data-parity.tar.gz`.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-web-empty-states.tar.gz` passed with full check/build gates.
+- Deploy archive SHA-256: `361b80cd0884925fd94ba7a53d5e8bc0a56e4d230a91fae112fe544321595337`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-web-empty-states.tar.gz`.
 - Server install health passed and server `npm run test:audit` found 0 vulnerabilities.
 - `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
@@ -104,4 +104,4 @@ DONE -> Public web now avoids invented profile/subscription/claim-send data and 
 
 ## Следующий шаг
 
-Next vertical slice: remove remaining web fake case/document samples and replace them with real API/empty states.
+Next vertical slice: browser smoke all public web flows after auth/profile seed, then close remaining UI regressions.
