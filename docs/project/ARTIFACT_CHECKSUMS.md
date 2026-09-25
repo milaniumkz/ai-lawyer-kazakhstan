@@ -44,3 +44,4 @@ Generated on 2026-09-07.
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-ai-interview-category.tar.gz` | `5508fa40e17b5b03b7e259e7ad205371e2e301a535349e01ba4b9a6f41573711` |
 | `/tmp/ai-lawyer-kz-draft-reset.tar.gz` | `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-draft-reset.tar.gz` | `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-draft-reset`) | `b04a311d8b2cc74e8c6c273055e81c6818bc9f6892b4eb5efe82f7c6a4e49cf2` |

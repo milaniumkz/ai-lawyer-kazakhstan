@@ -2,27 +2,23 @@
 
 ## Срез
 
-Web new case draft reset.
+Flutter new case draft reset parity.
 
 ## Статус
 
-DONE -> new case intake now starts from a clean draft/session and cannot inherit old case progress, classification, documents or remote case id.
+DONE -> Flutter mobile intake now starts from a clean draft/session and blocks case creation when AI reports missing facts.
 
 ## Scope
 
-- Web new case entrypoints call `startNewCaseDraft()` and clear only intake fields while keeping the signed-in user, profile, theme, language and real saved case list.
-- `draftCaseId` and `remoteCaseDraftId` now bind a created API case to the current draft; progress reaches `100%` only for the current draft after real `/cases` creation.
-- Category confirmation is blocked while `missing_facts` exist, with a clear "answer AI and repeat analysis" blocker.
-- Desktop context panel shows "Новое дело не создано" and draft progress instead of reusing the previous active case.
-- Public server updated without changing runtime credentials or manual server edits.
-- Deploy archive: `/tmp/ai-lawyer-kz-draft-reset.tar.gz`.
-- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-draft-reset.tar.gz`.
-- SHA-256: `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c`.
+- `MobileCaseRuntime.startDraft()` clears stale active case and confirmed text before entering `/case/new`.
+- Home mic, home "Новое дело" card and empty cases state now start a clean mobile draft.
+- `MobileCaseRuntime.markCreated()` binds created API case to the current draft; `currentDraftCreated` is true only after real case creation.
+- Category confirmation now blocks when `missingFacts` exist and shows "Сначала ответьте на вопросы AI".
 - `npm run check` passed.
-- `npm run deploy:package -- /tmp/ai-lawyer-kz-draft-reset.tar.gz` passed with full check/build gates.
-- Server install health passed; `ai-lawyer-web`, `ai-lawyer-admin`, `ai-lawyer-api`, `ai-lawyer-ai` and `nginx` are active.
-- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
-- Public Playwright smoke confirmed starting a new case clears old case text/documents and shows "Новое дело не создано".
+- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
+- Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
+- APK SHA-256: `b04a311d8b2cc74e8c6c273055e81c6818bc9f6892b4eb5efe82f7c6a4e49cf2`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -105,4 +101,4 @@ DONE -> new case intake now starts from a clean draft/session and cannot inherit
 
 ## Следующий шаг
 
-Next vertical slice: bring the same draft/session reset behavior to Flutter intake so mobile app parity matches web.
+Next vertical slice: make the mobile category screen follow the same visible AI interview/progress pattern as web.
