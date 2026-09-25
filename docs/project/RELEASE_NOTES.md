@@ -14,7 +14,7 @@ AI-Юрист Қазақстан RC foundation тіркеу, профиль, і�
 
 AI Lawyer Kazakhstan RC foundation includes locally testable flows for registration, profile, cases, chat, documents, OCR review, legal citation guardrails, pretrial claim drafts and AI budget controls. RC4 closes placeholder buttons in mobile/web and refreshes the public test web deployment.
 
-RC12 refreshes mobile store readiness: Android launcher label is `AI Юрист`, the current APK is rebuilt, a Play-prep AAB is included in the QA bundle, iOS App Store Connect build `1.0.1 (8)` is selected and `VALID`, native screenshots are uploaded, and review submission is guarded until real reviewer contact data is provided.
+RC12 refreshes mobile store readiness: Android launcher label is `AI Юрист`, the current APK is rebuilt, a Play-prep AAB is included in the QA bundle, Android production signing now has a keystore config path, iOS App Store Connect build `1.0.1 (8)` is selected and `VALID`, native screenshots are uploaded, and review submission is guarded until real reviewer contact data is provided.
 
 ## Limitations
 

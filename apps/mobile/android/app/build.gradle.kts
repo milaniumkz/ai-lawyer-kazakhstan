@@ -5,6 +5,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+
+val uploadKeystoreProperties = Properties()
+val uploadKeystorePropertiesFile = rootProject.file("key.properties")
+val hasUploadKeystore = uploadKeystorePropertiesFile.exists()
+if (hasUploadKeystore) {
+    uploadKeystoreProperties.load(uploadKeystorePropertiesFile.inputStream())
+}
+
 android {
     namespace = "kz.milanium.lawyer"
     compileSdk = flutter.compileSdkVersion
@@ -27,9 +36,24 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasUploadKeystore) {
+            create("upload") {
+                keyAlias = uploadKeystoreProperties["keyAlias"] as String
+                keyPassword = uploadKeystoreProperties["keyPassword"] as String
+                storeFile = file(uploadKeystoreProperties["storeFile"] as String)
+                storePassword = uploadKeystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasUploadKeystore) {
+                signingConfigs.getByName("upload")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
