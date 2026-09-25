@@ -955,7 +955,8 @@ class HttpCaseApi implements CaseApiPort {
     required String text,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl${ApiContract.basePath}${ApiContract.aiClassifications}'),
+      Uri.parse(
+          '$baseUrl${ApiContract.basePath}${ApiContract.aiClassifications}'),
       headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-classification',
@@ -1128,6 +1129,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   late final CaseApiPort caseApi;
+  late final TextEditingController answerController;
   CaseClassificationResult? classification;
   var status = 'Готовлю анализ категории';
   var isBusy = false;
@@ -1136,7 +1138,72 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     caseApi = widget.caseApi ?? HttpCaseApi();
+    answerController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) => classify());
+  }
+
+  @override
+  void dispose() {
+    answerController.dispose();
+    super.dispose();
+  }
+
+  int progressValue() {
+    if (MobileCaseRuntime.currentDraftCreated) return 100;
+    if (classification != null) {
+      return classification!.missingFacts.isNotEmpty ? 64 : 72;
+    }
+    if (isBusy) return 45;
+    if (MobileCaseRuntime.confirmedText.trim().isNotEmpty) return 25;
+    return 10;
+  }
+
+  List<({String title, bool done})> timeline() {
+    final result = classification;
+    return [
+      (
+        title: '1. Описание',
+        done: MobileCaseRuntime.confirmedText.trim().isNotEmpty
+      ),
+      (
+        title: '2. Уточнения AI',
+        done: result != null && result.missingFacts.isEmpty
+      ),
+      (title: '3. Документы', done: false),
+      (title: '4. Категория', done: result != null),
+      (title: '5. Дело', done: MobileCaseRuntime.currentDraftCreated),
+    ];
+  }
+
+  String nextAiQuestion() {
+    final missing = classification?.missingFacts.firstOrNull;
+    if (missing == null) {
+      return classification == null
+          ? 'Проверю описание, определю категорию и скажу, каких фактов не хватает.'
+          : 'Подтвердите категорию, и я создам дело в базе данных.';
+    }
+    if (missing == 'employer') {
+      return 'Укажите работодателя, должность и период, за который возник спор.';
+    }
+    if (missing == 'contract_date') {
+      return 'Уточните дату договора, сумму и что именно не оплатил заказчик.';
+    }
+    return 'Уточните недостающий факт: $missing.';
+  }
+
+  void appendAnswer() {
+    final value = answerController.text.trim();
+    if (value.isEmpty) {
+      setState(() => status = 'Введите ответ для AI');
+      return;
+    }
+    MobileCaseRuntime.confirmedText =
+        '${MobileCaseRuntime.confirmedText.trim()}\nУточнение: $value'.trim();
+    answerController.clear();
+    setState(() {
+      classification = null;
+      status = 'Ответ добавлен. Повторите анализ AI.';
+    });
   }
 
   Future<void> classify() async {
@@ -1219,17 +1286,47 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final result = classification;
+    final progress = progressValue();
     return _CaseScaffold(
-      title: 'Категория спора',
+      title: 'AI интервью',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CategoryResultCard(
-            classification: classification,
-            status: status,
-            onSelected: overrideCategory,
+          _AiInterviewProgress(
+            progress: progress,
+            subtitle: result == null
+                ? 'AI ждет факты для анализа'
+                : '${result.categoryLabel} · ${result.subcategoryLabel}',
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          _AiStageRail(items: timeline()),
+          const SizedBox(height: 16),
+          _AiInterviewChat(
+            confirmedText: MobileCaseRuntime.confirmedText,
+            question: nextAiQuestion(),
+            classification: result,
+            status: status,
+          ),
+          if (result?.missingFacts.isNotEmpty == true) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: answerController,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Ответьте AI',
+                hintText: 'Дата, сумма, участники, документ...',
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: appendAnswer,
+              icon: const Icon(Icons.reply_outlined),
+              label: const Text('Добавить ответ'),
+            ),
+          ],
+          const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: isBusy || classification == null
                 ? null
@@ -1248,90 +1345,216 @@ class _CategoryScreenState extends State<CategoryScreen> {
             onPressed: isBusy ? null : classify,
             child: const Text('Повторить анализ'),
           ),
+          const SizedBox(height: 12),
+          _CategoryAlternatives(
+            classification: result,
+            onSelected: overrideCategory,
+          ),
         ],
       ),
     );
   }
 }
 
-class _CategoryResultCard extends StatelessWidget {
-  const _CategoryResultCard({
+class _AiInterviewProgress extends StatelessWidget {
+  const _AiInterviewProgress({required this.progress, required this.subtitle});
+
+  final int progress;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.gold),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    child: Text(
+                        'Этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
+                Text('$progress%',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: AppColors.goldDark)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress / 100),
+            const SizedBox(height: 8),
+            Text(subtitle),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AiStageRail extends StatelessWidget {
+  const _AiStageRail({required this.items});
+
+  final List<({String title, bool done})> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          Chip(
+            avatar: Icon(item.done ? Icons.check_circle : Icons.circle_outlined,
+                size: 16),
+            label: Text(item.title),
+            side:
+                BorderSide(color: item.done ? AppColors.gold : Colors.white24),
+          ),
+      ],
+    );
+  }
+}
+
+class _AiInterviewChat extends StatelessWidget {
+  const _AiInterviewChat({
+    required this.confirmedText,
+    required this.question,
     required this.classification,
     required this.status,
+  });
+
+  final String confirmedText;
+  final String question;
+  final CaseClassificationResult? classification;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final result = classification;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AiBubble(
+          title: 'AI Юрист',
+          text:
+              'Я веду дело по шагам: уточняю факты, прошу документы, определяю категорию и только потом создаю дело в базе.',
+        ),
+        _AiBubble(
+          title: 'Вы',
+          text: confirmedText.trim().isEmpty
+              ? 'Описание еще не заполнено.'
+              : confirmedText,
+          user: true,
+        ),
+        _AiBubble(
+          title: 'AI Юрист',
+          text: question,
+          footer: result?.missingFacts.isNotEmpty == true
+              ? 'Не хватает данных: ${result!.missingFacts.join(', ')}'
+              : status,
+        ),
+        if (result != null)
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: const BorderSide(color: AppColors.gold),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Icon(Icons.balance_outlined,
+                      size: 56, color: AppColors.gold),
+                  const SizedBox(height: 8),
+                  Text(result.categoryLabel,
+                      textAlign: TextAlign.center,
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: AppColors.goldDark,
+                                fontFamily: 'Georgia',
+                              )),
+                  const SizedBox(height: 8),
+                  Text(result.subcategoryLabel, textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  Text('Уверенность: ${(result.confidence * 100).round()}%'),
+                  if (result.riskLevel == 'high' ||
+                      result.requiredHumanReview) ...[
+                    const SizedBox(height: 8),
+                    const Text('Высокий риск: нужна проверка юристом',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.redAccent)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AiBubble extends StatelessWidget {
+  const _AiBubble({
+    required this.title,
+    required this.text,
+    this.footer,
+    this.user = false,
+  });
+
+  final String title;
+  final String text;
+  final String? footer;
+  final bool user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
+      child: Card(
+        color: user ? AppColors.gold.withValues(alpha: 0.12) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      color: AppColors.gold, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text(text),
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                Text(footer!, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryAlternatives extends StatelessWidget {
+  const _CategoryAlternatives({
+    required this.classification,
     required this.onSelected,
   });
 
   final CaseClassificationResult? classification;
-  final String status;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final result = classification;
-    final title = result?.categoryLabel ?? 'Категория спора';
-    final subtitle = result?.subcategoryLabel ?? status;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-            side: const BorderSide(color: AppColors.gold),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              children: [
-                const Icon(Icons.balance_outlined,
-                    size: 92, color: AppColors.gold),
-                const SizedBox(height: 14),
-                Text(status),
-                const SizedBox(height: 8),
-                const _CaseGoldDivider(),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.goldDark,
-                        fontFamily: 'Georgia',
-                      ),
-                ),
-                const SizedBox(height: 18),
-                OutlinedButton.icon(
-                  onPressed: result == null
-                      ? null
-                      : () => onSelected(result.subcategoryCode),
-                  icon: const Icon(Icons.family_restroom_outlined),
-                  label: Text(subtitle),
-                ),
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.titleMedium,
-                    children: [
-                      const TextSpan(text: 'Уверенность: '),
-                      TextSpan(
-                        text:
-                            '${((result?.confidence ?? 0) * 100).round()}%',
-                        style: const TextStyle(color: AppColors.gold),
-                      ),
-                    ],
-                  ),
-                ),
-                if (result?.riskLevel == 'high' ||
-                    result?.requiredHumanReview == true) ...[
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Высокий риск: нужна проверка юристом',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
         const Text('Возможные альтернативы'),
         const SizedBox(height: 12),
         for (final item in (result?.alternatives.isNotEmpty == true
@@ -1355,24 +1578,6 @@ class _CategoryResultCard extends StatelessWidget {
           'На основании вашего описания система определила наиболее подходящую категорию спора.',
           textAlign: TextAlign.center,
         ),
-      ],
-    );
-  }
-}
-
-class _CaseGoldDivider extends StatelessWidget {
-  const _CaseGoldDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        Expanded(child: Divider(color: AppColors.gold)),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          child: Text('◇', style: TextStyle(color: AppColors.gold)),
-        ),
-        Expanded(child: Divider(color: AppColors.gold)),
       ],
     );
   }

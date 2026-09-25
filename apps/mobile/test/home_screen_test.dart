@@ -154,7 +154,7 @@ void main() {
       ['/cases', 'Мои дела'],
       ['/case/details', 'Карточка дела'],
       ['/case/new', 'Новое дело'],
-      ['/case/category', 'Категория спора'],
+      ['/case/category', 'AI интервью'],
       ['/case/chat', 'Чат по делу'],
       ['/documents', 'Документы и доказательства'],
       ['/documents/analysis', 'Анализ документов'],
@@ -188,7 +188,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
-    expect(find.text('Категория спора'), findsWidgets);
+    expect(find.text('AI интервью'), findsWidgets);
     expect(find.textContaining('Войдите'), findsWidgets);
   });
 
@@ -495,6 +495,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cases.classifiedText, 'Хочу подать на алименты на ребёнка');
+    expect(find.text('AI интервью'), findsWidgets);
+    expect(find.text('Этап 4 из 5'), findsOneWidget);
+    expect(find.text('AI Юрист'), findsWidgets);
     expect(find.text('Брачно-семейные отношения'), findsOneWidget);
     expect(find.text('Взыскание алиментов на ребёнка'), findsOneWidget);
 
@@ -529,12 +532,14 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Не хватает данных'), findsOneWidget);
-    await tester.tap(find.text('Ответьте AI'));
+    expect(find.textContaining('Не хватает данных'), findsWidgets);
+    expect(find.text('Ответьте AI'), findsWidgets);
+    expect(find.textContaining('Уточните дату договора'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Ответьте AI'));
     await tester.pumpAndSettle();
 
     expect(cases.createdText, isNull);
-    expect(find.text('Сначала ответьте на вопросы AI'), findsWidgets);
+    expect(find.text('Ответьте AI'), findsWidgets);
   });
 
   testWidgets('chat sends messages through case API when case exists',
