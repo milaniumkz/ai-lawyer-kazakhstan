@@ -11,7 +11,7 @@ npm run release:bundle -- v0.1.0-rc.12
 Output:
 
 - `dist/release/v0.1.0-rc.12/`
-- `dist/release/ai-lawyer-kz-v0.1.0-rc.12-release-bundle.tar.gz`
+- `dist/release/ai-lawyer-kz-v0.1.0-rc.12-release-bundle.tar.gz`, SHA-256 `844f029a648abaec6f042b42ded7e227fff8e915ac19a71689f0bbc298e011f7`
 - `dist/release/v0.1.0-rc.12/SHA256SUMS`
 
 Bundle contents:
