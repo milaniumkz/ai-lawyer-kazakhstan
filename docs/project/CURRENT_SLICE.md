@@ -2,23 +2,23 @@
 
 ## Срез
 
-Flutter new case draft reset parity.
+Flutter category AI interview parity.
 
 ## Статус
 
-DONE -> Flutter mobile intake now starts from a clean draft/session and blocks case creation when AI reports missing facts.
+DONE -> Flutter mobile category screen now follows the same AI interview/progress pattern as web.
 
 ## Scope
 
-- `MobileCaseRuntime.startDraft()` clears stale active case and confirmed text before entering `/case/new`.
-- Home mic, home "Новое дело" card and empty cases state now start a clean mobile draft.
-- `MobileCaseRuntime.markCreated()` binds created API case to the current draft; `currentDraftCreated` is true only after real case creation.
-- Category confirmation now blocks when `missingFacts` exist and shows "Сначала ответьте на вопросы AI".
+- Mobile `/case/category` title changed to `AI интервью`.
+- Added top progress card, 5-stage rail, AI/user chat bubbles, next-question logic and answer composer.
+- User answers append to `MobileCaseRuntime.confirmedText`, clear stale classification and require repeat analysis.
+- Category confirmation still creates a real API case only after classification has no `missingFacts`.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `b04a311d8b2cc74e8c6c273055e81c6818bc9f6892b4eb5efe82f7c6a4e49cf2`.
+- APK SHA-256: `f67b2059e6907ebdb6994644307ac31ef560946859d4f7b097b2774f008cd559`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +101,4 @@ DONE -> Flutter mobile intake now starts from a clean draft/session and blocks c
 
 ## Следующий шаг
 
-Next vertical slice: make the mobile category screen follow the same visible AI interview/progress pattern as web.
+Next vertical slice: apply the same AI-interview/progress pattern to documents/OCR review so AI asks for concrete files before analysis.
