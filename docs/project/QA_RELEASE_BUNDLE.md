@@ -1,18 +1,18 @@
 # QA Release Bundle
 
-Current RC: `v0.1.0-rc.16`.
+Current RC: `v0.1.0-rc.17`.
 
 Build locally:
 
 ```bash
-npm run release:bundle -- v0.1.0-rc.16
+npm run release:bundle -- v0.1.0-rc.17
 ```
 
 Output:
 
-- `dist/release/v0.1.0-rc.16/`
-- `dist/release/ai-lawyer-kz-v0.1.0-rc.16-release-bundle.tar.gz`, SHA-256 `e546fb98f96658405f1ab940b49f4bbc032bd50b866badcd0f6ab2c32279eb24`
-- `dist/release/v0.1.0-rc.16/SHA256SUMS`
+- `dist/release/v0.1.0-rc.17/`
+- `dist/release/ai-lawyer-kz-v0.1.0-rc.17-release-bundle.tar.gz`, SHA-256 pending build
+- `dist/release/v0.1.0-rc.17/SHA256SUMS`
 
 Bundle contents:
 
@@ -20,12 +20,12 @@ Bundle contents:
 - OpenAPI contract.
 - Android release APK.
 - Android Play-prep AAB, debug-signed until production upload keystore is provided.
-- Source archive from tag `v0.1.0-rc.16`.
+- Source archive from tag `v0.1.0-rc.17`.
 
 Before handing to QA:
 
 ```bash
 npm run release-check:local
 npm run release-check:server
-npm run release:bundle -- v0.1.0-rc.16
+npm run release:bundle -- v0.1.0-rc.17
 ```
