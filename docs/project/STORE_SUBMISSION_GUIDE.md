@@ -21,5 +21,6 @@
 - Native screenshot evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png` captured from iPhone 17 Pro Max simulator after installing `build/ios/iphonesimulator/Runner.app`.
 - Full native screenshot set: `docs/project/app-store-screenshots/ios-simulator-native-full`, generated with `scripts/mobile/capture-ios-simulator-screenshots.mjs`.
 - Uploaded screenshots: App Store Connect RU `APP_IPHONE_67` set `7bc670b5-61bc-4958-a55e-9e63e6d6bbc0` has 8 screenshots, verified by API read.
+- Prepared reviewer notes helper: `scripts/release/update-app-review-details.mjs`; blocked until real `ASC_REVIEW_CONTACT_PHONE` is provided because Apple requires `contactPhone`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect and fill reviewer contact/notes.
+- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect and fill reviewer contact phone/notes.

@@ -37,6 +37,9 @@
 
 `This is a Kazakhstan-focused legal assistant release candidate. Use phone login with the on-screen local RC SMS code. First-time users must complete profile fields before home access. Voice intake uses real microphone permission and records audio before transcript/classification flow. Government/payment/SMS production integrations are intentionally adapter/manual fallback until official credentials are provided. The app includes source guardrails and high-risk escalation and does not claim to replace licensed legal advice.`
 
+- Reviewer notes API helper: `scripts/release/update-app-review-details.mjs`.
+- Blocker: App Store Connect requires `contactPhone`; run with `ASC_REVIEW_CONTACT_PHONE=+... node scripts/release/update-app-review-details.mjs --execute` when the real review contact phone is available.
+
 ## App Privacy Draft
 
 - Prepared questionnaire source: `docs/project/APP_STORE_PRIVACY_QUESTIONNAIRE.md`.
@@ -66,5 +69,5 @@
 ## Submission Blockers
 
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
-- RU metadata fields and native screenshots are uploaded; privacy questionnaire draft is prepared; privacy questionnaire publication and reviewer contact still need App Store Connect entry.
+- RU metadata fields and native screenshots are uploaded; privacy questionnaire draft is prepared; privacy questionnaire publication and real reviewer contact phone still need App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.
