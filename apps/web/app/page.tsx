@@ -169,7 +169,9 @@ type SavedState = {
   otp: string;
   otpId: string;
   otpHint: string;
+  draftCaseId: string;
   remoteCaseId: string;
+  remoteCaseDraftId: string;
   remoteDocumentId: string;
   generatedClaimBody: string;
   claimReady: boolean;
@@ -481,7 +483,9 @@ export default function WebHome() {
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");
   const otpInputRef = useRef<HTMLInputElement | null>(null);
+  const [draftCaseId, setDraftCaseId] = useState("draft-initial");
   const [remoteCaseId, setRemoteCaseId] = useState("");
+  const [remoteCaseDraftId, setRemoteCaseDraftId] = useState("");
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
@@ -538,6 +542,18 @@ export default function WebHome() {
 
   const activeCase =
     cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? null;
+  const currentDraftCaseCreated = Boolean(
+    remoteCaseId && remoteCaseDraftId === draftCaseId,
+  );
+  const draftContextViews: View[] = [
+    "newCase",
+    "category",
+    "documentCheck",
+    "documentUpload",
+    "analysis",
+  ];
+  const showDraftContext =
+    draftContextViews.includes(view) && !currentDraftCaseCreated;
   const authText = AUTH_I18N[language];
   const cleanProfileId = profileId.replace(/\D/g, "");
   const profileIdInvalid = Boolean(cleanProfileId) && !isValidKzIinBin(cleanProfileId);
@@ -620,7 +636,9 @@ export default function WebHome() {
       if (saved.otp) setOtp(saved.otp);
       if (saved.otpId) setOtpId(saved.otpId);
       if (saved.otpHint) setOtpHint(saved.otpHint);
+      if (saved.draftCaseId) setDraftCaseId(saved.draftCaseId);
       if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
+      if (saved.remoteCaseDraftId) setRemoteCaseDraftId(saved.remoteCaseDraftId);
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
       if (saved.generatedClaimBody)
         setGeneratedClaimBody(saved.generatedClaimBody);
@@ -673,7 +691,9 @@ export default function WebHome() {
       otp,
       otpId,
       otpHint,
+      draftCaseId,
       remoteCaseId,
+      remoteCaseDraftId,
       remoteDocumentId,
       generatedClaimBody,
       claimReady,
@@ -716,7 +736,9 @@ export default function WebHome() {
     otp,
     otpId,
     otpHint,
+    draftCaseId,
     remoteCaseId,
+    remoteCaseDraftId,
     remoteDocumentId,
     generatedClaimBody,
     claimReady,
@@ -768,6 +790,47 @@ export default function WebHome() {
     return `${prefix}-${clientSequenceRef.current}`;
   }
 
+  function startNewCaseDraft(options: { startVoice?: boolean } = {}) {
+    const nextDraftId = nextClientId("draft");
+    speechRecognitionRef.current?.stop();
+    speechRecognitionRef.current = null;
+    mediaRecorderRef.current = null;
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioChunksRef.current = [];
+    audioBlobRef.current = null;
+    speechDraftRef.current = "";
+    setDraftCaseId(nextDraftId);
+    setRemoteCaseId("");
+    setRemoteCaseDraftId("");
+    setRemoteDocumentId("");
+    setClassification(null);
+    setDocuments([]);
+    setSelectedDocument("");
+    setMessages([
+      {
+        role: "assistant",
+        text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
+      },
+    ]);
+    setCaseText("");
+    setAiInterviewInput("");
+    setTranscriptJobId("");
+    setAudioUrl("");
+    setRecording(false);
+    setPaused(false);
+    setRecordingSeconds(0);
+    setOcrConfirmed(false);
+    setAnalysisDone(false);
+    setGeneratedClaimBody("");
+    setClaimReady(false);
+    setSent(false);
+    setSyncState("Начато новое дело: черновик очищен");
+    go("newCase");
+    if (options.startVoice) window.setTimeout(() => void startRecording(), 0);
+  }
+
   async function ensureUser() {
     if (authUserId) return authUserId;
     go("login");
@@ -813,14 +876,19 @@ export default function WebHome() {
       })) as ApiLegalCase;
       const next = mapCase(legalCase);
       setRemoteCaseId(legalCase.id);
-      setCases([next, ...cases]);
+      setRemoteCaseDraftId(draftCaseId);
+      setCases((items) => [next, ...items.filter((item) => item.id !== next.id)]);
       setActiveCaseId(next.id);
       setTasks((items) =>
         items.map((item) =>
           item.title === "Проверить расписку" ? { ...item, done: true } : item,
         ),
       );
-      setSyncState(`Дело сохранено в API: №${next.id}`);
+      setSyncState(
+        documents.length
+          ? `Дело сохранено в API: №${next.id}. Загрузите pending документы в это дело.`
+          : `Дело сохранено в API: №${next.id}`,
+      );
       go("case");
     } catch (error) {
       setSyncState(
@@ -863,6 +931,10 @@ export default function WebHome() {
   async function confirmCategoryAndCreateCase() {
     if (!classification) {
       await classifyCurrentText();
+      return;
+    }
+    if (classification.result.missing_facts.length) {
+      setSyncState("Сначала ответьте на вопросы AI и повторите анализ");
       return;
     }
     setClassificationBusy(true);
@@ -913,11 +985,13 @@ export default function WebHome() {
   }
 
   function categoryStageProgress() {
-    if (remoteCaseId) return 100;
-    if (documents.length > 0) return classification ? 82 : 64;
-    if (classification) return classification.result.missing_facts.length ? 58 : 72;
-    if (caseText.trim().length >= 12) return 34;
-    return 12;
+    if (currentDraftCaseCreated) return 100;
+    if (documents.length > 0) return classification ? 88 : 80;
+    if (classification)
+      return classification.result.missing_facts.length ? 64 : 72;
+    if (classificationBusy) return 45;
+    if (caseText.trim().length >= 12 || audioUrl || transcriptJobId) return 25;
+    return 10;
   }
 
   function appendInterviewFact() {
@@ -927,13 +1001,14 @@ export default function WebHome() {
       return;
     }
     setCaseText((text) => `${text.trim()}\nУточнение: ${value}`.trim());
+    setClassification(null);
     setMessages((items) => [
       ...items,
       { role: "user", text: value },
       { role: "assistant", text: nextAiQuestion() },
     ]);
     setAiInterviewInput("");
-    setSyncState("Ответ добавлен к делу. Запустите анализ заново.");
+    setSyncState("Ответ добавлен к делу. Повторите анализ AI.");
   }
 
   function nextAiQuestion() {
@@ -952,7 +1027,7 @@ export default function WebHome() {
       { title: "2. Уточнения AI", done: Boolean(classification && !classification.result.missing_facts.length) },
       { title: "3. Документы", done: documents.length > 0 },
       { title: "4. Категория", done: Boolean(classification) },
-      { title: "5. Дело", done: Boolean(remoteCaseId) },
+      { title: "5. Дело", done: currentDraftCaseCreated },
     ];
   }
 
@@ -2443,10 +2518,21 @@ export default function WebHome() {
             </button>
             <button
               className="primary"
-              disabled={classificationBusy || !currentClassification}
+              disabled={
+                classificationBusy ||
+                !currentClassification ||
+                currentClassification.missing_facts.length > 0
+              }
               onClick={confirmCategoryAndCreateCase}
+              title={
+                currentClassification?.missing_facts.length
+                  ? "Сначала ответьте на вопросы AI и повторите анализ"
+                  : "Создать дело в базе данных"
+              }
             >
-              Подтвердить и создать дело
+              {currentClassification?.missing_facts.length
+                ? "Ответьте AI и повторите анализ"
+                : "Подтвердить и создать дело"}
             </button>
           </div>
           {currentClassification?.alternatives.length ? (
@@ -2488,7 +2574,7 @@ export default function WebHome() {
           </div>
           <div className="list">
             {!filteredCases.length && (
-              <button className="caseRow" onClick={() => go("newCase")}>
+              <button className="caseRow" onClick={() => startNewCaseDraft()}>
                 <span className="roundIcon">+</span>
                 <span>
                   <strong>Нет дел</strong>
@@ -2547,7 +2633,7 @@ export default function WebHome() {
                 API/БД.
               </p>
             </div>
-            <button className="primary wide" onClick={() => go("newCase")}>
+            <button className="primary wide" onClick={() => startNewCaseDraft()}>
               Создать дело
             </button>
           </section>
@@ -2647,7 +2733,7 @@ export default function WebHome() {
               <strong>Чат недоступен</strong>
               <p>Сначала создайте или выберите реальное дело из API/БД.</p>
             </div>
-            <button className="primary wide" onClick={() => go("newCase")}>
+            <button className="primary wide" onClick={() => startNewCaseDraft()}>
               Создать дело
             </button>
           </section>
@@ -4031,8 +4117,7 @@ export default function WebHome() {
         <button
           className={recording ? "mic active" : "mic"}
           onClick={() => {
-            go("newCase");
-            setTimeout(() => void startRecording(), 0);
+            startNewCaseDraft({ startVoice: true });
           }}
           aria-label="Рассказать проблему"
         >
@@ -4045,7 +4130,7 @@ export default function WebHome() {
             : "Нажмите и говорите голосом"}
         </p>
         <div className="quickGrid">
-          <button onClick={() => go("newCase")}>
+          <button onClick={() => startNewCaseDraft()}>
             <span className="quickIcon">▣</span>Новое дело
             <small>Создать новое дело</small>
           </button>
@@ -4064,7 +4149,7 @@ export default function WebHome() {
         </div>
         <div className="list">
           {!cases.length && (
-            <button className="caseRow" onClick={() => go("newCase")}>
+            <button className="caseRow" onClick={() => startNewCaseDraft()}>
               <span className="roundIcon">+</span>
               <span>
                 <strong>Нет дел</strong>
@@ -4125,7 +4210,11 @@ export default function WebHome() {
             <button
               key={target}
               className={view === target ? "active" : ""}
-              onClick={() => go(target as View)}
+              onClick={() =>
+                target === "newCase"
+                  ? startNewCaseDraft()
+                  : go(target as View)
+              }
             >
               {label}
             </button>
@@ -4193,7 +4282,15 @@ export default function WebHome() {
         </nav>
       </section>
       <aside className="rightPanel" aria-label="Контекст дела">
-        {activeCase ? (
+        {showDraftContext ? (
+          <div className="analysisBox">
+            <strong>Новое дело не создано</strong>
+            <p>
+              Это черновик. Данные попадут в БД только после подтверждения
+              категории и создания дела.
+            </p>
+          </div>
+        ) : activeCase ? (
           <div className="caseHero compact">
             <span className="roundIcon">⚖</span>
             <div>
@@ -4210,14 +4307,20 @@ export default function WebHome() {
         <div className="tileGrid compactTiles">
           <Info
             label="Готовность"
-            value={activeCase ? `${activeCase.progress}%` : "0%"}
+            value={
+              showDraftContext
+                ? `${categoryStageProgress()}%`
+                : activeCase
+                  ? `${activeCase.progress}%`
+                  : "0%"
+            }
           />
           <Info label="Документы" value={`${documents.length}`} />
         </div>
         <div className="sideSection">
           <h3>Быстрые действия</h3>
           <div className="sideActions">
-            <button onClick={() => go("newCase")}>Голос</button>
+            <button onClick={() => startNewCaseDraft({ startVoice: true })}>Голос</button>
             <button onClick={() => go("chat")}>Чат</button>
             <button onClick={() => go("documents")}>Файлы</button>
             <button onClick={() => go("legal")}>RAG</button>
