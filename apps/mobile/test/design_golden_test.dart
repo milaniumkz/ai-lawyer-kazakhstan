@@ -11,6 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUp(() {
+    AuthRuntime.displayName = 'Тестовый пользователь';
+  });
+
   testWidgets('home screen matches light design regression golden',
       (tester) async {
     await setReferenceViewport(tester);

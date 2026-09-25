@@ -1167,7 +1167,7 @@ abstract final class AuthRuntime {
   static String otpId = '';
   static String? otpCodeHint;
   static String userId = '';
-  static String displayName = 'Тестовый пользователь';
+  static String displayName = '';
   static bool profileComplete = false;
 }
 

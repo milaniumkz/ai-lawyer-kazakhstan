@@ -155,6 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displayName = AuthRuntime.displayName.trim();
     return Scaffold(
       bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
       body: SafeArea(
@@ -165,7 +166,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Здравствуйте, ${AuthRuntime.displayName}',
+                    displayName.isEmpty
+                        ? 'Войдите, чтобы продолжить'
+                        : 'Здравствуйте, $displayName',
                     style: theme.textTheme.displaySmall?.copyWith(
                       color: AppColors.goldDark,
                     ),

@@ -12,7 +12,12 @@ import 'src/features/workflows/workflow_screens.dart';
 import 'src/theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: AiLawyerApp()));
+  const initialRoute = String.fromEnvironment(
+    'AI_LAWYER_INITIAL_ROUTE',
+    defaultValue: '/login',
+  );
+  runApp(const ProviderScope(
+      child: AiLawyerApp(initialLocation: initialRoute)));
 }
 
 GoRouter _buildRouter(String initialLocation) => GoRouter(
