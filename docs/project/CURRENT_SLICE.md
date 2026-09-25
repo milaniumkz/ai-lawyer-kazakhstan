@@ -2,27 +2,26 @@
 
 ## Срез
 
-App Store build selection after Flutter real-data fixes.
+App Store build selection after latest Flutter auth/profile fixes.
 
 ## Статус
 
-DONE -> App Store version `1.0` now has build `1.0.1 (7)` selected.
+DONE -> App Store version `1.0` now has build `1.0.1 (8)` selected.
 
 ## Scope
 
-- Cleaned Xcode DerivedData after the first IPA attempt hit local disk exhaustion.
-- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=7` passed.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=8` passed.
 - IPA path: `apps/mobile/build/ios/ipa/AI Юрист.ipa`.
 - IPA size: `21M`.
-- IPA SHA-256: `eb2e99156f182814001166cdf166c9b1d226a2de588901d2a33826d0e8aafc0d`.
-- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `7`, iOS `15.0`.
+- IPA SHA-256: `aa63eb54281eff2b958745f8a82ce44bddfa4673b36cfdae8585d58d06c14cca`.
+- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `8`, iOS `15.0`.
 - `xcrun altool --validate-app` passed with no errors.
-- `xcrun altool --upload-app` succeeded with Delivery UUID `275d979b-9e7c-425e-891f-53b708797f1c`.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `4137cf18-be24-42a1-ba59-7ff7153e4612`.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
 - App Store Connect API listed app `6810983647`, appStoreVersion `44a3b72a-b7ec-4e71-a664-86f7254ae56e`, state `PREPARE_FOR_SUBMISSION`.
-- App Store Connect API attached build `275d979b-9e7c-425e-891f-53b708797f1c` to version `1.0` via `PATCH /v1/appStoreVersions/{id}/relationships/build`.
-- Follow-up API read confirms selected build `275d979b-9e7c-425e-891f-53b708797f1c`, processingState `VALID`.
-- Previous `npm run check` passed before the iOS build.
+- App Store Connect API attached build `4137cf18-be24-42a1-ba59-7ff7153e4612` to version `1.0` via `PATCH /v1/appStoreVersions/{id}/relationships/build`.
+- Follow-up API read confirms selected build `4137cf18-be24-42a1-ba59-7ff7153e4612`, processingState `VALID`.
+- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed before the iOS build.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
