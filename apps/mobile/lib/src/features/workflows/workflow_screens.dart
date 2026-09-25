@@ -235,6 +235,8 @@ class ClaimDraftScreen extends StatefulWidget {
 class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
   var approved = false;
 
+  double get progress => approved ? 0.78 : 0.58;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -244,6 +246,30 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             const _ClaimStatusChips(),
+            const SizedBox(height: 12),
+            _ClaimProgressCard(
+              progress: progress,
+              subtitle: approved
+                  ? 'Пользователь подтвердил проект. Можно перейти к assisted отправке.'
+                  : 'Проверьте текст проекта. Без подтверждения отправка заблокирована.',
+            ),
+            const SizedBox(height: 12),
+            _ClaimStageRail(items: [
+              (
+                title: '1. Проект',
+                done: WorkflowRuntime.generatedBody.isNotEmpty
+              ),
+              (title: '2. Проверка', done: approved),
+              (title: '3. Отправка', done: false),
+            ]),
+            const SizedBox(height: 12),
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                    'AI проверяет структуру документа, но финальное подтверждение остается за пользователем. Государственная подача не имитируется.'),
+              ),
+            ),
             const SizedBox(height: 16),
             Card(
               color: const Color(0xFFFBF7EF),
@@ -402,6 +428,33 @@ class ClaimSendScreen extends StatefulWidget {
 
 class _ClaimSendScreenState extends State<ClaimSendScreen> {
   var sent = false;
+  var selectedMethod = 'WhatsApp';
+  var status = 'Выберите канал и укажите контакт получателя';
+  late final TextEditingController recipientController;
+
+  @override
+  void initState() {
+    super.initState();
+    recipientController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    recipientController.dispose();
+    super.dispose();
+  }
+
+  void recordAssistedSend() {
+    if (recipientController.text.trim().isEmpty) {
+      setState(() => status = 'Укажите контакт получателя');
+      return;
+    }
+    setState(() {
+      sent = true;
+      status =
+          'Ручной статус зафиксирован: $selectedMethod, ${recipientController.text.trim()}';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -419,15 +472,43 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
                   ?.copyWith(color: AppColors.goldDark),
             ),
             const SizedBox(height: 16),
-            const _SendMethodGrid(),
+            _ClaimProgressCard(
+              progress: sent ? 1 : 0.86,
+              subtitle: status,
+            ),
+            const SizedBox(height: 12),
+            _ClaimStageRail(items: [
+              (title: '1. Проверено', done: true),
+              (title: '2. Канал', done: selectedMethod.isNotEmpty),
+              (
+                title: '3. Контакт',
+                done: recipientController.text.trim().isNotEmpty
+              ),
+              (title: '4. Статус', done: sent),
+            ]),
+            const SizedBox(height: 12),
+            _SendMethodGrid(
+              selected: selectedMethod,
+              onSelect: (value) => setState(() {
+                selectedMethod = value;
+                sent = false;
+                status = 'Канал выбран: $value. Укажите контакт получателя.';
+              }),
+            ),
             const SizedBox(height: 12),
             const _RecipientCard(),
             const SizedBox(height: 12),
             const _AttachmentCard(),
             const SizedBox(height: 12),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Контакт получателя'),
-              controller: null,
+            TextField(
+              controller: recipientController,
+              onChanged: (_) => setState(() {
+                sent = false;
+                status =
+                    'Контакт введен. Можно зафиксировать assisted отправку.';
+              }),
+              decoration:
+                  const InputDecoration(labelText: 'Контакт получателя'),
             ),
             const SizedBox(height: 12),
             const Card(
@@ -447,13 +528,16 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => setState(() => sent = true),
+              onPressed: recordAssistedSend,
               icon: const Icon(Icons.mark_email_read_outlined),
-              label: Text(sent ? 'Отправка зафиксирована' : 'Отправить'),
+              label: Text(sent ? 'Ручной статус зафиксирован' : 'Отправить'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => setState(() => sent = false),
+              onPressed: () => setState(() {
+                sent = false;
+                status = 'Черновик сохранен локально до внешней отправки';
+              }),
               icon: const Icon(Icons.description_outlined),
               label: const Text('Сохранить как черновик'),
             ),
@@ -684,15 +768,18 @@ class _PaperSection extends StatelessWidget {
 }
 
 class _SendMethodGrid extends StatelessWidget {
-  const _SendMethodGrid();
+  const _SendMethodGrid({required this.selected, required this.onSelect});
+
+  final String selected;
+  final ValueChanged<String> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final methods = [
-      ('E-mail', Icons.mail_outline, false),
-      ('WhatsApp', Icons.phone_in_talk_outlined, true),
-      ('SMS', Icons.chat_bubble_outline, false),
-      ('Почтовая отправка', Icons.local_post_office_outlined, false),
+      ('E-mail', Icons.mail_outline),
+      ('WhatsApp', Icons.phone_in_talk_outlined),
+      ('SMS', Icons.chat_bubble_outline),
+      ('Почтовая отправка', Icons.local_post_office_outlined),
     ];
     return GridView.count(
       crossAxisCount: 2,
@@ -707,15 +794,21 @@ class _SendMethodGrid extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                  color: method.$3 ? AppColors.gold : Colors.transparent),
+                  color: selected == method.$1
+                      ? AppColors.gold
+                      : Colors.transparent),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(method.$2, color: AppColors.gold),
-                const SizedBox(height: 8),
-                Text(method.$1, textAlign: TextAlign.center),
-              ],
+            child: InkWell(
+              onTap: () => onSelect(method.$1),
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(method.$2, color: AppColors.gold),
+                  const SizedBox(height: 8),
+                  Text(method.$1, textAlign: TextAlign.center),
+                ],
+              ),
             ),
           ),
       ],
@@ -732,7 +825,7 @@ class _RecipientCard extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.phone_in_talk_outlined, color: AppColors.gold),
         title: Text('Получатель'),
-        subtitle: Text('Иванов Иван Иванович\n+7 905 123-45-67'),
+        subtitle: Text('Контакт вводится пользователем перед отправкой'),
       ),
     );
   }
@@ -747,7 +840,7 @@ class _AttachmentCard extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
         title: Text('Претензия.pdf'),
-        subtitle: Text('245 КБ'),
+        subtitle: Text('Формируется из API-проекта претензии'),
         trailing: Icon(Icons.download_outlined),
       ),
     );

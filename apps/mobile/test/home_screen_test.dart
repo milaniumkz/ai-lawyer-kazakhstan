@@ -675,6 +675,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Проект досудебной претензии'), findsWidgets);
+    expect(find.textContaining('Без подтверждения отправка заблокирована'),
+        findsOneWidget);
     await tester.ensureVisible(find.text('Проверено пользователем'));
     await tester.tap(find.text('Проверено пользователем'));
     await tester.pumpAndSettle();
@@ -689,7 +691,13 @@ void main() {
     await tester.ensureVisible(find.text('Отправить'));
     await tester.tap(find.text('Отправить'));
     await tester.pumpAndSettle();
-    expect(find.text('Отправка зафиксирована'), findsOneWidget);
+    expect(find.text('Укажите контакт получателя'), findsOneWidget);
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Контакт получателя'), '+77001234567');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Отправить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ручной статус зафиксирован'), findsOneWidget);
   });
 
   testWidgets('shows subscription budget screen', (tester) async {
