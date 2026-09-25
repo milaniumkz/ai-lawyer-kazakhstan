@@ -2,13 +2,27 @@
 
 ## Срез
 
-OpenAI integration.
+Web category AI interview.
 
 ## Статус
 
-DONE -> backend and AI-service OpenAI provider implemented, deployed and publicly smoke-tested.
+DONE -> category flow converted from one-shot result screen into sequential AI chat/interview with visible mobile progress, real classification actions, document upload request and case creation.
 
 ## Scope
+
+- Web `#category` now shows a 5-step AI progress header: description, AI уточнения, documents, category, case.
+- Category stage is presented as chat: AI asks next question, user answers are appended to the case text, documents can be requested/uploaded, and category confirmation creates the case through the existing API path.
+- Public server updated without changing runtime credentials or manual server edits.
+- Deploy archive: `/tmp/ai-lawyer-kz-ai-interview-category.tar.gz`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-ai-interview-category.tar.gz`.
+- SHA-256: `5508fa40e17b5b03b7e259e7ad205371e2e301a535349e01ba4b9a6f41573711`.
+- `npm run check` passed.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-ai-interview-category.tar.gz` passed with full check/build gates.
+- Server install health passed; `ai-lawyer-web`, `ai-lawyer-admin`, `ai-lawyer-api`, `ai-lawyer-ai` and `nginx` are active.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Docker config is blocked locally because Docker CLI is not installed.
+
+## Previous Scope
 
 - OpenAI provider added for backend `/api/v1/rag/answer`.
 - OpenAI provider added for AI-service `/ai/rag/safe-answer`.
@@ -88,4 +102,4 @@ DONE -> backend and AI-service OpenAI provider implemented, deployed and publicl
 
 ## Следующий шаг
 
-Next vertical slice: rotate the exposed OpenAI key in the OpenAI dashboard, update server env with the replacement key, then check App Store Connect processing for build `1.0.1 (6)`.
+Next vertical slice: continue the same sequential chat pattern for the next user-facing stage: document request/OCR review, so the AI asks for concrete files and updates progress from evidence to analysis.
