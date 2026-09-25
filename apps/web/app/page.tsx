@@ -414,17 +414,6 @@ const CASE_CATEGORY_LABELS: Record<string, string> = {
   clarification_required: "Требует уточнения",
 };
 
-const CATEGORY_ALTERNATIVES = [
-  "Семейные споры",
-  "Договоры и долги",
-  "Трудовые споры",
-  "Спор с госорганом",
-  "Административное правонарушение",
-  "Имущество и недвижимость",
-  "Наследство",
-  "Банки, кредиты и МФО",
-];
-
 const screens: { label: string; view: View }[] = [
   { label: "Онбординг", view: "onboarding" },
   { label: "Вход и регистрация", view: "login" },
@@ -487,6 +476,7 @@ export default function WebHome() {
   const [selectedCategory, setSelectedCategory] = useState("Семейные споры");
   const [classification, setClassification] = useState<ApiClassification | null>(null);
   const [classificationBusy, setClassificationBusy] = useState(false);
+  const [aiInterviewInput, setAiInterviewInput] = useState("");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
   const [otpHint, setOtpHint] = useState("");
@@ -920,6 +910,50 @@ export default function WebHome() {
     } finally {
       setClassificationBusy(false);
     }
+  }
+
+  function categoryStageProgress() {
+    if (remoteCaseId) return 100;
+    if (documents.length > 0) return classification ? 82 : 64;
+    if (classification) return classification.result.missing_facts.length ? 58 : 72;
+    if (caseText.trim().length >= 12) return 34;
+    return 12;
+  }
+
+  function appendInterviewFact() {
+    const value = aiInterviewInput.trim();
+    if (!value) {
+      setSyncState("Введите ответ для AI");
+      return;
+    }
+    setCaseText((text) => `${text.trim()}\nУточнение: ${value}`.trim());
+    setMessages((items) => [
+      ...items,
+      { role: "user", text: value },
+      { role: "assistant", text: nextAiQuestion() },
+    ]);
+    setAiInterviewInput("");
+    setSyncState("Ответ добавлен к делу. Запустите анализ заново.");
+  }
+
+  function nextAiQuestion() {
+    const question = classification?.result.clarification_questions[0]?.questionRu;
+    if (question) return question;
+    const missing = classification?.result.missing_facts[0];
+    if (missing === "employer") return "Укажите работодателя, должность и период, за который возник спор.";
+    if (missing) return `Уточните недостающий факт: ${missing}.`;
+    if (!documents.length) return "Загрузите договор, расписку, переписку или иной документ. После этого я проверю доказательства.";
+    return "Подтвердите категорию, и я создам дело с текущими фактами и документами.";
+  }
+
+  function categoryTimeline() {
+    return [
+      { title: "1. Описание", done: caseText.trim().length >= 12 },
+      { title: "2. Уточнения AI", done: Boolean(classification && !classification.result.missing_facts.length) },
+      { title: "3. Документы", done: documents.length > 0 },
+      { title: "4. Категория", done: Boolean(classification) },
+      { title: "5. Дело", done: Boolean(remoteCaseId) },
+    ];
   }
 
   async function sendMessage() {
@@ -2311,101 +2345,120 @@ export default function WebHome() {
 
     if (view === "category") {
       const currentClassification = classification?.result;
+      const progress = categoryStageProgress();
+      const timeline = categoryTimeline();
       return (
-        <section className="contentPanel">
+        <section className="contentPanel aiInterviewPanel">
           <AppHeader
-            title="Категория спора"
+            title="AI интервью"
             subtitle={
               currentClassification
-                ? "AI определил категорию по подтвержденному тексту"
-                : "Нужен подтвержденный текст обращения"
+                ? "Уточняю факты, документы и категорию дела"
+                : "Иду по этапам, пока данных достаточно для дела"
             }
             back="newCase"
           />
-          <div className="categoryHero">
-            <AuthMark />
-            <strong>
-              {classificationBusy
-                ? "Анализирую"
-                : currentClassification
-                  ? "Категория определена"
-                  : "Ожидает анализа"}
-            </strong>
-            <AuthDivider />
-            <h1>
-              {currentClassification?.category_label ?? selectedCategory}
-            </h1>
-            <button
-              className="categoryPill"
-              disabled={!currentClassification}
-              onClick={() =>
-                setSyncState(
-                  currentClassification
-                    ? `Подкатегория: ${currentClassification.subcategory_code}`
-                    : "Сначала запустите анализ",
-                )
-              }
-            >
-              ♙ {currentClassification?.subcategory_label ?? "Определить категорию"}
-            </button>
-            <p>
-              Уверенность:{" "}
-              <b>
-                {currentClassification
-                  ? `${Math.round(currentClassification.confidence * 100)}%`
-                  : "0%"}
-              </b>
-            </p>
+          <div className="aiProgressTop" aria-label="Прогресс AI интервью">
+            <div>
+              <span>Этап {Math.min(5, Math.max(1, Math.ceil(progress / 20)))} из 5</span>
+              <strong>{progress}%</strong>
+            </div>
+            <progress value={progress} max="100" />
+            <small>
+              {currentClassification
+                ? `${currentClassification.category_label} · ${currentClassification.subcategory_label}`
+                : "AI ждет факты для первичного анализа"}
+            </small>
           </div>
-          {currentClassification?.risk_level === "high" && (
-            <p className="hint">
-              ⚠ Высокий риск: требуется предупреждение и проверка юристом.
-            </p>
-          )}
-          <AuthDivider />
-          <p className="hint">Возможные альтернативы</p>
-          <div className="categoryAlternatives">
-            {(currentClassification?.alternatives.length
-              ? currentClassification.alternatives.map((item) => item.code)
-              : CATEGORY_ALTERNATIVES
-            ).map((type) => (
+          <div className="aiStageRail">
+            {timeline.map((item) => (
               <button
-                key={type}
-                onClick={() => {
-                  if (type.includes(".")) void overrideCategory(type);
-                  else {
-                    setSelectedCategory(type);
-                    setSyncState(`Категория выбрана: ${type}`);
-                  }
-                }}
+                key={item.title}
+                className={item.done ? "done" : ""}
+                onClick={() => setSyncState(item.done ? `${item.title}: готово` : `${item.title}: нужно пройти`)}
               >
-                ◴ {type}
+                {item.done ? "✓" : "○"} {item.title}
               </button>
             ))}
           </div>
-          {currentClassification?.missing_facts.length ? (
-            <p className="hint">
-              Не хватает данных: {currentClassification.missing_facts.join(", ")}
-            </p>
+          <div className="aiChatFlow" aria-label="AI чат по делу">
+            <div className="aiBubble assistant">
+              <strong>AI Юрист</strong>
+              <p>
+                Я веду дело по шагам: сначала уточняю факты, затем прошу документы,
+                определяю категорию и только после подтверждения создаю дело в базе.
+              </p>
+            </div>
+            <div className="aiBubble user">
+              <strong>Вы</strong>
+              <p>{caseText.trim() || "Описание еще не заполнено."}</p>
+            </div>
+            <div className="aiBubble assistant">
+              <strong>AI Юрист</strong>
+              <p>{nextAiQuestion()}</p>
+              {currentClassification?.missing_facts.length ? (
+                <em>Не хватает: {currentClassification.missing_facts.join(", ")}</em>
+              ) : null}
+            </div>
+            {currentClassification ? (
+              <div className="aiDecisionCard categoryHero">
+                <span>Предварительная категория</span>
+                <h3>{currentClassification.category_label}</h3>
+                <button
+                  className="categoryPill"
+                  onClick={() => setSyncState(`Подкатегория: ${currentClassification.subcategory_code}`)}
+                >
+                  {currentClassification.subcategory_label}
+                </button>
+                <p>
+                  Уверенность: {Math.round(currentClassification.confidence * 100)}%
+                  {currentClassification.risk_level === "high" ? " · высокий риск" : ""}
+                </p>
+              </div>
+            ) : null}
+            {documents.length ? (
+              <div className="aiBubble assistant">
+                <strong>Документы приняты</strong>
+                <p>
+                  Загружено: {documents[0].name}. Я учту документ на следующих этапах:
+                  OCR, анализ и подготовка претензии.
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <div className="aiComposer">
+            <input
+              value={aiInterviewInput}
+              onChange={(event) => setAiInterviewInput(event.target.value)}
+              placeholder="Ответьте AI: работодатель, сумма, даты, что произошло..."
+            />
+            <button onClick={appendInterviewFact}>Ответить</button>
+          </div>
+          <div className="aiActionGrid">
+            <button onClick={() => void classifyCurrentText()} disabled={classificationBusy || caseText.trim().length < 12}>
+              {classificationBusy ? "Анализирую..." : "Анализировать факты"}
+            </button>
+            <button onClick={() => fileInputRef.current?.click()}>
+              Запросить / загрузить документы
+            </button>
+            <button
+              className="primary"
+              disabled={classificationBusy || !currentClassification}
+              onClick={confirmCategoryAndCreateCase}
+            >
+              Подтвердить и создать дело
+            </button>
+          </div>
+          {currentClassification?.alternatives.length ? (
+            <div className="categoryAlternatives aiAlternatives">
+              <p className="hint">Возможные альтернативы</p>
+              {currentClassification.alternatives.map((item) => (
+                <button key={item.code} onClick={() => void overrideCategory(item.code)}>
+                  ◴ {item.code} · {Math.round(item.confidence * 100)}%
+                </button>
+              ))}
+            </div>
           ) : null}
-          <p className="hint">
-            ✦{" "}
-            {currentClassification?.reasons.join(", ") ??
-              "Нажмите повторный анализ, если категория не появилась."}
-          </p>
-          <button
-            className="primary wide heroCta"
-            disabled={classificationBusy || !currentClassification}
-            onClick={confirmCategoryAndCreateCase}
-          >
-            {classificationBusy ? "Сохраняю..." : "✧ Продолжить"}
-          </button>
-          <button
-            className="linkAction"
-            onClick={() => void classifyCurrentText()}
-          >
-            Повторить анализ
-          </button>
         </section>
       );
     }

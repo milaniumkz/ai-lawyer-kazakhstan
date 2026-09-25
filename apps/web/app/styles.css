@@ -3290,6 +3290,143 @@ h3 { font-size: 28px; }
   text-align: left;
 }
 
+.aiInterviewPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.aiProgressTop {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.aiProgressTop div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aiProgressTop span,
+.aiProgressTop small {
+  color: var(--muted);
+}
+
+.aiProgressTop strong {
+  color: var(--gold-strong);
+  font-size: 22px;
+}
+
+.aiStageRail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aiStageRail button {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel-soft) 85%, transparent);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.aiStageRail button.done {
+  border-color: var(--gold);
+  color: var(--gold-strong);
+}
+
+.aiChatFlow {
+  display: grid;
+  gap: 10px;
+}
+
+.aiBubble,
+.aiDecisionCard {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel-soft) 88%, transparent);
+  padding: 12px 14px;
+}
+
+.aiBubble strong,
+.aiDecisionCard span {
+  color: var(--gold-strong);
+}
+
+.aiBubble p,
+.aiDecisionCard p {
+  margin: 6px 0 0;
+  color: var(--text);
+}
+
+.aiBubble em {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-style: normal;
+}
+
+.aiBubble.user {
+  margin-left: 34px;
+  border-color: color-mix(in srgb, var(--gold) 58%, var(--border));
+}
+
+.aiDecisionCard h3 {
+  margin: 6px 0 10px;
+  color: var(--gold-strong);
+}
+
+.aiComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.aiComposer input {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 14px;
+}
+
+.aiComposer button,
+.aiActionGrid button {
+  min-height: 48px;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--gold-strong);
+  padding: 0 14px;
+  font-weight: 800;
+}
+
+.aiActionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aiActionGrid .primary {
+  background: var(--gold-gradient);
+  color: #0b1320;
+}
+
+.aiAlternatives {
+  margin: 0;
+}
+
 .panelHeader { margin-bottom: 22px; }
 
 .screenHeader {
@@ -5125,7 +5262,7 @@ button:disabled {
   .appShell[data-view="category"] .contentPanel {
     min-height: 685px;
     padding: 16px 38px 18px;
-    overflow: hidden;
+    overflow-y: auto;
   }
   .appShell[data-view="category"] .bottomNav {
     display: none;
@@ -5231,6 +5368,66 @@ button:disabled {
     margin-top: 8px;
     color: var(--gold-strong);
     font-size: 13px;
+  }
+  .appShell[data-view="category"] .aiInterviewPanel {
+    gap: 10px;
+  }
+  .appShell[data-view="category"] .aiProgressTop {
+    top: 0;
+    gap: 5px;
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .appShell[data-view="category"] .aiProgressTop strong {
+    font-size: 17px;
+  }
+  .appShell[data-view="category"] .aiProgressTop small {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .appShell[data-view="category"] .aiStageRail {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+  .appShell[data-view="category"] .aiStageRail button {
+    min-height: 34px;
+    padding: 3px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+  .appShell[data-view="category"] .aiBubble,
+  .appShell[data-view="category"] .aiDecisionCard {
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .appShell[data-view="category"] .aiBubble p,
+  .appShell[data-view="category"] .aiDecisionCard p {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .appShell[data-view="category"] .aiBubble.user {
+    margin-left: 18px;
+  }
+  .appShell[data-view="category"] .aiDecisionCard h3 {
+    margin: 4px 0 7px;
+    font-size: 15px;
+  }
+  .appShell[data-view="category"] .aiComposer {
+    grid-template-columns: 1fr;
+  }
+  .appShell[data-view="category"] .aiComposer input,
+  .appShell[data-view="category"] .aiComposer button,
+  .appShell[data-view="category"] .aiActionGrid button {
+    min-height: 38px;
+    border-radius: 9px;
+    font-size: 12px;
+  }
+  .appShell[data-view="category"] .aiActionGrid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .appShell[data-view="category"] .aiAlternatives {
+    gap: 6px;
   }
   .appShell[data-view="subscription"] {
     --bg: #020912;
