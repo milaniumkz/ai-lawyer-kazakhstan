@@ -17,6 +17,7 @@ Output:
 Bundle contents:
 
 - RC manifest, release notes, checklist, acceptance matrix, blockers and test evidence.
+- Machine-readable release blocker report rendered as Markdown.
 - OpenAPI contract.
 - Android release APK.
 - Android Play-prep AAB, debug-signed until production upload keystore is provided.

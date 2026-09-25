@@ -46,7 +46,8 @@
     "app-store:readiness": "node scripts/release/check-app-store-readiness.mjs",
     "app-store:review-plan": "node scripts/release/prepare-app-store-review-submission.mjs",
     "android:signing-check": "node scripts/release/check-android-signing.mjs",
-    "release:blockers": "node scripts/release/check-release-blockers.mjs"
+    "release:blockers": "node scripts/release/check-release-blockers.mjs",
+    "release:blockers:report": "node scripts/release/write-release-blockers-report.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
