@@ -51,3 +51,5 @@ Generated on 2026-09-07.
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-pretrial-claim-ai-progress`) | `520050f0337c9500cf692e52c6e60bd606abf71797b37cea732a196a79b7400a` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-claim-draft-send-confirmation`) | `f224df5fdda193bd77ae10cd704b497e643ee8ea46209b3894a68eaa32b3164c` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-profile-subscription-real-data`) | `732b46cee502eae1aed33057b2b45a3bc4c9ffc33caff91eb04c8ae5581df817` |
+| `/tmp/ai-lawyer-kz-web-real-data-parity.tar.gz` | `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8` |
+| `/opt/ai-lawyer-kz/ai-lawyer-kz-web-real-data-parity.tar.gz` | `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8` |

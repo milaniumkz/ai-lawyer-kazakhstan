@@ -2,24 +2,26 @@
 
 ## Срез
 
-Flutter profile/settings/subscription real-data parity.
+Web auth/profile/subscription real-data parity deploy.
 
 ## Статус
 
-DONE -> Flutter profile/settings/subscription/help screens now avoid invented personal/payment data.
+DONE -> Public web now avoids invented profile/subscription/claim-send data and is deployed.
 
 ## Scope
 
-- Login starts with only `+7`, no invented phone number.
-- Registration/profile city/address defaults are empty; profile completion is calculated from actual entered/API state.
-- Profile hero no longer invents a person name or confirmed status.
-- Subscription usage cards now reflect Billing API state instead of fixed fake counts/date.
-- Help topics are selectable and support remains adapter/manual.
+- Web claim-send starts without fake recipient/contact/file size and records only assisted/manual status.
+- Web claim generation no longer sends fake claimant/amount/deadline values; profile is required.
+- Web profile no longer invents a person name or confirmed status; completion is calculated from actual state.
+- Web subscription hero/usage no longer shows fixed fake plan/date/counts.
+- Help support wording is manual/adapter, without fake online SLA.
 - `npm run check` passed.
-- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
-- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
-- Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `732b46cee502eae1aed33057b2b45a3bc4c9ffc33caff91eb04c8ae5581df817`.
+- `npm run build --workspace apps/web` passed.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-web-real-data-parity.tar.gz` passed with full check/build gates.
+- Deploy archive SHA-256: `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-web-real-data-parity.tar.gz`.
+- Server install health passed and server `npm run test:audit` found 0 vulnerabilities.
+- `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -102,4 +104,4 @@ DONE -> Flutter profile/settings/subscription/help screens now avoid invented pe
 
 ## Следующий шаг
 
-Next vertical slice: web/mobile auth and profile parity pass, then public deploy.
+Next vertical slice: remove remaining web fake case/document samples and replace them with real API/empty states.
