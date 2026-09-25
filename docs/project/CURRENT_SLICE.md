@@ -2,21 +2,24 @@
 
 ## Срез
 
-Android release APK refresh after Flutter real-data fixes.
+iOS App Store build upload after Flutter real-data fixes.
 
 ## Статус
 
-DONE -> Android release APK rebuilt from current Flutter real-data parity code.
+DONE -> iOS IPA `1.0.1 (7)` built, validated, uploaded and marked VALID by App Store Connect.
 
 ## Scope
 
-- Android release APK rebuilt at `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK size: `49M`.
-- APK SHA-256: `99b77eae8dc018c8c73ce26319c8422c5612ebc137a3110d3aceb7b7f726a38c`.
-- `npm run check` passed.
-- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
-- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed.
-- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build apk --release` passed.
+- Cleaned Xcode DerivedData after the first IPA attempt hit local disk exhaustion.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=7` passed.
+- IPA path: `apps/mobile/build/ios/ipa/AI Юрист.ipa`.
+- IPA size: `21M`.
+- IPA SHA-256: `eb2e99156f182814001166cdf166c9b1d226a2de588901d2a33826d0e8aafc0d`.
+- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `7`, iOS `15.0`.
+- `xcrun altool --validate-app` passed with no errors.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `275d979b-9e7c-425e-891f-53b708797f1c`.
+- `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
+- Previous `npm run check` passed before the iOS build.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -99,4 +102,4 @@ DONE -> Android release APK rebuilt from current Flutter real-data parity code.
 
 ## Следующий шаг
 
-Next vertical slice: deploy current web/server only if runtime code changes; otherwise continue Flutter/App Store parity cleanup.
+Next vertical slice: update App Store/TestFlight selection in the portal and continue review metadata/privacy questionnaire.

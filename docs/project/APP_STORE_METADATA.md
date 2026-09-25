@@ -5,9 +5,9 @@
 - App name: `AI Юрист`
 - Bundle ID: `kz.milanium.lawyer`
 - SKU/application domain: Kazakhstan legal assistant
-- Uploaded build: `1.0.1 (6)`
-- Delivery UUID: `d42bc057-b4de-4156-8b02-39165a84057a`
-- Apple processing status: uploaded successfully; post-upload build-status request timed out locally, App Store Connect processing must be checked in the portal.
+- Uploaded build: `1.0.1 (7)`
+- Delivery UUID: `275d979b-9e7c-425e-891f-53b708797f1c`
+- Apple processing status: `BUILD-STATUS: VALID`.
 
 ## RU Listing Draft
 
