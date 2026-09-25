@@ -21,6 +21,8 @@ void main() {
     AuthRuntime.profileComplete = false;
     MobileCaseRuntime.activeCaseId = '';
     MobileCaseRuntime.confirmedText = '';
+    MobileCaseRuntime.draftCaseId = 'draft-initial';
+    MobileCaseRuntime.createdDraftCaseId = '';
     WorkflowRuntime.generatedBody = '';
   });
 
@@ -42,11 +44,16 @@ void main() {
   });
 
   testWidgets('main voice button opens case intake route', (tester) async {
+    MobileCaseRuntime.activeCaseId = 'old-case';
+    MobileCaseRuntime.confirmedText = 'старый текст';
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     expect(find.text('Новое дело'), findsWidgets);
+    expect(MobileCaseRuntime.activeCaseId, isEmpty);
+    expect(MobileCaseRuntime.confirmedText, isEmpty);
+    expect(MobileCaseRuntime.currentDraftCreated, isFalse);
   });
 
   testWidgets('profile icon opens profile route', (tester) async {
@@ -496,7 +503,38 @@ void main() {
 
     expect(cases.confirmedClassificationId, 'classification-1');
     expect(cases.createdText, contains('family.alimony.child'));
+    expect(MobileCaseRuntime.currentDraftCreated, isTrue);
     expect(find.text('Карточка дела'), findsOneWidget);
+  });
+
+  testWidgets('category blocks case creation when AI needs missing facts',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'user-1';
+    MobileCaseRuntime.confirmedText = 'Заказчик не оплатил договор';
+    final cases = _FakeCaseApi(missingFacts: const ['contract_date']);
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => CategoryScreen(caseApi: cases),
+          ),
+          GoRoute(
+            path: '/case/details',
+            builder: (_, __) => const Scaffold(body: Text('Карточка дела')),
+          ),
+        ],
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Не хватает данных'), findsOneWidget);
+    await tester.tap(find.text('Ответьте AI'));
+    await tester.pumpAndSettle();
+
+    expect(cases.createdText, isNull);
+    expect(find.text('Сначала ответьте на вопросы AI'), findsWidgets);
   });
 
   testWidgets('chat sends messages through case API when case exists',
@@ -728,6 +766,9 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
 }
 
 class _FakeCaseApi implements CaseApiPort {
+  _FakeCaseApi({this.missingFacts = const []});
+
+  final List<String> missingFacts;
   String? createdText;
   String? sentText;
   String? classifiedText;
@@ -740,14 +781,14 @@ class _FakeCaseApi implements CaseApiPort {
     required String text,
   }) async {
     classifiedText = text;
-    return const CaseClassificationResult(
+    return CaseClassificationResult(
       id: 'classification-1',
       categoryLabel: 'Брачно-семейные отношения',
       subcategoryLabel: 'Взыскание алиментов на ребёнка',
       subcategoryCode: 'family.alimony.child',
       confidence: 0.92,
-      missingFacts: ['child_birth_date'],
-      alternatives: ['family.divorce'],
+      missingFacts: missingFacts,
+      alternatives: const ['family.divorce'],
       riskLevel: 'medium',
       requiredHumanReview: false,
     );

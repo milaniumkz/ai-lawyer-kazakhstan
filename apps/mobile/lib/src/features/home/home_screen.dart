@@ -199,7 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 42),
             Center(
               child: FilledButton(
-                onPressed: () => context.go('/case/new'),
+                onPressed: () {
+                  MobileCaseRuntime.startDraft();
+                  context.go('/case/new');
+                },
                 style: FilledButton.styleFrom(
                   shape: const CircleBorder(),
                   fixedSize: const Size(176, 176),
@@ -230,6 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Новое дело',
                   subtitle: 'Создать новое дело',
                   route: '/case/new',
+                  startDraft: true,
                 ),
                 _ActionCard(
                   icon: Icons.description_outlined,
@@ -269,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 subtitle: 'Создайте первое дело',
                 status: 'Только реальные данные из БД',
                 route: '/case/new',
+                startDraft: true,
               )
             else
               for (final item in cases.take(2))
@@ -291,12 +296,14 @@ class _ActionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.route,
+    this.startDraft = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String route;
+  final bool startDraft;
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +311,10 @@ class _ActionCard extends StatelessWidget {
       width: 160,
       height: 176,
       child: InkWell(
-        onTap: () => context.go(route),
+        onTap: () {
+          if (startDraft) MobileCaseRuntime.startDraft();
+          context.go(route);
+        },
         borderRadius: BorderRadius.circular(20),
         child: Card(
           child: Padding(
@@ -341,19 +351,24 @@ class _CaseCard extends StatelessWidget {
     required this.subtitle,
     required this.status,
     required this.route,
+    this.startDraft = false,
   });
 
   final String title;
   final String subtitle;
   final String status;
   final String route;
+  final bool startDraft;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        onTap: () => context.go(route),
+        onTap: () {
+          if (startDraft) MobileCaseRuntime.startDraft();
+          context.go(route);
+        },
         leading: const CircleAvatar(child: Icon(Icons.balance_outlined)),
         title: Text(title),
         subtitle: Text('$subtitle\n$status'),

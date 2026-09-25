@@ -145,7 +145,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
                   subtitle: const Text(
                       'Создайте первое дело, чтобы оно появилось из БД'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go('/case/new'),
+                  onTap: () {
+                    MobileCaseRuntime.startDraft();
+                    context.go('/case/new');
+                  },
                 ),
               )
             else
@@ -870,6 +873,23 @@ abstract class CaseApiPort {
 abstract final class MobileCaseRuntime {
   static String activeCaseId = '';
   static String confirmedText = '';
+  static String draftCaseId = 'draft-initial';
+  static String createdDraftCaseId = '';
+
+  static bool get currentDraftCreated =>
+      activeCaseId.isNotEmpty && createdDraftCaseId == draftCaseId;
+
+  static void startDraft() {
+    draftCaseId = 'draft-${DateTime.now().microsecondsSinceEpoch}';
+    createdDraftCaseId = '';
+    activeCaseId = '';
+    confirmedText = '';
+  }
+
+  static void markCreated(String caseId) {
+    activeCaseId = caseId;
+    createdDraftCaseId = draftCaseId;
+  }
 }
 
 class CaseClassificationResult {
@@ -1012,7 +1032,7 @@ class HttpCaseApi implements CaseApiPort {
       throw HttpException(
           '${body['message'] ?? body['error'] ?? 'case create failed'}');
     }
-    MobileCaseRuntime.activeCaseId = body['id'] as String;
+    MobileCaseRuntime.markCreated(body['id'] as String);
     return caseFromJson(body);
   }
 
@@ -1151,6 +1171,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Future<void> confirmAndCreate() async {
     final result = classification;
     if (isBusy || result == null || AuthRuntime.userId.isEmpty) return;
+    if (result.missingFacts.isNotEmpty) {
+      setState(() => status = 'Сначала ответьте на вопросы AI');
+      return;
+    }
     setState(() {
       isBusy = true;
       status = 'Подтверждаю категорию и создаю дело...';
@@ -1163,7 +1187,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         problemText:
             '${MobileCaseRuntime.confirmedText}\nКатегория: ${result.subcategoryCode}',
       );
-      MobileCaseRuntime.activeCaseId = created.id;
+      MobileCaseRuntime.markCreated(created.id);
       if (mounted) context.go('/case/details');
     } catch (error) {
       setState(() => status = 'Ошибка сохранения: $error');
@@ -1207,10 +1231,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed:
-                isBusy || classification == null ? null : confirmAndCreate,
+            onPressed: isBusy || classification == null
+                ? null
+                : classification!.missingFacts.isNotEmpty
+                    ? () => setState(
+                        () => status = 'Сначала ответьте на вопросы AI')
+                    : confirmAndCreate,
             icon: const Icon(Icons.auto_awesome),
-            label: Text(isBusy ? 'Сохраняю' : 'Продолжить'),
+            label: Text(classification?.missingFacts.isNotEmpty == true
+                ? 'Ответьте AI'
+                : isBusy
+                    ? 'Сохраняю'
+                    : 'Продолжить'),
           ),
           TextButton(
             onPressed: isBusy ? null : classify,
