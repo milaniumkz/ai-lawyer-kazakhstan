@@ -2,18 +2,18 @@
 
 ## Срез
 
-Flutter case detail real-data parity.
+Flutter documents recent uploads real-data parity.
 
 ## Статус
 
-DONE -> Flutter case detail no longer shows invented amounts, dates, participants or document counts.
+DONE -> Flutter documents screen no longer shows invented recent files.
 
 ## Scope
 
-- Flutter `CaseDetailsScreen` now stores the selected API case in `MobileCaseRuntime.selectCase`.
-- Case detail title/status/category come from the selected API case.
-- Amounts, participants, document counts and key dates show explicit empty states unless present in real data.
-- Widget test now blocks regressions for `1 250 000`, fake April dates and fake document totals.
+- Flutter documents screen now shows `Файлы не загружены` until a file is saved through Documents API.
+- After upload, recent uploads display the actual `saved.fileName`.
+- Removed hardcoded `Свидетельство_о_браке.pdf` and `Справка_о_доходах.jpg`.
+- Widget test blocks the removed hardcoded file names and verifies uploaded `claim.pdf` appears from the fake API result.
 - `npm run check` passed.
 - Focused `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test test/home_screen_test.dart` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
@@ -98,4 +98,4 @@ DONE -> Flutter case detail no longer shows invented amounts, dates, participant
 
 ## Следующий шаг
 
-Next vertical slice: continue scanning Flutter screens for remaining invented dates/default data and replace them with API-backed or explicit empty/blocker states.
+Next vertical slice: remove fixed legal deadline dates from Flutter legal/deadlines UI and replace them with confirmed-source or explicit empty states.

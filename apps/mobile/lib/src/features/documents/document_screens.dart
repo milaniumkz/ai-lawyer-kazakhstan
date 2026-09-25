@@ -32,6 +32,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   var busy = false;
   var status = 'Выберите файл для загрузки';
   String? documentId;
+  String? uploadedFileName;
 
   int progressValue() {
     if (confirmed) return 86;
@@ -92,6 +93,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       setState(() {
         uploaded = true;
         documentId = saved.id;
+        uploadedFileName = saved.fileName;
         status = 'Файл добавлен: ${saved.fileName}';
       });
     } catch (error) {
@@ -213,12 +215,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             Text('Недавние загрузки',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            const _RecentDocumentTile(
-                title: 'Свидетельство_о_браке.pdf',
-                subtitle: 'PDF · 1.2 МБ · 15 мая 2024'),
-            const _RecentDocumentTile(
-                title: 'Справка_о_доходах.jpg',
-                subtitle: 'JPG · 0.8 МБ · 14 мая 2024'),
+            if (uploadedFileName == null)
+              const _RecentDocumentTile(
+                title: 'Файлы не загружены',
+                subtitle: 'Загрузки появятся после сохранения в API/БД',
+              )
+            else
+              _RecentDocumentTile(
+                title: uploadedFileName!,
+                subtitle: 'Сохранено через Documents API',
+              ),
             const SizedBox(height: 12),
             _OcrReviewCard(
               confirmed: confirmed,

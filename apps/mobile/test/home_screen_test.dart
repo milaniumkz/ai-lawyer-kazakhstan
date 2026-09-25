@@ -644,10 +644,14 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
+    expect(find.text('Файлы не загружены'), findsOneWidget);
+    expect(find.textContaining('Свидетельство_о_браке'), findsNothing);
+    expect(find.textContaining('Справка_о_доходах'), findsNothing);
 
     await tester.tap(find.text('Загрузить файл'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text('Файл добавлен'), findsOneWidget);
+    expect(find.text('claim.pdf'), findsOneWidget);
     expect(find.textContaining('нужен OCR-review'), findsOneWidget);
     expect(docs.uploadedFileName, 'claim.pdf');
 
