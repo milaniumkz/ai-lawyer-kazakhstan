@@ -84,8 +84,8 @@ async function main() {
           ? []
           : [
               {
-                id: '2024-0015',
-                title: 'Взыскание долга',
+                id: 'case-ref',
+                title: 'Тестовое дело из API',
                 type: 'Гражданское право',
                 status: 'В работе',
                 date: '12.09.2026',
@@ -97,7 +97,7 @@ async function main() {
           : [
               {
                 role: 'assistant',
-                text: 'Здравствуйте, Дмитрий! Я изучил материалы по вашему делу о взыскании долга. Ниже — ключевые выводы и правовые основания.',
+                text: 'Я изучил материалы тестового дела. Ниже — ключевые выводы и правовые основания.',
               },
               {
                 role: 'user',
@@ -156,10 +156,10 @@ async function main() {
             authUserId: isPublic ? '' : '00000000-0000-4000-8000-000000000001',
             profileComplete: !isPublic,
             remoteCaseId: isPublic ? '' : '00000000-0000-4000-8000-000000000017',
-            firstName: isPublic ? '' : 'Дмитрий',
-            lastName: isPublic ? '' : 'Штрахов',
-            city: isPublic ? '' : 'Астана',
-            profileName: isPublic ? '' : 'Дмитрий Штрахов',
+            firstName: isPublic ? '' : 'Тест',
+            lastName: isPublic ? '' : 'Пользователь',
+            city: isPublic ? '' : 'Город из профиля',
+            profileName: isPublic ? '' : 'Тест Пользователь',
           }),
         );
       }, { theme: target.theme, view: target.hash.slice(1), isPublic: publicViews.has(target.hash.slice(1)) });

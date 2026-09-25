@@ -2717,14 +2717,24 @@ export default function WebHome() {
           <div className="caseInfoGrid">
             <Info
               label="Участники дела"
-              value="Истец: вы · Ответчик: уточняется"
+              value={profileName ? `Заявитель: ${profileName}` : "Профиль не заполнен"}
             />
-            <Info label="Сумма и требования" value="1 250 000 ₸" />
+            <Info
+              label="Сумма и требования"
+              value={caseText ? "Из описания дела" : "Не указаны"}
+            />
             <Info
               label="Документы"
-              value={`${documents.length || 12} всего · 2 требуют внимания`}
+              value={
+                documents.length
+                  ? `${documents.length} из API/upload`
+                  : "Нет загруженных документов"
+              }
             />
-            <Info label="Ключевые даты" value="Претензия 18 мая · Суд 30 мая" />
+            <Info
+              label="Ключевые даты"
+              value={tasks.length ? `${tasks.length} задач` : "Сроки не рассчитаны"}
+            />
           </div>
           <div className="actionBar">
             <button className="primary" onClick={() => go("chat")}>
@@ -2788,11 +2798,11 @@ export default function WebHome() {
                       <button onClick={() => go("legalSearch")}>Источник ↗</button>
                     </div>
                   )}
-                  {message.role === "assistant" && index === 2 && (
+                  {message.role === "assistant" && index === 2 && generatedClaimBody && (
                     <button className="attachmentCard" onClick={() => go("claimDraft")}>
                       <span>▤</span>
                       <b>Претензия.pdf</b>
-                      <em>PDF · 246 КБ</em>
+                      <em>Создано через documents API</em>
                     </button>
                   )}
                 </div>
@@ -2825,18 +2835,7 @@ export default function WebHome() {
       view === "documentCheck" ||
       view === "documentUpload"
     ) {
-      const recentDocs = documents.length
-        ? documents
-        : [
-            {
-              name: "Свидетельство_о_браке.pdf",
-              status: "PDF · 1.2 МБ · 15 мая 2024",
-            },
-            {
-              name: "Справка_о_доходах.jpg",
-              status: "JPG · 0.8 МБ · 14 мая 2024",
-            },
-          ];
+      const recentDocs = documents;
       return (
         <section
           className={
@@ -2912,17 +2911,17 @@ export default function WebHome() {
                   [
                     "Личные документы",
                     "Паспорт, ИИН, доверенности",
-                    "5 файлов",
+                    `${documents.filter((item) => item.name.toLowerCase().includes("паспорт") || item.name.toLowerCase().includes("иин")).length} файлов`,
                   ],
                   [
                     "Договоры и переписка",
                     "Договоры, письма, сообщения",
-                    "12 файлов",
+                    `${documents.filter((item) => item.name.toLowerCase().includes("договор") || item.name.toLowerCase().includes("переписк")).length} файлов`,
                   ],
                   [
                     "Судебные документы",
                     "Иски, определения, решения",
-                    "8 файлов",
+                    `${documents.filter((item) => item.name.toLowerCase().includes("иск") || item.name.toLowerCase().includes("суд")).length} файлов`,
                   ],
                 ].map(([title, sub, count]) => (
                   <button
@@ -2941,36 +2940,26 @@ export default function WebHome() {
               </div>
               <h3 className="goldSection">Последние файлы</h3>
               <div className="recentFileList">
-                {[
-                  [
-                    "Исковое заявление.pdf",
-                    "PDF · 482 КБ · сегодня",
-                    "Проверено",
-                  ],
-                  [
-                    "Договор займа.pdf",
-                    "PDF · 1,2 МБ · вчера",
-                    "Нужна проверка",
-                  ],
-                  [
-                    "Переписка WhatsApp.zip",
-                    "ZIP · 3,4 МБ · 15 мая",
-                    "Доказательство",
-                  ],
-                ].map(([name, meta, status]) => (
+                {!documents.length && (
+                  <div className="analysisBox">
+                    <strong>Файлы не загружены</strong>
+                    <p>Последние файлы появятся после upload/OCR через API.</p>
+                  </div>
+                )}
+                {documents.map((doc) => (
                   <button
-                    key={name}
+                    key={doc.name}
                     onClick={() => {
-                      setSelectedDocument(name);
-                      setSyncState(`Открыт файл: ${name}`);
+                      setSelectedDocument(doc.name);
+                      setSyncState(`Открыт файл: ${doc.name}`);
                     }}
                   >
                     <span className="fileBadge">DOC</span>
                     <p>
-                      <strong>{name}</strong>
-                      <small>{meta}</small>
+                      <strong>{doc.name}</strong>
+                      <small>{doc.status}</small>
                     </p>
-                    <em>{status}</em>
+                    <em>Из API/upload</em>
                     <b>›</b>
                   </button>
                 ))}
@@ -2989,9 +2978,9 @@ export default function WebHome() {
                 <span className="largeIcon">⚖</span>
                 <div>
                   <h3>
-                    Готовность дела: <b>68%</b>
+                    Готовность дела: <b>{documents.length ? "68%" : "0%"}</b>
                   </h3>
-                  <progress value={68} max="100" />
+                  <progress value={documents.length ? 68 : 0} max="100" />
                   <p>
                     Чем выше готовность, тем больше шансов на успешный исход
                     дела.
@@ -3002,9 +2991,9 @@ export default function WebHome() {
               <div className="docChecklist">
                 {[
                   "Удостоверение личности",
-                  "Свидетельство о браке",
-                  "Свидетельство о рождении ребенка",
-                  "Справка о доходах",
+                  "Договор или основание требования",
+                  "Подтверждение оплаты/переписки",
+                  "Данные ответчика",
                 ].map((name, index) => (
                   <button
                     key={name}
@@ -3157,7 +3146,9 @@ export default function WebHome() {
                       <p>
                         {analysisDone
                           ? "Анализ завершен. Можно формировать претензию."
-                          : `Система нашла ${Math.max(documents.length, 4)} документа, распознала 18 страниц и выделила ключевые сведения`}
+                          : documents.length
+                            ? `Система нашла ${documents.length} документа и выделяет ключевые сведения`
+                            : "Загрузите документы, чтобы запустить OCR и анализ"}
                       </p>
                       <b>{analysisProgressLabel}</b>
                     </div>
@@ -3166,10 +3157,18 @@ export default function WebHome() {
                     </div>
                     <div className="analysisFoundGrid">
                       {[
-                        ["▤", "4 документа", "PDF, JPG, PNG"],
-                        ["▣", "7 ключевых дат", "Периоды и сроки"],
-                        ["◎", "12 сумм", "Общая сумма 4 250 000 ₸"],
-                        ["⚖", "9 норм права", "Найдены релевантные статьи"],
+                        ["▤", `${documents.length} документов`, "Из upload/API"],
+                        [
+                          "▣",
+                          analysisDone ? "Даты найдены" : "Даты не извлечены",
+                          "После OCR",
+                        ],
+                        ["◎", "Суммы не подтверждены", "Требуется документ"],
+                        [
+                          "⚖",
+                          legalNorms.length ? `${legalNorms.length} норм` : "Нормы не найдены",
+                          "После RAG",
+                        ],
                       ].map(([icon, title, detail]) => (
                         <button key={title} onClick={analyzeDocuments}>
                           <span>{icon}</span>
@@ -3205,6 +3204,10 @@ export default function WebHome() {
     }
 
     if (view === "deadlines") {
+      const calendarLabel = new Date().toLocaleDateString("ru-KZ", {
+        month: "long",
+        year: "numeric",
+      });
       return (
         <section className="contentPanel">
           <AppHeader
@@ -3222,7 +3225,7 @@ export default function WebHome() {
               >
                 ‹
               </button>
-              <strong>Май 2024</strong>
+              <strong>{calendarLabel}</strong>
               <button
                 onClick={() =>
                   setDeadlineStatus(
