@@ -5,7 +5,7 @@ Generated on 2026-09-07.
 | Artifact | SHA-256 |
 |---|---|
 | `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk` | `00447a20ad23d2494ee7fc9bfed0937430d153b7765a3df581f4b9638c7f34c8` |
-| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` | `32d35a190c6d54128b68005acd261e31ddbc76642aaa2e4ad6548f25c6681aec` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` | `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.1.tar.gz` | `0959cee4e96ae911071a515dcbce49ddf3d64caaf2912ca352b72360cd6a9dc8` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-v0.1.0-rc.2.tar.gz` | `9b0463459cac806af0ce07d88eb9fc7fc871ef784672ad16eda78132ec2a8d24` |
 | `dist/release/ai-lawyer-kz-v0.1.0-rc.2-release-bundle.tar.gz` | `e96dd688fec7f41f2a09ea4ee550c0db95ee046cfe975a95bbb359cd20e34415` |
@@ -52,6 +52,7 @@ Generated on 2026-09-07.
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-claim-draft-send-confirmation`) | `f224df5fdda193bd77ae10cd704b497e643ee8ea46209b3894a68eaa32b3164c` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-profile-subscription-real-data`) | `732b46cee502eae1aed33057b2b45a3bc4c9ffc33caff91eb04c8ae5581df817` |
 | `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`flutter-real-data-parity-refresh`) | `99b77eae8dc018c8c73ce26319c8422c5612ebc137a3110d3aceb7b7f726a38c` |
+| `apps/mobile/build/app/outputs/flutter-apk/app-release.apk` (`android-label-release-refresh`) | `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c` |
 | `apps/mobile/build/ios/ipa/AI Юрист.ipa` (`ios-real-data-parity-1.0.1-7`) | `eb2e99156f182814001166cdf166c9b1d226a2de588901d2a33826d0e8aafc0d` |
 | `/tmp/ai-lawyer-kz-web-real-data-parity.tar.gz` | `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-web-real-data-parity.tar.gz` | `fc5e418b7c3132401f4dcd40c96417b3acf5b5fb791e176ddf897b9232e780e8` |

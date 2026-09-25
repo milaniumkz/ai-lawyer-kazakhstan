@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="ai_lawyer_kz"
+        android:label="AI Юрист"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
