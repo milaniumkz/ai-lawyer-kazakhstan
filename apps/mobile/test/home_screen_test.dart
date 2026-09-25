@@ -256,6 +256,9 @@ void main() {
   testWidgets('shows documents OCR review screen', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
 
+    expect(find.text('AI проверка документов'), findsOneWidget);
+    expect(find.textContaining('AI запрос документов'), findsOneWidget);
+    expect(find.textContaining('Документы · этап'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('OCR-review'), 220);
     expect(find.text('OCR-review'), findsOneWidget);
     expect(find.text('Подтвердить поля'), findsOneWidget);
@@ -606,7 +609,13 @@ void main() {
     await tester.tap(find.text('Загрузить файл'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text('Файл добавлен'), findsOneWidget);
+    expect(find.textContaining('нужен OCR-review'), findsOneWidget);
     expect(docs.uploadedFileName, 'claim.pdf');
+
+    await tester.tap(find.text('Анализировать документы'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Сначала загрузите документ и подтвердите OCR'),
+        findsWidgets);
 
     await tester.tap(find.text('Сканировать документ'), warnIfMissed: false);
     await tester.pumpAndSettle();
@@ -617,6 +626,7 @@ void main() {
     await tester.tap(confirmFieldsButton, warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text('Поля подтверждены'), findsOneWidget);
+    expect(find.textContaining('можно анализировать'), findsOneWidget);
     expect(docs.ocrDocumentId, 'document-1');
 
     await tester.tap(find.text('Договор и переписка'), warnIfMissed: false);

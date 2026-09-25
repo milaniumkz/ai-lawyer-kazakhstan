@@ -33,6 +33,34 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   var status = 'Выберите файл для загрузки';
   String? documentId;
 
+  int progressValue() {
+    if (confirmed) return 86;
+    if (uploaded) return 68;
+    if (scanned) return 42;
+    return 18;
+  }
+
+  List<({String title, bool done})> documentStages() => [
+        (title: '1. Дело', done: MobileCaseRuntime.activeCaseId.isNotEmpty),
+        (title: '2. Запрос AI', done: true),
+        (title: '3. Файл', done: uploaded || scanned),
+        (title: '4. OCR', done: confirmed),
+        (title: '5. Анализ', done: confirmed),
+      ];
+
+  String aiDocumentQuestion() {
+    if (MobileCaseRuntime.activeCaseId.isEmpty) {
+      return 'Сначала создайте дело. После этого я привяжу документы к делу в базе.';
+    }
+    if (!uploaded && !scanned) {
+      return 'Загрузите договор, расписку, переписку, удостоверение или иной документ по делу.';
+    }
+    if (!confirmed) {
+      return 'Проверьте OCR-поля и подтвердите, что реквизиты распознаны правильно.';
+    }
+    return 'Документы готовы к анализу. Я могу перейти к проверке фактов и доказательств.';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -124,11 +152,29 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Проверка документов',
+              'AI проверка документов',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(color: AppColors.goldDark),
+            ),
+            const SizedBox(height: 16),
+            _DocumentAiProgress(
+              progress: progressValue(),
+              subtitle: confirmed
+                  ? 'OCR подтвержден · можно анализировать'
+                  : uploaded
+                      ? 'Файл загружен · нужен OCR-review'
+                      : 'AI ждет документы по делу',
+            ),
+            const SizedBox(height: 12),
+            _DocumentStageRail(items: documentStages()),
+            const SizedBox(height: 12),
+            _DocumentAiChat(
+              question: aiDocumentQuestion(),
+              status: status,
+              uploaded: uploaded,
+              confirmed: confirmed,
             ),
             const SizedBox(height: 16),
             const _ReadinessCard(),
@@ -180,7 +226,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => context.go('/documents/analysis'),
+              onPressed: confirmed
+                  ? () => context.go('/documents/analysis')
+                  : () => setState(() =>
+                      status = 'Сначала загрузите документ и подтвердите OCR'),
               icon: const Icon(Icons.analytics_outlined),
               label: const Text('Анализировать документы'),
             ),
@@ -442,6 +491,155 @@ class _ReadinessCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentAiProgress extends StatelessWidget {
+  const _DocumentAiProgress({required this.progress, required this.subtitle});
+
+  final int progress;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.gold),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    child: Text(
+                        'Документы · этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
+                Text('$progress%',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: AppColors.goldDark)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: progress / 100),
+            const SizedBox(height: 8),
+            Text(subtitle),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentStageRail extends StatelessWidget {
+  const _DocumentStageRail({required this.items});
+
+  final List<({String title, bool done})> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          Chip(
+            avatar: Icon(
+              item.done ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+            ),
+            label: Text(item.title),
+            side:
+                BorderSide(color: item.done ? AppColors.gold : Colors.white24),
+          ),
+      ],
+    );
+  }
+}
+
+class _DocumentAiChat extends StatelessWidget {
+  const _DocumentAiChat({
+    required this.question,
+    required this.status,
+    required this.uploaded,
+    required this.confirmed,
+  });
+
+  final String question;
+  final String status;
+  final bool uploaded;
+  final bool confirmed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DocumentAiBubble(
+          title: 'AI Юрист',
+          text:
+              'Я проверяю документы по шагам: запрашиваю файлы, сохраняю их в дело, затем прошу подтвердить OCR и только после этого запускаю анализ.',
+        ),
+        _DocumentAiBubble(
+          title: 'AI запрос документов',
+          text: question,
+          footer: status,
+        ),
+        if (uploaded || confirmed)
+          _DocumentAiBubble(
+            title: 'Документы',
+            text: confirmed
+                ? 'OCR-поля подтверждены пользователем.'
+                : 'Файл загружен. Следующий шаг — OCR-review.',
+            user: true,
+          ),
+      ],
+    );
+  }
+}
+
+class _DocumentAiBubble extends StatelessWidget {
+  const _DocumentAiBubble({
+    required this.title,
+    required this.text,
+    this.footer,
+    this.user = false,
+  });
+
+  final String title;
+  final String text;
+  final String? footer;
+  final bool user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
+      child: Card(
+        color: user ? AppColors.gold.withValues(alpha: 0.12) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      color: AppColors.gold, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text(text),
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                Text(footer!, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ],
+          ),
         ),
       ),
     );
