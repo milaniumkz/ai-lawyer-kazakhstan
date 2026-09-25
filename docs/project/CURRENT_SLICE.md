@@ -2,23 +2,23 @@
 
 ## Срез
 
-Flutter pretrial claim AI progress parity.
+Flutter claim draft/send confirmation parity.
 
 ## Статус
 
-DONE -> Flutter mobile pretrial claim screen now uses real-data AI progress before draft generation.
+DONE -> Flutter mobile claim draft/send screens now use explicit confirmation and assisted-send status.
 
 ## Scope
 
-- Removed invented default respondent/amount/reason values from the claim builder.
-- Added blocker: claim draft generation requires a real current `caseId` and filled claimant/respondent/amount/reason fields.
-- Added claim progress card, 5-stage rail and AI preparation guidance.
-- Draft creation still goes through the real workflow API adapter before opening the draft screen.
+- Claim draft screen now shows progress, stage rail and user confirmation blocker before send.
+- Claim send screen now requires a real recipient contact before recording send status.
+- Send channel is selectable and updates local state.
+- Fake recipient/contact/file-size data was removed; send remains assisted/manual instead of pretending official delivery.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `520050f0337c9500cf692e52c6e60bd606abf71797b37cea732a196a79b7400a`.
+- APK SHA-256: `f224df5fdda193bd77ae10cd704b497e643ee8ea46209b3894a68eaa32b3164c`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +101,4 @@ DONE -> Flutter mobile pretrial claim screen now uses real-data AI progress befo
 
 ## Следующий шаг
 
-Next vertical slice: apply the same real-data AI progress to claim draft/send confirmation screens.
+Next vertical slice: apply the same real-data AI progress to profile/settings/subscription/help screens.
