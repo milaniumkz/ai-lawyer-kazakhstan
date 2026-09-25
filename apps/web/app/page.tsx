@@ -176,6 +176,7 @@ type SavedState = {
   generatedClaimBody: string;
   claimReady: boolean;
   sent: boolean;
+  claimSendMethod: string;
   claimSendContact: string;
   claimSendMessage: string;
   helpStatus: string;
@@ -489,9 +490,10 @@ export default function WebHome() {
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
-  const [claimSendContact, setClaimSendContact] = useState("+7 905 123-45-67");
+  const [claimSendMethod, setClaimSendMethod] = useState("WhatsApp");
+  const [claimSendContact, setClaimSendContact] = useState("");
   const [claimSendMessage, setClaimSendMessage] = useState(
-    "Здравствуйте!\nНаправляю Вам претензию по делу №2024-0015.\nПрошу ознакомиться с документом во вложении.\nС уважением,\nAI Юрист",
+    "Здравствуйте!\nНаправляю Вам претензию по делу. Прошу ознакомиться с документом во вложении.\nС уважением.",
   );
   const [deadlineStatus, setDeadlineStatus] = useState(
     "Ближайший срок: досудебная претензия за 10 дней",
@@ -645,6 +647,7 @@ export default function WebHome() {
       if (typeof saved.claimReady === "boolean") setClaimReady(saved.claimReady);
       if (typeof saved.sent === "boolean") setSent(saved.sent);
       if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
+      if (saved.claimSendMethod) setClaimSendMethod(saved.claimSendMethod);
       if (saved.claimSendMessage) setClaimSendMessage(saved.claimSendMessage);
       if (saved.helpStatus) setHelpStatus(saved.helpStatus);
       setSyncState("Локальные данные восстановлены");
@@ -699,6 +702,7 @@ export default function WebHome() {
       claimReady,
       sent,
       claimSendContact,
+      claimSendMethod,
       claimSendMessage,
       helpStatus,
       firstName,
@@ -744,6 +748,7 @@ export default function WebHome() {
     claimReady,
     sent,
     claimSendContact,
+    claimSendMethod,
     claimSendMessage,
     helpStatus,
     firstName,
@@ -1328,6 +1333,11 @@ export default function WebHome() {
       setSyncState("Сначала создайте дело в API");
       return;
     }
+    if (!profileName.trim()) {
+      setSyncState("Заполните профиль перед формированием претензии");
+      go("profile");
+      return;
+    }
     setSyncState("Формирую претензию...");
     try {
       const userId = await ensureUser();
@@ -1339,11 +1349,11 @@ export default function WebHome() {
           templateId: templates[0]?.id ?? "tpl-pretrial-claim-ru-v1",
           caseId: remoteCaseId,
           fields: {
-            claimantName: profileName || "Заявитель",
-            respondentName: "Ответчик",
-            claimAmount: "1250000",
-            claimReason: caseText,
-            deadlineDate: "14 сентября 2026",
+            claimantName: profileName,
+            respondentName: "Ответчик уточняется пользователем",
+            claimAmount: "Сумма уточняется пользователем",
+            claimReason: caseText || "Основание уточняется пользователем",
+            deadlineDate: "Срок рассчитывается после проверки",
           },
           confirmedCitationIds: [],
         }),
@@ -1402,18 +1412,25 @@ export default function WebHome() {
       setSyncState("Сначала сформируйте проект претензии");
       return;
     }
+    if (!claimSendContact.trim()) {
+      setSyncState("Укажите контакт получателя перед фиксацией отправки");
+      go("claimSend");
+      return;
+    }
     const sentAt = new Date().toLocaleString("ru-KZ");
     setSent(true);
-    updateActiveCase("Отправка претензии зафиксирована", 100);
+    updateActiveCase("Assisted отправка претензии зафиксирована", 100);
     setTasks((items) => [
       {
-        title: `Отправка претензии подтверждена ${sentAt}`,
-        due: "Зафиксировано",
+        title: `Assisted отправка (${claimSendMethod}) ${sentAt}`,
+        due: "Manual status",
         done: true,
       },
       ...items,
     ]);
-    setSyncState(`Отправка зафиксирована пользователем: ${sentAt}`);
+    setSyncState(
+      `Manual status зафиксирован: ${claimSendMethod}, ${claimSendContact.trim()}, ${sentAt}`,
+    );
     go("claimSend");
   }
 
@@ -3627,13 +3644,15 @@ export default function WebHome() {
                 {["E-mail", "WhatsApp", "SMS", "Почтовая отправка"].map(
                   (method) => (
                     <button
-                      className={method === "WhatsApp" ? "active" : ""}
+                      className={method === claimSendMethod ? "active" : ""}
                       key={method}
-                      onClick={() =>
+                      onClick={() => {
+                        setClaimSendMethod(method);
+                        setSent(false);
                         setSyncState(
                           `${method}: внешний канал, требуется ручная отправка или provider adapter`,
-                        )
-                      }
+                        );
+                      }}
                     >
                       <span>
                         {method === "E-mail"
@@ -3654,9 +3673,9 @@ export default function WebHome() {
                 <p>
                   <small>Получатель</small>
                   <br />
-                  <b>Иванов Иван Иванович</b>
+                  <b>{claimSendContact || "Контакт еще не указан"}</b>
                   <br />
-                  +7 905 123-45-67
+                  Assisted/manual отправка через adapter
                 </p>
               </div>
               <p className="fieldLabel">Вложенные файлы</p>
@@ -3665,7 +3684,7 @@ export default function WebHome() {
                 <p>
                   <b>Претензия.pdf</b>
                   <br />
-                  245 КБ
+                  Будет сформирован через documents adapter
                 </p>
                 <button
                   onClick={() =>
@@ -3705,7 +3724,7 @@ export default function WebHome() {
                 className="primary wide heroCta"
                 onClick={confirmClaimSent}
               >
-                {sent ? "Отправка зафиксирована" : "✧ Отправить"}
+                {sent ? "Manual status зафиксирован" : "✧ Зафиксировать assisted отправку"}
               </button>
               <button
                 className="wide outlineGold"
@@ -3723,29 +3742,48 @@ export default function WebHome() {
     }
 
     if (view === "profile") {
+      const profileProgressItems = [
+        profileName.trim(),
+        city.trim(),
+        profileId.trim(),
+        authUserId,
+      ];
+      const profileProgress = Math.round(
+        (profileProgressItems.filter(Boolean).length /
+          profileProgressItems.length) *
+          100,
+      );
       return (
         <section className="contentPanel">
           <AppHeader
             title="Профиль"
-            subtitle="Физическое лицо · профиль подтверждён"
+            subtitle={
+              profileComplete
+                ? `${profileType} · данные из профиля`
+                : "Заполните профиль для доступа к делам"
+            }
           />
           <div className="profileHero">
             <div className="profileAvatar">
-              {(profileName || "АС").slice(0, 2).toUpperCase()}
+              {(profileName || "П").slice(0, 2).toUpperCase()}
             </div>
-            <h2>{profileName || "Асем Серикбосыновна"}</h2>
-            <p>Физическое лицо · профиль подтверждён</p>
+            <h2>{profileName || "Профиль не заполнен"}</h2>
+            <p>
+              {profileComplete
+                ? `${profileType} · сохранен в API`
+                : "Нет сохраненного профиля"}
+            </p>
           </div>
           <div className="claimProgress">
             <span>Заполненность профиля</span>
-            <b>86%</b>
-            <progress value={86} max="100" />
+            <b>{profileProgress}%</b>
+            <progress value={profileProgress} max="100" />
           </div>
           <h3 className="goldSection">Мои профили</h3>
           <div className="profileCards">
             {[
-              "Физическое лицо|Активный профиль|Основной",
-              "Индивидуальный предприниматель|ИП MILANIUM|›",
+              `Физическое лицо|${profileType === "Физлицо" ? "Текущий профиль" : "Выбрать профиль"}|Основной`,
+              "Индивидуальный предприниматель|Выбрать ИП|›",
               "Юридическое лицо|Добавить организацию|›",
             ].map((row) => {
               const [title, sub, tail] = row.split("|");
@@ -3903,6 +3941,7 @@ export default function WebHome() {
     }
 
     if (view === "subscription") {
+      const loadedPlans = subscriptionPlans.length > 0;
       return (
         <section className="contentPanel">
           <AppHeader
@@ -3912,16 +3951,16 @@ export default function WebHome() {
           />
           <div className="subscriptionHero">
             <p>Текущий план</p>
-            <h2>Профессиональный</h2>
-            <span>Активен</span>
-            <small>действует до 15 сентября 2026</small>
+            <h2>{loadedPlans ? "Данные из Billing API" : "Не загружен"}</h2>
+            <span>{authUserId ? "API" : "Требуется вход"}</span>
+            <small>{subscriptionStatus}</small>
           </div>
-          <h3 className="goldSection">Использование в августе</h3>
+          <h3 className="goldSection">Использование</h3>
           <div className="usageBars">
             {[
-              "Консультации|34 из 100|34",
-              "Документы|12 из 30|40",
-              "Голосовые минуты|68 из 180|38",
+              `Планы|${subscriptionPlans.length} из API|${loadedPlans ? 100 : 0}`,
+              `Платежи|${paymentHistory.length} записей|${paymentHistory.length ? 100 : 0}`,
+              `Статус|${authUserId ? "пользователь авторизован" : "нет входа"}|${authUserId ? 100 : 0}`,
             ].map((row) => {
               const [label, value, progress] = row.split("|");
               return (
@@ -4005,7 +4044,7 @@ export default function WebHome() {
             {[
               "Частые вопросы|Ответы на популярные темы",
               "Инструкции|Пошаговые руководства",
-              "Написать в WhatsApp|Обычно отвечаем за 5 минут",
+              "WhatsApp adapter|Внешний канал без fake-доставки",
               "Сообщить о проблеме|Ошибка или предложение",
             ].map((row, index) => {
               const [title, sub] = row.split("|");
@@ -4024,9 +4063,9 @@ export default function WebHome() {
             })}
           </div>
           <div className="supportOnline">
-            <strong>Служба поддержки онлайн</strong>
-            <span>В сети</span>
-            <p>Среднее время ответа — до 15 минут</p>
+            <strong>Служба поддержки</strong>
+            <span>Manual</span>
+            <p>Обращение фиксируется локально и, при наличии дела, отправляется в API-сообщения.</p>
             <button
               className="primary"
               onClick={() => {
