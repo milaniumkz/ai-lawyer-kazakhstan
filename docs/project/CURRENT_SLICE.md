@@ -105,4 +105,4 @@ DONE -> App Store version `1.0` now has build `1.0.1 (7)` selected.
 
 ## Следующий шаг
 
-Next vertical slice: publish App Store privacy questionnaire/reviewer notes and upload native screenshots in App Store Connect.
+Next vertical slice: publish App Store privacy questionnaire/reviewer notes in App Store Connect and perform final review submission readiness check.

@@ -57,13 +57,14 @@
 - Prepared iPhone 6.7" dark set: `docs/project/app-store-screenshots/iphone-67-dark`, 8 PNG files at `1290x2796`.
 - Native iOS simulator evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png`, iPhone 17 Pro Max simulator, `1320x2868`.
 - Full native iOS simulator set: `docs/project/app-store-screenshots/ios-simulator-native-full`, 8 screenshots at `1320x2868` plus contact sheet.
+- App Store Connect screenshot upload: RU localization `e35267d2-009d-41db-b4cc-a25c4cc45899`, screenshot set `7bc670b5-61bc-4958-a55e-9e63e6d6bbc0`, display type `APP_IPHONE_67`, 8 screenshots uploaded and verified.
 - iPhone 6.7": login, home voice, case intake, category, chat, documents, legal search, subscription.
 - iPhone 6.5": same set if App Store Connect requires fallback size.
 - iPad: not required unless iPad support is enabled.
-- Final public submission still needs upload of the prepared native screenshot set in App Store Connect after TestFlight smoke.
+- Final public submission still needs TestFlight smoke and App Store Connect reviewer/privacy completion.
 
 ## Submission Blockers
 
 - Metadata fields, screenshots, privacy questionnaire and reviewer contact must be completed in App Store Connect.
-- RU metadata fields are already uploaded; privacy questionnaire draft is prepared; screenshots, privacy questionnaire publication and reviewer contact still need App Store Connect entry.
+- RU metadata fields and native screenshots are uploaded; privacy questionnaire draft is prepared; privacy questionnaire publication and reviewer contact still need App Store Connect entry.
 - Production SMS/payment/government credentials are not provided; app review notes must explicitly describe local/adapter behavior.

@@ -20,5 +20,6 @@
 - Prepared screenshot assets: `docs/project/app-store-screenshots/iphone-67-dark`.
 - Native screenshot evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png` captured from iPhone 17 Pro Max simulator after installing `build/ios/iphonesimulator/Runner.app`.
 - Full native screenshot set: `docs/project/app-store-screenshots/ios-simulator-native-full`, generated with `scripts/mobile/capture-ios-simulator-screenshots.mjs`.
+- Uploaded screenshots: App Store Connect RU `APP_IPHONE_67` set `7bc670b5-61bc-4958-a55e-9e63e6d6bbc0` has 8 screenshots, verified by API read.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect, upload native iOS screenshots and reviewer contact/notes.
+- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect and fill reviewer contact/notes.
