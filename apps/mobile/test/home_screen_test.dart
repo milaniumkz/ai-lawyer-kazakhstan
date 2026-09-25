@@ -354,7 +354,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.savedUserId, 'user-1');
-    expect(find.textContaining('Профиль сохранен'), findsOneWidget);
+    expect(find.textContaining('Профиль сохранен'), findsWidgets);
   });
 
   testWidgets('shows pretrial claim builder', (tester) async {

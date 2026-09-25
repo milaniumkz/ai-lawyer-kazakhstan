@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     authApi = widget.authApi ?? HttpAuthApi();
-    loginController = TextEditingController(text: '+77010000001');
+    loginController = TextEditingController(text: '+7');
   }
 
   @override
@@ -142,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         TextEditingController(text: parts.length > 1 ? parts[1] : '');
     middleNameController = TextEditingController(
         text: parts.length > 2 ? parts.sublist(2).join(' ') : '');
-    cityController = TextEditingController(text: 'Алматы');
+    cityController = TextEditingController();
     iinController = TextEditingController();
   }
 
@@ -507,7 +507,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     profileApi = widget.profileApi ?? HttpProfileApi();
     nameController = TextEditingController(text: AuthRuntime.displayName);
     iinController = TextEditingController();
-    addressController = TextEditingController(text: 'Алматы, Казахстан');
+    addressController = TextEditingController();
+  }
+
+  double completionValue() {
+    final fields = [
+      nameController.text.trim(),
+      iinController.text.trim(),
+      addressController.text.trim(),
+      AuthRuntime.userId,
+    ];
+    return fields.where((value) => value.isNotEmpty).length / fields.length;
   }
 
   @override
@@ -552,7 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _ProfileHero(name: nameController.text),
           const SizedBox(height: 16),
-          const _ProfileCompletionCard(),
+          _ProfileCompletionCard(progress: completionValue(), status: status),
           const SizedBox(height: 16),
           Text('Мои профили',
               style: Theme.of(context)
@@ -573,6 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: nameController,
+            onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
               labelText: 'Ф.И.О. / название',
               prefixIcon: Icon(Icons.badge_outlined),
@@ -581,6 +592,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: iinController,
+            onChanged: (_) => setState(() {}),
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'ИИН/БИН',
@@ -590,6 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: addressController,
+            onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
               labelText: 'Адрес в РК',
               prefixIcon: Icon(Icons.location_on_outlined),
@@ -711,33 +724,45 @@ class _ProfileHero extends StatelessWidget {
               style: const TextStyle(color: AppColors.gold, fontSize: 34)),
         ),
         const SizedBox(height: 14),
-        Text(name.isEmpty ? 'Асем Серикбосыновна' : name,
+        Text(name.isEmpty ? 'Профиль не заполнен' : name,
             style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 4),
-        const Text('Физическое лицо · профиль подтверждён',
-            style: TextStyle(color: Color(0xFF62D983))),
+        Text(
+          name.isEmpty
+              ? 'Заполните данные из базы профиля'
+              : 'Физическое лицо · данные из профиля',
+          style: const TextStyle(color: Color(0xFF62D983)),
+        ),
       ],
     );
   }
 }
 
 class _ProfileCompletionCard extends StatelessWidget {
-  const _ProfileCompletionCard();
+  const _ProfileCompletionCard({required this.progress, required this.status});
+
+  final double progress;
+  final String status;
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [Text('Заполненность профиля'), Text('86%')],
+              children: [
+                const Text('Заполненность профиля'),
+                Text('${(progress * 100).round()}%'),
+              ],
             ),
-            SizedBox(height: 10),
-            LinearProgressIndicator(value: 0.86),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(value: progress),
+            const SizedBox(height: 8),
+            Text(status),
           ],
         ),
       ),
@@ -946,6 +971,7 @@ class HelpScreen extends StatefulWidget {
 
 class _HelpScreenState extends State<HelpScreen> {
   var requestCreated = false;
+  var selectedTopic = 'Общие вопросы';
 
   @override
   Widget build(BuildContext context) {
@@ -960,16 +986,19 @@ class _HelpScreenState extends State<HelpScreen> {
             title: Text('Найдите ответ на вопрос'),
             subtitle: Text('Аккаунт, дела, документы, подписка'),
           ),
-          const _HelpQuickGrid(),
+          _HelpQuickGrid(
+            selected: selectedTopic,
+            onSelect: (value) => setState(() => selectedTopic = value),
+          ),
           const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: const Icon(Icons.support_agent_outlined,
                   color: AppColors.gold),
               title: const Text('Служба поддержки онлайн'),
-              subtitle: const Text('Среднее время ответа — до 15 минут'),
-              trailing: const Text('В сети',
-                  style: TextStyle(color: Color(0xFF62D983))),
+              subtitle: Text('Тема: $selectedTopic'),
+              trailing: const Text('Adapter',
+                  style: TextStyle(color: AppColors.gold)),
               onTap: () => setState(() => requestCreated = true),
             ),
           ),
@@ -991,14 +1020,17 @@ class _HelpScreenState extends State<HelpScreen> {
 }
 
 class _HelpQuickGrid extends StatelessWidget {
-  const _HelpQuickGrid();
+  const _HelpQuickGrid({required this.selected, required this.onSelect});
+
+  final String selected;
+  final ValueChanged<String> onSelect;
 
   @override
   Widget build(BuildContext context) {
     const items = [
       ('1', 'Частые вопросы', 'Ответы на популярные темы'),
       ('2', 'Инструкции', 'Пошаговые руководства'),
-      ('3', 'Написать в WhatsApp', 'Внешний канал через adapter'),
+      ('3', 'WhatsApp blocker', 'Внешний канал через adapter'),
       ('4', 'Сообщить о проблеме', 'Ошибка или предложение'),
     ];
     return GridView.count(
@@ -1011,24 +1043,35 @@ class _HelpQuickGrid extends StatelessWidget {
       children: [
         for (final item in items)
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppColors.gold.withValues(alpha: 0.12),
-                    child: Text(item.$1,
-                        style: const TextStyle(color: AppColors.gold)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(item.$3,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                  color: selected == item.$2
+                      ? AppColors.gold
+                      : Colors.transparent),
+            ),
+            child: InkWell(
+              onTap: () => onSelect(item.$2),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppColors.gold.withValues(alpha: 0.12),
+                      child: Text(item.$1,
+                          style: const TextStyle(color: AppColors.gold)),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(item.$3,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
               ),
             ),
           ),

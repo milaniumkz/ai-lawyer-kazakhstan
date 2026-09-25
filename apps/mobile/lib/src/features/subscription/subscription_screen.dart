@@ -97,9 +97,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     .titleLarge
                     ?.copyWith(color: AppColors.goldDark)),
             const SizedBox(height: 10),
-            const _UsageCard('Консультации', '34 из 100', 0.34),
-            const _UsageCard('Документы', '12 из 30', 0.40),
-            const _UsageCard('Голосовые минуты', '68 из 180', 0.38),
+            _UsageCard('AI бюджет', '$percent%', percent / 100),
+            _UsageCard('TTS', ttsDisabled ? 'выключен' : 'доступен',
+                ttsDisabled ? 1 : 0),
+            _UsageCard('История платежей', '${payments.length} записей',
+                payments.isEmpty ? 0 : 1),
             const SizedBox(height: 18),
             Text('Выберите план',
                 style: Theme.of(context)
@@ -219,9 +221,8 @@ class _CurrentPlanCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Текущий план'),
-                  Text(plan == 'Free' ? 'Профессиональный' : plan,
-                      style: Theme.of(context).textTheme.headlineSmall),
-                  const Text('действует до 15 сентября 2026'),
+                  Text(plan, style: Theme.of(context).textTheme.headlineSmall),
+                  const Text('данные загружаются из Billing API'),
                 ],
               ),
             ),
