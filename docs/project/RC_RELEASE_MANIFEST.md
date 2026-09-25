@@ -1,6 +1,6 @@
 # RC Release Manifest
 
-Release: `v0.1.0-rc.12`
+Release: `v0.1.0-rc.13`
 
 Date: 2026-09-26
 
@@ -30,9 +30,9 @@ Date: 2026-09-26
 
 ## Source Archive
 
-- Source tag: `v0.1.0-rc.12`
-- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.12-release-bundle.tar.gz`
-- QA bundle SHA-256: `844f029a648abaec6f042b42ded7e227fff8e915ac19a71689f0bbc298e011f7`
+- Source tag: `v0.1.0-rc.13`
+- QA bundle: `dist/release/ai-lawyer-kz-v0.1.0-rc.13-release-bundle.tar.gz`
+- QA bundle SHA-256: pending build
 - Android APK SHA-256: `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c`
 - Android AAB SHA-256: `c1e679e519f41ed397080a50adc4f5819968cc967a1dfb0b4934b5499c8548df` (debug-signed test artifact until upload keystore is provided).
 - iOS bundle id: `kz.milanium.lawyer`, latest selected App Store Connect build `1.0.1 (8)`.
