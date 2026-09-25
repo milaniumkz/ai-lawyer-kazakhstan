@@ -2,21 +2,21 @@
 
 ## Срез
 
-Flutter deadlines real-data parity.
+Android release APK refresh after Flutter real-data fixes.
 
 ## Статус
 
-DONE -> Flutter deadlines screen no longer shows invented legal deadline dates.
+DONE -> Android release APK rebuilt from current Flutter real-data parity code.
 
 ## Scope
 
-- Flutter deadlines screen now shows an empty calendar until a case has confirmed dates.
-- Removed hardcoded May 2024 calendar and fake deadline events.
-- Deadline card now clearly says dates appear only after case creation and confirmed input dates.
-- Design source gate now checks `_EmptyDeadlinesCalendar`.
-- Widget test blocks the removed `15 мая 2024` and `Подать иск` entries.
+- Android release APK rebuilt at `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
+- APK size: `49M`.
+- APK SHA-256: `99b77eae8dc018c8c73ce26319c8422c5612ebc137a3110d3aceb7b7f726a38c`.
 - `npm run check` passed.
-- Focused `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test test/home_screen_test.dart` passed.
+- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build apk --release` passed.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -99,4 +99,4 @@ DONE -> Flutter deadlines screen no longer shows invented legal deadline dates.
 
 ## Следующий шаг
 
-Next vertical slice: rebuild Android release APK after the Flutter real-data parity fixes and update release checksums.
+Next vertical slice: deploy current web/server only if runtime code changes; otherwise continue Flutter/App Store parity cleanup.
