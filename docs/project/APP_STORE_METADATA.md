@@ -39,6 +39,7 @@
 
 - Reviewer notes API helper: `scripts/release/update-app-review-details.mjs`.
 - Submission readiness API helper: `scripts/release/check-app-store-readiness.mjs`.
+- Review submission API helper: `scripts/release/prepare-app-store-review-submission.mjs`.
 - Blocker: App Store Connect requires `contactPhone`; run with `ASC_REVIEW_CONTACT_PHONE=+... node scripts/release/update-app-review-details.mjs --execute` when the real review contact phone is available.
 
 ## App Privacy Draft

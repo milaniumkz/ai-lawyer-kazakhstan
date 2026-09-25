@@ -42,7 +42,9 @@
     "deploy:server-health": "bash scripts/deploy/server-health-check.sh",
     "deploy:firewall": "bash scripts/deploy/server-firewall.sh",
     "deploy:backup-postgres": "bash scripts/deploy/server-backup-postgres.sh",
-    "deploy:install-backup-timer": "bash scripts/deploy/server-install-backup-timer.sh"
+    "deploy:install-backup-timer": "bash scripts/deploy/server-install-backup-timer.sh",
+    "app-store:readiness": "node scripts/release/check-app-store-readiness.mjs",
+    "app-store:review-plan": "node scripts/release/prepare-app-store-review-submission.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

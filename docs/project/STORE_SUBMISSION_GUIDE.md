@@ -23,5 +23,6 @@
 - Uploaded screenshots: App Store Connect RU `APP_IPHONE_67` set `7bc670b5-61bc-4958-a55e-9e63e6d6bbc0` has 8 screenshots, verified by API read.
 - Prepared reviewer notes helper: `scripts/release/update-app-review-details.mjs`; blocked until real `ASC_REVIEW_CONTACT_PHONE` is provided because Apple requires `contactPhone`.
 - Readiness checker: `scripts/release/check-app-store-readiness.mjs`; current API result passes app/version/build/localization/screenshots and reports only `reviewContact: missing contact phone`.
+- Review submission helper: `scripts/release/prepare-app-store-review-submission.mjs`; dry-run by default, `--execute` can create/reuse the review submission and attach the app version after blockers are clear, and actual submit requires both `--submit` and `ASC_CONFIRM_SUBMIT=YES`.
 - Prepared RC legal/support URLs: `/privacy`, `/terms`, `/support`, `/delete-account`.
-- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect and fill reviewer contact phone/notes.
+- Required before submission/review: TestFlight check, publish privacy questionnaire in App Store Connect, fill reviewer contact phone/notes, then run `npm run app-store:review-plan` and only submit when blockers are empty.
