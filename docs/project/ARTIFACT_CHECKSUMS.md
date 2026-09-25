@@ -42,3 +42,5 @@ Generated on 2026-09-07.
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-openai-integration-v2.tar.gz` | `c246be7046eb43f8d1974f80bfece33ab927271ebec329b8e981f30b962ebbd6` |
 | `/tmp/ai-lawyer-kz-ai-interview-category.tar.gz` | `5508fa40e17b5b03b7e259e7ad205371e2e301a535349e01ba4b9a6f41573711` |
 | `/opt/ai-lawyer-kz/ai-lawyer-kz-ai-interview-category.tar.gz` | `5508fa40e17b5b03b7e259e7ad205371e2e301a535349e01ba4b9a6f41573711` |
+| `/tmp/ai-lawyer-kz-draft-reset.tar.gz` | `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c` |
+| `/opt/ai-lawyer-kz/ai-lawyer-kz-draft-reset.tar.gz` | `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c` |

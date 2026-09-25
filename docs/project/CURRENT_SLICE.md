@@ -2,24 +2,27 @@
 
 ## Срез
 
-Web category AI interview.
+Web new case draft reset.
 
 ## Статус
 
-DONE -> category flow converted from one-shot result screen into sequential AI chat/interview with visible mobile progress, real classification actions, document upload request and case creation.
+DONE -> new case intake now starts from a clean draft/session and cannot inherit old case progress, classification, documents or remote case id.
 
 ## Scope
 
-- Web `#category` now shows a 5-step AI progress header: description, AI уточнения, documents, category, case.
-- Category stage is presented as chat: AI asks next question, user answers are appended to the case text, documents can be requested/uploaded, and category confirmation creates the case through the existing API path.
+- Web new case entrypoints call `startNewCaseDraft()` and clear only intake fields while keeping the signed-in user, profile, theme, language and real saved case list.
+- `draftCaseId` and `remoteCaseDraftId` now bind a created API case to the current draft; progress reaches `100%` only for the current draft after real `/cases` creation.
+- Category confirmation is blocked while `missing_facts` exist, with a clear "answer AI and repeat analysis" blocker.
+- Desktop context panel shows "Новое дело не создано" and draft progress instead of reusing the previous active case.
 - Public server updated without changing runtime credentials or manual server edits.
-- Deploy archive: `/tmp/ai-lawyer-kz-ai-interview-category.tar.gz`.
-- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-ai-interview-category.tar.gz`.
-- SHA-256: `5508fa40e17b5b03b7e259e7ad205371e2e301a535349e01ba4b9a6f41573711`.
+- Deploy archive: `/tmp/ai-lawyer-kz-draft-reset.tar.gz`.
+- Server archive: `/opt/ai-lawyer-kz/ai-lawyer-kz-draft-reset.tar.gz`.
+- SHA-256: `abc1d1d6c837ef10051979fe28fc7baaeea735ce17b8006d6a865a327c43f79c`.
 - `npm run check` passed.
-- `npm run deploy:package -- /tmp/ai-lawyer-kz-ai-interview-category.tar.gz` passed with full check/build gates.
+- `npm run deploy:package -- /tmp/ai-lawyer-kz-draft-reset.tar.gz` passed with full check/build gates.
 - Server install health passed; `ai-lawyer-web`, `ai-lawyer-admin`, `ai-lawyer-api`, `ai-lawyer-ai` and `nginx` are active.
 - `PUBLIC_SERVER_URL=https://89-207-250-217.sslip.io npm run release-check:server` passed.
+- Public Playwright smoke confirmed starting a new case clears old case text/documents and shows "Новое дело не создано".
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -102,4 +105,4 @@ DONE -> category flow converted from one-shot result screen into sequential AI c
 
 ## Следующий шаг
 
-Next vertical slice: continue the same sequential chat pattern for the next user-facing stage: document request/OCR review, so the AI asks for concrete files and updates progress from evidence to analysis.
+Next vertical slice: bring the same draft/session reset behavior to Flutter intake so mobile app parity matches web.
