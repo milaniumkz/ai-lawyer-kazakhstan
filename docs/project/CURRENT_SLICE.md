@@ -2,23 +2,23 @@
 
 ## Срез
 
-Flutter category AI interview parity.
+Flutter documents AI review parity.
 
 ## Статус
 
-DONE -> Flutter mobile category screen now follows the same AI interview/progress pattern as web.
+DONE -> Flutter mobile documents/OCR screen now uses AI-guided progress before analysis.
 
 ## Scope
 
-- Mobile `/case/category` title changed to `AI интервью`.
-- Added top progress card, 5-stage rail, AI/user chat bubbles, next-question logic and answer composer.
-- User answers append to `MobileCaseRuntime.confirmedText`, clear stale classification and require repeat analysis.
-- Category confirmation still creates a real API case only after classification has no `missingFacts`.
+- Mobile documents screen title changed to `AI проверка документов`.
+- Added document progress card, 5-stage rail and AI chat/request bubbles.
+- AI asks for concrete documents, then OCR confirmation, then analysis.
+- `Анализировать документы` now blocks until upload/OCR is confirmed instead of jumping ahead.
 - `npm run check` passed.
 - `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed.
 - `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test` passed with 34 tests.
 - Android release APK built: `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`.
-- APK SHA-256: `f67b2059e6907ebdb6994644307ac31ef560946859d4f7b097b2774f008cd559`.
+- APK SHA-256: `a53978fb90c239f58a373c56764ee86934e14f0f01b76acbb6283b19fd0e7754`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope
@@ -101,4 +101,4 @@ DONE -> Flutter mobile category screen now follows the same AI interview/progres
 
 ## Следующий шаг
 
-Next vertical slice: apply the same AI-interview/progress pattern to documents/OCR review so AI asks for concrete files before analysis.
+Next vertical slice: apply the same AI-guided progress to legal/RAG answers so citations and no-source fallback are visible step-by-step.
