@@ -359,9 +359,13 @@ void main() {
 
   testWidgets('shows pretrial claim builder', (tester) async {
     await setLargeViewport(tester);
+    MobileCaseRuntime.activeCaseId = '';
     await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
 
     expect(find.text('Формирование претензии'), findsOneWidget);
+    expect(find.text('AI подготовка претензии'), findsOneWidget);
+    expect(find.textContaining('Претензия не формируется без реального caseId'),
+        findsOneWidget);
     await tester.ensureVisible(find.text('Открыть проект'));
     expect(find.text('Открыть проект'), findsOneWidget);
   });
@@ -385,6 +389,17 @@ void main() {
         ],
       ),
     ));
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Заявитель'), 'Дмитрий Штрахов');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Ответчик'), 'ТОО Контрагент');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Сумма требования, ₸'), '1250000');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Основание требования'),
+        'Задолженность по договору');
+    await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Открыть проект'));
     await tester.tap(find.text('Открыть проект'));

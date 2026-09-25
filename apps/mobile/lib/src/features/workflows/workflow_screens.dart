@@ -34,10 +34,9 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     super.initState();
     workflowApi = widget.workflowApi ?? HttpWorkflowApi();
     claimantController = TextEditingController(text: AuthRuntime.displayName);
-    respondentController = TextEditingController(text: 'Ответчик');
-    amountController = TextEditingController(text: '1250000');
-    reasonController =
-        TextEditingController(text: 'Задолженность по договору займа');
+    respondentController = TextEditingController();
+    amountController = TextEditingController();
+    reasonController = TextEditingController();
   }
 
   @override
@@ -53,6 +52,14 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     if (busy) return;
     if (MobileCaseRuntime.activeCaseId.isEmpty) {
       setState(() => status = 'Сначала создайте дело');
+      return;
+    }
+    if (claimantController.text.trim().isEmpty ||
+        respondentController.text.trim().isEmpty ||
+        amountController.text.trim().isEmpty ||
+        reasonController.text.trim().isEmpty) {
+      setState(
+          () => status = 'Заполните заявителя, ответчика, сумму и основание');
       return;
     }
     setState(() {
@@ -80,6 +87,53 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     }
   }
 
+  double progressValue() {
+    if (generated) return 1;
+    if (busy) return 0.72;
+    final filled = [
+      claimantController.text.trim(),
+      respondentController.text.trim(),
+      amountController.text.trim(),
+      reasonController.text.trim(),
+    ].where((value) => value.isNotEmpty).length;
+    final hasCase = MobileCaseRuntime.activeCaseId.isNotEmpty;
+    return (hasCase ? 0.24 : 0.12) + (filled * 0.1);
+  }
+
+  bool get hasRequiredFields =>
+      claimantController.text.trim().isNotEmpty &&
+      respondentController.text.trim().isNotEmpty &&
+      amountController.text.trim().isNotEmpty &&
+      reasonController.text.trim().isNotEmpty;
+
+  List<({String title, bool done})> workflowStages() => [
+        (
+          title: '1. Дело',
+          done: MobileCaseRuntime.activeCaseId.isNotEmpty,
+        ),
+        (title: '2. Данные', done: hasRequiredFields),
+        (
+          title: '3. Нормы',
+          done: MobileCaseRuntime.activeCaseId.isNotEmpty,
+        ),
+        (title: '4. Проект', done: generated),
+        (title: '5. Проверка', done: generated),
+      ];
+
+  String aiStepText() {
+    if (MobileCaseRuntime.activeCaseId.isEmpty) {
+      return 'Сначала создайте дело в базе. Претензия не формируется без реального caseId.';
+    }
+    if (busy) return 'Формирую проект через API и проверяю обязательные поля.';
+    if (!hasRequiredFields) {
+      return 'Заполните стороны, сумму и основание. Я не буду подставлять выдуманные данные.';
+    }
+    if (!generated) {
+      return 'Данные готовы. Нажмите “Открыть проект”, чтобы создать черновик через API.';
+    }
+    return 'Проект создан. Перед отправкой нужна проверка пользователя и при необходимости юриста.';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,22 +152,36 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
             const SizedBox(height: 16),
             const _ClaimBuildHero(),
             const SizedBox(height: 12),
-            _ClaimSteps(onGenerate: generateDraft),
+            _ClaimProgressCard(
+              progress: progressValue(),
+              subtitle: status,
+            ),
+            const SizedBox(height: 12),
+            _ClaimStageRail(items: workflowStages()),
+            const SizedBox(height: 12),
+            _ClaimAiChat(status: aiStepText(), generated: generated),
+            const SizedBox(height: 12),
+            _ClaimSteps(
+              onGenerate: generateDraft,
+              generated: generated,
+              hasRequiredFields: hasRequiredFields,
+            ),
             const SizedBox(height: 12),
             const _ClaimBasisCard(),
-            const SizedBox(height: 12),
-            _ClaimProgressCard(progress: generated ? 1 : 0.74),
             const SizedBox(height: 16),
             TextField(
                 controller: claimantController,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(labelText: 'Заявитель')),
             const SizedBox(height: 12),
             TextField(
                 controller: respondentController,
+                onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(labelText: 'Ответчик')),
             const SizedBox(height: 12),
             TextField(
               controller: amountController,
+              onChanged: (_) => setState(() {}),
               keyboardType: TextInputType.number,
               decoration:
                   const InputDecoration(labelText: 'Сумма требования, ₸'),
@@ -121,6 +189,7 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
+              onChanged: (_) => setState(() {}),
               minLines: 3,
               maxLines: 5,
               decoration:
@@ -427,17 +496,26 @@ class _ClaimBuildHero extends StatelessWidget {
 }
 
 class _ClaimSteps extends StatelessWidget {
-  const _ClaimSteps({required this.onGenerate});
+  const _ClaimSteps({
+    required this.onGenerate,
+    required this.generated,
+    required this.hasRequiredFields,
+  });
 
   final VoidCallback onGenerate;
+  final bool generated;
+  final bool hasRequiredFields;
 
   @override
   Widget build(BuildContext context) {
     final steps = [
-      ('Категория спора определена', true),
-      ('Нормы права подобраны', true),
-      ('Недостающие документы проверены', true),
-      ('Текст претензии формируется', false),
+      ('Дело создано в базе', MobileCaseRuntime.activeCaseId.isNotEmpty),
+      ('Данные сторон заполнены', hasRequiredFields),
+      (
+        'Официальные нормы проверяются',
+        MobileCaseRuntime.activeCaseId.isNotEmpty,
+      ),
+      ('Текст претензии сформирован', generated),
     ];
     return Card(
       child: Column(
@@ -475,9 +553,10 @@ class _ClaimBasisCard extends StatelessWidget {
 }
 
 class _ClaimProgressCard extends StatelessWidget {
-  const _ClaimProgressCard({required this.progress});
+  const _ClaimProgressCard({required this.progress, required this.subtitle});
 
   final double progress;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -496,6 +575,70 @@ class _ClaimProgressCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             LinearProgressIndicator(value: progress),
+            const SizedBox(height: 8),
+            Text(subtitle),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClaimStageRail extends StatelessWidget {
+  const _ClaimStageRail({required this.items});
+
+  final List<({String title, bool done})> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          Chip(
+            avatar: Icon(
+              item.done ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+            ),
+            label: Text(item.title),
+            side: BorderSide(
+              color: item.done ? AppColors.gold : Colors.white24,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ClaimAiChat extends StatelessWidget {
+  const _ClaimAiChat({required this.status, required this.generated});
+
+  final String status;
+  final bool generated;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'AI подготовка претензии',
+              style:
+                  TextStyle(color: AppColors.gold, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(status),
+            const SizedBox(height: 8),
+            Text(
+              generated
+                  ? 'Следующий шаг: проверьте черновик и подтвердите отправку.'
+                  : 'Следующий шаг: заполните реальные данные и создайте проект через API.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
       ),
