@@ -53,11 +53,17 @@ const requiredActions = [
   "addCase(",
   "sendMessage(",
   "addDocument(",
+  "openFilePicker(",
+  "handleFileSelection(",
+  "ensureRemoteCaseForDocumentUpload(",
   'localStorage.setItem("ai-lawyer-web-state"',
   'localStorage.getItem("ai-lawyer-web-state"',
   'type="file"',
   'capture="environment"',
   'crypto.subtle.digest("SHA-256"',
+  "Фото не выбрано или доступ к камере отменен",
+  "Ошибка загрузки документа:",
+  "Документ сохранен в API",
   "profileTypeMap",
   "application/pdf",
   "startAuth(",
@@ -252,6 +258,28 @@ for (const needle of cssNeedles) {
 
 if (/onClick=\{\(\) => \{\}\}/.test(page))
   failures.push("web page contains empty onClick handler");
+for (const forbidden of [
+  "fileInputRef.current?.click()",
+  "scanInputRef.current?.click()",
+  "if (file) void addDocument",
+  "Документ локально, API ошибка",
+  "Для API сохранения сначала создайте дело",
+  "Файл добавлен из браузера",
+]) {
+  if (page.includes(forbidden))
+    failures.push(`web upload still bypasses real action contract: ${forbidden}`);
+}
+for (const required of [
+  'onClick={() => openFilePicker("file")}',
+  'onClick={() => openFilePicker("camera")}',
+  'handleFileSelection(file, "file")',
+  'handleFileSelection(file, "camera")',
+  'caseId = await ensureRemoteCaseForDocumentUpload(file.name)',
+  'go("documentCheck")',
+]) {
+  if (!page.includes(required))
+    failures.push(`web upload action contract missing: ${required}`);
+}
 for (const forbidden of [
   "Скан документа ${documents.length + 1}.jpg",
   'setSyncState("Настройки сохранены")',

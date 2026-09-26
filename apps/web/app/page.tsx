@@ -40,10 +40,12 @@ type CaseItem = {
 };
 type Message = { role: "user" | "assistant"; text: string };
 type DocumentItem = {
+  id?: string;
   name: string;
   status: string;
   sizeBytes?: number;
   source?: "file" | "camera";
+  sha256?: string;
 };
 type TaskItem = { title: string; due: string; done: boolean };
 type LegalNorm = {
@@ -67,6 +69,11 @@ type ApiDocument = {
   fileName: string;
   status: string;
   extractedFields?: Record<string, string>;
+};
+type ApiUploadSession = {
+  id: string;
+  uploadUrl: string;
+  status: string;
 };
 type ApiGeneratedDocument = {
   id: string;
@@ -534,6 +541,13 @@ export default function WebHome() {
   const [syncState, setSyncState] = useState("Не синхронизировано");
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [documentTab, setDocumentTab] = useState<"documents" | "evidence" | "recent">("documents");
+  const [documentFolder, setDocumentFolder] = useState("Все документы");
+  const [textSize, setTextSize] = useState("Средний");
+  const [voiceSpeed, setVoiceSpeed] = useState("1.0x");
+  const [autoPlayback, setAutoPlayback] = useState(false);
+  const [saveVoiceRecords, setSaveVoiceRecords] = useState(false);
+  const [usageAnalytics, setUsageAnalytics] = useState(false);
   const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskItem[]>([
@@ -568,6 +582,23 @@ export default function WebHome() {
       ),
     [cases, caseSearch],
   );
+  const visibleDocuments = useMemo(() => {
+    const query = caseSearch.toLowerCase();
+    return documents.filter((item) => {
+      const name = item.name.toLowerCase();
+      const matchesSearch = query.length < 3 || name.includes(query);
+      const matchesFolder =
+        documentFolder === "Все документы" ||
+        (documentFolder === "Личные документы" && (name.includes("паспорт") || name.includes("иин"))) ||
+        (documentFolder === "Договоры и переписка" && (name.includes("договор") || name.includes("переписк"))) ||
+        (documentFolder === "Судебные документы" && (name.includes("иск") || name.includes("суд")));
+      const matchesTab =
+        documentTab === "recent" ||
+        documentTab === "documents" ||
+        (documentTab === "evidence" && item.status !== "Ошибка API upload");
+      return matchesSearch && matchesFolder && matchesTab;
+    });
+  }, [caseSearch, documentFolder, documentTab, documents]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -904,6 +935,33 @@ export default function WebHome() {
     }
   }
 
+  async function ensureRemoteCaseForDocumentUpload(fileName: string) {
+    if (remoteCaseId && remoteCaseDraftId === draftCaseId) return remoteCaseId;
+    const ownerUserId = await ensureUser();
+    const problemText =
+      caseText.trim().length >= 12
+        ? caseText.trim()
+        : `Черновик дела: пользователь загрузил документ ${fileName} для юридической проверки по законодательству Республики Казахстан.`;
+    const legalCase = (await apiJson("/cases", {
+      method: "POST",
+      headers: {
+        "idempotency-key": `web-upload-${draftCaseId}`,
+        "x-user-id": ownerUserId,
+      },
+      body: JSON.stringify({
+        ownerUserId,
+        problemText,
+      }),
+    })) as ApiLegalCase;
+    const next = mapCase(legalCase);
+    setRemoteCaseId(legalCase.id);
+    setRemoteCaseDraftId(draftCaseId);
+    setCases((items) => [next, ...items.filter((item) => item.id !== next.id)]);
+    setActiveCaseId(next.id);
+    if (!caseText.trim()) setCaseText(problemText);
+    return legalCase.id;
+  }
+
   async function classifyCurrentText() {
     if (caseText.trim().length < 12) {
       setSyncState("Опишите ситуацию подробнее");
@@ -1089,56 +1147,84 @@ export default function WebHome() {
       .join("");
   }
 
+  function openFilePicker(source: "file" | "camera") {
+    const input = source === "camera" ? scanInputRef.current : fileInputRef.current;
+    if (!input) {
+      setSyncState(source === "camera" ? "Камера недоступна в этом браузере" : "Выбор файлов недоступен");
+      return;
+    }
+    input.value = "";
+    setSyncState(source === "camera" ? "Ожидаю фото с камеры..." : "Ожидаю выбор файла...");
+    input.click();
+  }
+
+  function handleFileSelection(file: File | undefined, source: "file" | "camera") {
+    if (!file) {
+      setSyncState(source === "camera" ? "Фото не выбрано или доступ к камере отменен" : "Файл не выбран");
+      return;
+    }
+    void addDocument(file, source);
+    go("documentUpload");
+  }
+
   async function addDocument(file: File, source: "file" | "camera" = "file") {
+    if (!file.size) {
+      setSyncState("Файл пустой или недоступен для загрузки");
+      return;
+    }
+    const sha256 = await fileSha256(file);
     const localDoc: DocumentItem = {
       name: file.name,
-      status: "Загружен",
+      status: "Загрузка в API...",
       sizeBytes: file.size,
       source,
+      sha256,
     };
     setSelectedDocument(file.name);
     setDocuments((items) => [localDoc, ...items]);
     updateActiveCase("Документы загружены", 76);
-    if (!remoteCaseId) {
-      setSyncState(
-        `Файл добавлен из браузера: ${file.name}. Для API сохранения сначала создайте дело.`,
-      );
-      return;
-    }
     try {
       const userId = await ensureUser();
-      const session = await apiJson("/files/upload-sessions", {
+      const caseId = await ensureRemoteCaseForDocumentUpload(file.name);
+      const session = (await apiJson("/files/upload-sessions", {
         method: "POST",
         headers: { "x-user-id": userId },
         body: JSON.stringify({
-          caseId: remoteCaseId,
+          caseId,
           fileName: file.name,
           mimeType: file.type || mimeTypeFor(file.name),
           sizeBytes: file.size,
         }),
-      });
+      })) as ApiUploadSession;
       const document = (await apiJson("/files/complete", {
         method: "POST",
         headers: { "x-user-id": userId },
         body: JSON.stringify({
           uploadSessionId: session.id,
-          sha256: await fileSha256(file),
+          sha256,
         }),
       })) as ApiDocument;
       setRemoteDocumentId(document.id);
       setDocuments((items) =>
         items.map((item, index) =>
           index === 0
-            ? { ...item, name: document.fileName, status: "OCR-review" }
+            ? { ...item, id: document.id, name: document.fileName, status: "OCR-review" }
             : item,
         ),
       );
-      setSyncState(`Документ сохранен в API: ${document.fileName}`);
+      setOcrConfirmed(false);
+      setSyncState(`Документ сохранен в API: ${document.fileName}. Проверьте OCR.`);
+      go("documentCheck");
     } catch (error) {
+      setDocuments((items) =>
+        items.map((item, index) =>
+          index === 0 ? { ...item, status: "Ошибка API upload" } : item,
+        ),
+      );
       setSyncState(
         error instanceof Error
-          ? `Документ локально, API ошибка: ${error.message}`
-          : "Документ добавлен локально",
+          ? `Ошибка загрузки документа: ${error.message}`
+          : "Ошибка загрузки документа",
       );
     }
   }
@@ -1440,6 +1526,12 @@ export default function WebHome() {
       JSON.stringify({
         maskPii,
         budgetAlerts,
+        language,
+        textSize,
+        voiceSpeed,
+        autoPlayback,
+        saveVoiceRecords,
+        usageAnalytics,
         savedAt: new Date().toISOString(),
       }),
     );
@@ -2530,7 +2622,7 @@ export default function WebHome() {
             <button onClick={() => void classifyCurrentText()} disabled={classificationBusy || caseText.trim().length < 12}>
               {classificationBusy ? "Анализирую..." : "Анализировать факты"}
             </button>
-            <button onClick={() => fileInputRef.current?.click()}>
+            <button onClick={() => openFilePicker("file")}>
               Запросить / загрузить документы
             </button>
             <button
@@ -2863,8 +2955,7 @@ export default function WebHome() {
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) void addDocument(file, "file");
-              go("documentUpload");
+              handleFileSelection(file, "file");
             }}
           />
           <input
@@ -2875,8 +2966,7 @@ export default function WebHome() {
             capture="environment"
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) void addDocument(file, "camera");
-              go("documentUpload");
+              handleFileSelection(file, "camera");
             }}
           />
           {view === "documents" && (
@@ -2891,17 +2981,32 @@ export default function WebHome() {
               </div>
               <div className="docTabs">
                 <button
-                  className="active"
-                  onClick={() => setSyncState("Раздел документов открыт")}
+                  className={documentTab === "documents" ? "active" : ""}
+                  onClick={() => {
+                    setDocumentTab("documents");
+                    setDocumentFolder("Все документы");
+                    setSyncState(`Документы: ${documents.length} файлов из API/upload`);
+                  }}
                 >
                   Документы
                 </button>
                 <button
-                  onClick={() => setSyncState("Раздел доказательств открыт")}
+                  className={documentTab === "evidence" ? "active" : ""}
+                  onClick={() => {
+                    setDocumentTab("evidence");
+                    setSyncState(`Доказательства: ${documents.filter((item) => item.status !== "Ошибка API upload").length} файлов`);
+                  }}
                 >
                   Доказательства
                 </button>
-                <button onClick={() => setSyncState("Недавние файлы открыты")}>
+                <button
+                  className={documentTab === "recent" ? "active" : ""}
+                  onClick={() => {
+                    setDocumentTab("recent");
+                    setDocumentFolder("Все документы");
+                    setSyncState(`Недавние файлы: ${documents.slice(0, 5).length}`);
+                  }}
+                >
                   Недавние
                 </button>
               </div>
@@ -2926,7 +3031,11 @@ export default function WebHome() {
                 ].map(([title, sub, count]) => (
                   <button
                     key={title}
-                    onClick={() => setSyncState(`Открыта папка: ${title}`)}
+                    onClick={() => {
+                      setDocumentFolder(title);
+                      setDocumentTab("documents");
+                      setSyncState(`Папка выбрана: ${title}`);
+                    }}
                   >
                     <span className="folderIcon"></span>
                     <p>
@@ -2940,18 +3049,19 @@ export default function WebHome() {
               </div>
               <h3 className="goldSection">Последние файлы</h3>
               <div className="recentFileList">
-                {!documents.length && (
+                {!visibleDocuments.length && (
                   <div className="analysisBox">
-                    <strong>Файлы не загружены</strong>
-                    <p>Последние файлы появятся после upload/OCR через API.</p>
+                    <strong>Файлы не найдены</strong>
+                    <p>Загрузите документ или смените фильтр папки.</p>
                   </div>
                 )}
-                {documents.map((doc) => (
+                {visibleDocuments.map((doc) => (
                   <button
-                    key={doc.name}
+                    key={`${doc.name}-${doc.sha256 ?? doc.id ?? ""}`}
                     onClick={() => {
                       setSelectedDocument(doc.name);
-                      setSyncState(`Открыт файл: ${doc.name}`);
+                      setDocumentTab("recent");
+                      setSyncState(`Файл выбран для OCR: ${doc.name}`);
                     }}
                   >
                     <span className="fileBadge">DOC</span>
@@ -2966,7 +3076,7 @@ export default function WebHome() {
               </div>
               <button
                 className="primary wide heroCta fixedDocCta"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => openFilePicker("file")}
               >
                 Добавить документ
               </button>
@@ -3017,7 +3127,7 @@ export default function WebHome() {
               </div>
               <button
                 className="primary wide heroCta"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => openFilePicker("file")}
               >
                 ⇧ Загрузить документы
               </button>
@@ -3040,13 +3150,13 @@ export default function WebHome() {
                 </p>
               </div>
               <div className="uploadActions">
-                <button onClick={() => scanInputRef.current?.click()}>
+                <button onClick={() => openFilePicker("camera")}>
                   <span>▣</span>Сканировать камерой
                 </button>
-                <button onClick={() => fileInputRef.current?.click()}>
+                <button onClick={() => openFilePicker("file")}>
                   <span>▰</span>Выбрать из файлов
                 </button>
-                <button onClick={() => scanInputRef.current?.click()}>
+                <button onClick={() => openFilePicker("camera")}>
                   <span>▣</span>Сделать фото
                 </button>
               </div>
@@ -3873,8 +3983,13 @@ export default function WebHome() {
           />
           <h3 className="goldSection">Основные</h3>
           <div className="settingsGroup">
-            <button onClick={() => setSyncState("Язык: русский")}>
-              Язык приложения <em>Русский ›</em>
+            <button
+              onClick={() => {
+                setLanguage(language === "RU" ? "KZ" : language === "KZ" ? "EN" : "RU");
+                setSyncState("Язык переключен и будет сохранен в настройках");
+              }}
+            >
+              Язык приложения <em>{language} ›</em>
             </button>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -3882,8 +3997,14 @@ export default function WebHome() {
               Тема приложения{" "}
               <em>{theme === "dark" ? "Тёмная" : "Светлая"} ›</em>
             </button>
-            <button onClick={() => setSyncState("Размер текста: средний")}>
-              Размер текста <em>Средний ›</em>
+            <button
+              onClick={() => {
+                const next = textSize === "Средний" ? "Крупный" : textSize === "Крупный" ? "Мелкий" : "Средний";
+                setTextSize(next);
+                setSyncState(`Размер текста выбран: ${next}`);
+              }}
+            >
+              Размер текста <em>{textSize} ›</em>
             </button>
           </div>
           <h3 className="goldSection">Голосовой помощник</h3>
@@ -3897,10 +4018,21 @@ export default function WebHome() {
               Голосовые ответы
             </label>
             <label className="toggle">
-              <input type="checkbox" /> Автовоспроизведение
+              <input
+                type="checkbox"
+                checked={autoPlayback}
+                onChange={(event) => setAutoPlayback(event.target.checked)}
+              />{" "}
+              Автовоспроизведение
             </label>
-            <button onClick={() => setSyncState("Скорость речи: 1.0x")}>
-              Скорость речи <em>1.0x ›</em>
+            <button
+              onClick={() => {
+                const next = voiceSpeed === "1.0x" ? "1.25x" : voiceSpeed === "1.25x" ? "0.75x" : "1.0x";
+                setVoiceSpeed(next);
+                setSyncState(`Скорость речи выбрана: ${next}`);
+              }}
+            >
+              Скорость речи <em>{voiceSpeed} ›</em>
             </button>
           </div>
           <h3 className="goldSection">Конфиденциальность</h3>
@@ -3914,10 +4046,20 @@ export default function WebHome() {
               Обезличивать данные перед AI
             </label>
             <label className="toggle">
-              <input type="checkbox" /> Сохранять голосовые записи
+              <input
+                type="checkbox"
+                checked={saveVoiceRecords}
+                onChange={(event) => setSaveVoiceRecords(event.target.checked)}
+              />{" "}
+              Сохранять голосовые записи
             </label>
             <label className="toggle">
-              <input type="checkbox" /> Аналитика использования
+              <input
+                type="checkbox"
+                checked={usageAnalytics}
+                onChange={(event) => setUsageAnalytics(event.target.checked)}
+              />{" "}
+              Аналитика использования
             </label>
           </div>
           <button className="primary wide" onClick={saveSettings}>
