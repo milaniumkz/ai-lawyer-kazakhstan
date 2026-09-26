@@ -18,8 +18,8 @@
 - Bundle ID: `kz.milanium.lawyer`.
 - Display name: `AI Юрист`.
 - Xcode team: `Z3NZN92Y7P`.
-- Current validation/upload: build `1.0.1 (9)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings validated and uploaded to App Store Connect on 2026-09-26; Delivery UUID `1b0c365e-7730-4c46-87c4-9ad91ba481ab`. Apple returned `BUILD-STATUS: VALID`.
-- Current build selection: App Store Connect API attached build `1b0c365e-7730-4c46-87c4-9ad91ba481ab` to App Store version `1.0` (`44a3b72a-b7ec-4e71-a664-86f7254ae56e`).
+- Current validation/upload: build `1.0.1 (10)` with `MinimumOSVersion=15.0`, Microphone, Speech Recognition and Photo Library purpose strings validated and uploaded to App Store Connect on 2026-09-26; Delivery UUID `93dc3818-af05-431a-8eb7-071b81f646a1`. Apple returned `BUILD-STATUS: VALID`.
+- Current build selection: App Store Connect API attached build `93dc3818-af05-431a-8eb7-071b81f646a1` to App Store version `1.0` (`44a3b72a-b7ec-4e71-a664-86f7254ae56e`).
 - Prepared metadata: `docs/project/APP_STORE_METADATA.md`.
 - Prepared app privacy questionnaire: `docs/project/APP_STORE_PRIVACY_QUESTIONNAIRE.md`.
 - Uploaded metadata: RU App Store text/appInfo/copyright uploaded via `xcrun altool --app-store-text` and verified by download.
@@ -27,7 +27,7 @@
 - Native screenshot evidence: `docs/project/app-store-screenshots/ios-simulator-native/01-login-native.png` captured from iPhone 17 Pro Max simulator after installing `build/ios/iphonesimulator/Runner.app`.
 - Full native screenshot set: `docs/project/app-store-screenshots/ios-simulator-native-full`, generated with `scripts/mobile/capture-ios-simulator-screenshots.mjs`.
 - Uploaded screenshots: App Store Connect RU `APP_IPHONE_67` set `7bc670b5-61bc-4958-a55e-9e63e6d6bbc0` has 8 screenshots, verified by API read.
-- TestFlight internal testing: build `1.0.1 (9)` / `1b0c365e-7730-4c46-87c4-9ad91ba481ab` is `VALID`; internal group `test` has 3 testers; RU `whatsNew` was added through App Store Connect API on 2026-09-26.
+- TestFlight internal testing: build `1.0.1 (10)` / `93dc3818-af05-431a-8eb7-071b81f646a1` is `VALID`; internal group `test` has 3 testers; RU `whatsNew` was updated through App Store Connect API on 2026-09-26.
 - Prepared reviewer notes helper: `scripts/release/update-app-review-details.mjs`; blocked until real `ASC_REVIEW_CONTACT_PHONE` is provided because Apple requires `contactPhone`.
 - Readiness checker: `scripts/release/check-app-store-readiness.mjs`; current API result passes app/version/build/localization/screenshots and reports only `reviewContact: missing contact phone`.
 - Review submission helper: `scripts/release/prepare-app-store-review-submission.mjs`; dry-run by default, `--execute` can create/reuse the review submission and attach the app version after blockers are clear, and actual submit requires both `--submit` and `ASC_CONFIRM_SUBMIT=YES`.

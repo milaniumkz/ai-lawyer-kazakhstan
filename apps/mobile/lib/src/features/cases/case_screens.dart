@@ -533,12 +533,14 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     if (isBusy) return;
     setState(() => isBusy = true);
     try {
+      final confirmedText = transcriptController.text.trim();
       if (recordedPath == null) {
-        MobileCaseRuntime.confirmedText = transcriptController.text.trim();
+        MobileCaseRuntime.confirmedText = confirmedText;
         if (mounted) context.go('/case/category');
         return;
       }
       if (AuthRuntime.userId.isEmpty) {
+        MobileCaseRuntime.confirmedText = confirmedText;
         setState(() {
           speechStatus = 'Текст распознан локально. Войдите для синхронизации';
         });
@@ -548,8 +550,8 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       final job = await voiceApi.uploadAudio(
         userId: AuthRuntime.userId,
         path: recordedPath!,
-        transcript: transcriptController.text.trim(),
-      );
+        transcript: confirmedText,
+      ).timeout(const Duration(seconds: 8));
       setState(() {
         transcriptJobId = job.id;
         transcript = job.transcript;
@@ -558,17 +560,20 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       MobileCaseRuntime.confirmedText = job.transcript;
       if (mounted) context.go('/case/category');
     } catch (_) {
+      final currentText = transcriptController.text.trim();
+      MobileCaseRuntime.confirmedText = currentText;
       setState(() {
-        final currentText = transcriptController.text.trim();
         if (currentText.isEmpty ||
             currentText == 'Говорите, текст появится здесь автоматически...') {
           transcript =
               'Аудио сохранено на устройстве. Проверьте сеть и повторите отправку.';
           transcriptController.text = transcript;
+          MobileCaseRuntime.confirmedText = transcript;
         }
         speechStatus =
-            'Текст сохранен локально, API синхронизация не выполнена';
+            'Текст сохранен локально, продолжаю AI интервью';
       });
+      if (mounted) context.go('/case/category');
     } finally {
       if (mounted) setState(() => isBusy = false);
     }

@@ -518,6 +518,41 @@ void main() {
     expect(find.text('Категория готова'), findsOneWidget);
   });
 
+  testWidgets('case intake continues to category when audio upload fails',
+      (tester) async {
+    AuthRuntime.userId = 'user-1';
+    MobileCaseRuntime.confirmedText = '';
+    await tester.pumpWidget(MaterialApp.router(
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => NewCaseScreen(
+                recorder: _FakeRecorder(),
+                speechRecognizer: _FakeSpeechRecognizer(),
+                voiceApi: _FailingVoiceApi()),
+          ),
+          GoRoute(
+            path: '/case/category',
+            builder: (_, __) => const Scaffold(body: Text('Категория готова')),
+          ),
+        ],
+      ),
+    ));
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.stop));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Подтвердить текст'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подтвердить текст'));
+    await tester.pumpAndSettle();
+
+    expect(MobileCaseRuntime.confirmedText, 'Распознанный текст из микрофона');
+    expect(find.text('Категория готова'), findsOneWidget);
+  });
+
   testWidgets('category screen classifies confirms and creates case',
       (tester) async {
     await setLargeViewport(tester);
@@ -832,6 +867,17 @@ class _FakeVoiceApi implements VoiceTranscriptPort {
       id: '12345678-1234-1234-1234-123456789012',
       transcript: 'Голос отправлен в API',
     );
+  }
+}
+
+class _FailingVoiceApi implements VoiceTranscriptPort {
+  @override
+  Future<VoiceTranscriptJob> uploadAudio({
+    required String userId,
+    required String path,
+    required String transcript,
+  }) async {
+    throw StateError('network down');
   }
 }
 

@@ -35,7 +35,7 @@ Date: 2026-09-26
 - QA bundle SHA-256: `1348099227c559452ac234e50aa72d50e229b38d2e3e7173e26abb378e48e1e7`
 - Android APK SHA-256: `86c9724b87a2669130dcd95595a90d847e0a5d38239f20b4518c0745397aa86c`
 - Android AAB SHA-256: `c1e679e519f41ed397080a50adc4f5819968cc967a1dfb0b4934b5499c8548df` (debug-signed test artifact until upload keystore is provided).
-- iOS bundle id: `kz.milanium.lawyer`, latest selected App Store Connect build `1.0.1 (9)`.
+- iOS bundle id: `kz.milanium.lawyer`, latest selected App Store Connect build `1.0.1 (10)`.
 
 ## Not Production Until
 

@@ -2,7 +2,7 @@ import { asc } from './app-store-connect-client.mjs';
 
 const appId = process.env.ASC_APP_ID ?? '6810983647';
 const appStoreVersionId = process.env.ASC_APP_STORE_VERSION_ID ?? '44a3b72a-b7ec-4e71-a664-86f7254ae56e';
-const expectedBuildId = process.env.ASC_EXPECTED_BUILD_ID ?? '1b0c365e-7730-4c46-87c4-9ad91ba481ab';
+const expectedBuildId = process.env.ASC_EXPECTED_BUILD_ID ?? '93dc3818-af05-431a-8eb7-071b81f646a1';
 const execute = process.argv.includes('--execute');
 const submit = process.argv.includes('--submit');
 
