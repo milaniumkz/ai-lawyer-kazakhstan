@@ -1232,14 +1232,20 @@ export default function WebHome() {
       setSyncState(`Документ сохранен в API: ${document.fileName}. Проверьте OCR.`);
       go("documentCheck");
     } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const duplicate = message.includes("DUPLICATE_FILE");
       setDocuments((items) =>
         items.map((item, index) =>
-          index === 0 ? { ...item, status: "Ошибка API upload" } : item,
+          index === 0
+            ? { ...item, status: duplicate ? "Уже загружен ранее" : "Ошибка API upload" }
+            : item,
         ),
       );
       setSyncState(
-        error instanceof Error
-          ? `Ошибка загрузки документа: ${error.message}`
+        duplicate
+          ? "Такой файл уже есть в деле. Выберите другой файл или откройте документы."
+          : error instanceof Error
+          ? `Ошибка загрузки документа: ${message}`
           : "Ошибка загрузки документа",
       );
     }
