@@ -53,12 +53,15 @@ const requiredActions = [
   "addCase(",
   "sendMessage(",
   "addDocument(",
-  "openFilePicker(",
   "handleFileSelection(",
   "ensureRemoteCaseForDocumentUpload(",
   'localStorage.setItem("ai-lawyer-web-state"',
   'localStorage.getItem("ai-lawyer-web-state"',
   'type="file"',
+  'id="web-file-upload"',
+  'id="web-camera-upload"',
+  'htmlFor="web-file-upload"',
+  'htmlFor="web-camera-upload"',
   'capture="environment"',
   'crypto.subtle.digest("SHA-256"',
   "Фото не выбрано или доступ к камере отменен",
@@ -261,6 +264,8 @@ if (/onClick=\{\(\) => \{\}\}/.test(page))
 for (const forbidden of [
   "fileInputRef.current?.click()",
   "scanInputRef.current?.click()",
+  "input.click()",
+  "openFilePicker(",
   "if (file) void addDocument",
   "Документ локально, API ошибка",
   "Для API сохранения сначала создайте дело",
@@ -270,8 +275,8 @@ for (const forbidden of [
     failures.push(`web upload still bypasses real action contract: ${forbidden}`);
 }
 for (const required of [
-  'onClick={() => openFilePicker("file")}',
-  'onClick={() => openFilePicker("camera")}',
+  'htmlFor="web-file-upload"',
+  'htmlFor="web-camera-upload"',
   'handleFileSelection(file, "file")',
   'handleFileSelection(file, "camera")',
   'caseId = await ensureRemoteCaseForDocumentUpload(file.name)',

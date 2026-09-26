@@ -453,8 +453,6 @@ const screens: { label: string; view: View }[] = [
 ];
 
 export default function WebHome() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scanInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -1145,17 +1143,6 @@ export default function WebHome() {
     return Array.from(new Uint8Array(digest))
       .map((byte) => byte.toString(16).padStart(2, "0"))
       .join("");
-  }
-
-  function openFilePicker(source: "file" | "camera") {
-    const input = source === "camera" ? scanInputRef.current : fileInputRef.current;
-    if (!input) {
-      setSyncState(source === "camera" ? "Камера недоступна в этом браузере" : "Выбор файлов недоступен");
-      return;
-    }
-    input.value = "";
-    setSyncState(source === "camera" ? "Ожидаю фото с камеры..." : "Ожидаю выбор файла...");
-    input.click();
   }
 
   function handleFileSelection(file: File | undefined, source: "file" | "camera") {
@@ -2622,9 +2609,13 @@ export default function WebHome() {
             <button onClick={() => void classifyCurrentText()} disabled={classificationBusy || caseText.trim().length < 12}>
               {classificationBusy ? "Анализирую..." : "Анализировать факты"}
             </button>
-            <button onClick={() => openFilePicker("file")}>
+            <label
+              className="inlineUploadLink"
+              htmlFor="web-file-upload"
+              onClick={() => setSyncState("Ожидаю выбор файла...")}
+            >
               Запросить / загрузить документы
-            </button>
+            </label>
             <button
               className="primary"
               disabled={
@@ -2949,7 +2940,7 @@ export default function WebHome() {
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
           <input
-            ref={fileInputRef}
+            id="web-file-upload"
             className="fileInput"
             type="file"
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -2959,7 +2950,7 @@ export default function WebHome() {
             }}
           />
           <input
-            ref={scanInputRef}
+            id="web-camera-upload"
             className="fileInput"
             type="file"
             accept="image/*"
@@ -3076,7 +3067,10 @@ export default function WebHome() {
               </div>
               <button
                 className="primary wide heroCta fixedDocCta"
-                onClick={() => openFilePicker("file")}
+                onClick={() => {
+                  setSyncState("Откройте выбор файла кнопкой загрузки");
+                  go("documentUpload");
+                }}
               >
                 Добавить документ
               </button>
@@ -3125,12 +3119,13 @@ export default function WebHome() {
                   Для подготовки иска желательно добавить недостающие документы.
                 </p>
               </div>
-              <button
+              <label
                 className="primary wide heroCta"
-                onClick={() => openFilePicker("file")}
+                htmlFor="web-file-upload"
+                onClick={() => setSyncState("Ожидаю выбор файла...")}
               >
                 ⇧ Загрузить документы
-              </button>
+              </label>
               <button
                 className="wide outlineGold"
                 onClick={() => go("analysis")}
@@ -3150,15 +3145,15 @@ export default function WebHome() {
                 </p>
               </div>
               <div className="uploadActions">
-                <button onClick={() => openFilePicker("camera")}>
+                <label htmlFor="web-camera-upload" onClick={() => setSyncState("Ожидаю фото с камеры...")}>
                   <span>▣</span>Сканировать камерой
-                </button>
-                <button onClick={() => openFilePicker("file")}>
+                </label>
+                <label htmlFor="web-file-upload" onClick={() => setSyncState("Ожидаю выбор файла...")}>
                   <span>▰</span>Выбрать из файлов
-                </button>
-                <button onClick={() => openFilePicker("camera")}>
+                </label>
+                <label htmlFor="web-camera-upload" onClick={() => setSyncState("Ожидаю фото с камеры...")}>
                   <span>▣</span>Сделать фото
-                </button>
+                </label>
               </div>
               <div className="sectionTitle">
                 <h3>Недавние загрузки</h3>
