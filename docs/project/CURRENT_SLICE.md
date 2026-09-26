@@ -2,26 +2,26 @@
 
 ## Срез
 
-App Store build selection after latest Flutter auth/profile fixes.
+App Store Connect/TestFlight fresh build after user did not see the previous build.
 
 ## Статус
 
-DONE -> App Store version `1.0` now has build `1.0.1 (8)` selected.
+DONE -> App Store version `1.0` now has build `1.0.1 (9)` selected and TestFlight `whatsNew` updated.
 
 ## Scope
 
-- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=8` passed.
+- `cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter build ipa --release --build-name=1.0.1 --build-number=9` passed.
 - IPA path: `apps/mobile/build/ios/ipa/AI Юрист.ipa`.
-- IPA size: `21M`.
-- IPA SHA-256: `aa63eb54281eff2b958745f8a82ce44bddfa4673b36cfdae8585d58d06c14cca`.
-- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `8`, iOS `15.0`.
+- IPA size: `22.3MB`.
+- IPA SHA-256: `7093fadacd915a1437dedead7f3bf02fc199356e728cca8606cd6d5508c88751`.
+- IPA `Info.plist` confirms bundle `kz.milanium.lawyer`, version `1.0.1`, build `9`, iOS `15.0`.
 - `xcrun altool --validate-app` passed with no errors.
-- `xcrun altool --upload-app` succeeded with Delivery UUID `4137cf18-be24-42a1-ba59-7ff7153e4612`.
+- `xcrun altool --upload-app` succeeded with Delivery UUID `1b0c365e-7730-4c46-87c4-9ad91ba481ab`.
 - `xcrun altool --build-status` returned `BUILD-STATUS: VALID`.
 - App Store Connect API listed app `6810983647`, appStoreVersion `44a3b72a-b7ec-4e71-a664-86f7254ae56e`, state `PREPARE_FOR_SUBMISSION`.
-- App Store Connect API attached build `4137cf18-be24-42a1-ba59-7ff7153e4612` to version `1.0` via `PATCH /v1/appStoreVersions/{id}/relationships/build`.
-- Follow-up API read confirms selected build `4137cf18-be24-42a1-ba59-7ff7153e4612`, processingState `VALID`.
-- `/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile` passed before the iOS build.
+- App Store Connect API attached build `1b0c365e-7730-4c46-87c4-9ad91ba481ab` to version `1.0` via `PATCH /v1/appStoreVersions/{id}/relationships/build`.
+- Follow-up API read confirms selected build `1b0c365e-7730-4c46-87c4-9ad91ba481ab`, processingState `VALID`.
+- RU TestFlight `whatsNew` localization updated for build `9`.
 - Docker config is blocked locally because Docker CLI is not installed.
 
 ## Previous Scope

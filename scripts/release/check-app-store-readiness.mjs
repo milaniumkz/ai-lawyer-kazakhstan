@@ -4,7 +4,7 @@ const appId = process.env.ASC_APP_ID ?? '6810983647';
 const appStoreVersionId = process.env.ASC_APP_STORE_VERSION_ID ?? '44a3b72a-b7ec-4e71-a664-86f7254ae56e';
 const locale = process.env.ASC_LOCALE ?? 'ru';
 const displayType = process.env.ASC_SCREENSHOT_DISPLAY_TYPE ?? 'APP_IPHONE_67';
-const expectedBuildId = process.env.ASC_EXPECTED_BUILD_ID ?? '4137cf18-be24-42a1-ba59-7ff7153e4612';
+const expectedBuildId = process.env.ASC_EXPECTED_BUILD_ID ?? '1b0c365e-7730-4c46-87c4-9ad91ba481ab';
 const expectedScreenshotCount = Number(process.env.ASC_EXPECTED_SCREENSHOT_COUNT ?? '8');
 
 async function getVersion() {
