@@ -2342,13 +2342,18 @@ body {
 
 button, input, textarea { font: inherit; }
 button, label { cursor: pointer; }
-.fileInput {
-  position: fixed;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+.fileInput { display: none; }
+.nativeUploadControl {
+  position: relative;
   overflow: hidden;
+}
+.nativeUploadControl input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .storePage {

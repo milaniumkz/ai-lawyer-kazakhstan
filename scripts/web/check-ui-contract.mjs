@@ -58,11 +58,9 @@ const requiredActions = [
   'localStorage.setItem("ai-lawyer-web-state"',
   'localStorage.getItem("ai-lawyer-web-state"',
   'type="file"',
-  'id="web-file-upload"',
-  'id="web-camera-upload"',
-  'htmlFor="web-file-upload"',
-  'htmlFor="web-camera-upload"',
-  'capture="environment"',
+  "nativeUploadControl",
+  'source: "file" | "camera"',
+  'capture={source === "camera" ? "environment" : undefined}',
   'crypto.subtle.digest("SHA-256"',
   "Фото не выбрано или доступ к камере отменен",
   "Ошибка загрузки документа:",
@@ -275,10 +273,10 @@ for (const forbidden of [
     failures.push(`web upload still bypasses real action contract: ${forbidden}`);
 }
 for (const required of [
-  'htmlFor="web-file-upload"',
-  'htmlFor="web-camera-upload"',
-  'handleFileSelection(file, "file")',
-  'handleFileSelection(file, "camera")',
+  "function UploadControl",
+  "nativeUploadControl",
+  'source === "camera"',
+  "handleFileSelection(event.target.files?.[0], source)",
   'caseId = await ensureRemoteCaseForDocumentUpload(file.name)',
   'go("documentCheck")',
 ]) {

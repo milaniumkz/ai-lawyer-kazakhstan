@@ -1154,6 +1154,35 @@ export default function WebHome() {
     go("documentUpload");
   }
 
+  function UploadControl({
+    source,
+    className = "",
+    children,
+  }: {
+    source: "file" | "camera";
+    className?: string;
+    children: ReactNode;
+  }) {
+    return (
+      <label className={`nativeUploadControl ${className}`.trim()}>
+        {children}
+        <input
+          type="file"
+          accept={
+            source === "camera"
+              ? "image/*"
+              : ".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          }
+          capture={source === "camera" ? "environment" : undefined}
+          onChange={(event) => {
+            handleFileSelection(event.target.files?.[0], source);
+            event.currentTarget.value = "";
+          }}
+        />
+      </label>
+    );
+  }
+
   async function addDocument(file: File, source: "file" | "camera" = "file") {
     if (!file.size) {
       setSyncState("Файл пустой или недоступен для загрузки");
@@ -2609,13 +2638,9 @@ export default function WebHome() {
             <button onClick={() => void classifyCurrentText()} disabled={classificationBusy || caseText.trim().length < 12}>
               {classificationBusy ? "Анализирую..." : "Анализировать факты"}
             </button>
-            <label
-              className="inlineUploadLink"
-              htmlFor="web-file-upload"
-              onClick={() => setSyncState("Ожидаю выбор файла...")}
-            >
+            <UploadControl source="file" className="inlineUploadLink">
               Запросить / загрузить документы
-            </label>
+            </UploadControl>
             <button
               className="primary"
               disabled={
@@ -2939,27 +2964,6 @@ export default function WebHome() {
             }
             subtitle="Загрузка документа, OCR и проверка фактов"
           />
-          <input
-            id="web-file-upload"
-            className="fileInput"
-            type="file"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              handleFileSelection(file, "file");
-            }}
-          />
-          <input
-            id="web-camera-upload"
-            className="fileInput"
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              handleFileSelection(file, "camera");
-            }}
-          />
           {view === "documents" && (
             <>
               <div className="docSearch">
@@ -3065,15 +3069,9 @@ export default function WebHome() {
                   </button>
                 ))}
               </div>
-              <button
-                className="primary wide heroCta fixedDocCta"
-                onClick={() => {
-                  setSyncState("Откройте выбор файла кнопкой загрузки");
-                  go("documentUpload");
-                }}
-              >
+              <UploadControl source="file" className="primary wide heroCta fixedDocCta">
                 Добавить документ
-              </button>
+              </UploadControl>
             </>
           )}
           {view === "documentCheck" && (
@@ -3119,13 +3117,9 @@ export default function WebHome() {
                   Для подготовки иска желательно добавить недостающие документы.
                 </p>
               </div>
-              <label
-                className="primary wide heroCta"
-                htmlFor="web-file-upload"
-                onClick={() => setSyncState("Ожидаю выбор файла...")}
-              >
+              <UploadControl source="file" className="primary wide heroCta">
                 ⇧ Загрузить документы
-              </label>
+              </UploadControl>
               <button
                 className="wide outlineGold"
                 onClick={() => go("analysis")}
@@ -3145,15 +3139,15 @@ export default function WebHome() {
                 </p>
               </div>
               <div className="uploadActions">
-                <label htmlFor="web-camera-upload" onClick={() => setSyncState("Ожидаю фото с камеры...")}>
+                <UploadControl source="camera">
                   <span>▣</span>Сканировать камерой
-                </label>
-                <label htmlFor="web-file-upload" onClick={() => setSyncState("Ожидаю выбор файла...")}>
+                </UploadControl>
+                <UploadControl source="file">
                   <span>▰</span>Выбрать из файлов
-                </label>
-                <label htmlFor="web-camera-upload" onClick={() => setSyncState("Ожидаю фото с камеры...")}>
+                </UploadControl>
+                <UploadControl source="camera">
                   <span>▣</span>Сделать фото
-                </label>
+                </UploadControl>
               </div>
               <div className="sectionTitle">
                 <h3>Недавние загрузки</h3>
