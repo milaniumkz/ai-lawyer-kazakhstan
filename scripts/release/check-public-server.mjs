@@ -25,10 +25,12 @@ async function expectPublicWebBundle() {
   const response = await expectHttp('/');
   if (!response.ok) return;
   const html = await response.text();
-  const htmlNeedles = ['AI Юрист', 'Добро пожаловать', '/_next/static/'];
+  const htmlNeedles = ['AI Юрист', '/_next/static/'];
   for (const needle of htmlNeedles) {
     if (!html.includes(needle)) failures.push(`public web html missing: ${needle}`);
   }
+  const loginAsset = await fetch(`${baseUrl}/aizan-login/background-whatsapp-20260930.jpg`);
+  if (!loginAsset.ok) failures.push(`/aizan-login/background-whatsapp-20260930.jpg returned ${loginAsset.status}`);
 
   const scriptPaths = [...html.matchAll(/src="([^"]*\/_next\/static\/chunks\/[^"]+\.js)"/g)].map((match) => match[1]);
   if (!scriptPaths.length) {
