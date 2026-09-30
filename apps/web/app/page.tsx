@@ -2134,16 +2134,21 @@ export default function WebHome() {
   function AuthActionRow({
     icon,
     label,
+    subtitle,
     onClick,
   }: {
     icon: string;
     label: string;
+    subtitle?: string;
     onClick: () => void;
   }) {
     return (
       <button className="authActionRow" onClick={onClick}>
         <span>{icon}</span>
-        <strong>{label}</strong>
+        <strong>
+          {label}
+          {subtitle ? <small>{subtitle}</small> : null}
+        </strong>
         <em>›</em>
       </button>
     );
@@ -2201,11 +2206,20 @@ export default function WebHome() {
                   ))}
                 </div>
               </div>
+              <div className="aizanBrand" aria-label="AIZAN">
+                <div className="aizanSeal">
+                  <span>A</span>
+                  <b>Z</b>
+                  <em>A</em>
+                </div>
+                <strong>AIZAN</strong>
+              </div>
               <Header
                 title="Добро пожаловать"
                 subtitle="Войдите или создайте аккаунт, чтобы сохранить дела, документы и сроки"
               />
               <AuthDivider />
+              <p className="loginMotto">ПРАВО · ТЕХНОЛОГИИ · ДЛЯ ЛЮДЕЙ</p>
               <div className="authTabs">
                 <button className="active" onClick={() => setSyncState("Режим входа по номеру телефона")}>
                   Вход
@@ -2215,7 +2229,13 @@ export default function WebHome() {
               <div className="authActionRow loginPhoneRow">
                 <span>☏</span>
                 <label className="phoneField">
-                  <small>{authText.phoneLabel}</small>
+                  <small>
+                    {language === "RU"
+                      ? "Войти по номеру телефона"
+                      : language === "KZ"
+                        ? "Телефон нөмірімен кіру"
+                        : "Sign in by phone"}
+                  </small>
                   <input
                     inputMode="tel"
                     autoComplete="tel"
@@ -2241,13 +2261,21 @@ export default function WebHome() {
               <AuthActionRow
                 icon="✉"
                 label="Войти по e-mail"
+                subtitle="Используйте вашу почту"
                 onClick={() => setSyncState("E-mail вход подключается через auth adapter")}
               />
-              <div className="loginOr"><span></span><em>или</em><span></span></div>
-              <AuthActionRow icon="⌗" label={authText.biometric} onClick={() => go("biometric")} />
+              <AuthActionRow
+                icon="⌾"
+                label={authText.biometric}
+                subtitle="Быстро и безопасно"
+                onClick={() => go("biometric")}
+              />
+              {syncState !== "Не синхронизировано" ? (
+                <p className="authStatusPill loginInlineStatus">{syncState}</p>
+              ) : null}
               <AuthDivider />
               <p className="loginRegisterHint">
-                Нет аккаунта? <button onClick={() => go("register")}>Зарегистрироваться</button>
+                Нет аккаунта? <button onClick={() => go("register")}>Зарегистрироваться</button> <span>›</span>
               </p>
             </>
           )}
