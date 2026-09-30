@@ -2444,6 +2444,7 @@ button, label { cursor: pointer; }
 .appShell[data-view="login"] .sidebar,
 .appShell[data-view="login"] .rightPanel,
 .appShell[data-view="login"] .appStatus,
+.appShell[data-view="login"] .bottomNav,
 .appShell[data-view="register"] .sidebar,
 .appShell[data-view="register"] .rightPanel,
 .appShell[data-view="register"] .appStatus,
@@ -7504,4 +7505,152 @@ button:disabled {
   .appShell[data-view="login"] .authTabs button { min-height: 44px; }
   .appShell[data-view="login"] .authActionRow { min-height: 70px; }
   .appShell[data-view="login"] .authActionRow span { width: 46px; height: 46px; }
+}
+
+.appShell[data-view="login"] {
+  background: #000;
+}
+
+.appShell[data-view="login"] .deviceFrame {
+  max-width: min(100vw, calc(100svh * 941 / 1672));
+  min-height: 100svh;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  box-shadow: none;
+}
+
+.appShell[data-view="login"] .deviceFrame::before,
+.appShell[data-view="login"] .deviceFrame::after {
+  display: none;
+}
+
+.appShell[data-view="login"] .loginPanel {
+  position: relative;
+  min-height: 100svh;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.loginExactScreen {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  background: url("/aizan-login/background-full.png") center / cover no-repeat #030201;
+  overflow: hidden;
+}
+
+.loginExactScreen button,
+.loginExactPhone {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.loginExactBack {
+  left: 5%;
+  top: 2.6%;
+  width: 15%;
+  height: 8%;
+  border-radius: 50%;
+}
+
+.loginExactLanguages {
+  position: absolute;
+  right: 5.4%;
+  top: 2.7%;
+  width: 36%;
+  height: 6.1%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.loginExactLanguages button {
+  position: static;
+  width: 100%;
+  height: 100%;
+}
+
+.loginExactLanguages span {
+  opacity: 0;
+}
+
+.loginExactTab {
+  top: 49.6%;
+  height: 5.8%;
+}
+
+.loginExactTabIn {
+  left: 9.8%;
+  width: 41%;
+}
+
+.loginExactTabRegister {
+  left: 50.8%;
+  width: 39%;
+}
+
+.loginExactAction {
+  left: 5%;
+  width: 90%;
+  height: 8.6%;
+  border-radius: 22px;
+}
+
+.loginExactPhoneAction {
+  top: 57.2%;
+}
+
+.loginExactEmailAction {
+  top: 66.7%;
+}
+
+.loginExactBioAction {
+  top: 76%;
+}
+
+.loginExactPhone {
+  left: 29%;
+  top: 61.8%;
+  width: 45%;
+  height: 3.6%;
+  cursor: text;
+}
+
+.loginExactPhone input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: rgba(255, 244, 222, .78);
+  font: 500 clamp(15px, 4.2vw, 23px) system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.loginExactRegisterFooter {
+  left: 43%;
+  top: 91.2%;
+  width: 40%;
+  height: 4.8%;
+}
+
+.loginExactStatus {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 1.2%;
+  margin: 0;
+  border: 1px solid rgba(230, 171, 63, .58);
+  border-radius: 999px;
+  background: rgba(4, 3, 2, .78);
+  color: #ffe08a;
+  padding: 7px 10px;
+  font-size: 12px;
+  text-align: center;
 }

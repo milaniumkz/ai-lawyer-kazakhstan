@@ -3,7 +3,6 @@
 /* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 
 type View =
   | "onboarding"
@@ -526,7 +525,7 @@ export default function WebHome() {
       text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
     },
   ]);
-  const [phone, setPhone] = useState("+7");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
@@ -2132,29 +2131,6 @@ export default function WebHome() {
     );
   }
 
-  function AuthActionRow({
-    icon,
-    label,
-    subtitle,
-    onClick,
-  }: {
-    icon: string;
-    label: string;
-    subtitle?: string;
-    onClick: () => void;
-  }) {
-    return (
-      <button className="authActionRow" onClick={onClick}>
-        <span>{icon}</span>
-        <strong>
-          {label}
-          {subtitle ? <small>{subtitle}</small> : null}
-        </strong>
-        <em>›</em>
-      </button>
-    );
-  }
-
   function renderView() {
     if (view === "onboarding") {
       return (
@@ -2187,100 +2163,75 @@ export default function WebHome() {
           }
         >
           {view === "login" && (
-            <>
-              <div className="loginTopBar">
-                <button className="loginBackButton" onClick={() => go("onboarding")} aria-label="Назад">
-                  ‹
-                </button>
-                <div className="languageTabs">
-                  {(["RU", "KZ", "EN"] as const).map((item) => (
-                    <button
-                      key={item}
-                      className={language === item ? "active" : ""}
-                      onClick={() => {
-                        setLanguage(item);
-                        setSyncState(`${AUTH_I18N[item].languageStatus}: ${item}`);
-                      }}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="aizanBrand" aria-label="AIZAN">
-                <Image
-                  src="/aizan-logo-mark.png"
-                  alt="AIZAN"
-                  width={900}
-                  height={900}
-                  priority
-                />
-                <strong>AIZAN</strong>
-              </div>
-              <Header
-                title="Добро пожаловать"
-                subtitle="Войдите или создайте аккаунт, чтобы сохранить дела, документы и сроки"
-              />
-              <AuthDivider />
-              <p className="loginMotto">ПРАВО · ТЕХНОЛОГИИ · ДЛЯ ЛЮДЕЙ</p>
-              <div className="authTabs">
-                <button className="active" onClick={() => setSyncState("Режим входа по номеру телефона")}>
-                  Вход
-                </button>
-                <button onClick={() => go("register")}>Регистрация</button>
-              </div>
-              <div className="authActionRow loginPhoneRow">
-                <span>☏</span>
-                <label className="phoneField">
-                  <small>
-                    {language === "RU"
-                      ? "Войти по номеру телефона"
-                      : language === "KZ"
-                        ? "Телефон нөмірімен кіру"
-                        : "Sign in by phone"}
-                  </small>
-                  <input
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder={authText.phonePlaceholder}
-                    value={phone}
-                    onFocus={() => {
-                      if (!phone) setPhone("+7");
+            <div className="loginExactScreen" aria-label="AIZAN вход">
+              <button className="loginExactBack" onClick={() => go("onboarding")} aria-label="Назад" />
+              <div className="loginExactLanguages" aria-label="Язык интерфейса">
+                {(["RU", "KZ", "EN"] as const).map((item) => (
+                  <button
+                    key={item}
+                    className={language === item ? "active" : ""}
+                    onClick={() => {
+                      setLanguage(item);
+                      setSyncState(`${AUTH_I18N[item].languageStatus}: ${item}`);
                     }}
-                    onChange={(event) =>
-                      setPhone(normalizeKzPhoneInput(event.target.value))
-                    }
-                  />
-                </label>
-                <button
-                  aria-label={authText.smsButton}
-                  onClick={() => {
-                    void startAuth();
-                  }}
-                >
-                  ›
-                </button>
+                  >
+                    <span>{item}</span>
+                  </button>
+                ))}
               </div>
-              <AuthActionRow
-                icon="✉"
-                label="Войти по e-mail"
-                subtitle="Используйте вашу почту"
+              <button
+                className="loginExactTab loginExactTabIn"
+                onClick={() => setSyncState("Режим входа по номеру телефона")}
+              >
+                Вход
+              </button>
+              <button className="loginExactTab loginExactTabRegister" onClick={() => go("register")}>
+                Регистрация
+              </button>
+              <label className="loginExactPhone">
+                <input
+                  inputMode="tel"
+                  autoComplete="tel"
+                  aria-label={authText.phonePlaceholder}
+                  value={phone.startsWith("+7") ? phone.slice(2) : phone}
+                  onFocus={() => {
+                    if (!phone) setPhone("+7");
+                  }}
+                  onChange={(event) =>
+                    setPhone(
+                      normalizeKzPhoneInput(
+                        event.target.value.startsWith("+")
+                          ? event.target.value
+                          : `+7${event.target.value}`,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <button
+                className="loginExactAction loginExactPhoneAction"
+                onClick={() => {
+                  void startAuth();
+                }}
+                aria-label={authText.smsButton}
+              />
+              <button
+                className="loginExactAction loginExactEmailAction"
                 onClick={() => setSyncState("E-mail вход подключается через auth adapter")}
+                aria-label="Войти по e-mail"
               />
-              <AuthActionRow
-                icon="⌾"
-                label={authText.biometric}
-                subtitle="Быстро и безопасно"
+              <button
+                className="loginExactAction loginExactBioAction"
                 onClick={() => go("biometric")}
+                aria-label={authText.biometric}
               />
+              <button className="loginExactRegisterFooter" onClick={() => go("register")}>
+                Зарегистрироваться
+              </button>
               {syncState !== "Не синхронизировано" ? (
-                <p className="authStatusPill loginInlineStatus">{syncState}</p>
+                <p className="loginExactStatus">{syncState}</p>
               ) : null}
-              <AuthDivider />
-              <p className="loginRegisterHint">
-                Нет аккаунта? <button onClick={() => go("register")}>Зарегистрироваться</button> <span>›</span>
-              </p>
-            </>
+            </div>
           )}
           {view === "register" && (
             <>
