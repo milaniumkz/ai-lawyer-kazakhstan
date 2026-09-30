@@ -3,9 +3,9 @@
 /* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 
 type View =
-  | "splash"
   | "onboarding"
   | "login"
   | "register"
@@ -426,7 +426,6 @@ const CASE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 const screens: { label: string; view: View }[] = [
-  { label: "Splash", view: "splash" },
   { label: "Онбординг", view: "onboarding" },
   { label: "Вход и регистрация", view: "login" },
   { label: "Регистрация пользователя", view: "register" },
@@ -462,7 +461,7 @@ export default function WebHome() {
   const audioBlobRef = useRef<Blob | null>(null);
   const speechDraftRef = useRef("");
   const clientSequenceRef = useRef(0);
-  const [view, setView] = useState<View>("splash");
+  const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [language, setLanguage] = useState<"RU" | "KZ" | "EN">("RU");
@@ -602,7 +601,7 @@ export default function WebHome() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const publicViews: View[] = ["splash", "onboarding", "login", "otp", "register", "biometric"];
+    const publicViews: View[] = ["onboarding", "login", "otp", "register", "biometric"];
     if (!authUserId && !publicViews.includes(view)) {
       setView("login");
       return;
@@ -630,7 +629,7 @@ export default function WebHome() {
       if (hasHashView) setView(hashView);
       else if (saved.authUserId && saved.profileComplete && saved.view)
         setView(saved.view);
-      else setView("splash");
+      else setView("login");
       if (saved.theme === "light" || saved.theme === "dark")
         setTheme(saved.theme);
       if (saved.language === "RU" || saved.language === "KZ" || saved.language === "EN")
@@ -809,7 +808,7 @@ export default function WebHome() {
   );
 
   function go(nextView: View) {
-    const publicViews: View[] = ["splash", "onboarding", "login", "otp", "register", "biometric"];
+    const publicViews: View[] = ["onboarding", "login", "otp", "register", "biometric"];
     if (!authUserId && !publicViews.includes(nextView)) {
       setView("login");
       return;
@@ -2157,19 +2156,6 @@ export default function WebHome() {
   }
 
   function renderView() {
-    if (view === "splash") {
-      return (
-        <button
-          className="splashScreen"
-          type="button"
-          aria-label="Открыть вход"
-          onClick={() => go("login")}
-        >
-          <img src="/logo.png" alt="AIZAN" />
-        </button>
-      );
-    }
-
     if (view === "onboarding") {
       return (
         <section className="contentPanel centerPanel">
@@ -2222,11 +2208,13 @@ export default function WebHome() {
                 </div>
               </div>
               <div className="aizanBrand" aria-label="AIZAN">
-                <div className="aizanSeal">
-                  <span>A</span>
-                  <b>Z</b>
-                  <em>A</em>
-                </div>
+                <Image
+                  src="/aizan-logo-mark.png"
+                  alt="AIZAN"
+                  width={900}
+                  height={900}
+                  priority
+                />
                 <strong>AIZAN</strong>
               </div>
               <Header

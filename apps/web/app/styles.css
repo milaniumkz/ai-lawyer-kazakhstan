@@ -2441,51 +2441,6 @@ button, label { cursor: pointer; }
   align-items: center;
 }
 
-.appShell[data-view="splash"] {
-  display: grid;
-  grid-template-columns: minmax(0, 430px);
-  justify-content: center;
-  align-items: stretch;
-  min-height: 100vh;
-  padding: 0;
-  background: #000;
-}
-
-.appShell[data-view="splash"] .sidebar,
-.appShell[data-view="splash"] .rightPanel,
-.appShell[data-view="splash"] .appStatus,
-.appShell[data-view="splash"] .bottomNav {
-  display: none;
-}
-
-.appShell[data-view="splash"] .deviceFrame {
-  max-width: 430px;
-  min-height: 100vh;
-  border: 0;
-  border-radius: 0;
-  background: #000;
-  box-shadow: none;
-  overflow: hidden;
-}
-
-.splashScreen {
-  display: block;
-  width: 100%;
-  min-height: 100vh;
-  border: 0;
-  background: #000;
-  padding: 0;
-  cursor: pointer;
-}
-
-.splashScreen img {
-  display: block;
-  width: 100%;
-  min-height: 100vh;
-  object-fit: cover;
-  object-position: center;
-}
-
 .appShell[data-view="login"] .sidebar,
 .appShell[data-view="login"] .rightPanel,
 .appShell[data-view="login"] .appStatus,
@@ -2669,7 +2624,7 @@ button, label { cursor: pointer; }
   --gold-strong: #ffe08a;
   --line: rgba(230, 171, 63, 0.62);
   background:
-    radial-gradient(circle at 50% 16%, rgba(255, 206, 105, 0.38), transparent 18%),
+    radial-gradient(circle at 50% 15%, rgba(255, 206, 105, 0.38), transparent 18%),
     radial-gradient(circle at 50% 34%, rgba(172, 103, 22, 0.22), transparent 29%),
     linear-gradient(90deg, rgba(10, 5, 1, 0.92), transparent 20%, transparent 80%, rgba(10, 5, 1, 0.92)),
     #050301;
@@ -2681,8 +2636,8 @@ button, label { cursor: pointer; }
   max-width: 500px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% 17%, rgba(255, 220, 126, 0.28), transparent 18%),
-    radial-gradient(circle at 50% 17%, transparent 0 118px, rgba(246, 180, 62, 0.85) 119px 121px, transparent 122px),
+    radial-gradient(circle at 50% 17%, rgba(255, 220, 126, 0.32), transparent 18%),
+    radial-gradient(circle at 50% 17%, transparent 0 122px, rgba(246, 180, 62, 0.88) 123px 125px, transparent 126px),
     radial-gradient(ellipse at 50% 100%, rgba(219, 143, 38, 0.26), transparent 28%),
     linear-gradient(90deg, rgba(255, 193, 77, 0.20), transparent 15%, transparent 85%, rgba(255, 193, 77, 0.20)),
     linear-gradient(180deg, #0b0602 0%, #160d05 38%, #090502 100%);
@@ -2773,61 +2728,24 @@ button, label { cursor: pointer; }
 .aizanBrand {
   display: grid;
   justify-items: center;
-  margin: 0 auto 4px;
+  margin: -2px auto 4px;
   color: #ffe8aa;
   text-align: center;
 }
 
-.aizanSeal {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: clamp(154px, 38vw, 224px);
+.aizanBrand img {
+  display: block;
+  width: clamp(208px, 51vw, 282px);
+  height: auto;
   aspect-ratio: 1;
-  border: 1px solid rgba(255, 207, 102, .92);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(255, 230, 159, .22), transparent 48%),
-    rgba(7, 4, 2, .38);
-  box-shadow: 0 0 32px rgba(255, 197, 81, .42), inset 0 0 32px rgba(225, 145, 34, .15);
-}
-
-.aizanSeal span,
-.aizanSeal b,
-.aizanSeal em {
-  position: absolute;
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 1;
-  background: linear-gradient(180deg, #fff0ba 0%, #d99026 78%, #6c390a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 7px 18px rgba(0, 0, 0, .55);
-}
-
-.aizanSeal span {
-  left: 34px;
-  top: 48px;
-  font-size: clamp(78px, 17vw, 112px);
-  transform: skew(-10deg);
-}
-
-.aizanSeal b {
-  top: 58px;
-  font-size: clamp(70px, 16vw, 104px);
-}
-
-.aizanSeal em {
-  right: 33px;
-  top: 55px;
-  font-size: clamp(78px, 17vw, 112px);
-  transform: skew(10deg);
+  border-radius: 0;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 0 24px rgba(255, 190, 70, .42));
 }
 
 .aizanBrand strong {
-  margin-top: 6px;
+  margin-top: -2px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(28px, 7vw, 46px);
   font-weight: 600;
@@ -2846,7 +2764,9 @@ button, label { cursor: pointer; }
   margin: 0 0 10px;
   color: #fff4c9;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(42px, 10.5vw, 66px);
+  max-width: 330px;
+  margin-inline: auto;
+  font-size: clamp(43px, 10.8vw, 66px);
   line-height: .94;
   text-shadow: 0 8px 24px rgba(0, 0, 0, .72), 0 0 18px rgba(255, 205, 97, .24);
 }
@@ -2945,6 +2865,7 @@ button, label { cursor: pointer; }
   font-size: clamp(19px, 4.8vw, 26px);
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
 }
 
 .appShell[data-view="login"] .phoneField input {
@@ -7524,58 +7445,57 @@ button:disabled {
   }
   .appShell[data-view="login"] .loginPanel {
     min-height: 100svh;
-    gap: clamp(10px, 1.75vh, 16px);
-    padding: max(24px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+    gap: clamp(7px, 1vh, 10px);
+    padding: max(16px, env(safe-area-inset-top)) 22px max(14px, env(safe-area-inset-bottom));
     overflow: hidden;
   }
-  .appShell[data-view="login"] .loginTopBar { margin-bottom: clamp(14px, 2.6vh, 24px); }
-  .appShell[data-view="login"] .loginBackButton { width: 54px; height: 54px; font-size: 52px; }
-  .appShell[data-view="login"] .languageTabs { min-width: 150px; min-height: 54px; border-radius: 28px; }
-  .appShell[data-view="login"] .languageTabs button { min-height: 44px; padding: 0; font-size: 16px; }
-  .appShell[data-view="login"] .aizanSeal { width: clamp(146px, 44vw, 188px); }
-  .appShell[data-view="login"] .aizanSeal span { left: 28px; top: 43px; }
-  .appShell[data-view="login"] .aizanSeal b { top: 52px; }
-  .appShell[data-view="login"] .aizanSeal em { right: 27px; top: 50px; }
-  .appShell[data-view="login"] .aizanBrand strong { margin-top: 3px; font-size: clamp(30px, 8vw, 39px); }
+  .appShell[data-view="login"] .loginTopBar { margin-bottom: clamp(6px, 1.2vh, 12px); }
+  .appShell[data-view="login"] .loginBackButton { width: 50px; height: 50px; font-size: 48px; }
+  .appShell[data-view="login"] .languageTabs { min-width: 146px; min-height: 50px; border-radius: 26px; }
+  .appShell[data-view="login"] .languageTabs button { min-height: 40px; padding: 0; font-size: 16px; }
+  .appShell[data-view="login"] .aizanBrand img { width: clamp(164px, 41vw, 188px); }
+  .appShell[data-view="login"] .aizanBrand strong { margin-top: -10px; font-size: clamp(26px, 6.7vw, 32px); }
   .appShell[data-view="login"] .panelHeader h2 {
-    margin-bottom: 8px;
-    font-size: clamp(42px, 11.7vw, 58px);
+    margin-bottom: 5px;
+    max-width: 280px;
+    font-size: clamp(39px, 10.6vw, 48px);
     white-space: normal;
   }
   .appShell[data-view="login"] .panelHeader p {
     max-width: 330px;
-    font-size: clamp(18px, 5.3vw, 23px);
-    line-height: 1.24;
+    font-size: clamp(15px, 4.1vw, 17px);
+    line-height: 1.2;
   }
-  .appShell[data-view="login"] .goldDivider { width: 220px; margin: 0 auto; }
+  .appShell[data-view="login"] .goldDivider { width: 190px; margin: -2px auto; }
   .appShell[data-view="login"] .loginMotto {
-    margin-bottom: 2px;
-    font-size: 10px;
-    letter-spacing: .38em;
+    margin-bottom: 0;
+    font-size: 8px;
+    letter-spacing: .34em;
   }
   .appShell[data-view="login"] .authTabs {
-    min-height: 64px;
+    min-height: 52px;
     margin: 0 20px;
     border-radius: 34px;
   }
-  .appShell[data-view="login"] .authTabs button { min-height: 52px; font-size: 20px; }
+  .appShell[data-view="login"] .authTabs button { min-height: 40px; font-size: 17px; }
   .appShell[data-view="login"] .authActionRow {
-    min-height: clamp(78px, 10.5vh, 92px);
-    grid-template-columns: 58px minmax(0, 1fr) 24px;
+    min-height: clamp(58px, 7.15vh, 66px);
+    grid-template-columns: 48px minmax(0, 1fr) 20px;
+    gap: 12px;
     border-radius: 19px;
-    padding: 12px 18px;
+    padding: 9px 14px;
   }
-  .appShell[data-view="login"] .authActionRow span { width: 54px; height: 54px; border-radius: 50%; font-size: 27px; }
-  .appShell[data-view="login"] .authActionRow strong { font-size: clamp(18px, 5.7vw, 24px); }
+  .appShell[data-view="login"] .authActionRow span { width: 48px; height: 48px; border-radius: 50%; font-size: 24px; }
+  .appShell[data-view="login"] .authActionRow strong { font-size: clamp(16px, 4.45vw, 20px); }
   .appShell[data-view="login"] .authActionRow strong small,
-  .appShell[data-view="login"] .phoneField input { font-size: clamp(14px, 4.2vw, 17px); }
-  .appShell[data-view="login"] .phoneField small { font-size: clamp(18px, 5.7vw, 24px); }
-  .appShell[data-view="login"] .loginRegisterHint { font-size: clamp(17px, 4.7vw, 20px); }
+  .appShell[data-view="login"] .phoneField input { font-size: clamp(13px, 3.7vw, 15px); }
+  .appShell[data-view="login"] .phoneField small { font-size: clamp(16px, 4.45vw, 20px); }
+  .appShell[data-view="login"] .loginRegisterHint { font-size: clamp(15px, 4vw, 17px); }
 }
 
 @media (max-width: 620px) and (max-height: 820px) {
   .appShell[data-view="login"] .loginPanel { gap: 8px; padding-inline: 22px; }
-  .appShell[data-view="login"] .aizanSeal { width: 132px; }
+  .appShell[data-view="login"] .aizanBrand img { width: 176px; }
   .appShell[data-view="login"] .aizanBrand strong { font-size: 30px; }
   .appShell[data-view="login"] .panelHeader h2 { font-size: 39px; }
   .appShell[data-view="login"] .panelHeader p { font-size: 16px; }
