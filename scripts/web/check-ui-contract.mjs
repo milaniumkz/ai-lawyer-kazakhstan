@@ -245,7 +245,7 @@ const cssNeedles = [
   ".quickIcon",
   ".screenHeader",
   ".loginPanel",
-  "background-full.png",
+  "background-whatsapp-20260930.jpg",
   '.appShell[data-view="login"] .bottomNav',
   '.appShell[data-view="register"] .bottomNav',
   '.appShell[data-view="otp"] .bottomNav',

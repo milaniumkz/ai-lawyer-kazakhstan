@@ -7512,7 +7512,7 @@ button:disabled {
 }
 
 .appShell[data-view="login"] .deviceFrame {
-  max-width: min(100vw, calc(100svh * 941 / 1672));
+  max-width: min(100vw, calc(100svh * 738 / 1600));
   min-height: 100svh;
   border: 0;
   border-radius: 0;
@@ -7539,7 +7539,7 @@ button:disabled {
   position: relative;
   width: 100%;
   min-height: 100svh;
-  background: url("/aizan-login/background-full.png") center / cover no-repeat #030201;
+  background: url("/aizan-login/background-whatsapp-20260930.jpg") center / cover no-repeat #050403;
   overflow: hidden;
 }
 
@@ -7554,19 +7554,19 @@ button:disabled {
 }
 
 .loginExactBack {
-  left: 5%;
-  top: 2.6%;
-  width: 15%;
-  height: 8%;
+  left: 6.1%;
+  top: 11.2%;
+  width: 10.2%;
+  height: 4.8%;
   border-radius: 50%;
 }
 
 .loginExactLanguages {
   position: absolute;
-  right: 5.4%;
-  top: 2.7%;
-  width: 36%;
-  height: 6.1%;
+  right: 4.7%;
+  top: 11.2%;
+  width: 31.4%;
+  height: 3.7%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 }
@@ -7582,44 +7582,44 @@ button:disabled {
 }
 
 .loginExactTab {
-  top: 49.6%;
-  height: 5.8%;
+  top: 49.8%;
+  height: 4.7%;
 }
 
 .loginExactTabIn {
-  left: 9.8%;
-  width: 41%;
+  left: 15.7%;
+  width: 35.8%;
 }
 
 .loginExactTabRegister {
-  left: 50.8%;
-  width: 39%;
+  left: 51.5%;
+  width: 32.8%;
 }
 
 .loginExactAction {
-  left: 5%;
-  width: 90%;
-  height: 8.6%;
-  border-radius: 22px;
+  left: 10.8%;
+  width: 78%;
+  height: 6.8%;
+  border-radius: 18px;
 }
 
 .loginExactPhoneAction {
-  top: 57.2%;
+  top: 56.1%;
 }
 
 .loginExactEmailAction {
-  top: 66.7%;
+  top: 64.5%;
 }
 
 .loginExactBioAction {
-  top: 76%;
+  top: 73.1%;
 }
 
 .loginExactPhone {
-  left: 29%;
-  top: 61.8%;
-  width: 45%;
-  height: 3.6%;
+  left: 29.2%;
+  top: 60.2%;
+  width: 30%;
+  height: 2.8%;
   cursor: text;
 }
 
@@ -7635,9 +7635,9 @@ button:disabled {
 
 .loginExactRegisterFooter {
   left: 43%;
-  top: 91.2%;
-  width: 40%;
-  height: 4.8%;
+  top: 84.4%;
+  width: 33%;
+  height: 4.6%;
 }
 
 .loginExactStatus {
