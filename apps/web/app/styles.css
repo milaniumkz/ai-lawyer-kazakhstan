@@ -7745,7 +7745,7 @@ button:disabled {
 
 .appShell[data-view="register"] .authExactScreen::before,
 .appShell[data-view="otp"] .authExactScreen::before {
-  background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .22) 40%, rgba(0, 0, 0, .9) 46%, rgba(0, 0, 0, .96));
+  background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .18) 44%, rgba(0, 0, 0, .72));
 }
 
 .appShell[data-view="register"] .authExactScreen::after,
@@ -7776,8 +7776,9 @@ button:disabled {
   margin: 0 auto;
   border: 1px solid rgba(229, 171, 64, .62);
   border-radius: 28px;
-  background: linear-gradient(145deg, rgba(19, 13, 7, .94), rgba(2, 2, 1, .88));
+  background: linear-gradient(145deg, rgba(19, 13, 7, .98), rgba(2, 2, 1, .97));
   box-shadow: 0 24px 80px rgba(0, 0, 0, .64), inset 0 1px 0 rgba(255, 225, 145, .14);
+  backdrop-filter: blur(8px);
   color: #fff3da;
   padding: 22px;
 }
@@ -7807,27 +7808,26 @@ button:disabled {
 
 .appShell[data-view="register"] .authExactPanel,
 .appShell[data-view="otp"] .authExactPanel {
-  top: 43svh;
-  bottom: max(10px, env(safe-area-inset-bottom));
-  max-height: none;
-}
-
-.appShell[data-view="register"] .authExactPanel,
-.appShell[data-view="otp"] .authExactPanel {
-  left: 10.8%;
-  right: 10.8%;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
+  left: 22px;
+  right: 22px;
+  top: auto;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  max-height: calc(100svh - 150px);
+  overflow: auto;
+  border: 1px solid rgba(229, 171, 64, .62);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(19, 13, 7, .98), rgba(2, 2, 1, .97));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .64), inset 0 1px 0 rgba(255, 225, 145, .14);
+  padding: 22px;
 }
 
 .appShell[data-view="register"] .authExactPanel {
-  top: 51.4svh;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  max-height: calc(100svh - 112px);
 }
 
 .appShell[data-view="otp"] .authExactPanel {
-  top: 53.8svh;
+  bottom: max(34px, env(safe-area-inset-bottom));
 }
 
 .authExactModal h2,
@@ -7990,7 +7990,9 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanelTall {
-    top: 51.2svh;
+    top: auto;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    max-height: calc(100svh - 92px);
   }
 
   .authExactPanel h2 {
@@ -8037,8 +8039,9 @@ button:disabled {
   }
 
   .appShell[data-view="otp"] .authExactPanel {
-    top: 43.5svh;
-    max-height: none;
+    top: auto;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    max-height: calc(100svh - 132px);
   }
 
   .appShell[data-view="otp"] .otpBoxes {
@@ -8098,17 +8101,26 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanel {
-    left: 10.8%;
-    right: 10.8%;
-    padding: 0;
+    left: 20px;
+    right: 20px;
+    border: 1px solid rgba(229, 171, 64, .62);
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(19, 13, 7, .98), rgba(2, 2, 1, .97));
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .64), inset 0 1px 0 rgba(255, 225, 145, .14);
+    padding: 16px;
   }
 
   .appShell[data-view="register"] .authExactPanel h2 {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    margin: 0 34px 6px 0;
+    color: #f5d071;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    line-height: 1.02;
   }
 
   .appShell[data-view="register"] .authExactPanel p {
@@ -8116,11 +8128,12 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanel .registerInputRow {
-    min-height: 32px;
-    margin-bottom: 4px;
-    padding: 5px 10px;
-    border-radius: 12px;
-    background: rgba(4, 4, 3, .88);
+    min-height: 36px;
+    margin-bottom: 5px;
+    padding: 6px 10px;
+    border: 1px solid rgba(229, 171, 64, .36);
+    border-radius: 14px;
+    background: rgba(7, 8, 8, .62);
   }
 
   .appShell[data-view="register"] .authExactPanel .registerInputRow span {
@@ -8149,9 +8162,10 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanel .primary {
-    min-height: 34px;
-    margin-top: 3px;
-    font-size: 13px;
+    min-height: 42px;
+    margin-top: 5px;
+    border-radius: 14px;
+    font-size: 14px;
   }
 
   .appShell[data-view="register"] .authExactPanel .goldDivider,
