@@ -21,6 +21,7 @@
     "test:web-ui": "node scripts/web/check-ui-contract.mjs",
     "test:web-visual": "node scripts/web/check-visual-contract.mjs",
     "test:web-public-smoke": "node scripts/web/check-public-flow-smoke.mjs",
+    "test:web-responsive": "node scripts/web/check-responsive-runtime.mjs",
     "test:web-screenshots": "node scripts/web/check-screenshots.mjs",
     "test:web-screenshots:strict": "WEB_SCREENSHOT_STRICT=1 node scripts/web/check-screenshots.mjs",
     "test:web-pixel-diff": "python3 scripts/web/check-pixel-diff.py",

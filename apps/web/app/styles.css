@@ -5454,9 +5454,35 @@ button:disabled {
 }
 
 @media (max-width: 980px) {
-  .appShell { grid-template-columns: minmax(0, 1fr); padding: 0; }
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .appShell {
+    width: 100vw;
+    max-width: 100vw;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    padding: 0;
+    overflow-x: hidden;
+  }
   .sidebar, .rightPanel { display: none; }
-  .deviceFrame { border-radius: 0; min-height: 100vh; }
+  .deviceFrame {
+    width: 100vw;
+    max-width: none;
+    min-width: 0;
+    border-radius: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .contentPanel,
+  .homeScreen {
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+  }
   .appShell[data-view="login"] .bottomNav,
   .appShell[data-view="register"] .bottomNav,
   .appShell[data-view="otp"] .bottomNav,
@@ -7539,13 +7565,23 @@ button:disabled {
 .appShell[data-view="register"] .deviceFrame,
 .appShell[data-view="otp"] .deviceFrame,
 .appShell[data-view="biometric"] .deviceFrame {
-  width: 100vw;
-  max-width: none;
+  width: min(100%, 430px);
+  max-width: 430px;
   min-height: 100svh;
   border: 0;
   border-radius: 0;
   background: #000;
   box-shadow: none;
+}
+
+@media (max-width: 980px) {
+  .appShell[data-view="login"] .deviceFrame,
+  .appShell[data-view="register"] .deviceFrame,
+  .appShell[data-view="otp"] .deviceFrame,
+  .appShell[data-view="biometric"] .deviceFrame {
+    width: 100vw;
+    max-width: none;
+  }
 }
 
 .appShell[data-view="login"] .deviceFrame::before,
