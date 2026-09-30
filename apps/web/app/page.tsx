@@ -2,7 +2,7 @@
 
 /* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
 
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type View =
   | "onboarding"
@@ -509,6 +509,7 @@ export default function WebHome() {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [authModal, setAuthModal] = useState<"phone" | "email" | null>(null);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("");
   const [legalAnswer, setLegalAnswer] = useState(
@@ -806,7 +807,7 @@ export default function WebHome() {
     [audioUrl],
   );
 
-  function go(nextView: View) {
+  const go = useCallback((nextView: View) => {
     const publicViews: View[] = ["onboarding", "login", "otp", "register", "biometric"];
     if (!authUserId && !publicViews.includes(nextView)) {
       setView("login");
@@ -817,7 +818,7 @@ export default function WebHome() {
       return;
     }
     setView(nextView);
-  }
+  }, [authUserId, profileComplete]);
 
   function nextClientId(prefix: string) {
     clientSequenceRef.current += 1;
@@ -1916,7 +1917,7 @@ export default function WebHome() {
     );
   }
 
-  async function startAuth() {
+  const startAuth = useCallback(async () => {
     if (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11) {
       setSyncState("Введите корректный номер +7");
       return;
@@ -1934,6 +1935,7 @@ export default function WebHome() {
           : "Код отправлен через подключенный канал",
       );
       setSyncState(`OTP создан в API: ${registered.otpId.slice(0, 8)}`);
+      setAuthModal(null);
       go("otp");
     } catch (error) {
       setSyncState(
@@ -1942,7 +1944,29 @@ export default function WebHome() {
           : "Auth API ошибка",
       );
     }
-  }
+  }, [authText.otpTestCode, go, phone]);
+
+  useEffect(() => {
+    function handleAuthClick(event: MouseEvent) {
+      const actionTarget = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+        "[data-auth-action]",
+      );
+      if (!actionTarget) return;
+      const action = actionTarget.dataset.authAction;
+      event.preventDefault();
+      if (action === "phone") {
+        if (!phone) setPhone("+7");
+        setAuthModal("phone");
+      }
+      if (action === "email") setAuthModal("email");
+      if (action === "register") setView("register");
+      if (action === "biometric") setView("biometric");
+      if (action === "close") setAuthModal(null);
+      if (action === "start-phone") void startAuth();
+    }
+    document.addEventListener("click", handleAuthClick);
+    return () => document.removeEventListener("click", handleAuthClick);
+  }, [phone, startAuth]);
 
   async function verifyOtp() {
     if (!otp.trim()) {
@@ -2227,11 +2251,14 @@ export default function WebHome() {
               </div>
               <button
                 className="loginExactTab loginExactTabIn"
-                onClick={() => setSyncState("Режим входа по номеру телефона")}
+                data-auth-action="phone"
               >
                 Вход
               </button>
-              <button className="loginExactTab loginExactTabRegister" onClick={() => go("register")}>
+              <button
+                className="loginExactTab loginExactTabRegister"
+                data-auth-action="register"
+              >
                 Регистрация
               </button>
               <label className="loginExactPhone">
@@ -2256,44 +2283,108 @@ export default function WebHome() {
               </label>
               <button
                 className="loginExactAction loginExactPhoneAction"
-                onClick={() => {
-                  void startAuth();
-                }}
+                data-auth-action="phone"
                 aria-label={authText.smsButton}
               />
               <button
                 className="loginExactAction loginExactEmailAction"
-                onClick={() => setSyncState("E-mail вход подключается через auth adapter")}
+                data-auth-action="email"
                 aria-label="Войти по e-mail"
               />
               <button
                 className="loginExactAction loginExactBioAction"
-                onClick={() => go("biometric")}
+                data-auth-action="biometric"
                 aria-label={authText.biometric}
               />
-              <button className="loginExactRegisterFooter" onClick={() => go("register")}>
+              <button
+                className="loginExactRegisterFooter"
+                data-auth-action="register"
+              >
                 Зарегистрироваться
               </button>
-              {syncState !== "Не синхронизировано" ? (
-                <p className="loginExactStatus">{syncState}</p>
-              ) : null}
+              {authModal === "phone" && (
+                <div className="authExactOverlay" role="dialog" aria-modal="true">
+                  <div className="authExactModal">
+                    <button
+                      className="authExactClose"
+                      data-auth-action="close"
+                      aria-label="Закрыть"
+                    >
+                      ×
+                    </button>
+                    <h2>Вход по телефону</h2>
+                    <p>Введите казахстанский номер. SMS-код для теста будет показан на следующем экране.</p>
+                    <label className="authExactField">
+                      <span>Номер телефона</span>
+                      <input
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="+7"
+                        value={phone}
+                        onFocus={() => {
+                          if (!phone) setPhone("+7");
+                        }}
+                        onChange={(event) => setPhone(normalizeKzPhoneInput(event.target.value))}
+                      />
+                    </label>
+                    {syncState !== "Не синхронизировано" ? (
+                      <small className="authExactStatus">{syncState}</small>
+                    ) : null}
+                    <button
+                      className="authExactPrimary"
+                      data-auth-action="start-phone"
+                    >
+                      Получить SMS-код
+                    </button>
+                  </div>
+                </div>
+              )}
+              {authModal === "email" && (
+                <div className="authExactOverlay" role="dialog" aria-modal="true">
+                  <div className="authExactModal">
+                    <button
+                      className="authExactClose"
+                      data-auth-action="close"
+                      aria-label="Закрыть"
+                    >
+                      ×
+                    </button>
+                    <h2>Вход по e-mail</h2>
+                    <p>E-mail вход подключается через auth adapter. В RC доступен основной вход по телефону.</p>
+                    <button
+                      className="authExactPrimary"
+                      onClick={() => {
+                        setSyncState("E-mail вход подключается через auth adapter");
+                        setAuthModal(null);
+                      }}
+                    >
+                      Понятно
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {view === "register" && (
-            <>
-              <div className="screenHeader registerTop">
-                <button onClick={() => go("login")} aria-label="Назад">
-                  ‹
-                </button>
-                <h2>Регистрация</h2>
-                <span />
+            <div className="loginExactScreen authExactScreen" aria-label="AIZAN регистрация">
+              <button className="loginExactBack" onClick={() => go("login")} aria-label="Назад" />
+              <div className="loginExactLanguages" aria-label="Язык интерфейса">
+                {(["RU", "KZ", "EN"] as const).map((item) => (
+                  <button
+                    key={item}
+                    className={language === item ? "active" : ""}
+                    onClick={() => {
+                      setLanguage(item);
+                      setSyncState(`${AUTH_I18N[item].languageStatus}: ${item}`);
+                    }}
+                  >
+                    <span>{item}</span>
+                  </button>
+                ))}
               </div>
-              <Header
-                title={authText.registerTitle}
-                subtitle={authText.registerSubtitle}
-              />
-              <AuthMark />
-              <div className="authFormCard">
+              <div className="authExactPanel authExactPanelTall">
+                <h2>Регистрация</h2>
+                <p>{authText.registerSubtitle}</p>
                 <label className="registerInputRow">
                   <span>♙</span>
                   <input
@@ -2376,38 +2467,22 @@ export default function WebHome() {
                   {authText.alreadyHaveAccount}
                 </button>
               </div>
-            </>
+            </div>
           )}
           {view === "otp" && (
-            <>
-              <div className="screenHeader otpTop">
-                <button
-                  onClick={() => {
-                    setOtp("");
-                    setOtpId("");
-                    go("login");
-                  }}
-                  aria-label="Назад"
-                >
-                  ‹
-                </button>
-                <h2>Подтверждение</h2>
-                <span />
-              </div>
-              <AuthMark />
-              <Header
-                title={authText.otpTitle}
-                subtitle={
-                  phone
-                    ? (
-                        <>
-                          <span>{authText.otpSent}</span>
-                          <strong>{phone}</strong>
-                        </>
-                      )
-                    : authText.otpFallback
-                }
+            <div className="loginExactScreen authExactScreen" aria-label="AIZAN SMS код">
+              <button
+                className="loginExactBack"
+                onClick={() => {
+                  setOtp("");
+                  setOtpId("");
+                  go("login");
+                }}
+                aria-label="Назад"
               />
+              <div className="authExactPanel">
+                <h2>{authText.otpTitle}</h2>
+                <p>{phone ? `${authText.otpSent} ${phone}` : authText.otpFallback}</p>
               {otpHint && <small className="recordMeta otpHint">{otpHint}</small>}
               <input
                 ref={otpInputRef}
@@ -2453,23 +2528,16 @@ export default function WebHome() {
               >
                 {authText.changePhone}
               </button>
-            </>
+              </div>
+            </div>
           )}
           {view === "biometric" && (
-            <>
-              <div className="screenHeader biometricTop">
-                <button onClick={() => go("login")} aria-label="Назад">
-                  ‹
-                </button>
-                <h2>Быстрый вход</h2>
-                <span />
-              </div>
+            <div className="loginExactScreen authExactScreen" aria-label="AIZAN быстрый вход">
+              <button className="loginExactBack" onClick={() => go("login")} aria-label="Назад" />
+              <div className="authExactPanel">
               <BiometricMark />
-              <Header
-                title={authText.biometricTitle}
-                subtitle={authText.biometricSubtitle}
-              />
-              <AuthDivider />
+              <h2>{authText.biometricTitle}</h2>
+              <p>{authText.biometricSubtitle}</p>
               <button
                 className="primary wide heroCta"
                 onClick={() => {
@@ -2488,7 +2556,8 @@ export default function WebHome() {
               <p className="hint secureHint">
                 {authText.biometricHint}
               </p>
-            </>
+              </div>
+            </div>
           )}
         </section>
       );

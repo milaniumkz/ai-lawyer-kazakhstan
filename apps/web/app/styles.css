@@ -7528,12 +7528,19 @@ button:disabled {
   .appShell[data-view="login"] .authActionRow span { width: 46px; height: 46px; }
 }
 
-.appShell[data-view="login"] {
+.appShell[data-view="login"],
+.appShell[data-view="register"],
+.appShell[data-view="otp"],
+.appShell[data-view="biometric"] {
   background: #000;
 }
 
-.appShell[data-view="login"] .deviceFrame {
-  max-width: min(100vw, calc(100svh * 738 / 1600));
+.appShell[data-view="login"] .deviceFrame,
+.appShell[data-view="register"] .deviceFrame,
+.appShell[data-view="otp"] .deviceFrame,
+.appShell[data-view="biometric"] .deviceFrame {
+  width: 100vw;
+  max-width: none;
   min-height: 100svh;
   border: 0;
   border-radius: 0;
@@ -7542,11 +7549,20 @@ button:disabled {
 }
 
 .appShell[data-view="login"] .deviceFrame::before,
-.appShell[data-view="login"] .deviceFrame::after {
+.appShell[data-view="login"] .deviceFrame::after,
+.appShell[data-view="register"] .deviceFrame::before,
+.appShell[data-view="register"] .deviceFrame::after,
+.appShell[data-view="otp"] .deviceFrame::before,
+.appShell[data-view="otp"] .deviceFrame::after,
+.appShell[data-view="biometric"] .deviceFrame::before,
+.appShell[data-view="biometric"] .deviceFrame::after {
   display: none;
 }
 
-.appShell[data-view="login"] .loginPanel {
+.appShell[data-view="login"] .loginPanel,
+.appShell[data-view="register"] .authPanel,
+.appShell[data-view="otp"] .authPanel,
+.appShell[data-view="biometric"] .authPanel {
   position: relative;
   min-height: 100svh;
   padding: 0;
@@ -7559,8 +7575,9 @@ button:disabled {
 .loginExactScreen {
   position: relative;
   width: 100%;
+  height: 100svh;
   min-height: 100svh;
-  background: url("/aizan-login/background-whatsapp-20260930.jpg") center / cover no-repeat #050403;
+  background: url("/aizan-login/background-whatsapp-20260930.jpg") center / 100% 100% no-repeat #050403;
   overflow: hidden;
 }
 
@@ -7674,4 +7691,199 @@ button:disabled {
   padding: 7px 10px;
   font-size: 12px;
   text-align: center;
+}
+
+.authExactScreen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .34);
+}
+
+.authExactOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  align-items: end;
+  padding: 18px 22px max(22px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .72));
+}
+
+.authExactModal,
+.authExactPanel {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 430px);
+  margin: 0 auto;
+  border: 1px solid rgba(229, 171, 64, .62);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(19, 13, 7, .94), rgba(2, 2, 1, .88));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .64), inset 0 1px 0 rgba(255, 225, 145, .14);
+  color: #fff3da;
+  padding: 22px;
+}
+
+.authExactModal button,
+.authExactPanel button {
+  position: relative;
+  color: inherit;
+  cursor: pointer;
+}
+
+.authExactPanel {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  max-height: calc(100svh - 132px);
+  overflow: auto;
+}
+
+.authExactPanelTall {
+  bottom: max(18px, env(safe-area-inset-bottom));
+  max-height: calc(100svh - 108px);
+}
+
+.authExactModal h2,
+.authExactPanel h2 {
+  margin: 0 34px 8px 0;
+  color: #f5d071;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(28px, 7vw, 38px);
+  line-height: 1.02;
+}
+
+.authExactModal p,
+.authExactPanel p {
+  margin: 0 0 18px;
+  color: rgba(255, 244, 222, .78);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.authExactClose {
+  position: absolute !important;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(229, 171, 64, .5) !important;
+  border-radius: 50%;
+  background: rgba(255, 218, 119, .08) !important;
+  color: #f8d777 !important;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.authExactField,
+.authExactPanel .registerInputRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 10px;
+  border: 1px solid rgba(229, 171, 64, .36);
+  border-radius: 16px;
+  background: rgba(7, 8, 8, .58);
+  padding: 12px 14px;
+}
+
+.authExactField {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.authExactField span,
+.authExactPanel .registerInputRow span {
+  color: #f6d474;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.authExactField input,
+.authExactPanel .registerInputRow input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff7e8;
+  font: 700 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.authExactField input::placeholder,
+.authExactPanel .registerInputRow input::placeholder {
+  color: rgba(255, 244, 222, .46);
+}
+
+.authExactPrimary,
+.authExactPanel .primary,
+.authExactPanel .outlineGold {
+  position: relative !important;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 230, 150, .72);
+  background: linear-gradient(135deg, #fff0a6, #c88724);
+  color: #1a1308 !important;
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.authExactPanel .outlineGold {
+  background: rgba(255, 218, 119, .08);
+  color: #ffe39a !important;
+}
+
+.authExactStatus {
+  display: block;
+  margin: 2px 0 8px;
+  color: #ffe08a;
+  font-weight: 800;
+}
+
+.authExactPanel .chips,
+.authExactPanel .toggle,
+.authExactPanel .linkAction,
+.authExactPanel .hint,
+.authExactPanel .otpBoxes,
+.authExactPanel .otpInput,
+.authExactPanel .recordMeta {
+  position: relative;
+  z-index: 2;
+}
+
+.authExactPanel .profileChips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.authExactPanel .chip {
+  min-height: 38px;
+  border-radius: 12px;
+}
+
+.authExactPanel .toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 244, 222, .82);
+  font-size: 12px;
+}
+
+.authExactPanel .linkAction {
+  width: 100%;
+  margin-top: 10px;
+  color: #f7d777;
+}
+
+.authExactPanel .otpInput {
+  opacity: 0;
+  height: 1px;
+  width: 1px;
+  position: absolute;
 }
