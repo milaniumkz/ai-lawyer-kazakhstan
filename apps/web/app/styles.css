@@ -7736,6 +7736,28 @@ button:disabled {
   background: rgba(0, 0, 0, .34);
 }
 
+.appShell[data-view="register"] .authExactScreen,
+.appShell[data-view="otp"] .authExactScreen {
+  background-image: url("/aizan-login/background-auth-cropped-20260930.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.appShell[data-view="register"] .authExactScreen::before,
+.appShell[data-view="otp"] .authExactScreen::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .22) 40%, rgba(0, 0, 0, .9) 46%, rgba(0, 0, 0, .96));
+}
+
+.appShell[data-view="register"] .authExactScreen::after,
+.appShell[data-view="otp"] .authExactScreen::after {
+  display: none;
+}
+
+.authExactScreen .loginExactBack,
+.authExactScreen .loginExactLanguages {
+  z-index: 5;
+}
+
 .authExactOverlay {
   position: absolute;
   inset: 0;
@@ -7788,6 +7810,24 @@ button:disabled {
   top: 43svh;
   bottom: max(10px, env(safe-area-inset-bottom));
   max-height: none;
+}
+
+.appShell[data-view="register"] .authExactPanel,
+.appShell[data-view="otp"] .authExactPanel {
+  left: 10.8%;
+  right: 10.8%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.appShell[data-view="register"] .authExactPanel {
+  top: 51.4svh;
+}
+
+.appShell[data-view="otp"] .authExactPanel {
+  top: 53.8svh;
 }
 
 .authExactModal h2,
@@ -7950,7 +7990,7 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanelTall {
-    top: 30svh;
+    top: 51.2svh;
   }
 
   .authExactPanel h2 {
@@ -7997,7 +8037,7 @@ button:disabled {
   }
 
   .appShell[data-view="otp"] .authExactPanel {
-    top: 45svh;
+    top: 43.5svh;
     max-height: none;
   }
 
@@ -8058,12 +8098,17 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanel {
-    padding: 16px;
+    left: 10.8%;
+    right: 10.8%;
+    padding: 0;
   }
 
   .appShell[data-view="register"] .authExactPanel h2 {
-    margin-bottom: 6px;
-    font-size: 25px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
 
   .appShell[data-view="register"] .authExactPanel p {
@@ -8071,32 +8116,46 @@ button:disabled {
   }
 
   .appShell[data-view="register"] .authExactPanel .registerInputRow {
-    min-height: 36px;
-    margin-bottom: 5px;
-    padding: 7px 10px;
+    min-height: 32px;
+    margin-bottom: 4px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    background: rgba(4, 4, 3, .88);
+  }
+
+  .appShell[data-view="register"] .authExactPanel .registerInputRow span {
+    font-size: 16px;
+    line-height: 1;
   }
 
   .appShell[data-view="register"] .authExactPanel .registerInputRow input {
-    font-size: 14px;
+    min-height: 22px;
+    font-size: 13px;
+    line-height: 1.05;
   }
 
   .appShell[data-view="register"] .authExactPanel .profileChips {
-    margin: 4px 0 7px;
+    margin: 3px 0 5px;
   }
 
   .appShell[data-view="register"] .authExactPanel .chip {
-    min-height: 30px;
-    font-size: 12px;
+    min-height: 27px;
+    font-size: 11px;
   }
 
   .appShell[data-view="register"] .authExactPanel .toggle {
     margin: 0;
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .appShell[data-view="register"] .authExactPanel .primary {
     min-height: 34px;
     margin-top: 3px;
-    font-size: 14px;
+    font-size: 13px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .goldDivider,
+  .appShell[data-view="register"] .authExactPanel .linkAction {
+    display: none;
   }
 }
