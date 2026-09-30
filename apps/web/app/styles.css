@@ -7613,7 +7613,7 @@ button:disabled {
   width: 100%;
   height: 100svh;
   min-height: 100svh;
-  background: url("/aizan-login/background-whatsapp-20260930.jpg") center / 100% 100% no-repeat #050403;
+  background: url("/aizan-login/background-auth-cropped-20260930.jpg") center / cover no-repeat #050403;
   overflow: hidden;
 }
 
@@ -7629,18 +7629,18 @@ button:disabled {
 
 .loginExactBack {
   left: 6.1%;
-  top: 11.2%;
+  top: 3.3%;
   width: 10.2%;
-  height: 4.8%;
+  height: 5.7%;
   border-radius: 50%;
 }
 
 .loginExactLanguages {
   position: absolute;
   right: 4.7%;
-  top: 11.2%;
+  top: 3.3%;
   width: 31.4%;
-  height: 3.7%;
+  height: 4.4%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 }
@@ -7656,8 +7656,8 @@ button:disabled {
 }
 
 .loginExactTab {
-  top: 49.8%;
-  height: 4.7%;
+  top: 49%;
+  height: 5.6%;
 }
 
 .loginExactTabIn {
@@ -7673,27 +7673,27 @@ button:disabled {
 .loginExactAction {
   left: 10.8%;
   width: 78%;
-  height: 6.8%;
+  height: 8.1%;
   border-radius: 18px;
 }
 
 .loginExactPhoneAction {
-  top: 56.1%;
+  top: 56.5%;
 }
 
 .loginExactEmailAction {
-  top: 64.5%;
+  top: 66.4%;
 }
 
 .loginExactBioAction {
-  top: 73.1%;
+  top: 76.6%;
 }
 
 .loginExactPhone {
   left: 29.2%;
-  top: 60.2%;
+  top: 61.4%;
   width: 30%;
-  height: 2.8%;
+  height: 3.3%;
   cursor: text;
 }
 
@@ -7709,9 +7709,9 @@ button:disabled {
 
 .loginExactRegisterFooter {
   left: 43%;
-  top: 84.4%;
+  top: 90%;
   width: 33%;
-  height: 4.6%;
+  height: 5.4%;
 }
 
 .loginExactStatus {
@@ -7771,6 +7771,8 @@ button:disabled {
   position: absolute;
   left: 22px;
   right: 22px;
+  width: auto;
+  margin: 0;
   bottom: max(28px, env(safe-area-inset-bottom));
   max-height: calc(100svh - 132px);
   overflow: auto;
@@ -7779,6 +7781,13 @@ button:disabled {
 .authExactPanelTall {
   bottom: max(18px, env(safe-area-inset-bottom));
   max-height: calc(100svh - 108px);
+}
+
+.appShell[data-view="register"] .authExactPanel,
+.appShell[data-view="otp"] .authExactPanel {
+  top: 43svh;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  max-height: none;
 }
 
 .authExactModal h2,
@@ -7922,4 +7931,172 @@ button:disabled {
   height: 1px;
   width: 1px;
   position: absolute;
+}
+
+@media (max-width: 430px) and (max-height: 760px) {
+  .authExactPanel {
+    left: 20px;
+    right: 20px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    max-height: calc(100svh - 88px);
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .authExactPanelTall {
+    top: 34svh;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-height: none;
+  }
+
+  .appShell[data-view="register"] .authExactPanelTall {
+    top: 30svh;
+  }
+
+  .authExactPanel h2 {
+    margin-right: 0;
+    margin-bottom: 8px;
+    font-size: 30px;
+  }
+
+  .authExactPanel p {
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.32;
+  }
+
+  .authExactPanel .registerInputRow {
+    min-height: 48px;
+    margin-bottom: 8px;
+    padding: 9px 12px;
+    border-radius: 13px;
+  }
+
+  .authExactPanel .profileChips {
+    gap: 6px;
+    margin: 6px 0 9px;
+  }
+
+  .authExactPanel .chip {
+    min-height: 34px;
+    border-radius: 11px;
+    font-size: 13px;
+  }
+
+  .authExactPanel .toggle {
+    font-size: 11px;
+    line-height: 1.18;
+  }
+
+  .authExactPanel .primary,
+  .authExactPrimary {
+    min-height: 50px;
+    margin-top: 8px;
+    border-radius: 14px;
+    font-size: 17px;
+  }
+
+  .appShell[data-view="otp"] .authExactPanel {
+    top: 45svh;
+    max-height: none;
+  }
+
+  .appShell[data-view="otp"] .otpBoxes {
+    gap: 6px;
+    margin: 0 0 10px;
+  }
+
+  .appShell[data-view="otp"] .otpBoxes span,
+  .authExactPanel .otpBoxes span {
+    min-height: 46px;
+    border-radius: 11px;
+    font-size: 30px;
+  }
+
+  .appShell[data-view="otp"] .hint {
+    margin: 0 0 10px;
+    font-size: 13px;
+  }
+
+  .appShell[data-view="otp"] .heroCta {
+    min-height: 50px;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  .appShell[data-view="otp"] .recordMeta.otpHint {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: inline-flex;
+    margin: 2px 0 8px;
+    transform: none;
+  }
+
+  .appShell[data-view="otp"] .goldDivider {
+    margin-bottom: 6px;
+  }
+
+  .appShell[data-view="otp"] .linkAction {
+    min-height: 26px;
+    margin-top: 6px;
+    font-size: 17px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .linkAction,
+  .appShell[data-view="otp"] .authExactPanel .linkAction {
+    min-height: 24px;
+    padding: 0;
+    font-size: 14px !important;
+    line-height: 1.2;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .goldDivider,
+  .appShell[data-view="otp"] .authExactPanel .goldDivider {
+    margin: 8px auto 6px;
+    transform: scale(.74);
+  }
+
+  .appShell[data-view="register"] .authExactPanel {
+    padding: 16px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel h2 {
+    margin-bottom: 6px;
+    font-size: 25px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel p {
+    display: none;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .registerInputRow {
+    min-height: 36px;
+    margin-bottom: 5px;
+    padding: 7px 10px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .registerInputRow input {
+    font-size: 14px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .profileChips {
+    margin: 4px 0 7px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .chip {
+    min-height: 30px;
+    font-size: 12px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .toggle {
+    margin: 0;
+    font-size: 10px;
+  }
+
+  .appShell[data-view="register"] .authExactPanel .primary {
+    min-height: 34px;
+    margin-top: 3px;
+    font-size: 14px;
+  }
 }
