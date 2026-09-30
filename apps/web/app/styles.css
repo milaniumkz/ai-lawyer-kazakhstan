@@ -4523,6 +4523,17 @@ progress {
   gap: 4px;
 }
 
+.profileLogoutButton {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 12px;
+  border: 1px solid rgba(255, 122, 122, 0.48);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel-soft) 82%, rgba(120, 20, 20, 0.34));
+  color: #ffb4a8;
+  font-weight: 800;
+}
+
 .settingsGroup button,
 .settingsGroup label {
   display: flex;
@@ -4923,7 +4934,17 @@ progress {
   }
 
   .appShell[data-view="profile"] .profileSaveContract {
-    display: none;
+    min-height: 40px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+
+  .appShell[data-view="profile"] .profileLogoutButton {
+    min-height: 38px;
+    margin-top: -3px;
+    margin-bottom: 58px;
+    border-radius: 10px;
+    font-size: 11px;
   }
 
   .appShell[data-view="profile"] .bottomNav {

@@ -2075,6 +2075,52 @@ export default function WebHome() {
     }
   }
 
+  async function logoutUser() {
+    const userId = authUserId;
+    if (userId) {
+      try {
+        await apiJson("/auth/logout-all", {
+          method: "POST",
+          headers: { "x-user-id": userId },
+          body: JSON.stringify({ userId }),
+        });
+      } catch {
+        // Local logout must still work if the network is unavailable.
+      }
+    }
+    speechRecognitionRef.current?.stop();
+    speechRecognitionRef.current = null;
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioChunksRef.current = [];
+    audioBlobRef.current = null;
+    speechDraftRef.current = "";
+    setAuthUserId("");
+    setOtpId("");
+    setOtp("");
+    setOtpHint("");
+    setCases([]);
+    setActiveCaseId("");
+    setDocuments([]);
+    setMessages([
+      {
+        role: "assistant",
+        text: "Опишите ситуацию. Я проверю факты, документы и официальные источники РК.",
+      },
+    ]);
+    setRemoteCaseId("");
+    setRemoteCaseDraftId("");
+    setRemoteDocumentId("");
+    setTranscriptJobId("");
+    setAudioUrl("");
+    setCaseText("");
+    setClassification(null);
+    setProfileComplete(false);
+    setSyncState("Вы вышли из аккаунта");
+    setView("login");
+  }
+
   function AppHeader({
     title,
     subtitle,
@@ -3945,6 +3991,14 @@ export default function WebHome() {
             }}
           >
             Сохранить профиль
+          </button>
+          <button
+            className="profileLogoutButton"
+            onClick={() => {
+              void logoutUser();
+            }}
+          >
+            Выйти из аккаунта
           </button>
         </section>
       );
