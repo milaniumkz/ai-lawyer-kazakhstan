@@ -738,6 +738,11 @@ export default function WebHome() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.lang =
+      language === "KZ" ? "kk" : language === "EN" ? "en" : "ru";
+  }, [language]);
+
+  useEffect(() => {
     if (!hydrated) return;
     const saved: SavedState = {
       view,
