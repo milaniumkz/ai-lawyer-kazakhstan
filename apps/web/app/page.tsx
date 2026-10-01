@@ -570,6 +570,47 @@ export default function WebHome() {
   const showDraftContext =
     draftContextViews.includes(view) && !currentDraftCaseCreated;
   const authText = AUTH_I18N[language];
+  const loginUiText = {
+    signIn: language === "KZ" ? "Кіру" : language === "EN" ? "Sign in" : "Вход",
+    register:
+      language === "KZ"
+        ? "Тіркелу"
+        : language === "EN"
+          ? "Registration"
+          : "Регистрация",
+    phoneTitle:
+      language === "KZ"
+        ? "Телефон арқылы кіру"
+        : language === "EN"
+          ? "Sign in by phone"
+          : "Войти по номеру телефона",
+    phoneSub: "+7",
+    emailTitle:
+      language === "KZ"
+        ? "E-mail арқылы кіру"
+        : language === "EN"
+          ? "Sign in by e-mail"
+          : "Войти по e-mail",
+    emailSub:
+      language === "KZ"
+        ? "Поштаңызды пайдаланыңыз"
+        : language === "EN"
+          ? "Use your e-mail"
+          : "Используйте вашу почту",
+    bioTitle: authText.biometric,
+    bioSub:
+      language === "KZ"
+        ? "Жылдам әрі қауіпсіз"
+        : language === "EN"
+          ? "Fast and secure"
+          : "Быстро и безопасно",
+    noAccount:
+      language === "KZ"
+        ? "Аккаунт жоқ па?"
+        : language === "EN"
+          ? "No account?"
+          : "Нет аккаунта?",
+  };
   const cleanProfileId = profileId.replace(/\D/g, "");
   const profileIdInvalid = Boolean(cleanProfileId) && !isValidKzIinBin(cleanProfileId);
   const filteredCases = useMemo(
@@ -2253,13 +2294,13 @@ export default function WebHome() {
                 className="loginExactTab loginExactTabIn"
                 data-auth-action="phone"
               >
-                Вход
+                {loginUiText.signIn}
               </button>
               <button
                 className="loginExactTab loginExactTabRegister"
                 data-auth-action="register"
               >
-                Регистрация
+                {loginUiText.register}
               </button>
               <label className="loginExactPhone">
                 <input
@@ -2285,22 +2326,43 @@ export default function WebHome() {
                 className="loginExactAction loginExactPhoneAction"
                 data-auth-action="phone"
                 aria-label={authText.smsButton}
-              />
+              >
+                <span className="loginExactIcon">☎</span>
+                <span className="loginExactActionText">
+                  <b>{loginUiText.phoneTitle}</b>
+                  <em>{loginUiText.phoneSub}</em>
+                </span>
+                <span className="loginExactChevron">›</span>
+              </button>
               <button
                 className="loginExactAction loginExactEmailAction"
                 data-auth-action="email"
                 aria-label="Войти по e-mail"
-              />
+              >
+                <span className="loginExactIcon">✉</span>
+                <span className="loginExactActionText">
+                  <b>{loginUiText.emailTitle}</b>
+                  <em>{loginUiText.emailSub}</em>
+                </span>
+                <span className="loginExactChevron">›</span>
+              </button>
               <button
                 className="loginExactAction loginExactBioAction"
                 data-auth-action="biometric"
                 aria-label={authText.biometric}
-              />
+              >
+                <span className="loginExactIcon">◉</span>
+                <span className="loginExactActionText">
+                  <b>{loginUiText.bioTitle}</b>
+                  <em>{loginUiText.bioSub}</em>
+                </span>
+                <span className="loginExactChevron">›</span>
+              </button>
               <button
                 className="loginExactRegisterFooter"
                 data-auth-action="register"
               >
-                Зарегистрироваться
+                <span>{loginUiText.noAccount}</span> {loginUiText.register} <b>›</b>
               </button>
               {authModal === "phone" && (
                 <div className="authExactOverlay" role="dialog" aria-modal="true">
