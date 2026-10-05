@@ -224,3 +224,10 @@
 .aizanHomeComposer textarea { width: 100%; resize: vertical; min-height: 100px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; font: inherit; }
 .aizanRecordingControls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .aizanRecordingControls button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 15px; background: #281706; color: var(--text); }
+.aizanIntakeSteps { display: grid; gap: 10px; margin-top: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: #221306; color: var(--text); font-size: 13px; text-align: left; }
+.aizanIntakeSteps p { margin: 0; line-height: 1.5; }
+.aizanIntakeSteps select { width: 100%; max-width: 100%; padding: 10px; margin-top: 8px; background: #221306; color: var(--text); border: 1px solid var(--line); border-radius: 12px; }
+.aizanHomeActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.aizanHomeActions > * { flex: 1; padding: 10px; text-align: center; }
+.appShell[data-design="aizan"][data-view="home"] .aizanFeedback { position: static; inset: auto; transform: none; width: auto; max-width: 100%; margin: 0; }
+html { scroll-padding-bottom: 140px; }

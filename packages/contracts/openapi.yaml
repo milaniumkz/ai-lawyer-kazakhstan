@@ -1996,6 +1996,10 @@ components:
           type: string
         profileId:
           type: string
+        classificationId:
+          type: string
+          format: uuid
+          description: Confirmed classification with completed clarifications, preserved on the case
         problemText:
           type: string
           minLength: 10

@@ -95,6 +95,13 @@ jobs:
           curl --fail --silent --show-error "$PUBLIC_SERVER_URL/" -o /tmp/deployed-web.html
           grep -q 'aizanArt-authBrand' /tmp/deployed-web.html
 
+      - name: Verify deployed intake in browser
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:web-intake
+
       - name: Remove SSH key
         if: always()
         run: rm -f ~/.ssh/ai-lawyer-kz

@@ -32,6 +32,7 @@ type View =
   | "help";
 type CaseItem = {
   id: string;
+  remoteId?: string;
   title: string;
   type: string;
   status: string;
@@ -58,6 +59,7 @@ type LegalNorm = {
 };
 type ApiLegalCase = {
   id: string;
+  problemText: string;
   title: string;
   category: string;
   status: string;
@@ -105,6 +107,7 @@ type ApiClassification = {
     alternatives: { code: string; confidence: number; reason: string }[];
     missing_facts: string[];
     clarification_questions: { id: string; questionRu: string }[];
+    facts?: Record<string, unknown>;
     risk_level: "low" | "medium" | "high";
     risk_flags: string[];
     required_human_review: boolean;
@@ -157,6 +160,8 @@ type SavedState = {
   cases: CaseItem[];
   activeCaseId: string;
   caseText: string;
+  homeInput: string;
+  homeConversationOpen: boolean;
   recording: boolean;
   paused: boolean;
   recordingSeconds: number;
@@ -461,6 +466,8 @@ export default function WebHome() {
   const speechDraftRef = useRef("");
   const speechPrefixRef = useRef("");
   const clientSequenceRef = useRef(0);
+  const intakeBusyRef = useRef(false);
+  const claimBusyRef = useRef(false);
   const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -472,6 +479,7 @@ export default function WebHome() {
   const [ocrConfirmed, setOcrConfirmed] = useState(false);
   const [analysisDone, setAnalysisDone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
+  const [claimBusy, setClaimBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -529,6 +537,8 @@ export default function WebHome() {
   ]);
   const [phone, setPhone] = useState("");
   const [homeConversationOpen, setHomeConversationOpen] = useState(false);
+  const [homeInput, setHomeInput] = useState("");
+  const [categoryOptions, setCategoryOptions] = useState<{ code: string; nameRu: string; parentId?: string }[]>([]);
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
@@ -681,13 +691,16 @@ export default function WebHome() {
       if (saved.cases?.length) setCases(saved.cases);
       if (saved.activeCaseId) setActiveCaseId(saved.activeCaseId);
       if (saved.caseText) setCaseText(saved.caseText);
-      if (typeof saved.recording === "boolean") setRecording(saved.recording);
-      if (typeof saved.paused === "boolean") setPaused(saved.paused);
+      // A browser reload cannot restore a live microphone stream.
+      setRecording(false);
+      setPaused(false);
       if (typeof saved.recordingSeconds === "number")
         setRecordingSeconds(saved.recordingSeconds);
       if (saved.speechStatus) setSpeechStatus(saved.speechStatus);
       if (saved.documents?.length) setDocuments(saved.documents);
       if (saved.messages?.length) setMessages(saved.messages);
+      setHomeConversationOpen(Boolean(saved.homeConversationOpen || saved.classification || saved.messages?.some((message) => message.role === "user")));
+      setHomeInput(saved.homeInput ?? (saved.messages?.some((message) => message.role === "user") ? "" : saved.caseText ?? ""));
       if (saved.profileType) setProfileType(saved.profileType);
       if (saved.profileName) {
         setProfileName(saved.profileName);
@@ -746,6 +759,19 @@ export default function WebHome() {
   }, [language]);
 
   useEffect(() => {
+    if (!hydrated || !authUserId) return;
+    const raw = window.localStorage.getItem("ai-lawyer-web-state");
+    if (!raw) return;
+    const record = (JSON.parse(raw) as Partial<SavedState>).classification;
+    if (!record?.id) return;
+    let active = true;
+    void apiJson(`/ai/classifications/${record.id}`, { headers: { "x-user-id": authUserId } }).then((saved: ApiClassification) => {
+      if (active) setClassification((current) => current?.id === saved.id && saved.result.missing_facts.length <= current.result.missing_facts.length ? saved : current);
+    }).catch(() => { /* Keep the local draft available for retry while offline. */ });
+    return () => { active = false; };
+  }, [authUserId, hydrated]);
+
+  useEffect(() => {
     if (!hydrated) return;
     const saved: SavedState = {
       view,
@@ -754,6 +780,8 @@ export default function WebHome() {
       cases,
       activeCaseId,
       caseText,
+      homeInput,
+      homeConversationOpen,
       recording,
       paused,
       recordingSeconds,
@@ -800,6 +828,8 @@ export default function WebHome() {
     cases,
     activeCaseId,
     caseText,
+    homeInput,
+    homeConversationOpen,
     recording,
     paused,
     recordingSeconds,
@@ -871,10 +901,12 @@ export default function WebHome() {
 
   function nextClientId(prefix: string) {
     clientSequenceRef.current += 1;
-    return `${prefix}-${clientSequenceRef.current}`;
+    const unique = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `${prefix}-${unique}-${clientSequenceRef.current}`;
   }
 
   function startNewCaseDraft(options: { startVoice?: boolean } = {}) {
+    if (intakeBusyRef.current || classificationBusy || voiceBusy) return;
     const nextDraftId = nextClientId("draft");
     speechRecognitionRef.current?.stop();
     speechRecognitionRef.current = null;
@@ -899,6 +931,7 @@ export default function WebHome() {
       },
     ]);
     setCaseText("");
+    setHomeInput("");
     setAiInterviewInput("");
     setTranscriptJobId("");
     setAudioUrl("");
@@ -925,10 +958,11 @@ export default function WebHome() {
   function mapCase(record: ApiLegalCase): CaseItem {
     return {
       id: record.id.slice(0, 8),
+      remoteId: record.id,
       title: record.title,
       type: CASE_CATEGORY_LABELS[record.category] ?? selectedCategory,
       status:
-        record.status === "consultation"
+        record.status === "review_required" ? "Требует проверки юристом" : record.status === "consultation"
           ? "Консультация открыта"
           : "Требует уточнения",
       date: new Date(record.createdAt).toLocaleDateString("ru-KZ", {
@@ -940,7 +974,7 @@ export default function WebHome() {
     };
   }
 
-  async function addCase() {
+  async function addCase(stayHome = false) {
     if (caseText.trim().length < 12) {
       setSyncState("Опишите ситуацию подробнее");
       return;
@@ -951,11 +985,12 @@ export default function WebHome() {
       const legalCase = (await apiJson("/cases", {
         method: "POST",
         headers: {
-          "idempotency-key": nextClientId("web-case"),
+          "idempotency-key": `web-case-${authUserId}-${classification?.id ?? draftCaseId}`,
           "x-user-id": ownerUserId,
         },
         body: JSON.stringify({
           ownerUserId,
+          classificationId: classification?.id,
           problemText: `${caseText}\nКатегория: ${classification?.result.subcategory_code ?? selectedCategory}`,
         }),
       })) as ApiLegalCase;
@@ -974,7 +1009,9 @@ export default function WebHome() {
           ? `Дело сохранено в API: №${next.id}. Загрузите pending документы в это дело.`
           : `Дело сохранено в API: №${next.id}`,
       );
-      go("case");
+      if (stayHome) {
+        setMessages((items) => [...items, { role: "assistant", text: `Дело «${next.title}» сохранено. Можно прикрепить документы, задать вопрос или подготовить проект претензии. ${classification?.result.required_human_review ? "Ситуация требует проверки юристом." : "Юридический вывод проверяется по официальным источникам РК."}` }]);
+      } else go("case");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -982,6 +1019,57 @@ export default function WebHome() {
           : "Не удалось создать дело",
       );
     }
+  }
+
+  async function openSavedCase(item: CaseItem) {
+    if (classificationBusy || intakeBusyRef.current || recording || voiceBusy) return;
+    intakeBusyRef.current = true;
+    setClassificationBusy(true);
+    try {
+      const userId = await ensureUser();
+      const headers = { "x-user-id": userId };
+      let id = item.remoteId;
+      if (!id) {
+        const records = await apiJson("/cases", { headers }) as ApiLegalCase[];
+        const matching = records.filter((record) => record.id.startsWith(item.id));
+        if (matching.length !== 1) throw new Error("Не удалось однозначно найти дело. Обновите список.");
+        id = matching[0].id;
+      }
+      const record = await apiJson(`/cases/${id}`, { headers }) as ApiLegalCase;
+      const results = await Promise.allSettled([
+        apiJson(`/cases/${id}/classification`, { headers }),
+        apiJson(`/cases/${id}/documents`, { headers }),
+        apiJson(`/cases/${id}/messages`, { headers }),
+        apiJson(`/cases/${id}/generated-documents`, { headers }),
+      ]);
+      const restoredClassification = results[0].status === "fulfilled" ? results[0].value as ApiClassification : null;
+      const restoredDocuments = results[1].status === "fulfilled" ? results[1].value as ApiDocument[] : [];
+      const restoredMessages = results[2].status === "fulfilled" ? results[2].value as { role: string; text: string }[] : [];
+      const drafts = results[3].status === "fulfilled" ? results[3].value as ApiGeneratedDocument[] : [];
+      const currentDraft = drafts.at(-1);
+      const nextDraftId = nextClientId("saved-case");
+      setActiveCaseId(record.id.slice(0, 8));
+      setRemoteCaseId(record.id);
+      setDraftCaseId(nextDraftId);
+      setRemoteCaseDraftId(nextDraftId);
+      setCaseText(record.problemText);
+      setHomeInput("");
+      setClassification(restoredClassification);
+      setSelectedCategory(restoredClassification?.result.subcategory_label ?? CASE_CATEGORY_LABELS[record.category] ?? record.category);
+      setDocuments(restoredDocuments.map((document) => ({ id: document.id, name: document.fileName, status: document.status === "ready" ? "Поля подтверждены вручную" : "Метаданные сохранены · требуется проверка" })));
+      setSelectedDocument("");
+      setRemoteDocumentId("");
+      setOcrConfirmed(false);
+      setAnalysisDone(false);
+      setGeneratedClaimBody(currentDraft?.body ?? "");
+      setClaimReady(Boolean(currentDraft));
+      setSent(false);
+      setMessages(restoredMessages.filter((message) => message.role === "assistant" || message.role === "user").map((message) => ({ role: message.role as "assistant" | "user", text: message.text })));
+      setHomeConversationOpen(true);
+      setSyncState(results.slice(1).some((result) => result.status === "rejected") ? "Дело загружено, часть данных недоступна. Повторите открытие." : "Дело и его данные загружены из API");
+      go("case");
+    } catch (error) { setSyncState(error instanceof Error ? `Не удалось открыть дело: ${error.message}` : "Не удалось открыть дело"); }
+    finally { intakeBusyRef.current = false; setClassificationBusy(false); }
   }
 
   async function ensureRemoteCaseForDocumentUpload(fileName: string) {
@@ -1042,7 +1130,8 @@ export default function WebHome() {
     }
   }
 
-  async function confirmCategoryAndCreateCase() {
+  async function confirmCategoryAndCreateCase(stayHome = false) {
+    if (classificationBusy || intakeBusyRef.current) return;
     if (!classification) {
       await classifyCurrentText();
       return;
@@ -1051,6 +1140,7 @@ export default function WebHome() {
       setSyncState("Сначала ответьте на вопросы AI и повторите анализ");
       return;
     }
+    intakeBusyRef.current = true;
     setClassificationBusy(true);
     try {
       const ownerUserId = await ensureUser();
@@ -1062,7 +1152,7 @@ export default function WebHome() {
         },
       });
       setSyncState("Категория подтверждена");
-      await addCase();
+      await addCase(stayHome);
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1070,6 +1160,7 @@ export default function WebHome() {
           : "Не удалось подтвердить категорию",
       );
     } finally {
+      intakeBusyRef.current = false;
       setClassificationBusy(false);
     }
   }
@@ -1087,6 +1178,7 @@ export default function WebHome() {
       setClassification(result);
       setSelectedCategory(result.result.subcategory_label);
       setSyncState(`Категория изменена: ${result.result.subcategory_label}`);
+      if (view === "home") setMessages((items) => [...items, { role: "assistant", text: intakeReply(result, true) }]);
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1108,21 +1200,90 @@ export default function WebHome() {
     return 10;
   }
 
-  function appendInterviewFact() {
+  async function appendInterviewFact() {
     const value = aiInterviewInput.trim();
-    if (!value) {
+    if (!value || !classification || classificationBusy) {
       setSyncState("Введите ответ для AI");
       return;
     }
-    setCaseText((text) => `${text.trim()}\nУточнение: ${value}`.trim());
-    setClassification(null);
-    setMessages((items) => [
-      ...items,
-      { role: "user", text: value },
-      { role: "assistant", text: nextAiQuestion() },
-    ]);
-    setAiInterviewInput("");
-    setSyncState("Ответ добавлен к делу. Повторите анализ AI.");
+    const question = pendingQuestion(classification);
+    if (!question) { setSyncState("Все уточнения заполнены. Подтвердите категорию."); return; }
+    setClassificationBusy(true);
+    try {
+      const updated = await saveClarification(classification, question.id, value);
+      setClassification(updated);
+      setCaseText((text) => `${text.trim()}\n${question.questionRu} ${value}`.trim());
+      setMessages((items) => [...items, { role: "user", text: value }, { role: "assistant", text: intakeReply(updated) }]);
+      setAiInterviewInput("");
+      setSyncState("Уточнение сохранено");
+    } catch (error) { setSyncState(error instanceof Error ? `Не удалось сохранить ответ: ${error.message}` : "Не удалось сохранить ответ"); }
+    finally { setClassificationBusy(false); }
+  }
+
+  function pendingQuestion(record: ApiClassification) {
+    return record.result.clarification_questions.find((question) => record.result.missing_facts.includes(question.id));
+  }
+
+  function intakeReply(record: ApiClassification, initial = false) {
+    const question = pendingQuestion(record);
+    const category = initial ? `Предварительная категория: ${record.result.category_label} — ${record.result.subcategory_label}.\n` : "Ответ сохранён.\n";
+    const warning = record.result.required_human_review ? "Ситуация требует проверки юристом.\n" : "";
+    return `${category}${warning}${question?.questionRu ?? (record.result.category_code === "clarification_required" ? "Выберите категорию вручную: по описанию её пока нельзя уверенно определить." : "Уточнения заполнены. Проверьте сведения и нажмите «Подтвердить и создать дело». Затем можно добавить документы и получить ответ по официальным источникам РК.")}`;
+  }
+
+  async function saveClarification(record: ApiClassification, field: string, value: string) {
+    const userId = await ensureUser();
+    return await apiJson(`/ai/classifications/${record.id}/clarifications`, {
+      method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ answers: { [field]: value } }),
+    }) as ApiClassification;
+  }
+
+  async function submitHomeMessage() {
+    const outgoing = homeInput.trim();
+    if (!outgoing || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
+    if (!classification && !remoteCaseId && outgoing.length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
+    intakeBusyRef.current = true;
+    setClassificationBusy(true);
+    setSyncState("Обрабатываю сообщение…");
+    try {
+      const userId = await ensureUser();
+      let reply: string;
+      if (remoteCaseId && remoteCaseDraftId === draftCaseId) {
+        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
+        const history = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as Message[];
+        reply = history.filter((message) => message.role === "assistant").at(-1)?.text ?? "Сообщение сохранено. Ответ пока недоступен, повторите запрос позже.";
+      } else if (classification && pendingQuestion(classification)) {
+        const question = pendingQuestion(classification)!;
+        const updated = await saveClarification(classification, question.id, outgoing);
+        setClassification(updated);
+        setCaseText((text) => `${text.trim()}\n${question.questionRu} ${outgoing}`.trim());
+        reply = intakeReply(updated);
+      } else if (classification) {
+        const answer = await apiJson("/rag/answer", { method: "POST", body: JSON.stringify({ query: `${caseText}\nВопрос: ${outgoing}` }) }) as ApiLegalAnswer;
+        reply = `${answer.message}${answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : "\nЮридический вывод требует проверки официальных источников и юристом."}`;
+      } else {
+        const result = await apiJson("/ai/classifications", { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ text: outgoing }) }) as ApiClassification;
+        setClassification(result);
+        setSelectedCategory(result.result.subcategory_label);
+        setCaseText(outgoing);
+        reply = intakeReply(result, true);
+      }
+      setMessages((items) => [...items, { role: "user", text: outgoing }, { role: "assistant", text: reply }]);
+      setHomeInput("");
+      setSyncState("Ответ получен");
+    } catch (error) {
+      setSyncState(error instanceof Error ? `Не удалось отправить. Текст сохранён, повторите попытку: ${error.message}` : "Не удалось отправить. Текст сохранён, повторите попытку.");
+    } finally {
+      intakeBusyRef.current = false;
+      setClassificationBusy(false);
+    }
+  }
+
+  async function loadCategoryOptions() {
+    try {
+      const userId = await ensureUser();
+      setCategoryOptions(await apiJson("/legal-categories", { headers: { "x-user-id": userId } }));
+    } catch (error) { setSyncState(error instanceof Error ? `Не удалось загрузить категории: ${error.message}` : "Не удалось загрузить категории"); }
   }
 
   function nextAiQuestion() {
@@ -1146,48 +1307,20 @@ export default function WebHome() {
   }
 
   async function sendMessage() {
-    if (!chatInput.trim()) return;
-    const outgoing = chatInput;
-    setMessages((items) => [
-      ...items,
-      { role: "user", text: outgoing },
-      {
-        role: "assistant",
-        text: "Для ответа потребуется договор, расписка, переписка и подтвержденная норма из официального источника РК.",
-      },
-    ]);
-    setChatInput("");
-    updateActiveCase("AI уточняет факты", 72);
-    if (!remoteCaseId) {
-      setSyncState("Сообщение добавлено локально: сначала создайте дело в API");
-      return;
-    }
+    const outgoing = chatInput.trim();
+    if (!outgoing || classificationBusy || intakeBusyRef.current) return;
+    if (!remoteCaseId) { setSyncState("Сначала создайте дело в API"); return; }
+    intakeBusyRef.current = true;
+    setClassificationBusy(true);
     try {
       const userId = await ensureUser();
-      await apiJson(`/cases/${remoteCaseId}/messages`, {
-        method: "POST",
-        headers: { "x-user-id": userId },
-        body: JSON.stringify({ role: "user", text: outgoing }),
-      });
-      const serverMessages = (await apiJson(`/cases/${remoteCaseId}/messages`, {
-        headers: { "x-user-id": userId },
-      })) as { role: "system" | "user" | "assistant"; text: string }[];
-      setMessages(
-        serverMessages
-          .filter((item) => item.role !== "system")
-          .map((item) => ({
-            role: item.role as "user" | "assistant",
-            text: item.text,
-          })),
-      );
-      setSyncState("Чат сохранен в API");
-    } catch (error) {
-      setSyncState(
-        error instanceof Error
-          ? `Чат локально, API ошибка: ${error.message}`
-          : "Чат локально",
-      );
-    }
+      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
+      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as { role: "system" | "user" | "assistant"; text: string }[];
+      setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ role: item.role as "user" | "assistant", text: item.text })));
+      setChatInput("");
+      setSyncState("Чат сохранён в API");
+    } catch (error) { setSyncState(error instanceof Error ? `Не удалось отправить. Текст сохранён: ${error.message}` : "Не удалось отправить. Текст сохранён."); }
+    finally { intakeBusyRef.current = false; setClassificationBusy(false); }
   }
 
   async function fileSha256(file: File) {
@@ -1204,7 +1337,7 @@ export default function WebHome() {
       return;
     }
     void addDocument(file, source);
-    go("documentUpload");
+    if (view !== "home") go("documentUpload");
   }
 
   function UploadControl({
@@ -1276,21 +1409,21 @@ export default function WebHome() {
       })) as ApiDocument;
       setRemoteDocumentId(document.id);
       setDocuments((items) =>
-        items.map((item, index) =>
-          index === 0
+        items.map((item) =>
+          item.sha256 === sha256
             ? { ...item, id: document.id, name: document.fileName, status: "Метаданные сохранены · требуется проверка" }
             : item,
         ),
       );
       setOcrConfirmed(false);
       setSyncState(`Метаданные сохранены: ${document.fileName}. Хранилище файлов и автоматический OCR пока не подключены.`);
-      go("documentCheck");
+      if (view !== "home") go("documentCheck");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       const duplicate = message.includes("DUPLICATE_FILE");
       setDocuments((items) =>
-        items.map((item, index) =>
-          index === 0
+        items.map((item) =>
+          item.sha256 === sha256
             ? { ...item, status: duplicate ? "Уже загружен ранее" : "Ошибка API upload" }
             : item,
         ),
@@ -1307,16 +1440,17 @@ export default function WebHome() {
 
   async function apiJson(path: string, init?: RequestInit) {
     const response = await fetch(`/api/v1${path}`, {
+      signal: AbortSignal.timeout(30000),
       ...init,
       headers: {
-        "content-type": "application/json",
+        ...(init?.body !== undefined ? { "content-type": "application/json" } : {}),
         "x-correlation-id": "web-app-sync",
         ...(init?.headers ?? {}),
       },
     });
     const body = await response.json();
     if (!response.ok) {
-      const message = body.message ?? body.error ?? `${path} failed`;
+      const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
         typeof message === "string" ? message : JSON.stringify(message),
       );
@@ -1326,6 +1460,7 @@ export default function WebHome() {
 
   async function apiForm(path: string, formData: FormData, userId?: string) {
     const response = await fetch(`/api/v1${path}`, {
+      signal: AbortSignal.timeout(30000),
       method: "POST",
       headers: {
         "x-correlation-id": "web-voice-upload",
@@ -1335,7 +1470,7 @@ export default function WebHome() {
     });
     const body = await response.json();
     if (!response.ok) {
-      const message = body.message ?? body.error ?? `${path} failed`;
+      const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
         typeof message === "string" ? message : JSON.stringify(message),
       );
@@ -1387,9 +1522,8 @@ export default function WebHome() {
       setSyncState("Сначала загрузите или отсканируйте документ");
       return;
     }
-    setOcrConfirmed(true);
     if (!remoteDocumentId) {
-      setSyncState("OCR подтвержден локально");
+      setSyncState("Сначала сохраните документ в API. Подтверждение не выполнено.");
       return;
     }
     try {
@@ -1406,12 +1540,13 @@ export default function WebHome() {
           item.name === selectedDocument ? { ...item, status: "Готов" } : item,
         ),
       );
-      setSyncState("OCR поля подтверждены в API");
+      setOcrConfirmed(true);
+      setSyncState("Поля подтверждены вручную в API. Автоматический OCR не выполнен.");
     } catch (error) {
       setSyncState(
         error instanceof Error
-          ? `OCR локально, API ошибка: ${error.message}`
-          : "OCR подтвержден локально",
+          ? `Не удалось подтвердить поля: ${error.message}`
+          : "Не удалось подтвердить поля",
       );
     }
   }
@@ -1500,6 +1635,10 @@ export default function WebHome() {
       go("profile");
       return;
     }
+    if (claimReady && generatedClaimBody) { go("claimDraft"); return; }
+    if (claimBusyRef.current) return;
+    claimBusyRef.current = true;
+    setClaimBusy(true);
     setSyncState("Формирую претензию...");
     try {
       const userId = await ensureUser();
@@ -1512,8 +1651,8 @@ export default function WebHome() {
           caseId: remoteCaseId,
           fields: {
             claimantName: profileName,
-            respondentName: "Ответчик уточняется пользователем",
-            claimAmount: "Сумма уточняется пользователем",
+            respondentName: String(classification?.result.facts?.debtor_identity ?? classification?.result.facts?.employer ?? "Ответчик уточняется пользователем"),
+            claimAmount: String(classification?.result.facts?.amount ?? classification?.result.facts?.paid_amount ?? "Сумма уточняется пользователем"),
             claimReason: caseText || "Основание уточняется пользователем",
             deadlineDate: "Срок рассчитывается после проверки",
           },
@@ -1531,7 +1670,7 @@ export default function WebHome() {
           ? `Ошибка генерации: ${error.message}`
           : "Не удалось сформировать претензию",
       );
-    }
+    } finally { claimBusyRef.current = false; setClaimBusy(false); }
   }
 
   async function analyzeDocuments() {
@@ -1554,7 +1693,7 @@ export default function WebHome() {
       const remoteDocs = (await apiJson(`/cases/${remoteCaseId}/documents`, {
         headers: { "x-user-id": userId },
       })) as ApiDocument[];
-      setAnalysisDone(remoteDocs.length > 0);
+      setAnalysisDone(false);
       setSyncState(`Получено документов: ${remoteDocs.length}. Автоматический юридический анализ не выполнен.`);
     } catch (error) {
       setAnalysisDone(false);
@@ -1787,7 +1926,7 @@ export default function WebHome() {
         if (text) {
           const combined = [speechPrefixRef.current, text].filter(Boolean).join("\n");
           speechDraftRef.current = combined;
-          setCaseText(combined);
+          if (view === "home") setHomeInput(combined); else setCaseText(combined);
           setSpeechStatus("Речь распознана браузером");
         }
       };
@@ -1814,7 +1953,7 @@ export default function WebHome() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       audioBlobRef.current = null;
-      speechPrefixRef.current = caseText.trim();
+      speechPrefixRef.current = (view === "home" ? homeInput : caseText).trim();
       speechDraftRef.current = "";
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
@@ -1877,7 +2016,7 @@ export default function WebHome() {
       return;
     }
     if (recorder.state === "paused") {
-      speechPrefixRef.current = caseText.trim();
+      speechPrefixRef.current = (view === "home" ? homeInput : caseText).trim();
       recorder.resume();
       startSpeechRecognition();
       setPaused(false);
@@ -1910,7 +2049,7 @@ export default function WebHome() {
     setSyncState("Запись завершена, сохраняю аудио...");
     try {
       const blob = await stopRecordingAndGetBlob();
-      if ((!blob || blob.size === 0) && caseText.trim()) {
+      if ((!blob || blob.size === 0) && (view === "home" ? homeInput : caseText).trim()) {
         setSyncState("Текст сохранен без аудиофайла");
         if (view !== "home") go("category");
         return;
@@ -1919,8 +2058,8 @@ export default function WebHome() {
         throw new Error("Пустая запись: попробуйте еще раз");
       const extension =
         blob.type.includes("mp4") || blob.type.includes("aac") ? "m4a" : "webm";
-      const recognizedText = speechDraftRef.current.trim() || caseText.trim();
-      if (recognizedText) setCaseText(recognizedText);
+      const recognizedText = speechDraftRef.current.trim() || (view === "home" ? homeInput : caseText).trim();
+      if (recognizedText) { if (view === "home") setHomeInput(recognizedText); else setCaseText(recognizedText); }
       if (!authUserId) {
         setSyncState(
           recognizedText
@@ -1941,7 +2080,7 @@ export default function WebHome() {
         authUserId,
       )) as TranscriptJob;
       setTranscriptJobId(job.id);
-      if (job.transcript) setCaseText(job.transcript);
+      if (job.transcript) { if (view === "home") setHomeInput(job.transcript); else setCaseText(job.transcript); }
       setSyncState(
         job.audioFileId
           ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}`
@@ -2764,7 +2903,7 @@ export default function WebHome() {
                 !currentClassification ||
                 currentClassification.missing_facts.length > 0
               }
-              onClick={confirmCategoryAndCreateCase}
+              onClick={() => void confirmCategoryAndCreateCase()}
               title={
                 currentClassification?.missing_facts.length
                   ? "Сначала ответьте на вопросы AI и повторите анализ"
@@ -2831,10 +2970,8 @@ export default function WebHome() {
               <button
                 className="caseRow"
                 key={item.id}
-                onClick={() => {
-                  setActiveCaseId(item.id);
-                  go("case");
-                }}
+                disabled={classificationBusy}
+                onClick={() => void openSavedCase(item)}
               >
                 <span className="roundIcon">
                   {["⚖", "👪", "▤", "▥", "♢"][index] ?? "⚖"}
@@ -3688,7 +3825,7 @@ export default function WebHome() {
               </div>
               <div className="claimProgress">
                 <span>Прогресс подготовки</span>
-                <b>{claimReady ? "Проект готов" : "Ожидает запуска"}</b>
+                <b>{claimBusy ? "Формирование выполняется" : claimReady ? "Проект готов" : "Ожидает запуска"}</b>
                 <progress value={claimReady ? 1 : 0} max="1" />
               </div>
               <div className="docHint">
@@ -3702,11 +3839,11 @@ export default function WebHome() {
                 value={caseText}
                 onChange={(event) => setCaseText(event.target.value)}
               />
-              <button className="primary wide heroCta" onClick={generateClaim}>
-                {claimReady ? "Открыть проект" : "✧ Открыть проект"}
+              <button className="primary wide heroCta" onClick={generateClaim} disabled={claimBusy}>
+                {claimBusy ? "Формирую…" : claimReady ? "Открыть проект" : "Сформировать проект"}
               </button>
-              <button className="wide outlineGold" onClick={() => go("case")}>
-                Отменить
+              <button className="wide outlineGold" disabled={claimBusy} onClick={() => go("home")}>
+                Назад
               </button>
             </>
           )}
@@ -4309,7 +4446,7 @@ export default function WebHome() {
 
     return (
       <section className={`homeScreen aizanHome ${homeConversationOpen ? "aizanHomeConversing" : ""}`}>
-        <button className="aizanMicrophone" disabled={voiceBusy} aria-label="Рассказать проблему" onClick={() => {
+        <button className="aizanMicrophone" disabled={voiceBusy || classificationBusy} aria-label="Рассказать проблему" onClick={() => {
           setHomeConversationOpen(true);
           if (recording) finishRecording(); else void startRecording();
         }}><AizanArt name="microphone" /></button>
@@ -4321,18 +4458,29 @@ export default function WebHome() {
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
             {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p></div>)}
           </div>
-          <form className="aizanHomeComposer" onSubmit={(event) => {
-            event.preventDefault();
-            if (caseText.trim().length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
-            setMessages((items) => [...items, { role: "user", text: caseText.trim() }]);
-            void classifyCurrentText(true);
-          }}>
-            <label htmlFor="home-problem">Расскажите о вашей ситуации</label>
-            <textarea id="home-problem" value={caseText} onChange={(event) => { setCaseText(event.target.value); setClassification(null); }} placeholder="Напишите сообщение или нажмите микрофон…" rows={3} />
+          {classification && <div className="aizanIntakeSteps">
+            <p>{classification.result.subcategory_label} · Уверенность: {Math.round(classification.result.confidence * 100)}%</p>
+            {classification.result.required_human_review && <p role="note">Высокий риск: требуется проверка юристом.</p>}
+            <p>{classification.result.missing_facts.length ? `Осталось уточнений: ${classification.result.missing_facts.length}` : "Уточнения заполнены"}</p>
+            {!remoteCaseId && <>
+              <button type="button" className="outlineGold wide" disabled={classificationBusy} onClick={() => void loadCategoryOptions()}>Изменить категорию</button>
+              {categoryOptions.length > 0 && <label>Категория<select aria-label="Категория дела" value={classification.result.subcategory_code} disabled={classificationBusy} onChange={(event) => void overrideCategory(event.target.value)}>{categoryOptions.filter((item) => item.parentId && item.code !== "clarification_required.other").map((item) => <option key={item.code} value={item.code}>{item.nameRu}</option>)}</select></label>}
+              <button type="button" className="primary wide" disabled={classificationBusy || classification.result.missing_facts.length > 0 || classification.result.category_code === "clarification_required"} onClick={() => void confirmCategoryAndCreateCase(true)}>Подтвердить и создать дело</button>
+            </>}
+            {documents.length > 0 && <div aria-label="Прикреплённые документы">{documents.map((document) => <p key={document.id ?? document.sha256 ?? document.name}>{document.name}: {document.status}</p>)}<p>Автоматический OCR не подключён. Сохранение метаданных не означает анализа содержимого.</p></div>}
+            {remoteCaseId && <div className="aizanHomeActions">
+              <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
+              <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
+            </div>}
+          </div>}
+          <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
+            {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
+            <label htmlFor="home-problem">{classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
+            <textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение или нажмите микрофон…" rows={3} />
             {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}
             {(recording || audioUrl || voiceBusy) && <small role="status">{speechStatus}</small>}
-            <button type="submit" className="primary wide" disabled={classificationBusy || recording || voiceBusy}>{classificationBusy ? "Анализирую…" : "Отправить"}</button>
+            <button type="submit" className="primary wide" disabled={classificationBusy || recording || voiceBusy || !homeInput.trim()}>{classificationBusy ? "Анализирую…" : "Отправить"}</button>
           </form>
         </div>}
 
@@ -4397,7 +4545,7 @@ export default function WebHome() {
         </div>
         {notificationOpen && <aside className="aizanNotifications"><strong>Уведомления</strong><p>{tasks.filter((task) => !task.done).map((task) => `${task.title}: ${task.due}`).join("; ") || "Активных уведомлений нет"}</p></aside>}
         {renderView()}
-        {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|проверьте|зафиксирован|метаданные|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
+        {view !== "home" && /ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|проверьте|зафиксирован|метаданные|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
         <nav className="bottomNav" aria-label="Основная навигация">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}><DesignIcon name="home" />Главная</button>
           <button className={["cases", "case", "chat"].includes(view) ? "active" : ""} onClick={() => go("cases")}><DesignIcon name="folder" />Мои дела</button>

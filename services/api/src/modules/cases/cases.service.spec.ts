@@ -77,12 +77,54 @@ describe('CasesService', () => {
     expect(clarified.result.facts.child_birth_date).toBe('2020-01-01');
     expect(clarified.result.missing_facts).not.toContain('child_birth_date');
 
+    await expect(service.confirmClassification(created.id, 'u1')).rejects.toThrow('CLASSIFICATION_CLARIFICATIONS_REQUIRED');
+    await service.answerClarifications(created.id, { answers: { debtor_identity: 'Отец ребёнка', income_info: 'Неизвестно' } }, 'u1');
     const confirmed = await service.confirmClassification(created.id, 'u1');
     expect(confirmed.userConfirmed).toBe(true);
 
     const overridden = await service.overrideClassification(created.id, { subcategoryCode: 'family.divorce', reason: 'Выбрал развод' }, 'u1');
     expect(overridden.userOverridden).toBe(true);
     expect(overridden.result.subcategory_code).toBe('family.divorce');
+    expect(overridden.result.missing_facts).toEqual(['marriage_date', 'children']);
+    expect(overridden.userConfirmed).toBe(false);
+  });
+
+  it('advances clarification questions and preserves confirmed facts/category on an idempotent case', async () => {
+    const service = new CasesService();
+    const initial = await service.classifyDispute({ text: 'Работодатель не выплатил зарплату' }, 'u1');
+    expect(initial.result.clarification_questions[0].questionRu).toBe('За какой период не выплачена зарплата?');
+    const first = await service.answerClarifications(initial.id, { answers: { employment_period: 'Январь и февраль 2026' } }, 'u1');
+    expect(first.id).toBe(initial.id);
+    expect(first.result.missing_facts).toEqual(['amount']);
+    expect(first.result.clarification_questions.map((question) => question.id)).toEqual(['amount']);
+    await expect(service.answerClarifications(initial.id, { answers: { amount: ' ' } }, 'u1')).rejects.toThrow('INVALID_CLARIFICATION_ANSWER');
+    await expect(service.answerClarifications(initial.id, { answers: { unrelated: 'данные' } }, 'u1')).rejects.toThrow('INVALID_CLARIFICATION_ANSWER');
+    await expect(service.answerClarifications(initial.id, { answers: { amount: '100000' } }, 'u2')).rejects.toThrow('CLASSIFICATION_ACCESS_DENIED');
+    await expect(service.createCase({ ownerUserId: 'u1', problemText: 'Невыплата зарплаты работодателем', classificationId: initial.id })).rejects.toThrow('CLASSIFICATION_CONFIRMATION_REQUIRED');
+    const complete = await service.answerClarifications(initial.id, { answers: { amount: '100000 тенге' } }, 'u1');
+    expect(complete.result.missing_facts).toEqual([]);
+    expect(complete.result.clarification_questions).toEqual([]);
+    await service.confirmClassification(initial.id, 'u1');
+    const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Невыплата зарплаты работодателем', classificationId: initial.id }, 'wages-case');
+    expect(legalCase.subcategory).toBe('labor.wage_arrears');
+    const stored = await service.getCaseClassification(legalCase.id, 'u1');
+    expect(stored.result.facts).toMatchObject({ employment_period: 'Январь и февраль 2026', amount: '100000 тенге' });
+    const retry = await service.createCase({ ownerUserId: 'u1', problemText: 'Невыплата зарплаты работодателем', classificationId: initial.id }, 'wages-case');
+    expect(retry.id).toBe(legalCase.id);
+    expect(await service.listCases('u1')).toHaveLength(1);
+    await expect(service.createCase({ ownerUserId: 'u2', problemText: 'Невыплата зарплаты работодателем' }, 'wages-case')).rejects.toThrow('CASE_ACCESS_DENIED');
+  });
+
+  it('requires manual selection for ambiguous input and flags a high risk case for review', async () => {
+    const service = new CasesService();
+    const ambiguous = await service.classifyDispute({ text: 'Нужна помощь с ситуацией' }, 'u1');
+    await service.answerClarifications(ambiguous.id, { answers: { parties: 'Люди', goal: 'Помощь', documents: 'Нет' } }, 'u1');
+    await expect(service.confirmClassification(ambiguous.id, 'u1')).rejects.toThrow('CLASSIFICATION_MANUAL_SELECTION_REQUIRED');
+    const risky = await service.classifyDispute({ text: 'Меня задержали' }, 'u1');
+    await service.answerClarifications(risky.id, { answers: { detention_time: 'Сегодня', location: 'Алматы' } }, 'u1');
+    await service.confirmClassification(risky.id, 'u1');
+    const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Меня задержали сегодня в Алматы', classificationId: risky.id });
+    expect(legalCase.status).toBe('review_required');
   });
 
   it('adds user message and safe assistant fallback', async () => {

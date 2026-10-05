@@ -7,6 +7,7 @@ import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } fro
 import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, classifyStructuredDispute, getLegalCategory, validateStructuredClassification, LegalCategory, StructuredClassification } from './case-taxonomy';
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
+import { LegalService } from '../legal/legal.service';
 
 const PROGRESS: ChatProgressStatus[] = ['transcribing', 'classifying', 'retrieving_sources', 'validating', 'generating', 'ready'];
 const ALLOWED_AUDIO_MIME_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav', 'audio/x-wav']);
@@ -25,20 +26,29 @@ export class CasesService {
   constructor(
     @Optional() @Inject(CASES_REPOSITORY) private readonly repository?: CasesRepository,
     private readonly db?: DatabaseService,
+    @Optional() private readonly legal?: LegalService,
   ) {}
 
-  async createCase(input: { ownerUserId: string; profileId?: string; problemText: string }, idempotencyKey?: string) {
+  async createCase(input: { ownerUserId: string; profileId?: string; problemText: string; classificationId?: string }, idempotencyKey?: string) {
     if (!input.ownerUserId) throw new BadRequestException('OWNER_REQUIRED');
     if (!input.problemText || input.problemText.trim().length < 10) throw new BadRequestException('PROBLEM_TEXT_TOO_SHORT');
     if (this.repository && idempotencyKey) {
       const existing = await this.repository.findCaseByIdempotencyKey(idempotencyKey);
-      if (existing) return existing;
+      if (existing) {
+        if (existing.ownerUserId !== input.ownerUserId) throw new ForbiddenException('CASE_ACCESS_DENIED');
+        return existing;
+      }
     }
     if (idempotencyKey && this.idempotency.has(idempotencyKey)) {
-      return this.idempotency.get(idempotencyKey)!;
+      const existing = this.idempotency.get(idempotencyKey)!;
+      if (existing.ownerUserId !== input.ownerUserId) throw new ForbiddenException('CASE_ACCESS_DENIED');
+      return existing;
     }
 
-    const classification = classifyProblem(input.problemText);
+    const confirmed = input.classificationId ? await this.getClassification(input.classificationId, input.ownerUserId) : undefined;
+    if (confirmed && (!confirmed.userConfirmed || confirmed.result.missing_facts.length)) throw new BadRequestException('CLASSIFICATION_CONFIRMATION_REQUIRED');
+    if (confirmed?.caseId) return this.getCase(confirmed.caseId, input.ownerUserId);
+    const classification = confirmed ? { category: confirmed.result.category_code, subcategory: confirmed.result.subcategory_code, confidence: confirmed.result.confidence } : classifyProblem(input.problemText);
     const record: LegalCaseRecord = {
       id: randomUUID(),
       ownerUserId: input.ownerUserId,
@@ -48,7 +58,7 @@ export class CasesService {
       category: classification.category,
       subcategory: classification.subcategory,
       confidence: classification.confidence,
-      status: classification.confidence < 0.65 ? 'clarification_required' : 'consultation',
+      status: confirmed?.result.required_human_review ? 'review_required' : classification.confidence < 0.65 ? 'clarification_required' : 'consultation',
       readinessPercent: 17,
       createdAt: new Date().toISOString(),
     };
@@ -67,6 +77,7 @@ export class CasesService {
       if (idempotencyKey) this.idempotency.set(idempotencyKey, stored);
     }
     if (this.repository && idempotencyKey) await this.repository.rememberIdempotencyKey({ key: idempotencyKey, ownerUserId: input.ownerUserId, caseId: stored.id });
+    if (confirmed) await this.persistClassification({ ...confirmed, caseId: stored.id });
     return stored;
   }
 
@@ -164,7 +175,8 @@ export class CasesService {
     const record = await this.findClassification(id);
     if (!record) throw new NotFoundException('CLASSIFICATION_NOT_FOUND');
     if (record.ownerUserId !== ownerUserId) throw new ForbiddenException('CLASSIFICATION_ACCESS_DENIED');
-    return record;
+    const category = getLegalCategory(record.result.subcategory_code);
+    return category ? { ...record, result: { ...record.result, clarification_questions: category.clarificationQuestionTemplates.filter((question) => record.result.missing_facts.includes(question.id)) } } : record;
   }
 
   async getCaseClassification(caseId: string, ownerUserId: string) {
@@ -177,15 +189,22 @@ export class CasesService {
 
   async answerClarifications(id: string, input: { answers: Record<string, unknown> }, ownerUserId: string) {
     const record = await this.getClassification(id, ownerUserId);
+    if (!input?.answers || typeof input.answers !== 'object' || Array.isArray(input.answers) || !Object.keys(input.answers).length) throw new BadRequestException('CLARIFICATION_ANSWERS_REQUIRED');
+    const allowed = new Set(Object.keys(record.result.facts).concat(record.result.missing_facts));
+    for (const [key, value] of Object.entries(input.answers)) {
+      if (!allowed.has(key) || typeof value !== 'string' || !value.trim() || value.length > 10000) throw new BadRequestException('INVALID_CLARIFICATION_ANSWER');
+    }
     const mergedFacts = { ...record.result.facts, ...input.answers };
     const answered = new Set(Object.keys(input.answers ?? {}));
     const missing = record.result.missing_facts.filter((field) => !answered.has(field));
-    const updated = { ...record, result: { ...record.result, facts: mergedFacts, missing_facts: missing, clarification_questions: record.result.clarification_questions.filter((q) => !answered.has(q.id)) } };
+    const updated = { ...record, userConfirmed: false, result: { ...record.result, facts: mergedFacts, missing_facts: missing, clarification_questions: record.result.clarification_questions.filter((q) => !answered.has(q.id)) } };
     return this.persistClassification(updated);
   }
 
   async confirmClassification(id: string, ownerUserId: string) {
     const record = await this.getClassification(id, ownerUserId);
+    if (record.result.missing_facts.length) throw new BadRequestException('CLASSIFICATION_CLARIFICATIONS_REQUIRED');
+    if (record.result.category_code === 'clarification_required') throw new BadRequestException('CLASSIFICATION_MANUAL_SELECTION_REQUIRED');
     if (record.userConfirmed) return record;
     const updated = { ...record, userConfirmed: true, confirmedAt: new Date().toISOString() };
     return this.persistClassification(updated);
@@ -230,6 +249,7 @@ export class CasesService {
     if (!category?.parentId) throw new BadRequestException('UNKNOWN_SUBCATEGORY_CODE');
     const parent = getLegalCategory(category.parentId);
     if (!parent) throw new BadRequestException('UNKNOWN_CATEGORY_CODE');
+    const missing = (category.requiredFactSchema.fields as string[]).filter((field) => typeof record.result.facts[field] !== 'string' || !(record.result.facts[field] as string).trim());
     const updated: ClassificationRecord = {
       ...record,
       result: {
@@ -241,11 +261,13 @@ export class CasesService {
         confidence: 1,
         alternatives: record.result.alternatives.filter((item) => item.code !== category.code),
         reasons: [source === 'expert' ? 'expert_manual_override' : 'user_manual_override', input.reason ?? `${source}_selected_category`],
+        missing_facts: missing,
+        clarification_questions: category.clarificationQuestionTemplates.filter((question) => missing.includes(question.id)),
         required_human_review: category.highRisk || category.defaultLegalRoute === 'criminal_high_risk',
         risk_level: category.highRisk ? 'high' : record.result.risk_level,
         risk_flags: category.highRisk ? [...new Set([...record.result.risk_flags, 'high_risk_category'])] : record.result.risk_flags,
       },
-      userConfirmed: true,
+      userConfirmed: missing.length === 0,
       userOverridden: true,
       confirmedAt: new Date().toISOString(),
     };
@@ -274,18 +296,19 @@ export class CasesService {
   }
 
   async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }, ownerUserId?: string) {
-    await this.getCase(caseId, ownerUserId);
-    if (!input.text) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
+    const legalCase = await this.getCase(caseId, ownerUserId);
+    if (!input.text?.trim()) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
     const message: MessageRecord = { id: randomUUID(), caseId, role: input.role, text: input.text, createdAt: new Date().toISOString() };
     if (this.repository) await this.repository.createMessage(message);
     const list = this.messages.get(caseId) ?? [];
     if (!this.repository) list.push(message);
     if (input.role === 'user') {
+      const answer = this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
       const fallback = {
         id: randomUUID(),
         caseId,
         role: 'assistant',
-        text: 'Принято. Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.',
+        text: answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.',
         createdAt: new Date().toISOString(),
       } as const;
       if (this.repository) await this.repository.createMessage(fallback);

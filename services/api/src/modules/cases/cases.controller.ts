@@ -19,7 +19,7 @@ export class CasesController {
 
   @Post('cases')
   createCase(
-    @Body() body: { ownerUserId: string; profileId?: string; problemText: string },
+    @Body() body: { ownerUserId: string; profileId?: string; problemText: string; classificationId?: string },
     @Headers('idempotency-key') idempotencyKey?: string,
     @Headers('x-user-id') userId?: string | string[],
   ) {

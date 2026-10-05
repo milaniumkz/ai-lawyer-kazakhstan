@@ -123,6 +123,12 @@ describe('AppModule HTTP smoke', () => {
       .expect(201)
       .expect(({ body }) => expect(body.userConfirmed).toBe(true));
     await request(app.getHttpServer())
+      .post(`/api/v1/ai/classifications/${classification.body.id}/clarifications`)
+      .set('x-user-id', userId)
+      .send({ answers: { child_birth_date: '2020-01-01', debtor_identity: 'Отец ребёнка', income_info: 'Неизвестно' } })
+      .expect(201)
+      .expect(({ body }) => expect(body.result.missing_facts).toEqual([]));
+    await request(app.getHttpServer())
       .post(`/api/v1/ai/classifications/${classification.body.id}/confirm`)
       .set('x-user-id', userId)
       .set('idempotency-key', 'confirm-smoke-1')

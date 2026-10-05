@@ -14,9 +14,11 @@ await page.getByRole('button',{name:'Ввести текст',exact:true}).click
 await page.locator('.aizanHomeComposer textarea').waitFor();
 assert.equal(await page.locator('.aizanHomeComposer textarea').inputValue(),'Мой сохранённый текст обращения');
 assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
-await page.route('**/api/v1/ai/classifications', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'test-classification',result:{category_label:'Трудовой спор',subcategory_label:'Заработная плата',clarification_questions:[{questionRu:'За какой период не выплачена зарплата?'}],missing_facts:['period']}})}));
+await page.route('**/api/v1/ai/classifications', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'test-classification',result:{category_code:'labor',subcategory_code:'labor.wage_arrears',confidence:0.8,required_human_review:false,category_label:'Трудовой спор',subcategory_label:'Заработная плата',clarification_questions:[{id:'period',questionRu:'За какой период не выплачена зарплата?'}],missing_facts:['period']}})}));
 await page.getByRole('button',{name:'Отправить',exact:true}).click();
-await page.getByText('Трудовой спор: Заработная плата. За какой период не выплачена зарплата?',{exact:true}).waitFor();
+await page.locator('.aizanHomeMessage.assistant').filter({hasText:'За какой период не выплачена зарплата?'}).waitFor();
+assert.equal(await page.locator('.aizanHomeComposer textarea').inputValue(),'');
+await page.locator('.aizanHomeComposer textarea').fill('Неотправленное уточнение');
 assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
 assert.equal(await page.locator('.bottomNav').isVisible(),true);
 for (const width of [320,390,1024]) {
@@ -27,7 +29,7 @@ await page.setViewportSize({width:390,height:845});
 await page.getByRole('button',{name:'Рассказать проблему',exact:true}).click();
 await page.locator('.aizanFeedback').waitFor();
 assert.match(await page.locator('.aizanFeedback').innerText(),/Микрофон недоступен/);
-assert.equal(await page.locator('.aizanHomeComposer textarea').inputValue(),'Мой сохранённый текст обращения');
+assert.equal(await page.locator('.aizanHomeComposer textarea').inputValue(),'Неотправленное уточнение');
 assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
 await page.getByRole('button',{name:'Новое дело',exact:true}).click();
 assert.equal(await page.locator('.aizanHomeComposer textarea').inputValue(),'');

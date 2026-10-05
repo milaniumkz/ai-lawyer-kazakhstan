@@ -9,5 +9,6 @@ import { PostgresLegalRepository } from './repositories/postgres-legal.repositor
 @Module({
   controllers: [LegalController],
   providers: [LegalService, DatabaseService, PostgresLegalRepository, legalRepositoryProvider, ManualLegalSourceIngestionAdapter],
+  exports: [LegalService],
 })
 export class LegalModule {}
