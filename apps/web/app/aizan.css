@@ -209,3 +209,18 @@
 
 .appShell[data-design="aizan"][data-theme] .bottomNav { display: grid; }
 .appShell[data-design="aizan"][data-theme]:is([data-view="login"], [data-view="register"], [data-view="otp"], [data-view="biometric"], [data-view="onboarding"], [data-view="category"], [data-view="analysis"], [data-view="claim"], [data-view="claimDraft"], [data-view="claimSend"], [data-view="documentUpload"]) .bottomNav { display: none; }
+
+/* Conversation stays inside the home screen, below the brand and microphone. */
+.appShell[data-design="aizan"] .aizanHomeConversing .aizanMicrophone { width: 105px; margin: 10px auto; }
+.appShell[data-design="aizan"] .aizanHomeConversing .aizanTextEntry { margin-top: 14px; }
+.aizanHomeConversation { margin-top: 22px; width: 100%; min-width: 0; }
+.aizanHomeMessages { display: flex; flex-direction: column; gap: 12px; }
+.aizanHomeMessage { max-width: 92%; padding: 12px 15px; border: 1px solid #b27c2b66; border-radius: 16px 16px 16px 4px; background: #281706; text-align: left; overflow-wrap: anywhere; }
+.aizanHomeMessage.user { align-self: flex-end; background: #52320f; border-radius: 16px 16px 4px 16px; }
+.aizanHomeMessage small { color: #ffdf83; }
+.aizanHomeMessage p { margin: 5px 0 0; color: var(--text); font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.aizanHomeComposer { display: grid; gap: 12px; margin-top: 18px; }
+.aizanHomeComposer label { color: var(--muted); font-size: 13px; text-align: left; }
+.aizanHomeComposer textarea { width: 100%; resize: vertical; min-height: 100px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; font: inherit; }
+.aizanRecordingControls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.aizanRecordingControls button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 15px; background: #281706; color: var(--text); }

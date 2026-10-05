@@ -220,7 +220,7 @@ function normalizeKzPhoneInput(value: string) {
   const digits = value.replace(/\D/g, "");
   if (!digits) return "+7";
   const subscriberDigits =
-    digits.length > 10 && (digits.startsWith("7") || digits.startsWith("8"))
+    (value.trim().startsWith("+7") || (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))))
       ? digits.slice(1)
       : digits;
   return `+7${subscriberDigits.slice(0, 10)}`;
@@ -528,6 +528,7 @@ export default function WebHome() {
     },
   ]);
   const [phone, setPhone] = useState("");
+  const [homeConversationOpen, setHomeConversationOpen] = useState(false);
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
   const [profileType, setProfileType] = useState("Физлицо");
@@ -910,7 +911,8 @@ export default function WebHome() {
     setClaimReady(false);
     setSent(false);
     setSyncState("Начато новое дело: черновик очищен");
-    go("newCase");
+    setHomeConversationOpen(true);
+    go("home");
     if (options.startVoice) window.setTimeout(() => void startRecording(), 0);
   }
 
@@ -1009,7 +1011,7 @@ export default function WebHome() {
     return legalCase.id;
   }
 
-  async function classifyCurrentText() {
+  async function classifyCurrentText(stayHome = false) {
     if (caseText.trim().length < 12) {
       setSyncState("Опишите ситуацию подробнее");
       return;
@@ -1026,7 +1028,9 @@ export default function WebHome() {
       setClassification(result);
       setSelectedCategory(result.result.subcategory_label);
       setSyncState(`Категория API: ${result.result.subcategory_label}`);
-      go("category");
+      if (stayHome) {
+        setMessages((items) => [...items, { role: "assistant", text: `${result.result.category_label}: ${result.result.subcategory_label}. ${result.result.clarification_questions[0]?.questionRu || "Проверьте категорию и описание обращения."}` }]);
+      } else go("category");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1908,7 +1912,7 @@ export default function WebHome() {
       const blob = await stopRecordingAndGetBlob();
       if ((!blob || blob.size === 0) && caseText.trim()) {
         setSyncState("Текст сохранен без аудиофайла");
-        go("category");
+        if (view !== "home") go("category");
         return;
       }
       if (!blob || blob.size === 0)
@@ -1923,7 +1927,7 @@ export default function WebHome() {
             ? "Текст распознан локально. Войдите для синхронизации аудио"
             : "Аудио записано локально. Войдите для синхронизации",
         );
-        go("category");
+        if (view !== "home") go("category");
         return;
       }
       const formData = new FormData();
@@ -1943,7 +1947,7 @@ export default function WebHome() {
           ? `Аудио сохранено: ${job.audioFileId.slice(0, 8)}`
           : `Transcript job готов: ${job.id.slice(0, 8)}`,
       );
-      go("category");
+      if (view !== "home") go("category");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -4304,15 +4308,34 @@ export default function WebHome() {
     }
 
     return (
-      <section className="homeScreen aizanHome">
-        <button className="aizanMicrophone" aria-label="Рассказать проблему" onClick={() => {
-          if (caseText.trim()) { go("newCase"); void startRecording(); }
-          else startNewCaseDraft({ startVoice: true });
+      <section className={`homeScreen aizanHome ${homeConversationOpen ? "aizanHomeConversing" : ""}`}>
+        <button className="aizanMicrophone" disabled={voiceBusy} aria-label="Рассказать проблему" onClick={() => {
+          setHomeConversationOpen(true);
+          if (recording) finishRecording(); else void startRecording();
         }}><AizanArt name="microphone" /></button>
-        <h1>Нажмите, чтобы говорить</h1>
-        <button className="aizanTextEntry" onClick={() => { go("newCase"); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".recordCard textarea")?.focus(), 0); }}>
+        <h1>{recording ? paused ? "Запись на паузе" : "Слушаю вас…" : "Нажмите, чтобы говорить"}</h1>
+        <button className="aizanTextEntry" onClick={() => { setHomeConversationOpen(true); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".aizanHomeComposer textarea")?.focus(), 0); }}>
           <span className="keyboardIcon"><DesignIcon name="keyboard" /></span><span>Ввести текст</span>
         </button>
+        {homeConversationOpen && <div className="aizanHomeConversation">
+          <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
+            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p></div>)}
+          </div>
+          <form className="aizanHomeComposer" onSubmit={(event) => {
+            event.preventDefault();
+            if (caseText.trim().length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
+            setMessages((items) => [...items, { role: "user", text: caseText.trim() }]);
+            void classifyCurrentText(true);
+          }}>
+            <label htmlFor="home-problem">Расскажите о вашей ситуации</label>
+            <textarea id="home-problem" value={caseText} onChange={(event) => { setCaseText(event.target.value); setClassification(null); }} placeholder="Напишите сообщение или нажмите микрофон…" rows={3} />
+            {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
+            {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}
+            {(recording || audioUrl || voiceBusy) && <small role="status">{speechStatus}</small>}
+            <button type="submit" className="primary wide" disabled={classificationBusy || recording || voiceBusy}>{classificationBusy ? "Анализирую…" : "Отправить"}</button>
+          </form>
+        </div>}
+
       </section>
     );
   }
