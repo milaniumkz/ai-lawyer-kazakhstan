@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- The app hydrates hash route and persisted client state after mount. */
-
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type View =

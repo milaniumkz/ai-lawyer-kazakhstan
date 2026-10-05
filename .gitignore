@@ -18,3 +18,15 @@ __pycache__/
 .env
 .env.*
 !.env.example
+output/
+secrets/
+.ssh/
+*.pem
+*.p8
+*.key
+*.p12
+*.cer
+*.mobileprovision
+*.keystore
+*.jks
+apps/mobile/android/key.properties
