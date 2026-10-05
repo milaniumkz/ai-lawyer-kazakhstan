@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -62,11 +61,9 @@ function pngFiles(dir) {
 }
 
 function dimensions(file) {
-  const output = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', file], { encoding: 'utf8' });
-  return {
-    width: Number(output.match(/pixelWidth:\s+(\d+)/)?.[1]),
-    height: Number(output.match(/pixelHeight:\s+(\d+)/)?.[1]),
-  };
+  const buffer = readFileSync(file);
+  if (buffer.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error(`Invalid PNG: ${file}`);
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
 function expectedSizeFor(file) {
@@ -128,11 +125,11 @@ const tokenNeedles = [
   ['web light panel', webCss, '--panel: #ffffff'],
   ['web gold', webCss, '--gold: #d8a13a'],
   ['web mobile breakpoint', webCss, '@media (max-width: 620px)'],
-  ['mobile light background', mobileTheme, '0xFFFBF7EF'],
-  ['mobile dark background', mobileTheme, '0xFF071421'],
-  ['mobile gold', mobileTheme, '0xFFD8A13A'],
-  ['mobile card radius', mobileTheme, 'Radius.circular(20)'],
-  ['mobile control radius', mobileTheme, 'Radius.circular(18)'],
+  ['mobile AIZAN background', mobileTheme, '0xFF0F0702'],
+  ['mobile AIZAN panel', mobileTheme, '0xFF241507'],
+  ['mobile gold', mobileTheme, '0xFFE9B952'],
+  ['mobile card radius', mobileTheme, 'Radius.circular(16)'],
+  ['mobile control radius', mobileTheme, 'Radius.circular(24)'],
   ['admin light background', adminCss, '--bg: #fbf7ef'],
   ['admin dark background', adminCss, '--bg: #071421'],
   ['admin dark media', adminCss, '@media (prefers-color-scheme: dark)'],
@@ -148,18 +145,18 @@ const tokenNeedles = [
   ['mobile auth divider', mobileAuth, '_AuthDivider'],
   ['web category hero', webCss, '.categoryHero'],
   ['web category alternatives', webCss, '.categoryAlternatives'],
-  ['mobile category interview progress', mobileCases, '_AiInterviewProgress'],
-  ['mobile category interview chat', mobileCases, '_AiInterviewChat'],
+  ['mobile category card', mobileCases, "title: 'Категория определена'"],
+  ['mobile category API', mobileCases, 'classifyDispute'],
   ['mobile category confidence', mobileCases, 'Уверенность:'],
   ['web document readiness', webCss, '.docReadinessCard'],
   ['web document checklist', webCss, '.docChecklist'],
   ['web upload hero', webCss, '.uploadHero'],
   ['web analysis timeline', webCss, '.analysisTimeline'],
-  ['mobile document readiness', mobileDocuments, '_ReadinessCard'],
+  ['mobile document data', mobileDocuments, 'DocumentRuntime.documents'],
   ['mobile upload options', mobileDocuments, '_UploadOptionGrid'],
-  ['mobile analysis timeline', mobileDocuments, '_AnalysisTimeline'],
-  ['mobile document 68 percent', mobileDocuments, 'Готовность дела: 68%'],
-  ['mobile document 82 percent', mobileDocuments, '82%'],
+  ['mobile analysis stages', mobileDocuments, 'Проверка реквизитов'],
+  ['mobile OCR confirmation', mobileDocuments, 'DocumentRuntime.confirmedIds'],
+  ['mobile honest analysis status', mobileDocuments, 'Автоматический юридический анализ не выполнен.'],
   ['web claim build hero', webCss, '.claimBuildHero'],
   ['web claim paper', webCss, '.claimPaper'],
   ['web send methods', webCss, '.sendMethods'],

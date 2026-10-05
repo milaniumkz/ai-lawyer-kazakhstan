@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../../api/api_contract.dart';
 import '../auth/auth_screens.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/aizan_design.dart';
 
 const caseCategoryLabels = {
   'family': 'Семейные споры',
@@ -100,29 +102,23 @@ class _CasesListScreenState extends State<CasesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мои дела'),
-        actions: [
-          IconButton(
-            tooltip: 'Поиск дела',
-            onPressed: () => showSearch(
-              context: context,
-              delegate: _CaseSearchDelegate(cases),
-            ),
-            icon: const Icon(Icons.search),
-          ),
-          IconButton(
-            tooltip: 'Обновить из API',
-            onPressed: refreshCases,
-            icon: const Icon(Icons.sync_outlined),
-          ),
-        ],
-      ),
+      appBar: const AizanHeader(newCase: true),
       bottomNavigationBar: const AppBottomNav(selectedIndex: 1),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            Row(children: [
+              Expanded(child: Text('Мои дела', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontFamily: 'AizanSans', fontSize: 32))),
+              IconButton(tooltip: 'Поиск дела', icon: const Icon(Icons.search), onPressed: () async {
+                final title = await showSearch(context: context, delegate: _CaseSearchDelegate(cases));
+                if (title == null || !mounted) return;
+                final match = cases.where((item) => item.title == title).firstOrNull;
+                if (match != null) { MobileCaseRuntime.selectCase(match); if (context.mounted) context.go('/case/details'); }
+              }),
+              IconButton(tooltip: 'Обновить из API', icon: const Icon(Icons.sync_outlined), onPressed: refreshCases),
+            ]),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -152,7 +148,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
                 ),
               )
             else
-              for (final item in cases)
+              for (final item in cases.where((item) => selectedFilter == 'Все' ||
+                  (selectedFilter == 'В работе' && item.status.toLowerCase().contains('работ')) ||
+                  (selectedFilter == 'Суд' && item.status.toLowerCase().contains('суд')) ||
+                  (selectedFilter == 'Претензии' && item.status.toLowerCase().contains('претенз'))))
                 _ReferenceCaseListTile(
                   item: item,
                   onTap: () {
@@ -306,11 +305,11 @@ class _ReferenceCaseListTile extends StatelessWidget {
         minVerticalPadding: 18,
         onTap: onTap,
         leading: CircleAvatar(
-          radius: 34,
+          radius: 26,
           backgroundColor: AppColors.gold.withValues(alpha: 0.12),
           child: Icon(item.icon, color: AppColors.gold, size: 34),
         ),
-        title: Text(item.title, style: Theme.of(context).textTheme.titleLarge),
+        title: Text(item.title, style: Theme.of(context).textTheme.titleMedium),
         subtitle: Text('${item.subtitle}\n${item.status}'),
         trailing: const Icon(Icons.chevron_right, color: AppColors.gold),
         isThreeLine: true,
@@ -504,11 +503,15 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
   late final VoiceTranscriptPort voiceApi;
   late final CaseApiPort caseApi;
   var isRecording = false;
+  var isPaused = false;
+  var elapsedSeconds = 0;
+  Timer? recordingTimer;
   var isBusy = false;
   String? recordedPath;
   String? transcriptJobId;
   var speechStatus = 'Распознавание не запущено';
   var recognizedSpeech = '';
+  var speechPrefix = '';
   var transcript = '';
 
   @override
@@ -518,11 +521,17 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     speechRecognizer = widget.speechRecognizer ?? DeviceSpeechRecognizer();
     voiceApi = widget.voiceApi ?? HttpVoiceTranscriptApi();
     caseApi = widget.caseApi ?? HttpCaseApi();
+    transcript = MobileCaseRuntime.confirmedText;
     transcriptController = TextEditingController(text: transcript);
+    transcriptController.addListener(() => MobileCaseRuntime.confirmedText = transcriptController.text);
+    if (MobileCaseRuntime.preferVoiceInput) {
+      WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) toggleRecording(); });
+    }
   }
 
   @override
   void dispose() {
+    recordingTimer?.cancel();
     transcriptController.dispose();
     voiceRecorder.dispose();
     speechRecognizer.dispose();
@@ -534,6 +543,10 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     setState(() => isBusy = true);
     try {
       final confirmedText = transcriptController.text.trim();
+      if (confirmedText.length < 12) {
+        setState(() => speechStatus = 'Опишите ситуацию подробнее: минимум 12 символов.');
+        return;
+      }
       if (recordedPath == null) {
         MobileCaseRuntime.confirmedText = confirmedText;
         if (mounted) context.go('/case/category');
@@ -560,20 +573,8 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       MobileCaseRuntime.confirmedText = job.transcript;
       if (mounted) context.go('/case/category');
     } catch (_) {
-      final currentText = transcriptController.text.trim();
-      MobileCaseRuntime.confirmedText = currentText;
-      setState(() {
-        if (currentText.isEmpty ||
-            currentText == 'Говорите, текст появится здесь автоматически...') {
-          transcript =
-              'Аудио сохранено на устройстве. Проверьте сеть и повторите отправку.';
-          transcriptController.text = transcript;
-          MobileCaseRuntime.confirmedText = transcript;
-        }
-        speechStatus =
-            'Текст сохранен локально, продолжаю AI интервью';
-      });
-      if (mounted) context.go('/case/category');
+      MobileCaseRuntime.confirmedText = transcriptController.text.trim();
+      if (mounted) setState(() => speechStatus = 'Текст сохранен. Не удалось отправить аудио: проверьте сеть и повторите.');
     } finally {
       if (mounted) setState(() => isBusy = false);
     }
@@ -586,18 +587,23 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       if (!isRecording) {
         final allowed = await voiceRecorder.hasPermission();
         if (!allowed) {
-          setState(() => transcript = 'Разрешите доступ к микрофону');
+          setState(() => speechStatus = 'Разрешите доступ к микрофону');
           return;
         }
         final path =
             '${Directory.systemTemp.path}/ai_lawyer_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
         await voiceRecorder.start(path);
+        recordingTimer?.cancel();
+        recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (mounted && isRecording && !isPaused) setState(() => elapsedSeconds++);
+        });
         setState(() {
           isRecording = true;
+          isPaused = false;
+          elapsedSeconds = 0;
           recordedPath = null;
+          speechPrefix = transcriptController.text.trim();
           recognizedSpeech = '';
-          transcript = 'Говорите, текст появится здесь автоматически...';
-          transcriptController.text = transcript;
           speechStatus = 'Запускаю распознавание...';
         });
         final speechStarted = await speechRecognizer.start(
@@ -606,8 +612,8 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             if (!mounted || text.trim().isEmpty) return;
             setState(() {
               recognizedSpeech = text.trim();
-              transcript = recognizedSpeech;
-              transcriptController.text = recognizedSpeech;
+              transcript = [speechPrefix, recognizedSpeech].where((part) => part.isNotEmpty).join('\n');
+              transcriptController.text = transcript;
               transcriptController.selection = TextSelection.fromPosition(
                 TextPosition(offset: transcriptController.text.length),
               );
@@ -620,9 +626,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         );
         setState(() {
           if (!speechStarted && recognizedSpeech.isEmpty) {
-            transcript =
-                'Говорите. Если устройство не поддержит STT, отредактируйте текст вручную.';
-            transcriptController.text = transcript;
+            speechStatus = 'Распознавание недоступно. Введите текст вручную.';
           }
           speechStatus = speechStarted
               ? 'Распознаю речь...'
@@ -631,111 +635,98 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         return;
       }
       final path = await voiceRecorder.stop();
+      recordingTimer?.cancel();
       final lastSpeech = await speechRecognizer.stop();
       setState(() {
         isRecording = false;
+        isPaused = false;
         recordedPath = path;
         final finalText =
             (lastSpeech.trim().isNotEmpty ? lastSpeech : recognizedSpeech)
                 .trim();
         if (finalText.isNotEmpty) {
-          transcript = finalText;
-          transcriptController.text = finalText;
+          transcript = [speechPrefix, finalText].where((part) => part.isNotEmpty).join('\n');
+          transcriptController.text = transcript;
           speechStatus = 'Текст распознан';
         } else {
-          transcript =
-              'Голос записан. Распознавание не вернуло текст, введите описание вручную.';
-          transcriptController.text = transcript;
           speechStatus = 'Текст не распознан';
         }
       });
     } catch (_) {
+      recordingTimer?.cancel();
       await speechRecognizer.stop();
-      setState(() {
+      try { await voiceRecorder.stop(); } catch (_) { /* No active recorder. */ }
+      if (mounted) setState(() {
         isRecording = false;
-        recordedPath ??= 'local-test-recorder.m4a';
-        if (recognizedSpeech.isNotEmpty) {
-          transcript = recognizedSpeech;
-          transcriptController.text = recognizedSpeech;
-        } else {
-          transcript =
-              'Голос готов к обработке. Для устройства требуется разрешение микрофона.';
-          transcriptController.text = transcript;
-        }
-        speechStatus = 'Ошибка распознавания';
+        isPaused = false;
+        speechStatus = 'Запись недоступна. Текст сохранён: проверьте микрофон или введите текст.';
       });
     } finally {
       if (mounted) setState(() => isBusy = false);
     }
   }
 
+  Future<void> pauseRecording() async {
+    final recorder = voiceRecorder;
+    if (recorder is! PausableVoiceRecorderPort || !isRecording || isBusy) return;
+    try {
+      if (isPaused) {
+        speechPrefix = transcriptController.text.trim();
+        await recorder.resume();
+        await speechRecognizer.start(localeId: 'ru_RU', onText: (text, isFinal) {
+          if (mounted && text.trim().isNotEmpty) setState(() {
+            recognizedSpeech = text;
+            transcriptController.text = [speechPrefix, text].where((part) => part.isNotEmpty).join('\n');
+            speechStatus = isFinal ? 'Текст распознан' : 'Распознаю речь...';
+          });
+        }, onStatus: (status) { if (mounted) setState(() => speechStatus = status); });
+      }
+      else { await recorder.pause(); await speechRecognizer.stop(); }
+      if (mounted) setState(() => isPaused = !isPaused);
+    } catch (_) {
+      if (mounted) setState(() => speechStatus = 'Не удалось изменить состояние записи.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final timer = '${(elapsedSeconds ~/ 60).toString().padLeft(2, '0')}:${(elapsedSeconds % 60).toString().padLeft(2, '0')}';
     return _CaseScaffold(
-      title: 'Новое дело',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: FilledButton(
-              onPressed: isBusy ? null : toggleRecording,
-              style: FilledButton.styleFrom(
-                  shape: const CircleBorder(), fixedSize: const Size(148, 148)),
-              child: Icon(isRecording ? Icons.stop : Icons.mic_none, size: 58),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isBusy
-                ? 'Подготовка микрофона'
-                : isRecording
-                    ? 'Запись активна'
-                    : 'Голос готов к обработке',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            speechStatus,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (recordedPath != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Файл: ${recordedPath!.split(Platform.pathSeparator).last}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-          if (transcriptJobId != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Transcript job: ${transcriptJobId!.substring(0, 8)}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-          const SizedBox(height: 18),
-          TextField(
-            controller: transcriptController,
-            minLines: 5,
-            maxLines: 8,
-            decoration: InputDecoration(
-              labelText: 'Проверьте описание проблемы',
-              alignLabelWithHint: true,
-              prefixIcon: Icon(Icons.edit_note_outlined),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const _ProgressStrip(),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: isBusy ? null : submitCase,
-            icon: const Icon(Icons.check_circle_outline),
-            label: Text(isBusy ? 'Отправляю аудио' : 'Подтвердить текст'),
-          ),
-        ],
-      ),
+      title: 'Новое дело', showTitle: false,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Center(child: Semantics(button: true, label: isRecording ? 'Остановить запись' : 'Записать голос',
+          child: InkWell(onTap: isBusy ? null : toggleRecording,
+            child: const AizanArt(AizanArtwork.voice, width: 330)))),
+        const SizedBox(height: 18),
+        const Text('Опишите проблему', textAlign: TextAlign.center, style: TextStyle(fontSize: 23)),
+        const SizedBox(height: 6),
+        Text(isRecording ? (isPaused ? 'Запись на паузе' : 'Нажмите и говорите') : 'Нажмите микрофон или введите текст',
+          textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 14)),
+        const SizedBox(height: 22),
+        Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
+          Row(children: [
+            Expanded(child: Icon(Icons.graphic_eq, size: 42, color: isRecording ? AppColors.goldDark : AppColors.muted)),
+            Text(timer, style: const TextStyle(color: AppColors.goldDark)),
+          ]),
+          const SizedBox(height: 10),
+          TextField(controller: transcriptController, minLines: 3, maxLines: 6,
+            autofocus: !MobileCaseRuntime.preferVoiceInput,
+            decoration: const InputDecoration(labelText: 'Проверьте описание проблемы', alignLabelWithHint: true)),
+        ]))),
+        const SizedBox(height: 18),
+        Row(children: [
+          Expanded(flex: 3, child: AizanButton(label: isRecording ? 'Завершить запись' : 'Начать запись',
+            onPressed: isBusy ? null : toggleRecording, icon: isRecording ? Icons.stop : Icons.mic_none)),
+          const SizedBox(width: 10),
+          Expanded(flex: 2, child: OutlinedButton.icon(
+            onPressed: isRecording && voiceRecorder is PausableVoiceRecorderPort ? pauseRecording : null,
+            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause), label: Text(isPaused ? 'Продолжить' : 'Пауза'))),
+        ]),
+        const SizedBox(height: 12),
+        Text(speechStatus, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+        const SizedBox(height: 12),
+        if (!isRecording) AizanButton(label: isBusy ? 'Отправляю аудио' : 'Подтвердить текст', onPressed: isBusy ? null : submitCase, icon: Icons.check_circle_outline),
+      ]),
     );
   }
 }
@@ -745,6 +736,11 @@ abstract class VoiceRecorderPort {
   Future<void> start(String path);
   Future<String?> stop();
   Future<void> dispose();
+}
+
+abstract class PausableVoiceRecorderPort implements VoiceRecorderPort {
+  Future<void> pause();
+  Future<void> resume();
 }
 
 typedef SpeechResultCallback = void Function(String text, bool isFinal);
@@ -814,7 +810,7 @@ class VoiceTranscriptJob {
   final String transcript;
 }
 
-class RecordVoiceRecorder implements VoiceRecorderPort {
+class RecordVoiceRecorder implements PausableVoiceRecorderPort {
   final AudioRecorder _recorder = AudioRecorder();
 
   @override
@@ -826,6 +822,11 @@ class RecordVoiceRecorder implements VoiceRecorderPort {
 
   @override
   Future<String?> stop() => _recorder.stop();
+
+  @override
+  Future<void> pause() => _recorder.pause();
+  @override
+  Future<void> resume() => _recorder.resume();
 
   @override
   Future<void> dispose() => _recorder.dispose();
@@ -896,6 +897,7 @@ abstract class CaseApiPort {
 }
 
 abstract final class MobileCaseRuntime {
+  static bool preferVoiceInput = false;
   static String activeCaseId = '';
   static String activeCaseTitle = '';
   static String activeCaseSubtitle = '';
@@ -915,6 +917,7 @@ abstract final class MobileCaseRuntime {
     activeCaseSubtitle = '';
     activeCaseStatus = '';
     confirmedText = '';
+    preferVoiceInput = false;
   }
 
   static void selectCase(CaseListItem item) {
@@ -1328,27 +1331,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     final result = classification;
-    final progress = progressValue();
     return _CaseScaffold(
-      title: 'AI интервью',
+      title: 'Категория определена',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _AiInterviewProgress(
-            progress: progress,
-            subtitle: result == null
-                ? 'AI ждет факты для анализа'
-                : '${result.categoryLabel} · ${result.subcategoryLabel}',
-          ),
-          const SizedBox(height: 12),
-          _AiStageRail(items: timeline()),
-          const SizedBox(height: 16),
-          _AiInterviewChat(
-            confirmedText: MobileCaseRuntime.confirmedText,
-            question: nextAiQuestion(),
-            classification: result,
-            status: status,
-          ),
+          Card(child: Padding(padding: const EdgeInsets.all(22), child: Column(children: [
+            const Icon(Icons.balance_outlined, size: 64, color: AizanDesign.gold),
+            const SizedBox(height: 18),
+            Text(result?.categoryLabel ?? 'Категория пока не определена', textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 10),
+            Text(result?.subcategoryLabel ?? 'Запустите анализ вашего обращения', textAlign: TextAlign.center),
+            if (result != null) ...[const SizedBox(height: 14), Text('Уверенность: ${(result.confidence * 100).round()}%')],
+          ]))),
+          const SizedBox(height: 18),
+          Text(status),
+          if (result?.missingFacts.isNotEmpty == true) Text(nextAiQuestion()),
           if (result?.missingFacts.isNotEmpty == true) ...[
             const SizedBox(height: 12),
             TextField(
@@ -1392,190 +1391,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
             onSelected: overrideCategory,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AiInterviewProgress extends StatelessWidget {
-  const _AiInterviewProgress({required this.progress, required this.subtitle});
-
-  final int progress;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.gold),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: Text(
-                        'Этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
-                Text('$progress%',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(color: AppColors.goldDark)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: progress / 100),
-            const SizedBox(height: 8),
-            Text(subtitle),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AiStageRail extends StatelessWidget {
-  const _AiStageRail({required this.items});
-
-  final List<({String title, bool done})> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final item in items)
-          Chip(
-            avatar: Icon(item.done ? Icons.check_circle : Icons.circle_outlined,
-                size: 16),
-            label: Text(item.title),
-            side:
-                BorderSide(color: item.done ? AppColors.gold : Colors.white24),
-          ),
-      ],
-    );
-  }
-}
-
-class _AiInterviewChat extends StatelessWidget {
-  const _AiInterviewChat({
-    required this.confirmedText,
-    required this.question,
-    required this.classification,
-    required this.status,
-  });
-
-  final String confirmedText;
-  final String question;
-  final CaseClassificationResult? classification;
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final result = classification;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _AiBubble(
-          title: 'AI Юрист',
-          text:
-              'Я веду дело по шагам: уточняю факты, прошу документы, определяю категорию и только потом создаю дело в базе.',
-        ),
-        _AiBubble(
-          title: 'Вы',
-          text: confirmedText.trim().isEmpty
-              ? 'Описание еще не заполнено.'
-              : confirmedText,
-          user: true,
-        ),
-        _AiBubble(
-          title: 'AI Юрист',
-          text: question,
-          footer: result?.missingFacts.isNotEmpty == true
-              ? 'Не хватает данных: ${result!.missingFacts.join(', ')}'
-              : status,
-        ),
-        if (result != null)
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: const BorderSide(color: AppColors.gold),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Icon(Icons.balance_outlined,
-                      size: 56, color: AppColors.gold),
-                  const SizedBox(height: 8),
-                  Text(result.categoryLabel,
-                      textAlign: TextAlign.center,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppColors.goldDark,
-                                fontFamily: 'Georgia',
-                              )),
-                  const SizedBox(height: 8),
-                  Text(result.subcategoryLabel, textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Text('Уверенность: ${(result.confidence * 100).round()}%'),
-                  if (result.riskLevel == 'high' ||
-                      result.requiredHumanReview) ...[
-                    const SizedBox(height: 8),
-                    const Text('Высокий риск: нужна проверка юристом',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.redAccent)),
-                  ],
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _AiBubble extends StatelessWidget {
-  const _AiBubble({
-    required this.title,
-    required this.text,
-    this.footer,
-    this.user = false,
-  });
-
-  final String title;
-  final String text;
-  final String? footer;
-  final bool user;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: Card(
-        color: user ? AppColors.gold.withValues(alpha: 0.12) : null,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: AppColors.gold, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(text),
-              if (footer != null) ...[
-                const SizedBox(height: 6),
-                Text(footer!, style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1802,25 +1617,27 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _CaseScaffold extends StatelessWidget {
-  const _CaseScaffold({required this.title, required this.child});
+  const _CaseScaffold({required this.title, required this.child, this.showTitle = true});
 
   final String title;
   final Widget child;
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: const AizanHeader(),
+      bottomNavigationBar: title == 'Новое дело' ? const AppBottomNav(selectedIndex: 0) : null,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(title,
+            if (showTitle) Text(title,
                 style: Theme.of(context)
                     .textTheme
                     .headlineMedium
                     ?.copyWith(color: AppColors.goldDark)),
-            const SizedBox(height: 24),
+            if (showTitle) const SizedBox(height: 24),
             child,
           ],
         ),

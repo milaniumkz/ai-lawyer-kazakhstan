@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../api/api_contract.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/aizan_design.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.authApi});
@@ -23,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController loginController;
   var isBusy = false;
   var status = 'Введите номер телефона';
+  var language = 'RU';
 
   @override
   void initState() {
@@ -58,55 +60,89 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AuthScaffold(
-      title: 'Вход и регистрация',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _AuthEmblem(icon: Icons.phone_iphone_outlined),
-          const SizedBox(height: 14),
-          const _AuthDivider(),
+  Future<void> openPhoneLogin() async {
+    await showModalBottomSheet<void>(
+      context: context, isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.viewInsetsOf(sheetContext).bottom + 24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text('Вход по телефону', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
-          TextField(
-            controller: loginController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: '+7 номер телефона',
-              prefixIcon: Icon(Icons.phone_outlined),
-            ),
-          ),
-          const SizedBox(height: 12),
-          CheckboxListTile(
-            value: true,
-            onChanged: (_) => _showAction(
-                context, 'Согласие обязательно для RC-тестирования'),
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Согласие с политикой обработки данных v1'),
-          ),
+          TextField(controller: loginController, keyboardType: TextInputType.phone, autofocus: true,
+            autofillHints: const [AutofillHints.telephoneNumber],
+            decoration: const InputDecoration(labelText: '+7 номер телефона')),
           const SizedBox(height: 16),
-          Text(status),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: isBusy ? null : requestOtp,
-            icon: const Icon(Icons.auto_awesome),
-            label: Text(isBusy ? 'Отправляю' : 'Получить SMS-код'),
-          ),
-          TextButton(
-            onPressed: () => _showAction(
-                context, 'Ссылка восстановления будет отправлена в stub mode'),
-            child: const Text('Восстановить доступ'),
-          ),
-          TextButton(
-            onPressed: () => _showAction(
-                context, 'Анкета откроется после подтверждения SMS'),
-            child: const Text('Регистрация после SMS'),
-          ),
-        ],
+          FilledButton(onPressed: () { Navigator.pop(sheetContext); requestOtp(); }, child: const Text('Получить SMS-код')),
+        ]),
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+              children: [
+                Stack(children: [
+                  const Padding(padding: EdgeInsets.only(top: 18), child: AizanArt(AizanArtwork.authBrand)),
+                  Positioned(top: 0, left: 0, right: 0, child:
+Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  IconButton.outlined(tooltip: 'Назад', onPressed: () => context.go('/onboarding'), icon: const Icon(Icons.chevron_left)),
+                  SegmentedButton<String>(segments: const [
+                    ButtonSegment(value: 'RU', label: Text('RU')), ButtonSegment(value: 'KZ', label: Text('KZ')), ButtonSegment(value: 'EN', label: Text('EN')),
+                  ], selected: {language}, showSelectedIcon: false, onSelectionChanged: (value) => setState(() => language = value.first)),
+                ])),
+                ]),
+                const SizedBox(height: 17),
+                Text(switch (language) {
+                  'KZ' => 'Істерді, құжаттарды және мерзімдерді сақтау үшін кіріңіз немесе аккаунт жасаңыз',
+                  'EN' => 'Sign in or create an account to save cases, documents and deadlines',
+                  _ => 'Войдите или создайте аккаунт,\nчтобы сохранять дела, документы и сроки',
+                }, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5)),
+                const SizedBox(height: 14),
+                const Text('ПРАВО. ТЕХНОЛОГИИ. ДЛЯ ЛЮДЕЙ.', textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 7, letterSpacing: 3, color: AppColors.muted)),
+                const SizedBox(height: 18),
+                Row(children: [
+                  Expanded(child: AizanButton(label: 'Вход', onPressed: isBusy ? null : openPhoneLogin, icon: Icons.login)),
+                  Expanded(child: TextButton(onPressed: isBusy ? null : openPhoneLogin, child: const Text('Регистрация'))),
+                ]),
+                const SizedBox(height: 16),
+                _loginAction(Icons.phone_outlined, 'Войти по номеру телефона', loginController.text, openPhoneLogin),
+                const SizedBox(height: 10),
+                _loginAction(Icons.mail_outline, 'Войти по e-mail', 'Используйте вашу почту', () => _showAction(context, 'Вход по e-mail пока недоступен. Используйте телефон.')),
+                const SizedBox(height: 10),
+                _loginAction(Icons.fingerprint, 'Войти по Face ID / Touch ID', 'Быстро и безопасно', () => _showAction(context, 'Биометрический вход пока не подключён. Используйте телефон.')),
+                if (isBusy || status != 'Введите номер телефона') ...[
+                  const SizedBox(height: 12), Text(status, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted)),
+                ],
+                const SizedBox(height: 17),
+                const _AuthDivider(),
+                TextButton(onPressed: isBusy ? null : openPhoneLogin, child: const Text('Нет аккаунта? Зарегистрироваться  ›')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loginAction(IconData icon, String title, String subtitle, VoidCallback onTap) => Card(
+    margin: EdgeInsets.zero,
+    child: ListTile(
+      onTap: isBusy ? null : onTap, minVerticalPadding: 10,
+      leading: Container(width: 39, height: 39, decoration: BoxDecoration(shape: BoxShape.circle,
+        border: Border.all(color: AppColors.gold)), child: Icon(icon, color: AppColors.goldDark, size: 23)),
+      title: Text(title, style: const TextStyle(fontSize: 13)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.gold),
+    ),
+  );
 }
 
 class RegisterScreen extends StatefulWidget {
@@ -1360,7 +1396,7 @@ class AuthScaffold extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Локальный stub mode до подключения официальных провайдеров.',
+              'Ваш юридический AI-помощник',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),

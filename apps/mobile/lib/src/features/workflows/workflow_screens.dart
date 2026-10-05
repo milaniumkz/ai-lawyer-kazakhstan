@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import '../../api/api_contract.dart';
 import '../cases/case_screens.dart';
 import '../auth/auth_screens.dart';
+import '../../widgets/aizan_design.dart';
+import 'document_export.dart';
 import '../../theme/app_theme.dart';
 
 class PretrialClaimScreen extends StatefulWidget {
@@ -87,18 +89,7 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     }
   }
 
-  double progressValue() {
-    if (generated) return 1;
-    if (busy) return 0.72;
-    final filled = [
-      claimantController.text.trim(),
-      respondentController.text.trim(),
-      amountController.text.trim(),
-      reasonController.text.trim(),
-    ].where((value) => value.isNotEmpty).length;
-    final hasCase = MobileCaseRuntime.activeCaseId.isNotEmpty;
-    return (hasCase ? 0.24 : 0.12) + (filled * 0.1);
-  }
+  double progressValue() => workflowStages().where((step) => step.done).length / workflowStages().length;
 
   bool get hasRequiredFields =>
       claimantController.text.trim().isNotEmpty &&
@@ -114,10 +105,10 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
         (title: '2. Данные', done: hasRequiredFields),
         (
           title: '3. Нормы',
-          done: MobileCaseRuntime.activeCaseId.isNotEmpty,
+          done: false,
         ),
         (title: '4. Проект', done: generated),
-        (title: '5. Проверка', done: generated),
+        (title: '5. Проверка', done: false),
       ];
 
   String aiStepText() {
@@ -137,7 +128,7 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Досудебная претензия')),
+      appBar: const AizanHeader(compact: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -234,104 +225,43 @@ class ClaimDraftScreen extends StatefulWidget {
 
 class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
   var approved = false;
-
-  double get progress => approved ? 0.78 : 0.58;
-
+  late final TextEditingController bodyController;
+  final bodyFocus = FocusNode();
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Проект досудебной претензии')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const _ClaimStatusChips(),
-            const SizedBox(height: 12),
-            _ClaimProgressCard(
-              progress: progress,
-              subtitle: approved
-                  ? 'Пользователь подтвердил проект. Можно перейти к assisted отправке.'
-                  : 'Проверьте текст проекта. Без подтверждения отправка заблокирована.',
-            ),
-            const SizedBox(height: 12),
-            _ClaimStageRail(items: [
-              (
-                title: '1. Проект',
-                done: WorkflowRuntime.generatedBody.isNotEmpty
-              ),
-              (title: '2. Проверка', done: approved),
-              (title: '3. Отправка', done: false),
-            ]),
-            const SizedBox(height: 12),
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                    'AI проверяет структуру документа, но финальное подтверждение остается за пользователем. Государственная подача не имитируется.'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              color: const Color(0xFFFBF7EF),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Center(
-                      child: Icon(Icons.balance_outlined,
-                          color: Color(0xFFAD7B25), size: 46),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Text(
-                        'Досудебная претензия',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(color: const Color(0xFF101827)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _PaperSection(
-                        title: 'От кого',
-                        body:
-                            '${AuthRuntime.displayName.isEmpty ? 'Заявитель' : AuthRuntime.displayName}\nКонтактные данные из профиля'),
-                    const _PaperSection(
-                        title: 'Кому',
-                        body: 'Ответчик\nРеквизиты уточняются пользователем'),
-                    _PaperSection(
-                      title: 'Суть требования',
-                      body: WorkflowRuntime.generatedBody.isEmpty
-                          ? 'Прошу урегулировать спор в досудебном порядке. Перед отправкой документ требует проверки пользователя.'
-                          : WorkflowRuntime.generatedBody,
-                    ),
-                    const _PaperSection(
-                      title: 'Норма права',
-                      body:
-                          'Нет подтвержденной нормы. Требуется ручная проверка официального источника РК.',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            CheckboxListTile(
-              value: approved,
-              onChanged: (value) => setState(() => approved = value ?? false),
-              title: const Text('Проверено пользователем'),
-            ),
-            FilledButton.icon(
-              onPressed: approved
-                  ? () => context.go('/workflow/pretrial-claim/send')
-                  : null,
-              icon: const Icon(Icons.send_outlined),
-              label: const Text('Перейти к отправке'),
-            ),
-          ],
-        ),
-      ),
-    );
+  void initState() { super.initState(); bodyController = TextEditingController(text: WorkflowRuntime.generatedBody); }
+  @override
+  void dispose() { bodyController.dispose(); bodyFocus.dispose(); super.dispose(); }
+  Future<void> exportPdf() async {
+    try { await exportClaimPdf(bodyController.text); }
+    catch (error) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось создать PDF: $error'))); }
   }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: const AizanHeader(compact: true),
+    body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
+      child: ListView(padding: const EdgeInsets.all(20), children: [
+        Text('Предпросмотр документа', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 16),
+        const _ClaimStatusChips(),
+        const SizedBox(height: 18),
+        Card(color: const Color(0xFFF4EDDE), child: Padding(padding: const EdgeInsets.all(20), child: Column(children: [
+          const Icon(Icons.balance_outlined, color: Color(0xFF9C6F21), size: 44),
+          const SizedBox(height: 14),
+          const Text('Досудебная претензия', style: TextStyle(fontFamily: 'AizanSerif', fontSize: 24, color: Color(0xFF3C2A0F))),
+          TextField(controller: bodyController, focusNode: bodyFocus, minLines: 12, maxLines: null,
+            style: const TextStyle(color: Color(0xFF332513), fontFamily: 'AizanSerif', height: 1.5),
+            decoration: const InputDecoration(fillColor: Colors.transparent, hintText: 'Сначала сформируйте проект'),
+            onChanged: (value) => setState(() { WorkflowRuntime.generatedBody = value; approved = false; })),
+        ]))),
+        const SizedBox(height: 14),
+        Row(children: [Expanded(child: OutlinedButton.icon(onPressed: bodyFocus.requestFocus, icon: const Icon(Icons.edit_outlined), label: const Text('Редактировать'))),
+          const SizedBox(width: 8), Expanded(child: OutlinedButton.icon(onPressed: bodyController.text.trim().isEmpty ? null : exportPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('Скачать PDF')))]),
+        CheckboxListTile(value: approved, onChanged: (value) => setState(() => approved = value ?? false), title: const Text('Проверено пользователем')),
+        AizanButton(label: 'Перейти к отправке', icon: Icons.send_outlined,
+          onPressed: approved && bodyController.text.trim().isNotEmpty ? () => context.go('/workflow/pretrial-claim/send') : null),
+      ]),
+    )),
+  );
 }
 
 class GeneratedClaimDraft {
@@ -444,11 +374,18 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
     super.dispose();
   }
 
-  void recordAssistedSend() {
+  Future<void> recordAssistedSend() async {
     if (recipientController.text.trim().isEmpty) {
       setState(() => status = 'Укажите контакт получателя');
       return;
     }
+    final accepted = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+      title: const Text('Зафиксировать ручную отправку?'),
+      content: const Text('Приложение не отправляет документ получателю и не подтверждает доставку.'),
+      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Подтвердить'))],
+    ));
+    if (accepted != true || !mounted) return;
     setState(() {
       sent = true;
       status =
@@ -459,7 +396,7 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Отправка претензии')),
+      appBar: const AizanHeader(compact: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -473,12 +410,12 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
             ),
             const SizedBox(height: 16),
             _ClaimProgressCard(
-              progress: sent ? 1 : 0.86,
+              progress: sent ? 1 : 0,
               subtitle: status,
             ),
             const SizedBox(height: 12),
             _ClaimStageRail(items: [
-              (title: '1. Проверено', done: true),
+              (title: '1. Проект', done: WorkflowRuntime.generatedBody.isNotEmpty),
               (title: '2. Канал', done: selectedMethod.isNotEmpty),
               (
                 title: '3. Контакт',
@@ -740,29 +677,9 @@ class _ClaimStatusChips extends StatelessWidget {
       runSpacing: 8,
       children: const [
         Chip(label: Text('Черновик')),
-        Chip(label: Text('Проверено AI')),
+        Chip(label: Text('Требует проверки')),
         Chip(label: Text('Требует подтверждения')),
       ],
-    );
-  }
-}
-
-class _PaperSection extends StatelessWidget {
-  const _PaperSection({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(top: 14, bottom: 14),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0x33AD7B25))),
-      ),
-      child: Text('$title\n$body',
-          style: const TextStyle(color: Color(0xFF101827), height: 1.45)),
     );
   }
 }

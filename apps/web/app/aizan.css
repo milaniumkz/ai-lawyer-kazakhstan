@@ -1,0 +1,211 @@
+@font-face { font-family: AizanSans; src: url('/fonts/OpenSans-Regular.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: AizanSerif; src: url('/fonts/LiberationSerif-Regular.ttf') format('truetype'); font-display: swap; }
+.appShell[data-design="aizan"][data-theme] {
+  --bg: #0f0702; --panel: #241507; --panel-soft: #2b1909; --text: #f6f1e9;
+  --muted: #b1a79b; --gold: #e9b952; --gold-strong: #ffdf83; --line: #bd872c99;
+  --shadow: 0 0 16px #e3a52215;
+  display: flex; justify-content: center; padding: 0; background: #090501;
+  font-family: AizanSans, sans-serif;
+}
+.appShell[data-design="aizan"] .sidebar, .appShell[data-design="aizan"] .rightPanel { display: none; }
+.appShell[data-design="aizan"][data-theme] .deviceFrame {
+  width: 100%; max-width: 480px; min-height: 100svh; border: 0; border-radius: 0; box-shadow: none;
+  background: radial-gradient(ellipse 280px 340px at 0 0, #a65d2077, transparent 85%), radial-gradient(ellipse 160px 230px at 40% 47%, #67350722, transparent 90%), #0b0501;
+  overflow: hidden;
+}
+.appShell[data-design="aizan"] .appStatus { display: none; }
+.appShell[data-design="aizan"] h1, .appShell[data-design="aizan"] h2, .appShell[data-design="aizan"] h3 { color: var(--gold-strong); font-family: AizanSerif, serif; font-weight: 400; }
+.appShell[data-design="aizan"][data-theme] .contentPanel {
+  min-height: 0; padding: 0 20px 110px; border: 0; border-radius: 0; background: none; box-shadow: none;
+}
+.appShell[data-design="aizan"][data-theme] .screenHeader { display: block; margin: 0 0 25px; }
+.appShell[data-design="aizan"] .screenHeader > button, .appShell[data-design="aizan"] .screenHeader p { display: none; }
+.appShell[data-design="aizan"][data-theme] .screenHeader h2 { text-align: center; font-family: AizanSans, sans-serif; font-size: 24px; line-height: 1.25; }
+.aizanHeader { position: relative; height: 160px; padding-top: 32px; }
+.aizanIdentity { width: 180px; margin: auto; text-align: center; }
+.aizanArt { display: block; max-width: 100%; }
+.aizanIdentity .aizanArt { width: 80px; height: 82px; margin: auto; }
+.aizanIdentity p { margin: 8px -10px 0; font-size: 8px; letter-spacing: 3px; line-height: 1.6; color: #ffdf83; }
+.aizanHeaderHome { height: 190px; padding-top: 57px; }
+.aizanHeaderHome .aizanArt { width: 100px; height: 102px; }
+.aizanHeaderHome .aizanIdentity p { margin-top: 7px; }
+.aizanHeaderAction { position: absolute; top: 33px; left: 27px; width: 44px; height: 44px; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold-strong); background: transparent; font-size: 30px; line-height: 1; padding: 0; }
+.aizanHeaderAction:last-child { left: auto; right: 22px; border: 0; font-size: 36px; }
+.aizanHeaderHome .aizanHeaderAction { top: 25px; }
+.appShell[data-design="aizan"][data-theme] .homeScreen { min-height: 0; padding: 0 20px 125px; }
+.aizanMicrophone { display: block; width: 200px; aspect-ratio: 495 / 475; margin: 37px auto 22px; background: none; border: 0; padding: 0; cursor: pointer; }
+.appShell[data-design="aizan"] .aizanHome h1 { font-family: AizanSans, sans-serif; text-align: center; color: var(--text); font-size: 18px; line-height: 1.3; margin: 0; }
+.aizanTextEntry { display: flex; align-items: center; justify-content: center; gap: 13px; min-height: 48px; width: 184px; margin: 25px auto 0; padding: 8px 12px; border: 1px solid #f3c966; border-radius: 999px; background: linear-gradient(110deg, #b8811f12, #140801); color: #ffdf83; font-size: 15px; box-shadow: 0 0 14px #ffb52515; }
+.keyboardIcon { border-right: 1px solid #c69a45; padding-right: 13px; font-size: 26px; line-height: 1; }
+.designIcon { display: block; width: 24px; height: 24px; flex-shrink: 0; }
+.appShell[data-design="aizan"][data-theme] .bottomNav {
+  position: fixed; z-index: 20; left: 50%; right: auto; transform: translateX(-50%); bottom: 0;
+  width: min(100%, 480px); min-height: 102px; grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 0; padding: 12px 3px max(24px, env(safe-area-inset-bottom)); border-radius: 0;
+  border-top: 1px solid #d6ac58; background: linear-gradient(120deg, #221103f5, #090501f5); box-shadow: none;
+}
+.appShell[data-design="aizan"][data-theme] .bottomNav button, .appShell[data-design="aizan"] .cameraNav {
+  display: flex; flex-direction: column; align-items: center; justify-content: start; position: relative;
+  min-height: 48px; padding: 4px 0; gap: 5px; border: 0; border-radius: 0; font-weight: 400;
+  background: none; color: var(--text); font-size: 10px; white-space: nowrap; overflow: visible;
+}
+.appShell[data-design="aizan"] .bottomNav button::before { display: none; content: none; }
+.appShell[data-design="aizan"] .bottomNav .designIcon { width: 25px; height: 25px; }
+.appShell[data-design="aizan"] .bottomNav button.active { color: #ffdf83; }
+.appShell[data-design="aizan"] .bottomNav button.active::after { content: ''; position: absolute; bottom: -8px; width: 6px; height: 6px; border-radius: 50%; background: #ffdb75; box-shadow: 0 0 8px #ffc04b66; }
+.appShell[data-design="aizan"] .cameraNav { padding-top: 35px; }
+.appShell[data-design="aizan"] .cameraNav > span { position: absolute; top: -27px; display: grid; place-items: center; width: 57px; height: 57px; border-radius: 50%; border: 1px solid #ffdc84; background: conic-gradient(from 30deg, #ffd983, #d48b1a, #ffd679, #f0a72c, #ffdd87); box-shadow: 0 0 0 2px #ba792466, 0 0 10px #ffc54755; }
+.appShell[data-design="aizan"] .cameraNav .designIcon { width: 30px; height: 30px; color: #120b01; stroke-width: 2.5; }
+.appShell[data-design="aizan"][data-view="home"] .bottomNav { min-height: 94px; }
+.appShell[data-design="aizan"]:is([data-view="category"], [data-view="analysis"], [data-view="claim"], [data-view="claimDraft"], [data-view="claimSend"], [data-view="documentUpload"]) .bottomNav { display: none; }
+.appShell[data-design="aizan"]:is([data-view="analysis"], [data-view="claim"], [data-view="claimDraft"], [data-view="claimSend"], [data-view="documentUpload"]) .aizanHeader { height: 130px; padding-top: 22px; }
+.appShell[data-design="aizan"][data-theme] .primary, .appShell[data-design="aizan"][data-theme] .heroCta {
+  min-height: 48px; border: 1px solid #ffe7a3; border-radius: 22px;
+  background: linear-gradient(110deg, #ffd77b, #efb447 50%, #d39330); color: #180e03;
+  font-family: AizanSans, sans-serif; font-size: 16px; font-weight: 600;
+  box-shadow: inset 0 1px 2px #fff5bb, 0 0 10px #ffbd4033;
+}
+.appShell[data-design="aizan"][data-theme] .outlineGold { min-height: 44px; border: 1px solid #e2b753; border-radius: 22px; font-size: 14px; background: none; color: #f5d489; }
+.appShell[data-design="aizan"][data-theme] :is(.caseRow, .docRow, .analysisBox, .recipientCard, .attachmentRow, .docHint, .claimBuildCard, .claimBasisCard, .claimProgress, .claimNote, .info) {
+  border-color: #b27c2b99; border-radius: 14px; background: linear-gradient(130deg, #74451622, transparent), #130a0399;
+  box-shadow: none;
+}
+.appShell[data-design="aizan"] :is(input,textarea) { color: var(--text); background-color: #120a04; border-color: var(--line); }
+.appShell[data-design="aizan"] button:focus-visible, .appShell[data-design="aizan"] label:focus-within { outline: 2px solid #ffe39c; outline-offset: 3px; }
+.appShell[data-design="aizan"][data-theme] :is(.roundIcon,.largeIcon) { background: radial-gradient(circle, #d9962122, #130a03); border: 1px solid var(--gold); color: var(--gold-strong); }
+.appShell[data-design="aizan"][data-view="cases"] .screenHeader h2 { font-size: 34px; text-align: left; }
+.appShell[data-design="aizan"][data-view="cases"] .caseRow { min-height: 97px; margin-bottom: 2px; grid-template-columns: 54px minmax(0,1fr) auto; padding: 14px; border-radius: 15px; }
+.appShell[data-design="aizan"][data-view="cases"] .caseRow strong { font-size: 16px; font-weight: 400; }
+.appShell[data-design="aizan"][data-view="cases"] .caseRow small { font-size: 11px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view="cases"] .roundIcon { width: 53px; height: 53px; font-size: 26px; }
+.appShell[data-design="aizan"][data-theme] .caseFilters { gap: 6px; margin: 8px 0 15px; }
+.appShell[data-design="aizan"][data-theme] .caseFilters button { min-height: 34px; padding: 5px; font-size: 11px; background: #251608; color: var(--muted); border: 1px solid var(--line); border-radius: 12px; }
+.appShell[data-design="aizan"][data-theme] .caseFilters button.active { background: linear-gradient(110deg, #ffda80, #c78c2e); color: #1c1001; }
+.appShell[data-design="aizan"][data-theme] .searchRow, .appShell[data-design="aizan"][data-theme] .docSearch { min-height: 36px; margin-bottom: 12px; border-color: var(--line); border-radius: 12px; background: #130a0499; }
+.appShell[data-design="aizan"][data-view="documents"] .aizanHeader { height: 210px; padding-top: 63px; }
+.appShell[data-design="aizan"][data-view="documents"] .aizanHeaderAction { top: 33px; }
+.appShell[data-design="aizan"][data-view="documents"] .screenHeader h2 { font-family: AizanSerif, serif; font-size: 32px; }
+.appShell[data-design="aizan"][data-theme] .docTabs { gap: 0; padding: 0; border: 1px solid var(--line); border-radius: 999px; background: #150b03; }
+.appShell[data-design="aizan"][data-theme] .docTabs button { min-height: 34px; border-radius: 999px; border: 0; font-size: 11px; font-weight: 400; color: var(--text); background: none; }
+.appShell[data-design="aizan"][data-theme] .docTabs button.active { color: #170d02; background: linear-gradient(110deg, #ffda82, #de9c30); }
+.appShell[data-design="aizan"][data-view="documents"] .folderList { margin-bottom: 14px; }
+.appShell[data-design="aizan"][data-view="documents"] .folderList button { background: #2a190966; border-color: var(--line); }
+.appShell[data-design="aizan"][data-view="documents"] .recentFileList button { min-height: 69px; border-radius: 13px; border-color: var(--line); background: linear-gradient(120deg, #77440e22, transparent), #130902; padding: 12px; }
+.appShell[data-design="aizan"][data-view="documents"] .recentFileList strong { color: var(--text); font-size: 14px; font-weight: 400; }
+.appShell[data-design="aizan"][data-view="documents"] .fixedDocCta { position: static; margin-top: 20px; }
+.appShell[data-design="aizan"][data-view="newCase"] .screenHeader { display: none; }
+.appShell[data-design="aizan"][data-view="newCase"] .contentPanel { display: flex; flex-direction: column; }
+.appShell[data-design="aizan"][data-view="newCase"] .mic { order: 0; width: 100%; max-width: 330px; height: auto; aspect-ratio: 720 / 470; margin: 20px auto 18px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.appShell[data-design="aizan"][data-view="newCase"] .heroTitle { order: 1; font-family: AizanSans, sans-serif; font-size: 22px; color: var(--text); margin: 0 0 6px; }
+.appShell[data-design="aizan"][data-view="newCase"] .hint { order: 2; font-size: 14px; color: var(--muted); margin-bottom: 22px; }
+.appShell[data-design="aizan"][data-view="newCase"] .recordCard { order: 3; min-height: 145px; padding: 15px; border-color: var(--line); background: #29150555; border-radius: 15px; }
+.appShell[data-design="aizan"][data-view="newCase"] .recordCard textarea { min-height: 73px; font-size: 15px; color: var(--text); }
+.appShell[data-design="aizan"][data-view="newCase"] .contentPanel > .wide { order: 4; margin-top: 18px; min-height: 44px; }
+.appShell[data-design="aizan"][data-view="newCase"] .contentPanel > .wide:last-child { order: 5; border: 1px solid var(--gold); border-radius: 22px; background: none; color: var(--text); }
+.appShell[data-design="aizan"][data-view="documentUpload"] .screenHeader { display: none; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadHero { border: 0; background: none; padding: 0; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadHero .aizanArt { width: 210px; margin: 19px auto; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadHero h1 { font-family: AizanSans, sans-serif; font-size: 25px; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadHero p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadActions { gap: 10px; margin: 19px 0 28px; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .uploadActions label { min-height: 96px; padding: 12px 5px; border: 1px solid var(--line); border-radius: 14px; background: #29160844; color: var(--text); font-size: 12px; }
+.appShell[data-design="aizan"][data-view="documentUpload"] .sectionTitle h3 { font-family: AizanSans, sans-serif; font-size: 15px; color: var(--text); }
+.appShell[data-design="aizan"][data-view="analysis"] .screenHeader { display: none; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisHero { display: block; text-align: center; background: none; border: 0; padding: 0; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisHero .aizanArt { width: 215px; margin: 0 auto 17px; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisHero h1 { font-size: 28px; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisHero p { font-size: 14px; color: var(--muted); line-height: 1.4; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisTags { gap: 8px; margin: 15px 0; flex-wrap: wrap; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisTimeline { padding: 13px 8px; border: 0; background: none; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisTimeline button { min-height: 53px; padding: 9px 0; background: none; border: 0; grid-template-columns: 33px minmax(0,1fr) auto; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisTimeline strong { font-size: 14px; font-weight: 400; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisTimeline small { font-size: 11px; color: var(--muted); }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisFoundGrid { margin: 20px 0; }
+.appShell[data-design="aizan"][data-view="analysis"] .analysisFoundGrid button { min-height: 65px; padding: 10px; background: #29150766; border-color: var(--line); }
+.appShell[data-design="aizan"][data-view="claimDraft"] .claimPaper { border-radius: 12px; box-shadow: 0 0 15px #ffc34222; padding: 20px; background: #f4edde; color: #332513; }
+.appShell[data-design="aizan"][data-view="claimDraft"] .claimPaper h2 { color: #442e0b; font-family: AizanSerif, serif; font-size: 23px; }
+.appShell[data-design="aizan"][data-view="claimDraft"] .paperSection { padding: 12px 0; border-color: #ae8e5044; }
+.appShell[data-design="aizan"][data-view="claimDraft"] .paperSection p { font-size: 12px; line-height: 1.5; color: #392f25; }
+.appShell[data-design="aizan"][data-view="claimSend"] .sendMethods { gap: 6px; margin: 20px 0; }
+.appShell[data-design="aizan"][data-view="claimSend"] .sendMethods button { min-height: 90px; border: 1px solid var(--line); border-radius: 14px; color: var(--text); background: #301a0755; }
+.appShell[data-design="aizan"][data-view="claimSend"] .sendMethods button.active { border-color: #ffe29a; box-shadow: 0 0 10px #ffc84c44; }
+.appShell[data-design="aizan"][data-view="claimSend"] .recipientCard { min-height: 82px; padding: 14px; margin-bottom: 12px; }
+.appShell[data-design="aizan"][data-view="claimSend"] .fieldLabel { color: #dab980; font-size: 13px; margin-top: 20px; }
+.appShell[data-design="aizan"][data-view="claim"] .claimBuildCard { padding: 20px; }
+.appShell[data-design="aizan"][data-view="claim"] .claimTimeline { margin: 20px 0; }
+.appShell[data-design="aizan"][data-view="claim"] .claimTimeline button { min-height: 43px; background: none; }
+.appShell[data-design="aizan"][data-view="claim"] .claimBuildHeading h1 { font-family: AizanSans, sans-serif; font-size: 21px; }
+.appShell[data-design="aizan"][data-theme] .authPanel { padding: 0; }
+.appShell[data-design="aizan"][data-theme] .loginExactScreen { min-height: max(693px, 100svh); background: none; }
+.appShell[data-design="aizan"] .loginExactBack { color: #ffdd89; font-size: 32px; }
+.aizanAuthIdentity { padding: 30px 24px 0; text-align: center; }
+.aizanAuthIdentity .aizanArt { width: 100%; margin: 0 auto; }
+.aizanAuthIdentity p { margin: 20px -10px 13px; font-size: 12px; line-height: 1.4; color: #a9a39a; }
+.aizanAuthIdentity small { color: #99938a; font-size: 7px; letter-spacing: 3px; }
+.appShell[data-design="aizan"] .loginExactTab { top: 49.6%; }
+.appShell[data-design="aizan"] .loginExactPhoneAction { top: 57.3%; }
+.appShell[data-design="aizan"] .loginExactEmailAction { top: 66.5%; }
+.appShell[data-design="aizan"] .loginExactBioAction { top: 75.8%; }
+.appShell[data-design="aizan"] .loginExactPhone { top: 62.4%; }
+.appShell[data-design="aizan"] .loginExactRegisterFooter { top: 91%; }
+.appShell[data-design="aizan"] .loginExactIcon .designIcon { width: 25px; height: 25px; }
+.aizanNotifications { margin: 0 20px 15px; padding: 15px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+@media (max-width: 360px) {
+  .aizanHeaderHome { height: 180px; padding-top: 45px; }
+  .aizanMicrophone { width: 175px; margin-top: 25px; }
+  .appShell[data-design="aizan"] .aizanHome h1 { font-size: 16px; }
+  .appShell[data-design="aizan"] .bottomNav button { font-size: 9px; }
+  .appShell[data-design="aizan"][data-theme] .contentPanel { padding-inline: 15px; }
+}
+@media (max-height: 650px) {
+  .appShell[data-design="aizan"][data-theme] .bottomNav { position: relative; left: 0; transform: none; }
+  .appShell[data-design="aizan"][data-theme] .homeScreen, .appShell[data-design="aizan"][data-theme] .contentPanel { padding-bottom: 50px; }
+}
+@media (prefers-reduced-motion: reduce) { .appShell[data-design="aizan"] * { animation: none !important; transition: none !important; } }
+
+.aizanArt { mask-image: radial-gradient(ellipse, #000 58%, transparent 74%); }
+.aizanArt-microphone { mask-image: radial-gradient(ellipse, #000 53%, transparent 71%); }
+.aizanArt-authBrand { mask-image: linear-gradient(transparent, #000 8%, #000 88%, transparent); }
+.aizanHeaderAction { display: grid; place-items: center; }
+.aizanHeaderAction .designIcon { width: 29px; height: 29px; }
+.aizanHeaderHome .aizanHeaderAction:first-child { border: 0; }
+.aizanHeaderHome .aizanHeaderAction:first-child::before { content: ''; position: absolute; inset: 9px; border: 1px solid var(--gold); border-radius: 50%; }
+.appShell[data-design="aizan"] .loginExactActionText b { font-size: 13px; font-weight: 400; white-space: normal; }
+.appShell[data-design="aizan"] .loginExactActionText small { font-size: 10px; white-space: normal; }
+.appShell[data-design="aizan"] .loginExactRegisterFooter { background: transparent !important; border: 0 !important; }
+
+.aizanCategoryCard { margin: 25px 0; border: 1px solid #f1bc57; border-radius: 22px; padding: 30px 20px; text-align: center; background: radial-gradient(ellipse at top, #8b501833, #140901); box-shadow: 0 0 18px #ffc23b22; }
+.aizanCategoryCard > .designIcon { width: 68px; height: 68px; margin: 0 auto 20px; color: var(--gold-strong); }
+.appShell[data-design="aizan"] .aizanCategoryCard h3 { font-size: 28px; }
+.aizanCategoryCard p { font-size: 13px; color: #c8baaa; line-height: 1.6; }
+.aizanCategoryCard .categoryPill { display: inline-block; padding: 9px 18px; border: 1px solid #b98b3e; border-radius: 22px; color: #ffe09b; }
+.aizanCategoryCard details { text-align: left; font-size: 11px; margin-top: 22px; color: var(--muted); }
+.appShell[data-design="aizan"][data-view="category"] .aiComposer { margin: 18px 0; }
+.appShell[data-design="aizan"][data-view="category"] .aiActionGrid { display: flex; flex-direction: column; gap: 12px; }
+.appShell[data-design="aizan"] .docTabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; margin-bottom: 24px; }
+.appShell[data-design="aizan"] .docTabs button { font-size: 11px; padding: 12px 3px; }
+.appShell[data-design="aizan"][data-theme] .authExactScreen, .appShell[data-design="aizan"] .authExactScreen::before { background-image: none !important; }
+
+.appShell[data-design="aizan"][data-theme] .deviceFrame { margin: 0; flex-shrink: 0; }
+.appShell[data-design="aizan"][data-theme] .screenHeader { border: 0; padding: 0; }
+.appShell[data-design="aizan"][data-theme] .screenHeader h2 { font-family: AizanSans, sans-serif !important; font-size: 24px !important; }
+.appShell[data-design="aizan"][data-theme] .documentsOverview .screenHeader { margin-bottom: 24px; }
+.appShell[data-design="aizan"][data-theme] .documentsOverview .fixedDocCta { display: flex; justify-content: center; align-items: center; position: relative; left: auto; right: auto; top: auto; bottom: auto; min-height: 48px; width: 100%; margin-top: 24px; padding: 10px 18px; border-radius: 24px; font-size: 15px; cursor: pointer; }
+.appShell[data-design="aizan"] .claimBodyEditor { color: #302313; background: transparent; width: 100%; min-height: 240px; border: 0; font: 14px/1.6 AizanSerif, serif; resize: vertical; }
+.appShell[data-design="aizan"] .claimPaper h1 { color: #4b3413; font-size: 24px; }
+@media print {
+  body, .appShell[data-design="aizan"][data-theme], .appShell[data-design="aizan"][data-theme] .deviceFrame { background: white; max-width: none; width: 100%; }
+  .appShell[data-design="aizan"] .deviceFrame > :not(.contentPanel), .appShell[data-design="aizan"] .contentPanel > :not(.claimPaper) { display: none !important; }
+  .appShell[data-design="aizan"][data-theme] .contentPanel, .appShell[data-design="aizan"] .claimPaper { padding: 0; border: 0; box-shadow: none; background: white; }
+  .appShell[data-design="aizan"] .claimBodyEditor { height: auto; min-height: 400px; }
+}
+
+.claimPrintBody { display: none; }
+@media print { .appShell[data-design="aizan"] .claimBodyEditor { display: none; } .claimPrintBody { display: block; white-space: pre-wrap; color: black; } }
+
+.aizanFeedback { position: fixed; z-index: 40; bottom: 115px; left: 50%; transform: translateX(-50%); width: min(calc(100% - 30px), 440px); padding: 14px; border: 1px solid #c99a43; border-radius: 14px; background: #160c03f5; color: #ffe7b2; font-size: 12px; line-height: 1.5; display: flex; align-items: center; gap: 12px; box-shadow: 0 5px 20px #0008; }
+.aizanFeedback button { background: transparent; border: 0; color: #ffdd89; font-size: 24px; min-width: 36px; min-height: 36px; }
+@media print { .aizanFeedback { display: none !important; } }
+
+.appShell[data-design="aizan"][data-theme] .bottomNav { display: grid; }
+.appShell[data-design="aizan"][data-theme]:is([data-view="login"], [data-view="register"], [data-view="otp"], [data-view="biometric"], [data-view="onboarding"], [data-view="category"], [data-view="analysis"], [data-view="claim"], [data-view="claimDraft"], [data-view="claimSend"], [data-view="documentUpload"]) .bottomNav { display: none; }

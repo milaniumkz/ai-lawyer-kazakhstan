@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -12,12 +13,15 @@ import '../auth/auth_screens.dart';
 import '../cases/case_screens.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/aizan_design.dart';
 
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key, this.filePicker, this.documentApi});
+  const DocumentsScreen({super.key, this.filePicker, this.documentApi, this.addMode = false, this.openCamera = false});
 
   final DocumentFilePickerPort? filePicker;
   final DocumentApiPort? documentApi;
+  final bool addMode;
+  final bool openCamera;
 
   @override
   State<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -27,56 +31,45 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   late final DocumentFilePickerPort filePicker;
   late final DocumentApiPort documentApi;
   var uploaded = false;
-  var scanned = false;
+  var selectedTab = 0;
+  final searchController = TextEditingController();
   var confirmed = false;
   var busy = false;
   var status = 'Выберите файл для загрузки';
   String? documentId;
-  String? uploadedFileName;
-
-  int progressValue() {
-    if (confirmed) return 86;
-    if (uploaded) return 68;
-    if (scanned) return 42;
-    return 18;
-  }
-
-  List<({String title, bool done})> documentStages() => [
-        (title: '1. Дело', done: MobileCaseRuntime.activeCaseId.isNotEmpty),
-        (title: '2. Запрос AI', done: true),
-        (title: '3. Файл', done: uploaded || scanned),
-        (title: '4. OCR', done: confirmed),
-        (title: '5. Анализ', done: confirmed),
-      ];
-
-  String aiDocumentQuestion() {
-    if (MobileCaseRuntime.activeCaseId.isEmpty) {
-      return 'Сначала создайте дело. После этого я привяжу документы к делу в базе.';
-    }
-    if (!uploaded && !scanned) {
-      return 'Загрузите договор, расписку, переписку, удостоверение или иной документ по делу.';
-    }
-    if (!confirmed) {
-      return 'Проверьте OCR-поля и подтвердите, что реквизиты распознаны правильно.';
-    }
-    return 'Документы готовы к анализу. Я могу перейти к проверке фактов и доказательств.';
-  }
+  final documentTitleController = TextEditingController();
+  final documentDetailsController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     filePicker = widget.filePicker ?? NativeDocumentFilePicker();
     documentApi = widget.documentApi ?? HttpDocumentApi();
+    if (widget.openCamera) WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) uploadDocument(camera: true); });
+    if (!widget.addMode && MobileCaseRuntime.activeCaseId.isNotEmpty && AuthRuntime.userId.isNotEmpty) loadDocuments();
   }
 
-  Future<void> uploadDocument() async {
+  Future<void> loadDocuments() async {
+    final api = documentApi;
+    if (api is! HttpDocumentApi) return;
+    try {
+      final files = await api.listDocuments(MobileCaseRuntime.activeCaseId);
+      if (!mounted) return;
+      setState(() { DocumentRuntime.documents..clear()..addAll(files); status = files.isEmpty ? 'Документов в деле пока нет' : 'Документы загружены'; });
+    } catch (error) { if (mounted) setState(() => status = 'Не удалось получить документы: $error'); }
+  }
+
+  Future<void> uploadDocument({bool camera = false}) async {
     if (busy) return;
     setState(() {
       busy = true;
       status = 'Открываю выбор файла...';
     });
     try {
-      final file = await filePicker.pick();
+      final picker = filePicker;
+      final file = camera && picker is NativeDocumentFilePicker
+          ? await picker.pickCamera()
+          : await picker.pick();
       if (file == null) {
         setState(() => status = 'Выбор файла отменен');
         return;
@@ -86,15 +79,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             () => status = 'Сначала создайте дело, затем загрузите документ');
         return;
       }
+      if (file.sizeBytes > 25 * 1024 * 1024) {
+        setState(() => status = 'Размер файла должен быть не более 25 МБ');
+        return;
+      }
       final saved = await documentApi.uploadMetadata(
         caseId: MobileCaseRuntime.activeCaseId,
         file: file,
       );
       setState(() {
         uploaded = true;
+        DocumentRuntime.documents.add(saved);
         documentId = saved.id;
-        uploadedFileName = saved.fileName;
-        status = 'Файл добавлен: ${saved.fileName}';
+        documentTitleController.text = saved.fileName;
+        status = 'Метаданные добавлены: ${saved.fileName}. Хранилище файлов и автоматический OCR пока не подключены.';
       });
     } catch (error) {
       setState(() => status = 'Документ API ошибка: $error');
@@ -112,11 +110,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     setState(() => busy = true);
     try {
       await documentApi.confirmOcr(documentId!, {
-        'documentTitle': 'Подтверждено пользователем',
+        'documentTitle': documentTitleController.text.trim(),
+        'details': documentDetailsController.text.trim(),
         'reviewRequired': 'false',
       });
       setState(() {
         confirmed = true;
+        DocumentRuntime.confirmedIds.add(documentId!);
         status = 'Поля подтверждены через API';
       });
     } catch (error) {
@@ -126,128 +126,84 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
-  Future<void> createEvidence() async {
-    if (MobileCaseRuntime.activeCaseId.isEmpty) {
-      setState(() => status = 'Сначала создайте дело');
-      return;
-    }
-    try {
-      final id = await documentApi.createEvidence(
-        caseId: MobileCaseRuntime.activeCaseId,
-        title: 'Договор и переписка',
-        documentIds: [if (documentId != null) documentId!],
-      );
-      setState(
-          () => status = 'Папка доказательств создана: ${id.substring(0, 8)}');
-    } catch (error) {
-      setState(() => status = 'Evidence API ошибка: $error');
-    }
+  @override
+  void dispose() {
+    searchController.dispose();
+    documentTitleController.dispose();
+    documentDetailsController.dispose();
+    super.dispose();
+  }
+
+  void cameraUnavailable() {
+    uploadDocument(camera: true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final files = DocumentRuntime.documents.where((file) =>
+      file.fileName.toLowerCase().contains(searchController.text.toLowerCase())).toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('Документы и доказательства')),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 2),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              'AI проверка документов',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(color: AppColors.goldDark),
-            ),
-            const SizedBox(height: 16),
-            _DocumentAiProgress(
-              progress: progressValue(),
-              subtitle: confirmed
-                  ? 'OCR подтвержден · можно анализировать'
-                  : uploaded
-                      ? 'Файл загружен · нужен OCR-review'
-                      : 'AI ждет документы по делу',
-            ),
+      appBar: AizanHeader(compact: widget.addMode),
+      bottomNavigationBar: widget.addMode ? null : const AppBottomNav(selectedIndex: 2),
+      body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 28), children: [
+          if (widget.addMode) ...[
+            const AizanArt(AizanArtwork.upload, width: 200),
+            const SizedBox(height: 14),
+            Text('Добавьте документ', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 12),
-            _DocumentStageRail(items: documentStages()),
-            const SizedBox(height: 12),
-            _DocumentAiChat(
-              question: aiDocumentQuestion(),
-              status: status,
-              uploaded: uploaded,
-              confirmed: confirmed,
-            ),
-            const SizedBox(height: 16),
-            const _ReadinessCard(),
-            const SizedBox(height: 12),
-            _MissingDocsCard(onConfirmPresent: confirmOcr),
-            const SizedBox(height: 12),
-            _DocumentHint(
-              text:
-                  'Для подготовки иска желательно добавить недостающие документы.',
-              trailing: status,
-            ),
-            const SizedBox(height: 16),
-            const _UploadHero(),
-            const SizedBox(height: 12),
-            _UploadOptionGrid(
-              busy: busy,
-              uploaded: uploaded,
-              onUpload: uploadDocument,
-              onScan: () => setState(() {
-                scanned = true;
-                status =
-                    'Сканирование камеры требует camera adapter; используйте загрузку файла';
-              }),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => setState(() {
-                scanned = true;
-                status =
-                    'Сканирование камеры требует camera adapter; используйте загрузку файла';
-              }),
-              icon: const Icon(Icons.document_scanner_outlined),
-              label: Text(scanned ? 'Скан готов' : 'Сканировать документ'),
-            ),
-            const SizedBox(height: 16),
-            Text('Недавние загрузки',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            if (uploadedFileName == null)
-              const _RecentDocumentTile(
-                title: 'Файлы не загружены',
-                subtitle: 'Загрузки появятся после сохранения в API/БД',
-              )
-            else
-              _RecentDocumentTile(
-                title: uploadedFileName!,
-                subtitle: 'Сохранено через Documents API',
-              ),
-            const SizedBox(height: 12),
-            _OcrReviewCard(
-              confirmed: confirmed,
-              onConfirm: confirmOcr,
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: confirmed
-                  ? () => context.go('/documents/analysis')
-                  : () => setState(() =>
-                      status = 'Сначала загрузите документ и подтвердите OCR'),
-              icon: const Icon(Icons.analytics_outlined),
-              label: const Text('Анализировать документы'),
-            ),
-            const SizedBox(height: 12),
-            _EvidenceCard(
-              onTap: createEvidence,
-            ),
+            const Text('Загрузите файл любым удобным способом для анализа и консультации', textAlign: TextAlign.center),
+            const SizedBox(height: 22),
+            _UploadOptionGrid(busy: busy, uploaded: uploaded, onUpload: uploadDocument, onScan: cameraUnavailable),
+            const SizedBox(height: 22),
+            Text('Недавние загрузки', style: Theme.of(context).textTheme.titleLarge),
+          ] else ...[
+            Text('Документы и доказательства', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 20),
+            Row(children: List.generate(4, (index) => Expanded(child: TextButton(
+              onPressed: () => setState(() => selectedTab = index),
+              style: TextButton.styleFrom(foregroundColor: selectedTab == index ? AizanDesign.gold : Colors.white70),
+              child: Text(['Все', 'По делу', 'Шаблоны', 'Загруженные'][index], style: const TextStyle(fontSize: 11)),
+            )))),
+            TextField(controller: searchController, onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Поиск по документам')),
+            const SizedBox(height: 18),
           ],
-        ),
-      ),
+          if (selectedTab == 2 && !widget.addMode)
+            const Padding(padding: EdgeInsets.all(20), child: Text('Готовые шаблоны появятся после подключения каталога.'))
+          else if (files.isEmpty)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Text('Документов пока нет. Добавьте файл по вашему делу.'))
+          else ...files.map((file) => _RecentDocumentTile(title: file.fileName,
+            subtitle: DocumentRuntime.confirmedIds.contains(file.id) ? 'Поля подтверждены' : 'Требуется проверка')),
+          const SizedBox(height: 18),
+          Text(status, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+          const SizedBox(height: 16),
+          if (!widget.addMode)
+            AizanButton(label: 'Добавить документ', icon: Icons.upload_file_outlined, onPressed: () => context.go('/documents/add'))
+          else ...[
+            const Text('PDF, DOCX, JPG, PNG · до 25 МБ', textAlign: TextAlign.center, style: TextStyle(fontSize: 11)),
+            const SizedBox(height: 16),
+            if (uploaded) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(children: [
+              const Text('Проверьте сведения вручную'),
+              const SizedBox(height: 12),
+              TextField(controller: documentTitleController, decoration: const InputDecoration(labelText: 'Название документа')),
+              const SizedBox(height: 12),
+              TextField(controller: documentDetailsController, decoration: const InputDecoration(labelText: 'Сумма / реквизиты')),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: busy ? null : confirmOcr, child: Text(confirmed ? 'Поля подтверждены' : 'Подтвердить поля')),
+            ]))),
+            const SizedBox(height: 12),
+            AizanButton(label: 'Продолжить', onPressed: uploaded ? () => context.go('/documents/analysis') : null),
+          ],
+        ]),
+      )),
     );
   }
+}
+
+abstract final class DocumentRuntime {
+  static final documents = <UploadedDocumentResult>[];
+  static final confirmedIds = <String>{};
 }
 
 class PickedDocumentFile {
@@ -293,6 +249,14 @@ abstract class DocumentApiPort {
 }
 
 class NativeDocumentFilePicker implements DocumentFilePickerPort {
+  Future<PickedDocumentFile?> pickCamera() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+    if (image == null) return null;
+    final bytes = await image.readAsBytes();
+    return PickedDocumentFile(name: image.name, path: image.path, sizeBytes: bytes.length,
+      mimeType: _mimeTypeFor(image.name), sha256: sha256.convert(bytes).toString());
+  }
+
   @override
   Future<PickedDocumentFile?> pick() async {
     final result = await FilePicker.platform.pickFiles(
@@ -331,6 +295,16 @@ class HttpDocumentApi implements DocumentApiPort {
   });
 
   final String baseUrl;
+
+  Future<List<UploadedDocumentResult>> listDocuments(String caseId) async {
+    final response = await http.get(Uri.parse('$baseUrl${ApiContract.basePath}/cases/$caseId/documents'),
+      headers: {'x-user-id': AuthRuntime.userId});
+    if (response.statusCode != 200) throw HttpException('Documents API: ${response.statusCode}');
+    return (jsonDecode(response.body) as List<dynamic>).map((value) {
+      final item = value as Map<String, dynamic>;
+      return UploadedDocumentResult(id: item['id'] as String, fileName: item['fileName'] as String);
+    }).toList();
+  }
 
   @override
   Future<UploadedDocumentResult> uploadMetadata({
@@ -416,312 +390,35 @@ class DocumentAnalysisScreen extends StatefulWidget {
 }
 
 class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
-  var checked = false;
-
   @override
-  Widget build(BuildContext context) {
-    final progress = checked ? 1.0 : 0.82;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Анализ документов')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              'Проверка документов',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(color: AppColors.goldDark),
-            ),
-            const SizedBox(height: 16),
-            const _AnalysisHero(),
-            const SizedBox(height: 16),
-            const _AnalysisTags(),
-            const SizedBox(height: 16),
-            const _AnalysisTimeline(),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(value: progress),
-            const SizedBox(height: 10),
-            Text('Готовность анализа: ${(progress * 100).round()}%'),
-            const SizedBox(height: 16),
-            const _DocumentHint(
-              text:
-                  'Система нашла 4 документа, распознала 18 страниц и выделила ключевые сведения',
-              trailing: '82%',
-            ),
-            FilledButton.icon(
-              onPressed: () => setState(() => checked = true),
-              icon: const Icon(Icons.check_outlined),
-              label: Text(checked ? 'Анализ завершен' : 'Подтвердить анализ'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed:
-                  checked ? () => context.go('/workflow/pretrial-claim') : null,
-              icon: const Icon(Icons.article_outlined),
-              label: const Text('Сформировать претензию'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadinessCard extends StatelessWidget {
-  const _ReadinessCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            const _RoundGoldIcon(Icons.balance_outlined),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Готовность дела: 68%',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 10),
-                  const LinearProgressIndicator(value: 0.68),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Чем выше готовность, тем больше шансов на успешный исход дела.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DocumentAiProgress extends StatelessWidget {
-  const _DocumentAiProgress({required this.progress, required this.subtitle});
-
-  final int progress;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.gold),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: Text(
-                        'Документы · этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
-                Text('$progress%',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(color: AppColors.goldDark)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: progress / 100),
-            const SizedBox(height: 8),
-            Text(subtitle),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DocumentStageRail extends StatelessWidget {
-  const _DocumentStageRail({required this.items});
-
-  final List<({String title, bool done})> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final item in items)
-          Chip(
-            avatar: Icon(
-              item.done ? Icons.check_circle : Icons.circle_outlined,
-              size: 16,
-            ),
-            label: Text(item.title),
-            side:
-                BorderSide(color: item.done ? AppColors.gold : Colors.white24),
-          ),
-      ],
-    );
-  }
-}
-
-class _DocumentAiChat extends StatelessWidget {
-  const _DocumentAiChat({
-    required this.question,
-    required this.status,
-    required this.uploaded,
-    required this.confirmed,
-  });
-
-  final String question;
-  final String status;
-  final bool uploaded;
-  final bool confirmed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _DocumentAiBubble(
-          title: 'AI Юрист',
-          text:
-              'Я проверяю документы по шагам: запрашиваю файлы, сохраняю их в дело, затем прошу подтвердить OCR и только после этого запускаю анализ.',
-        ),
-        _DocumentAiBubble(
-          title: 'AI запрос документов',
-          text: question,
-          footer: status,
-        ),
-        if (uploaded || confirmed)
-          _DocumentAiBubble(
-            title: 'Документы',
-            text: confirmed
-                ? 'OCR-поля подтверждены пользователем.'
-                : 'Файл загружен. Следующий шаг — OCR-review.',
-            user: true,
-          ),
-      ],
-    );
-  }
-}
-
-class _DocumentAiBubble extends StatelessWidget {
-  const _DocumentAiBubble({
-    required this.title,
-    required this.text,
-    this.footer,
-    this.user = false,
-  });
-
-  final String title;
-  final String text;
-  final String? footer;
-  final bool user;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: Card(
-        color: user ? AppColors.gold.withValues(alpha: 0.12) : null,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: AppColors.gold, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(text),
-              if (footer != null) ...[
-                const SizedBox(height: 6),
-                Text(footer!, style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MissingDocsCard extends StatelessWidget {
-  const _MissingDocsCard({required this.onConfirmPresent});
-
-  final VoidCallback onConfirmPresent;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      ('Удостоверение личности', true),
-      ('Свидетельство о браке', true),
-      ('Свидетельство о рождении ребенка', false),
-      ('Справка о доходах', false),
-    ];
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Не хватает документов',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(color: AppColors.goldDark)),
-            const SizedBox(height: 10),
-            for (final item in items)
-              ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  item.$2
-                      ? Icons.check_circle_outline
-                      : Icons.radio_button_unchecked,
-                  color: item.$2 ? AppColors.gold : Theme.of(context).hintColor,
-                ),
-                title: Text(item.$1),
-                trailing: Text(item.$2 ? 'Есть' : 'Отсутствует'),
-                onTap: item.$2 ? onConfirmPresent : null,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UploadHero extends StatelessWidget {
-  const _UploadHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
-        child: Column(
-          children: [
-            const _RoundGoldIcon(Icons.description_outlined, size: 76),
-            const SizedBox(height: 14),
-            Text('Добавьте документ',
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            const Text(
-              'Загрузите файл любым удобным способом для анализа и консультации',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: const AizanHeader(compact: true),
+    body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
+      child: ListView(padding: const EdgeInsets.all(20), children: [
+        const AizanArt(AizanArtwork.analysis, width: 210),
+        const SizedBox(height: 16),
+        Text('Анализ документов', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
+        const SizedBox(height: 12),
+        const Text('Проверьте сведения из ваших файлов перед подготовкой документа', textAlign: TextAlign.center),
+        const SizedBox(height: 20),
+        const _AnalysisTags(),
+        const SizedBox(height: 20),
+        ...[
+          ('Документы добавлены', DocumentRuntime.documents.isNotEmpty),
+          ('Поля подтверждены пользователем', DocumentRuntime.confirmedIds.isNotEmpty),
+          ('Проверка реквизитов', false),
+          ('Поиск норм права', false),
+        ].map((step) => ListTile(leading: Icon(step.$2 ? Icons.check_circle_outline : Icons.radio_button_unchecked, color: AizanDesign.gold),
+          title: Text(step.$1), subtitle: Text(step.$2 ? 'Подтверждено' : 'Ожидает проверки'))),
+        const SizedBox(height: 20),
+        _DocumentHint(text: 'Добавлено документов: ${DocumentRuntime.documents.length}. Автоматический юридический анализ не выполнен.', trailing: 'Проверка'),
+        const SizedBox(height: 16),
+        AizanButton(label: 'Продолжить', onPressed: DocumentRuntime.confirmedIds.isNotEmpty ? () => context.go('/workflow/pretrial-claim') : null),
+        const SizedBox(height: 12),
+        OutlinedButton(onPressed: () => context.go('/documents/add'), child: const Text('Посмотреть детали')),
+      ]),
+    )),
+  );
 }
 
 class _UploadOptionGrid extends StatelessWidget {
@@ -787,37 +484,6 @@ class _RecentDocumentTile extends StatelessWidget {
   }
 }
 
-class _AnalysisHero extends StatelessWidget {
-  const _AnalysisHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            const _RoundGoldIcon(Icons.auto_awesome_outlined),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Документы анализируются',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Извлекаем сведения из ваших файлов с помощью искусственного интеллекта'),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _AnalysisTags extends StatelessWidget {
   const _AnalysisTags();
 
@@ -834,32 +500,6 @@ class _AnalysisTags extends StatelessWidget {
         Chip(label: Text('Статьи')),
         Chip(label: Text('Приложения')),
       ],
-    );
-  }
-}
-
-class _AnalysisTimeline extends StatelessWidget {
-  const _AnalysisTimeline();
-
-  @override
-  Widget build(BuildContext context) {
-    final steps = [
-      ('OCR завершен', 'Завершено', Icons.check_circle_outline),
-      ('Тип документа определен', 'Завершено', Icons.check_circle_outline),
-      ('Проверка реквизитов', 'В процессе', Icons.radio_button_checked),
-      ('Поиск норм права', 'Ожидает', Icons.radio_button_unchecked),
-    ];
-    return Card(
-      child: Column(
-        children: [
-          for (final step in steps)
-            ListTile(
-              leading: Icon(step.$3, color: AppColors.gold),
-              title: Text(step.$1),
-              trailing: Text(step.$2),
-            ),
-        ],
-      ),
     );
   }
 }
@@ -898,84 +538,6 @@ class _DocumentHint extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _RoundGoldIcon extends StatelessWidget {
-  const _RoundGoldIcon(this.icon, {this.size = 56});
-
-  final IconData icon;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.gold.withValues(alpha: 0.14),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
-      ),
-      child: Icon(icon, color: AppColors.gold, size: size * 0.46),
-    );
-  }
-}
-
-class _OcrReviewCard extends StatelessWidget {
-  const _OcrReviewCard({required this.confirmed, required this.onConfirm});
-
-  final bool confirmed;
-  final VoidCallback onConfirm;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('OCR-review', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            const Text('Извлеченные поля требуют подтверждения пользователя.'),
-            const SizedBox(height: 12),
-            const TextField(
-                decoration: InputDecoration(labelText: 'Название документа')),
-            const SizedBox(height: 8),
-            const TextField(
-                decoration: InputDecoration(labelText: 'Сумма / реквизиты')),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onConfirm,
-              icon: Icon(
-                  confirmed ? Icons.verified_outlined : Icons.check_outlined),
-              label: Text(confirmed ? 'Поля подтверждены' : 'Подтвердить поля'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EvidenceCard extends StatelessWidget {
-  const _EvidenceCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.folder_copy_outlined, color: AppColors.gold),
-        title: const Text('Договор и переписка'),
-        subtitle: const Text(
-            'Предварительная оценка: возможная допустимость. Не оценка суда.'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
       ),
     );
   }

@@ -6,12 +6,12 @@ if (!baseUrl) {
 }
 
 const viewports = [
-  { name: "iphone-se", width: 375, height: 667 },
+  { name: "mobile-360", width: 360, height: 780 },
   { name: "iphone-small", width: 320, height: 568 },
   { name: "mobile", width: 390, height: 844 },
   { name: "mobile-large", width: 430, height: 932 },
   { name: "tablet", width: 768, height: 1024 },
-  { name: "desktop", width: 1440, height: 900 },
+  { name: "desktop", width: 1024, height: 900 },
 ];
 
 const screens = [
@@ -125,7 +125,7 @@ async function main() {
     return;
   }
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.CHROMIUM_EXECUTABLE_PATH ? {executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: ["--no-sandbox"]} : {});
   try {
     for (const viewport of viewports) {
       for (const view of screens) {
@@ -151,6 +151,7 @@ async function main() {
           const panel = document.querySelector(".contentPanel")?.getBoundingClientRect();
           const bottomNav = document.querySelector(".bottomNav");
           return {
+            design: document.querySelector(".appShell")?.getAttribute("data-design"),
             view: document.querySelector(".appShell")?.getAttribute("data-view"),
             bodyScrollWidth: document.body.scrollWidth,
             docScrollWidth: document.documentElement.scrollWidth,
@@ -165,7 +166,7 @@ async function main() {
         if (maxScroll > viewport.width + 2) {
           fail(`${viewport.name}/${view}: horizontal overflow ${maxScroll}px > ${viewport.width}px`);
         }
-        if (viewport.width <= 980 && result.deviceWidth < viewport.width - 2) {
+        if (viewport.width <= 980 && result.deviceWidth < (result.design === "aizan" ? Math.min(viewport.width, 480) : viewport.width) - 2) {
           fail(`${viewport.name}/${view}: device width ${result.deviceWidth}px < viewport ${viewport.width}px`);
         }
         await page.close();

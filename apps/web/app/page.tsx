@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AizanArt } from "./aizan-art";
+import { DesignIcon } from "./design-icon";
 
 type View =
   | "onboarding"
@@ -457,6 +459,7 @@ export default function WebHome() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
   const speechDraftRef = useRef("");
+  const speechPrefixRef = useRef("");
   const clientSequenceRef = useRef(0);
   const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
@@ -538,7 +541,8 @@ export default function WebHome() {
   const [syncState, setSyncState] = useState("Не синхронизировано");
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
-  const [documentTab, setDocumentTab] = useState<"documents" | "evidence" | "recent">("documents");
+  const [caseFilter, setCaseFilter] = useState("Все");
+  const [documentTab, setDocumentTab] = useState<"documents" | "evidence" | "recent" | "templates">("documents");
   const [documentFolder, setDocumentFolder] = useState("Все документы");
   const [textSize, setTextSize] = useState("Средний");
   const [voiceSpeed, setVoiceSpeed] = useState("1.0x");
@@ -615,10 +619,10 @@ export default function WebHome() {
     () =>
       cases.filter(
         (item) =>
-          item.title.toLowerCase().includes(caseSearch.toLowerCase()) ||
-          caseSearch.length < 3,
+          (item.title.toLowerCase().includes(caseSearch.toLowerCase())) &&
+          (caseFilter === "Все" || item.status.toLowerCase().includes(caseFilter.toLowerCase()) || item.type.toLowerCase().includes(caseFilter.toLowerCase())),
       ),
-    [cases, caseSearch],
+    [cases, caseSearch, caseFilter],
   );
   const visibleDocuments = useMemo(() => {
     const query = caseSearch.toLowerCase();
@@ -631,9 +635,9 @@ export default function WebHome() {
         (documentFolder === "Договоры и переписка" && (name.includes("договор") || name.includes("переписк"))) ||
         (documentFolder === "Судебные документы" && (name.includes("иск") || name.includes("суд")));
       const matchesTab =
-        documentTab === "recent" ||
+        documentTab !== "templates" && (documentTab === "recent" ||
         documentTab === "documents" ||
-        (documentTab === "evidence" && item.status !== "Ошибка API upload");
+        (documentTab === "evidence" && item.status !== "Ошибка API upload"));
       return matchesSearch && matchesFolder && matchesTab;
     });
   }, [caseSearch, documentFolder, documentTab, documents]);
@@ -1233,6 +1237,7 @@ export default function WebHome() {
       setSyncState("Файл пустой или недоступен для загрузки");
       return;
     }
+    if (file.size > 25 * 1024 * 1024) { setSyncState("Размер файла должен быть не более 25 МБ"); return; }
     const sha256 = await fileSha256(file);
     const localDoc: DocumentItem = {
       name: file.name,
@@ -1269,12 +1274,12 @@ export default function WebHome() {
       setDocuments((items) =>
         items.map((item, index) =>
           index === 0
-            ? { ...item, id: document.id, name: document.fileName, status: "OCR-review" }
+            ? { ...item, id: document.id, name: document.fileName, status: "Метаданные сохранены · требуется проверка" }
             : item,
         ),
       );
       setOcrConfirmed(false);
-      setSyncState(`Документ сохранен в API: ${document.fileName}. Проверьте OCR.`);
+      setSyncState(`Метаданные сохранены: ${document.fileName}. Хранилище файлов и автоматический OCR пока не подключены.`);
       go("documentCheck");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -1536,26 +1541,21 @@ export default function WebHome() {
       go("documentCheck");
       return;
     }
-    setAnalysisDone(true);
-    updateActiveCase("Анализ документов завершен", 84);
-    if (remoteCaseId) {
-      try {
-        const userId = await ensureUser();
-        const remoteDocs = (await apiJson(`/cases/${remoteCaseId}/documents`, {
-          headers: { "x-user-id": userId },
-        })) as ApiDocument[];
-        setSyncState(`Анализ API завершен: документов ${remoteDocs.length}`);
-      } catch (error) {
-        setSyncState(
-          error instanceof Error
-            ? `Анализ локально, API ошибка: ${error.message}`
-            : "Анализ завершен локально",
-        );
-      }
-    } else {
-      setSyncState(
-        "Анализ локальных файлов завершен. Для серверной обработки создайте дело.",
-      );
+    if (!remoteCaseId) {
+      setSyncState("Создайте дело для серверной проверки документов");
+      return;
+    }
+    try {
+      const userId = await ensureUser();
+      const remoteDocs = (await apiJson(`/cases/${remoteCaseId}/documents`, {
+        headers: { "x-user-id": userId },
+      })) as ApiDocument[];
+      setAnalysisDone(remoteDocs.length > 0);
+      setSyncState(`Получено документов: ${remoteDocs.length}. Автоматический юридический анализ не выполнен.`);
+    } catch (error) {
+      setAnalysisDone(false);
+      setSyncState(error instanceof Error ? error.message : "Не удалось получить документы");
+      return;
     }
     go("analysis");
   }
@@ -1570,6 +1570,7 @@ export default function WebHome() {
       go("claimSend");
       return;
     }
+    if (!window.confirm("Зафиксировать ручную отправку? Приложение не отправляет документ получателю и не подтверждает доставку.")) return;
     const sentAt = new Date().toLocaleString("ru-KZ");
     setSent(true);
     updateActiveCase("Assisted отправка претензии зафиксирована", 100);
@@ -1780,8 +1781,9 @@ export default function WebHome() {
           .join(" ")
           .trim();
         if (text) {
-          speechDraftRef.current = text;
-          setCaseText(text);
+          const combined = [speechPrefixRef.current, text].filter(Boolean).join("\n");
+          speechDraftRef.current = combined;
+          setCaseText(combined);
           setSpeechStatus("Речь распознана браузером");
         }
       };
@@ -1808,6 +1810,7 @@ export default function WebHome() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       audioBlobRef.current = null;
+      speechPrefixRef.current = caseText.trim();
       speechDraftRef.current = "";
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
@@ -1870,6 +1873,7 @@ export default function WebHome() {
       return;
     }
     if (recorder.state === "paused") {
+      speechPrefixRef.current = caseText.trim();
       recorder.resume();
       startSpeechRecognition();
       setPaused(false);
@@ -2278,7 +2282,8 @@ export default function WebHome() {
         >
           {view === "login" && (
             <div className="loginExactScreen" aria-label="AIZAN вход">
-              <button className="loginExactBack" onClick={() => go("onboarding")} aria-label="Назад" />
+              <button className="loginExactBack" onClick={() => go("onboarding")} aria-label="Назад">‹</button>
+              <div className="aizanAuthIdentity"><AizanArt name="authBrand" /><p>Войдите или создайте аккаунт,<br />чтобы сохранять дела, документы и сроки</p><small>ПРАВО. ТЕХНОЛОГИИ. ДЛЯ ЛЮДЕЙ.</small></div>
               <div className="loginExactLanguages" aria-label="Язык интерфейса">
                 {(["RU", "KZ", "EN"] as const).map((item) => (
                   <button
@@ -2330,7 +2335,7 @@ export default function WebHome() {
                 data-auth-action="phone"
                 aria-label={authText.smsButton}
               >
-                <span className="loginExactIcon">☎</span>
+                <span className="loginExactIcon"><DesignIcon name="phone" /></span>
                 <span className="loginExactActionText">
                   <b>{loginUiText.phoneTitle}</b>
                   <em>{loginUiText.phoneSub}</em>
@@ -2342,7 +2347,7 @@ export default function WebHome() {
                 data-auth-action="email"
                 aria-label="Войти по e-mail"
               >
-                <span className="loginExactIcon">✉</span>
+                <span className="loginExactIcon"><DesignIcon name="mail" /></span>
                 <span className="loginExactActionText">
                   <b>{loginUiText.emailTitle}</b>
                   <em>{loginUiText.emailSub}</em>
@@ -2354,7 +2359,7 @@ export default function WebHome() {
                 data-auth-action="biometric"
                 aria-label={authText.biometric}
               >
-                <span className="loginExactIcon">◉</span>
+                <span className="loginExactIcon"><DesignIcon name="face" /></span>
                 <span className="loginExactActionText">
                   <b>{loginUiText.bioTitle}</b>
                   <em>{loginUiText.bioSub}</em>
@@ -2647,7 +2652,7 @@ export default function WebHome() {
             }}
             aria-label="Записать голос"
           >
-            <span>⌾</span>
+            <AizanArt name="voice" />
           </button>
           <div className="recordCard">
             <div className="recordLine">
@@ -2718,7 +2723,7 @@ export default function WebHome() {
       return (
         <section className="contentPanel aiInterviewPanel">
           <AppHeader
-            title="AI интервью"
+            title="Категория определена"
             subtitle={
               currentClassification
                 ? "Уточняю факты, документы и категорию дела"
@@ -2726,73 +2731,14 @@ export default function WebHome() {
             }
             back="newCase"
           />
-          <div className="aiProgressTop" aria-label="Прогресс AI интервью">
-            <div>
-              <span>Этап {Math.min(5, Math.max(1, Math.ceil(progress / 20)))} из 5</span>
-              <strong>{progress}%</strong>
-            </div>
-            <progress value={progress} max="100" />
-            <small>
-              {currentClassification
-                ? `${currentClassification.category_label} · ${currentClassification.subcategory_label}`
-                : "AI ждет факты для первичного анализа"}
-            </small>
-          </div>
-          <div className="aiStageRail">
-            {timeline.map((item) => (
-              <button
-                key={item.title}
-                className={item.done ? "done" : ""}
-                onClick={() => setSyncState(item.done ? `${item.title}: готово` : `${item.title}: нужно пройти`)}
-              >
-                {item.done ? "✓" : "○"} {item.title}
-              </button>
-            ))}
-          </div>
-          <div className="aiChatFlow" aria-label="AI чат по делу">
-            <div className="aiBubble assistant">
-              <strong>AI Юрист</strong>
-              <p>
-                Я веду дело по шагам: сначала уточняю факты, затем прошу документы,
-                определяю категорию и только после подтверждения создаю дело в базе.
-              </p>
-            </div>
-            <div className="aiBubble user">
-              <strong>Вы</strong>
-              <p>{caseText.trim() || "Описание еще не заполнено."}</p>
-            </div>
-            <div className="aiBubble assistant">
-              <strong>AI Юрист</strong>
-              <p>{nextAiQuestion()}</p>
-              {currentClassification?.missing_facts.length ? (
-                <em>Не хватает: {currentClassification.missing_facts.join(", ")}</em>
-              ) : null}
-            </div>
-            {currentClassification ? (
-              <div className="aiDecisionCard categoryHero">
-                <span>Предварительная категория</span>
-                <h3>{currentClassification.category_label}</h3>
-                <button
-                  className="categoryPill"
-                  onClick={() => setSyncState(`Подкатегория: ${currentClassification.subcategory_code}`)}
-                >
-                  {currentClassification.subcategory_label}
-                </button>
-                <p>
-                  Уверенность: {Math.round(currentClassification.confidence * 100)}%
-                  {currentClassification.risk_level === "high" ? " · высокий риск" : ""}
-                </p>
-              </div>
-            ) : null}
-            {documents.length ? (
-              <div className="aiBubble assistant">
-                <strong>Документы приняты</strong>
-                <p>
-                  Загружено: {documents[0].name}. Я учту документ на следующих этапах:
-                  OCR, анализ и подготовка претензии.
-                </p>
-              </div>
-            ) : null}
+          <div className="aizanCategoryCard">
+            <DesignIcon name="scales" />
+            <h3>{currentClassification?.category_label || "Категория пока не определена"}</h3>
+            <p>{currentClassification?.subcategory_label || "Запустите анализ вашего обращения"}</p>
+            {currentClassification && <><span className="categoryPill">Уверенность: {Math.round(currentClassification.confidence * 100)}%</span>
+              <p>{currentClassification.missing_facts.length ? nextAiQuestion() : "Проверьте категорию перед созданием дела"}</p></>}
+            <details><summary>Этапы обработки</summary><progress value={progress} max="100" />
+              {timeline.map(item => <p key={item.title}>{item.done ? "✓" : "○"} {item.title}</p>)}</details>
           </div>
           <div className="aiComposer">
             <input
@@ -2806,9 +2752,7 @@ export default function WebHome() {
             <button onClick={() => void classifyCurrentText()} disabled={classificationBusy || caseText.trim().length < 12}>
               {classificationBusy ? "Анализирую..." : "Анализировать факты"}
             </button>
-            <UploadControl source="file" className="inlineUploadLink">
-              Запросить / загрузить документы
-            </UploadControl>
+
             <button
               className="primary"
               disabled={
@@ -2825,7 +2769,7 @@ export default function WebHome() {
             >
               {currentClassification?.missing_facts.length
                 ? "Ответьте AI и повторите анализ"
-                : "Подтвердить и создать дело"}
+                : "Продолжить"}
             </button>
           </div>
           {currentClassification?.alternatives.length ? (
@@ -2849,9 +2793,9 @@ export default function WebHome() {
           <div className="caseFilters">
             {["Все", "В работе", "Суд", "Претензии"].map((filter) => (
               <button
-                className={filter === "Все" ? "active" : ""}
+                className={filter === caseFilter ? "active" : ""}
                 key={filter}
-                onClick={() => setCaseSearch(filter === "Все" ? "" : filter)}
+                onClick={() => setCaseFilter(filter)}
               >
                 {filter}
               </button>
@@ -3143,72 +3087,11 @@ export default function WebHome() {
                 />
               </div>
               <div className="docTabs">
-                <button
-                  className={documentTab === "documents" ? "active" : ""}
-                  onClick={() => {
-                    setDocumentTab("documents");
-                    setDocumentFolder("Все документы");
-                    setSyncState(`Документы: ${documents.length} файлов из API/upload`);
-                  }}
-                >
-                  Документы
-                </button>
-                <button
-                  className={documentTab === "evidence" ? "active" : ""}
-                  onClick={() => {
-                    setDocumentTab("evidence");
-                    setSyncState(`Доказательства: ${documents.filter((item) => item.status !== "Ошибка API upload").length} файлов`);
-                  }}
-                >
-                  Доказательства
-                </button>
-                <button
-                  className={documentTab === "recent" ? "active" : ""}
-                  onClick={() => {
-                    setDocumentTab("recent");
-                    setDocumentFolder("Все документы");
-                    setSyncState(`Недавние файлы: ${documents.slice(0, 5).length}`);
-                  }}
-                >
-                  Недавние
-                </button>
-              </div>
-              <h3 className="goldSection">Папки</h3>
-              <div className="folderList">
-                {[
-                  [
-                    "Личные документы",
-                    "Паспорт, ИИН, доверенности",
-                    `${documents.filter((item) => item.name.toLowerCase().includes("паспорт") || item.name.toLowerCase().includes("иин")).length} файлов`,
-                  ],
-                  [
-                    "Договоры и переписка",
-                    "Договоры, письма, сообщения",
-                    `${documents.filter((item) => item.name.toLowerCase().includes("договор") || item.name.toLowerCase().includes("переписк")).length} файлов`,
-                  ],
-                  [
-                    "Судебные документы",
-                    "Иски, определения, решения",
-                    `${documents.filter((item) => item.name.toLowerCase().includes("иск") || item.name.toLowerCase().includes("суд")).length} файлов`,
-                  ],
-                ].map(([title, sub, count]) => (
-                  <button
-                    key={title}
-                    onClick={() => {
-                      setDocumentFolder(title);
-                      setDocumentTab("documents");
-                      setSyncState(`Папка выбрана: ${title}`);
-                    }}
-                  >
-                    <span className="folderIcon"></span>
-                    <p>
-                      <strong>{title}</strong>
-                      <small>{sub}</small>
-                    </p>
-                    <em>{count}</em>
-                    <b>›</b>
-                  </button>
-                ))}
+                {([
+                  ["documents", "Все"], ["evidence", "По делу"],
+                  ["templates", "Шаблоны"], ["recent", "Загруженные"],
+                ] as const).map(([tab, label]) => <button key={tab} className={documentTab === tab ? "active" : ""}
+                  onClick={() => { setDocumentTab(tab); setDocumentFolder("Все документы"); }}>{label}</button>)}
               </div>
               <h3 className="goldSection">Последние файлы</h3>
               <div className="recentFileList">
@@ -3227,7 +3110,7 @@ export default function WebHome() {
                       setSyncState(`Файл выбран для OCR: ${doc.name}`);
                     }}
                   >
-                    <span className="fileBadge">DOC</span>
+                    <span className="fileBadge"><DesignIcon name="document" /></span>
                     <p>
                       <strong>{doc.name}</strong>
                       <small>{doc.status}</small>
@@ -3238,7 +3121,7 @@ export default function WebHome() {
                 ))}
               </div>
               <UploadControl source="file" className="primary wide heroCta fixedDocCta">
-                Добавить документ
+                Загрузить документ
               </UploadControl>
             </>
           )}
@@ -3299,7 +3182,7 @@ export default function WebHome() {
           {view === "documentUpload" && (
             <>
               <div className="uploadHero">
-                <AuthMark icon="⇧" />
+                <AizanArt name="upload" />
                 <h1>Добавьте документ</h1>
                 <p>
                   Загрузите файл любым удобным способом для анализа и
@@ -3356,11 +3239,11 @@ export default function WebHome() {
           {view === "analysis" && (
             <>
               {(() => {
-                const analysisProgressLabel = analysisDone ? "100%" : "82%";
+                const analysisProgressLabel = ocrConfirmed ? "Поля подтверждены" : "Ожидает проверки";
                 return (
                   <>
                     <div className="analysisHero">
-                      <span className="largeIcon">▧</span>
+                      <AizanArt name="analysis" />
                       <div>
                         <h1>Документы анализируются</h1>
                         <p>
@@ -3379,8 +3262,8 @@ export default function WebHome() {
                     </div>
                     <div className="analysisTimeline">
                       {[
-                        ["OCR завершен", "Текст распознан и извлечен"],
-                        ["Тип документа определен", "Договор займа"],
+                        ["Проверка текста", ocrConfirmed ? "Подтверждено пользователем" : "Проверьте текст и реквизиты"],
+                        ["Тип документа", "Требует проверки"],
                         [
                           "Проверка реквизитов",
                           "Проверяем реквизиты и подписи",
@@ -3392,18 +3275,14 @@ export default function WebHome() {
                           onClick={index < 2 ? confirmOcr : analyzeDocuments}
                         >
                           <span>
-                            {index < 2 ? "✓" : index === 2 ? "●" : ""}
+                            {index === 0 && ocrConfirmed ? "✓" : "○"}
                           </span>
                           <p>
                             <strong>{step}</strong>
                             <small>{detail}</small>
                           </p>
                           <em>
-                            {index < 2
-                              ? "Завершено"
-                              : index === 2
-                                ? "В процессе"
-                                : "Ожидает"}
+                            {index === 0 && ocrConfirmed ? "Подтверждено" : "Ожидает"}
                           </em>
                         </button>
                       ))}
@@ -3412,7 +3291,7 @@ export default function WebHome() {
                       <span>✦</span>
                       <p>
                         {analysisDone
-                          ? "Анализ завершен. Можно формировать претензию."
+                          ? "Документы получены. Проверьте факты перед подготовкой проекта."
                           : documents.length
                             ? `Система нашла ${documents.length} документа и выделяет ключевые сведения`
                             : "Загрузите документы, чтобы запустить OCR и анализ"}
@@ -3427,7 +3306,7 @@ export default function WebHome() {
                         ["▤", `${documents.length} документов`, "Из upload/API"],
                         [
                           "▣",
-                          analysisDone ? "Даты найдены" : "Даты не извлечены",
+                          "Даты требуют проверки",
                           "После OCR",
                         ],
                         ["◎", "Суммы не подтверждены", "Требуется документ"],
@@ -3561,7 +3440,7 @@ export default function WebHome() {
           <div className="caseFilters deadlineFilters">
             {["Все", "Срочно", "Суд", "Напоминания"].map((filter) => (
               <button
-                className={filter === "Все" ? "active" : ""}
+                className={filter === caseFilter ? "active" : ""}
                 key={filter}
                 onClick={() => setDeadlineStatus(`Фильтр сроков: ${filter}`)}
               >
@@ -3752,9 +3631,6 @@ export default function WebHome() {
     }
 
     if (view === "claim" || view === "claimDraft" || view === "claimSend") {
-      const claimBody =
-        generatedClaimBody ||
-        "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ в установленный срок. Перед отправкой документ требует проверки пользователя.";
       return (
         <section className="contentPanel">
           <AppHeader
@@ -3792,7 +3668,7 @@ export default function WebHome() {
                         index === 3 ? generateClaim : () => setSyncState(step)
                       }
                     >
-                      <span>{index < 3 ? "✓" : "●"}</span>
+                      <span>{(index === 0 ? Boolean(classification) : index === 1 ? Boolean(selectedNorm) : index === 2 ? ocrConfirmed : claimReady) ? "✓" : "○"}</span>
                       <strong>{step}</strong>
                     </button>
                   ))}
@@ -3808,8 +3684,8 @@ export default function WebHome() {
               </div>
               <div className="claimProgress">
                 <span>Прогресс подготовки</span>
-                <b>{claimReady ? "100%" : "74%"}</b>
-                <progress value={claimReady ? 100 : 74} max="100" />
+                <b>{claimReady ? "Проект готов" : "Ожидает запуска"}</b>
+                <progress value={claimReady ? 1 : 0} max="1" />
               </div>
               <div className="docHint">
                 <span>ⓘ</span>
@@ -3834,7 +3710,7 @@ export default function WebHome() {
             <>
               <div className="claimStatusRow">
                 <span>✎ Черновик</span>
-                <span>🛡 Проверено AI</span>
+                <span>Требует вашей проверки</span>
                 <span>⚠ Требует подтверждения</span>
               </div>
               <article className="claimPaper">
@@ -3858,11 +3734,10 @@ export default function WebHome() {
                   <span>▤</span>
                   <div>
                     <b>Суть требования</b>
-                    <p>
-                      {generatedClaimBody
-                        ? claimBody
-                        : "Прошу урегулировать спор в досудебном порядке, исполнить обязательства и предоставить письменный ответ."}
-                    </p>
+                    <textarea className="claimBodyEditor" aria-label="Текст проекта претензии"
+                      value={generatedClaimBody} placeholder="Сначала сформируйте проект претензии"
+                      onChange={event => setGeneratedClaimBody(event.target.value)} />
+                    <p className="claimPrintBody">{generatedClaimBody}</p>
                   </div>
                 </section>
                 <section>
@@ -3885,25 +3760,21 @@ export default function WebHome() {
                 </aside>
               </article>
               <div className="claimDraftActions">
-                <button onClick={() => go("claim")}>✎ Редактировать</button>
+                <button onClick={() => document.querySelector<HTMLTextAreaElement>(".claimBodyEditor")?.focus()}>✎ Редактировать</button>
                 <button
-                  onClick={() =>
-                    setSyncState(
-                      "PDF будет сформирован через documents adapter после подтверждения",
-                    )
-                  }
+                  disabled={!generatedClaimBody.trim()} onClick={() => window.print()}
                 >
                   ▣ Скачать PDF
                 </button>
               </div>
               <button
                 className="primary wide heroCta"
-                onClick={confirmClaimSent}
+                onClick={() => go("claimSend")} disabled={!generatedClaimBody.trim()}
               >
                 ✧ Перейти к отправке
               </button>
               <p className="claimSecure">
-                🛡 Документ защищён и хранится безопасно
+                Проверьте текст и реквизиты перед отправкой
               </p>
             </>
           )}
@@ -4433,104 +4304,15 @@ export default function WebHome() {
     }
 
     return (
-      <section className="homeScreen">
-        <div className="topLine">
-          <div>
-            <h1>Здравствуйте, {profileName || phone || "пользователь"}</h1>
-            <p>Ваш умный юридический помощник</p>
-          </div>
-          <div className="topActions">
-            <button
-              className={notificationOpen ? "bell activeIcon" : "bell"}
-              onClick={toggleNotifications}
-              aria-label="Уведомления"
-            >
-              ♧
-            </button>
-            <button className="avatar" onClick={() => go("profile")}>
-              {profileName.slice(0, 2).toUpperCase()}
-            </button>
-          </div>
-        </div>
-        {notificationOpen && (
-          <div className="analysisBox">
-            <strong>Уведомления</strong>
-            <p>
-              {tasks
-                .filter((task) => !task.done)
-                .map((task) => `${task.title}: ${task.due}`)
-                .join("; ") || "Активных уведомлений нет"}
-            </p>
-          </div>
-        )}
-        <button
-          className={recording ? "mic active" : "mic"}
-          onClick={() => {
-            startNewCaseDraft({ startVoice: true });
-          }}
-          aria-label="Рассказать проблему"
-        >
-          <span>⌾</span>
+      <section className="homeScreen aizanHome">
+        <button className="aizanMicrophone" aria-label="Рассказать проблему" onClick={() => {
+          if (caseText.trim()) { go("newCase"); void startRecording(); }
+          else startNewCaseDraft({ startVoice: true });
+        }}><AizanArt name="microphone" /></button>
+        <h1>Нажмите, чтобы говорить</h1>
+        <button className="aizanTextEntry" onClick={() => { go("newCase"); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".recordCard textarea")?.focus(), 0); }}>
+          <span className="keyboardIcon"><DesignIcon name="keyboard" /></span><span>Ввести текст</span>
         </button>
-        <h2>Рассказать проблему</h2>
-        <p className="hint">
-          {recording
-            ? "Запись активна. Открылся экран описания дела."
-            : "Нажмите и говорите голосом"}
-        </p>
-        <div className="quickGrid">
-          <button onClick={() => startNewCaseDraft()}>
-            <span className="quickIcon">▣</span>Новое дело
-            <small>Создать новое дело</small>
-          </button>
-          <button onClick={() => go("documents")}>
-            <span className="quickIcon">□</span>Мои документы
-            <small>Просмотр и загрузка</small>
-          </button>
-          <button onClick={() => go("deadlines")}>
-            <span className="quickIcon">▦</span>Сроки и календарь
-            <small>Даты и напоминания</small>
-          </button>
-        </div>
-        <div className="sectionTitle">
-          <h3>Последние дела</h3>
-          <button onClick={() => go("cases")}>Все дела</button>
-        </div>
-        <div className="list">
-          {!cases.length && (
-            <button className="caseRow" onClick={() => startNewCaseDraft()}>
-              <span className="roundIcon">+</span>
-              <span>
-                <strong>Нет дел</strong>
-                <small>Создайте первое дело</small>
-                <small className="goldDot">
-                  ● Только реальные сохраненные данные
-                </small>
-              </span>
-              <em>Сейчас</em>
-            </button>
-          )}
-          {cases.slice(0, 2).map((item) => (
-            <button
-              className="caseRow"
-              key={item.id}
-              onClick={() => {
-                setActiveCaseId(item.id);
-                go("case");
-              }}
-            >
-              <span className="roundIcon">⚖</span>
-              <span>
-                <strong>{item.title}</strong>
-                <small>
-                  Дело №{item.id} · {item.type}
-                </small>
-                <small className="goldDot">● {item.status}</small>
-              </span>
-              <em>{item.date}</em>
-            </button>
-          ))}
-        </div>
       </section>
     );
   }
@@ -4538,6 +4320,7 @@ export default function WebHome() {
   return (
     <main
       className="appShell"
+      data-design="aizan"
       data-theme={theme}
       data-view={view}
       data-design-screen-count={screens.length}
@@ -4571,6 +4354,15 @@ export default function WebHome() {
         </nav>
       </aside>
       <section className="deviceFrame">
+        {!["login", "register", "otp", "biometric", "onboarding"].includes(view) && (
+          <header className={`aizanHeader ${view === "home" ? "aizanHeaderHome" : ""}`}>
+            <button className="aizanHeaderAction" aria-label={["home", "cases", "documents"].includes(view) ? "Новое дело" : "Назад"} onClick={() => ["home", "cases", "documents"].includes(view) ? startNewCaseDraft() : go(view === "category" ? "newCase" : "home")}>
+              {["home", "cases", "documents"].includes(view) ? "+" : "←"}
+            </button>
+            <div className="aizanIdentity"><AizanArt name="brand" /><p>ВАШ ЮРИДИЧЕСКИЙ<br />AI-ПОМОЩНИК</p></div>
+            <button className="aizanHeaderAction" aria-label="Настройки" onClick={() => view === "settings" ? toggleNotifications() : go("settings")}><DesignIcon name="settings" /></button>
+          </header>
+        )}
         <div className="appStatus">
           <span>{syncState}</span>
           <button aria-label="Синхронизировать" onClick={syncWithApi}>
@@ -4580,54 +4372,15 @@ export default function WebHome() {
             {theme === "dark" ? "☀" : "☾"}
           </button>
         </div>
+        {notificationOpen && <aside className="aizanNotifications"><strong>Уведомления</strong><p>{tasks.filter((task) => !task.done).map((task) => `${task.title}: ${task.due}`).join("; ") || "Активных уведомлений нет"}</p></aside>}
         {renderView()}
-        <nav className="bottomNav">
-          <button
-            className={
-              view === "home" || view === "analysis" || view === "legalSearch"
-                ? "active"
-                : ""
-            }
-            onClick={() => go("home")}
-          >
-            Главная
-          </button>
-          <button
-            className={
-              ["cases", "case", "chat", "newCase", "category"].includes(view)
-                ? "active"
-                : ""
-            }
-            onClick={() => go("cases")}
-          >
-            Дела
-          </button>
-          <button
-            className={
-              ["documents", "documentCheck", "documentUpload"].includes(view)
-                ? "active"
-                : ""
-            }
-            onClick={() => go("documents")}
-          >
-            Документы
-          </button>
-          <button
-            className={view === "deadlines" ? "active" : ""}
-            onClick={() => go("deadlines")}
-          >
-            Сроки
-          </button>
-          <button
-            className={
-              ["profile", "settings", "subscription", "help"].includes(view)
-                ? "active"
-                : ""
-            }
-            onClick={() => go("profile")}
-          >
-            Профиль
-          </button>
+        {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|проверьте|зафиксирован|метаданные|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
+        <nav className="bottomNav" aria-label="Основная навигация">
+          <button className={view === "home" ? "active" : ""} onClick={() => go("home")}><DesignIcon name="home" />Главная</button>
+          <button className={["cases", "case", "chat"].includes(view) ? "active" : ""} onClick={() => go("cases")}><DesignIcon name="folder" />Мои дела</button>
+          <UploadControl source="camera" className="cameraNav"><span><DesignIcon name="camera" /></span>Камера</UploadControl>
+          <button className={["documents", "documentUpload", "documentCheck"].includes(view) ? "active" : ""} onClick={() => go("documents")}><DesignIcon name="document" />Документы</button>
+          <button className={["profile", "settings", "help", "subscription"].includes(view) ? "active" : ""} onClick={() => go("profile")}><DesignIcon name="user" />Профиль</button>
         </nav>
       </section>
       <aside className="rightPanel" aria-label="Контекст дела">

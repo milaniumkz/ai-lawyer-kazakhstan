@@ -11,6 +11,9 @@ dependencies:
     sdk: flutter
   crypto: ^3.0.7
   file_picker: ^10.3.7
+  image_picker: ^1.2.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
   go_router: ^14.8.1
   flutter_riverpod: ^2.6.1
   http: ^1.4.0
@@ -24,3 +27,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/aizan/
+    - assets/fonts/OpenSans-LICENSE.txt
+    - assets/fonts/Liberation-LICENSE.txt
+  fonts:
+    - family: AizanSans
+      fonts:
+        - asset: assets/fonts/OpenSans-Regular.ttf
+    - family: AizanSerif
+      fonts:
+        - asset: assets/fonts/LiberationSerif-Regular.ttf
