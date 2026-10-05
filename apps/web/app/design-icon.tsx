@@ -24,4 +24,3 @@ const paths: Record<DesignIconName, ReactNode> = {
 export function DesignIcon({ name, className = "" }: { name: DesignIconName; className?: string }) {
   return <svg className={`designIcon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
-
