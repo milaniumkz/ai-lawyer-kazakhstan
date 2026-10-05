@@ -404,6 +404,10 @@ export class CasesService {
           $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
         )
         ON CONFLICT (id) DO UPDATE SET
+          case_id = EXCLUDED.case_id,
+          category_code = EXCLUDED.category_code,
+          subcategory_code = EXCLUDED.subcategory_code,
+          confidence = EXCLUDED.confidence,
           alternatives = EXCLUDED.alternatives,
           facts = EXCLUDED.facts,
           missing_facts = EXCLUDED.missing_facts,

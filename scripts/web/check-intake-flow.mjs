@@ -5,7 +5,8 @@ const web = process.env.WEB_BASE_URL;
 if (!web) { console.log('Intake E2E skipped: WEB_BASE_URL is not set'); process.exit(0); }
 const api = (process.env.API_TEST_ORIGIN || web).replace(/\/$/, '');
 const browser = await chromium.launch(process.env.CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] } : {});
-const context = await browser.newContext({ viewport: { width: 390, height: 845 }, ignoreHTTPSErrors: process.env.WEB_TEST_IGNORE_HTTPS_ERRORS === '1' });
+const proxyServer = process.env.WEB_TEST_PROXY || (/^https?:\/\/(?!localhost|127\.0\.0\.1)/.test(web) ? process.env.HTTPS_PROXY : undefined);
+const context = await browser.newContext({ viewport: { width: 390, height: 845 }, ignoreHTTPSErrors: process.env.WEB_TEST_IGNORE_HTTPS_ERRORS === '1', ...(proxyServer ? {proxy:{server:proxyServer,bypass:'localhost,127.0.0.1'}} : {}) });
 let userId;
 let page;
 async function request(path, data, method = data ? 'POST' : 'GET') {
@@ -108,6 +109,13 @@ try {
   assert.equal(restored.remoteCaseId, cases[0].id);
   assert.equal(restored.classification.result.facts.amount, '100000 тенге');
   assert.match(restored.generatedClaimBody, /100000 тенге/);
+  const manual = await request('/ai/classifications', {text:'Хочу развестись'});
+  await request(`/ai/classifications/${manual.id}/override`, {subcategoryCode:'civil.debt.loan',reason:'Проверка сохранения ручного выбора'});
+  const manualReload = await request(`/ai/classifications/${manual.id}`);
+  assert.equal(manualReload.result.category_code, 'civil.debt');
+  assert.equal(manualReload.result.subcategory_code, 'civil.debt.loan');
+  assert.equal(manualReload.result.confidence, 1);
+  assert.deepEqual(manualReload.result.missing_facts, ['loan_date','amount','debtor_identity']);
   assert.equal(jsErrors.length, 0, jsErrors.join('\n'));
   console.log('Real API intake E2E passed: one initial classification, sequential saved answers, outage/retry without duplicate messages, reload, confirmed case/facts, contextual legal answer, generated draft and reopening a saved case with its own facts/documents/history.');
 } catch (error) {
