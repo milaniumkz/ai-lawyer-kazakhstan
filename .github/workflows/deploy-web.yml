@@ -1,0 +1,51 @@
+name: Deploy Web
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build release package
+        run: npm run deploy:package -- /tmp/ai-lawyer-kz.tar.gz
+
+      - name: Configure SSH
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/ai-lawyer-kz
+          chmod 600 ~/.ssh/ai-lawyer-kz
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload package
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+        run: |
+          scp -i ~/.ssh/ai-lawyer-kz -P "$SERVER_SSH_PORT" /tmp/ai-lawyer-kz.tar.gz "$SERVER_USER@$SERVER_HOST:/opt/ai-lawyer-kz.tar.gz"
+
+      - name: Install on server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+        run: |
+          ssh -i ~/.ssh/ai-lawyer-kz -p "$SERVER_SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz'
+
+      - name: Public health check
+        env:
+          PUBLIC_SERVER_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: npm run release-check:server
