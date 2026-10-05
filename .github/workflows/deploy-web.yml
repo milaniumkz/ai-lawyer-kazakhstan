@@ -3,9 +3,17 @@ name: Deploy Web
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-lawyer-server-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -13,6 +21,12 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python -m pip install -e services/ai
 
       - run: npm ci
 
@@ -23,11 +37,15 @@ jobs:
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
         run: |
+          test -n "$SERVER_HOST" || { echo 'SERVER_HOST is missing'; exit 1; }
+          test -n "$SERVER_SSH_PRIVATE_KEY" || { echo 'SERVER_SSH_PRIVATE_KEY is missing'; exit 1; }
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/ai-lawyer-kz
           chmod 600 ~/.ssh/ai-lawyer-kz
-          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 15 -p "${SERVER_SSH_PORT:-22}" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload package
         env:
@@ -35,7 +53,9 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
         run: |
-          scp -i ~/.ssh/ai-lawyer-kz -P "$SERVER_SSH_PORT" /tmp/ai-lawyer-kz.tar.gz "$SERVER_USER@$SERVER_HOST:/opt/ai-lawyer-kz.tar.gz"
+          test -n "$SERVER_USER" || { echo 'SERVER_USER is missing'; exit 1; }
+          (cd /tmp && sha256sum ai-lawyer-kz.tar.gz > ai-lawyer-kz.tar.gz.sha256)
+          scp -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/ai-lawyer-kz -P "${SERVER_SSH_PORT:-22}" /tmp/ai-lawyer-kz.tar.gz /tmp/ai-lawyer-kz.tar.gz.sha256 "$SERVER_USER@$SERVER_HOST:/opt/"
 
       - name: Install on server
         env:
@@ -43,9 +63,38 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
         run: |
-          ssh -i ~/.ssh/ai-lawyer-kz -p "$SERVER_SSH_PORT" "$SERVER_USER@$SERVER_HOST" 'bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz'
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /opt
+          sha256sum -c ai-lawyer-kz.tar.gz.sha256
+          test -f /etc/ai-lawyer-api.env
+          previous_app_inode=$(stat -c %i /opt/ai-lawyer-kz/app)
+          bash /opt/ai-lawyer-kz/app/scripts/deploy/server-backup-postgres.sh
+          if ! bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz; then
+            current_app_inode=$(stat -c %i /opt/ai-lawyer-kz/app 2>/dev/null || true)
+            if [ "$current_app_inode" != "$previous_app_inode" ] && [ -d /opt/ai-lawyer-kz/app.prev ]; then
+              if [ -e /opt/ai-lawyer-kz/app ]; then
+                mv /opt/ai-lawyer-kz/app "/opt/ai-lawyer-kz/app.failed.$(date -u +%Y%m%dT%H%M%SZ)"
+              fi
+              mv /opt/ai-lawyer-kz/app.prev /opt/ai-lawyer-kz/app
+              systemctl restart ai-lawyer-web ai-lawyer-admin ai-lawyer-api ai-lawyer-ai
+              bash /opt/ai-lawyer-kz/app/scripts/deploy/server-health-check.sh
+            fi
+            exit 1
+          fi
+          REMOTE
 
       - name: Public health check
         env:
           PUBLIC_SERVER_URL: ${{ secrets.PUBLIC_SERVER_URL }}
-        run: npm run release-check:server
+        run: |
+          test -n "$PUBLIC_SERVER_URL" || { echo 'PUBLIC_SERVER_URL is missing'; exit 1; }
+          npm run release-check:server
+          curl --fail --silent --show-error "$PUBLIC_SERVER_URL/aizan/home.png" -o /tmp/deployed-home.png
+          cmp apps/web/public/aizan/home.png /tmp/deployed-home.png
+          curl --fail --silent --show-error "$PUBLIC_SERVER_URL/" -o /tmp/deployed-web.html
+          grep -q 'aizanArt-authBrand' /tmp/deployed-web.html
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/ai-lawyer-kz

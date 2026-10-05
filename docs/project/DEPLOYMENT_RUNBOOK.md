@@ -23,7 +23,7 @@ For the combined release report against the same file, run `RELEASE_BLOCKERS_ENV
 
 Use these scripts for the current Ubuntu test server flow:
 
-1. `npm run deploy:package` creates a checked release archive from current `HEAD`.
+1. `npm run deploy:package` runs server-only gates (web/admin/API/AI) and creates a checked release archive from current `HEAD`. Flutter gates remain separate in CI because mobile binaries are not installed on this server.
 2. Upload the archive to `/opt/ai-lawyer-kz.tar.gz`.
 3. On the server, run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz` for a full install/update.
 4. Run `bash /opt/ai-lawyer-kz/app/scripts/deploy/server-postgres-setup.sh` to install PostgreSQL 16 + pgvector, apply migrations and switch API to `PERSISTENCE_MODE=postgres`.
@@ -39,3 +39,11 @@ Node/API services bind to `127.0.0.1`; Nginx is the only public application entr
 ## Rollback
 
 Use immutable artifacts and database migration rollback only when the migration declares a safe rollback path. Destructive migrations require backup and expand-migrate-contract plan.
+
+## AIZAN deployment through GitHub Actions
+
+The manual `Deploy Web` workflow uses existing GitHub secrets `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_PORT` (defaults to 22), `SERVER_SSH_PRIVATE_KEY` and `PUBLIC_SERVER_URL`. The SSH key stays in the runner and is removed after use. GitHub never returns a stored secret value through its API. No key needs to be committed or pasted into chat.
+
+Choose the prepared `deploy/aizan-server` branch when dispatching the workflow so the package includes the new AIZAN sources. The workflow backs up PostgreSQL, keeps the server's existing environment file, installs all four services, checks public endpoints and the exact AIZAN asset, and restores the preceding application version if installation fails. Database restoration remains a separate operator action.
+
+As of preparation, the cloud environment blocks api.github.com and the server HTTPS host; these domains are saved in the configuration draft but require publication. Secret presence and an actual deployment have not been confirmed.
