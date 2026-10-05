@@ -31,6 +31,15 @@ describe('TemplatesService', () => {
     await expect(service.generate({ templateId: template.id, caseId: 'case-1', fields: {} })).rejects.toThrow(BadRequestException);
   });
 
+  it('rejects a persisted header-only template instead of claiming a complete document', async () => {
+    const repository = createRepositoryMock();
+    const [template] = await repository.listTemplates();
+    repository.findTemplateById.mockResolvedValue({ ...template, body: 'Проект документа. Требует проверки и подтверждения пользователем.' });
+    const service = new TemplatesService(repository);
+    await expect(service.generate({ templateId: template.id, caseId: 'case-1', fields: { claimantName: 'Заявитель', respondentName: 'Ответчик', claimAmount: '100000', claimReason: 'Долг', deadlineDate: 'Уточняется' } })).rejects.toThrow('Шаблон не содержит обязательные поля документа');
+    expect(repository.createGeneratedDocument).not.toHaveBeenCalled();
+  });
+
   it('checks case ownership when owner header is provided', async () => {
     const cases = { getCase: jest.fn().mockRejectedValue(new ForbiddenException('CASE_ACCESS_DENIED')) } as unknown as CasesService;
     const service = new TemplatesService(undefined, cases);

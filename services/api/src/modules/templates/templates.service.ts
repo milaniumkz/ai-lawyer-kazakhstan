@@ -43,6 +43,8 @@ export class TemplatesService {
     if (!template) throw new NotFoundException('TEMPLATE_NOT_FOUND');
     const missing = template.requiredFields.filter((field) => !input.fields[field]);
     if (missing.length) throw new BadRequestException({ code: 'REQUIRED_FIELDS_MISSING', missing });
+    const absent = template.requiredFields.filter((field) => !template.body.includes(`{{${field}}}`));
+    if (absent.length) throw new BadRequestException({ code: 'TEMPLATE_INCOMPLETE', message: 'Шаблон не содержит обязательные поля документа', missing: absent });
 
     let body = template.body;
     for (const [key, value] of Object.entries(input.fields)) {

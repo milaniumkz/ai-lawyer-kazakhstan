@@ -95,6 +95,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON subscription_payments TO ai_lawyer_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO ai_lawyer_app;
 SQL
   fi
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
+    -f "$APP_ROOT/app/infra/db/seeds/0002_pretrial_claim_v2.sql"
 fi
 
 mkdir -p /etc/ai-lawyer-kz/tls

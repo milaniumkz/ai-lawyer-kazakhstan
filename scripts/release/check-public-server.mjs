@@ -298,7 +298,7 @@ async function expectPublicApiDemo() {
   });
 
   const templates = await apiJson('/templates');
-  const templateId = templates?.[0]?.id;
+  const templateId = templates?.find((item) => item.code === "pretrial_claim" && item.language === "ru" && item.version === "v2")?.id ?? templates?.find((item) => item.code === "pretrial_claim" && item.language === "ru")?.id;
   if (!templateId) {
     failures.push('/api/v1/templates did not return a template id');
     return;

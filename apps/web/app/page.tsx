@@ -221,6 +221,8 @@ type PaymentHistoryItem = {
 
 type Language = "RU" | "KZ" | "EN";
 
+const LEGACY_EMPTY_CLAIM = "Проект документа. Требует проверки и подтверждения пользователем.";
+
 function normalizeKzPhoneInput(value: string) {
   const digits = value.replace(/\D/g, "");
   if (!digits) return "+7";
@@ -731,7 +733,7 @@ export default function WebHome() {
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
       if (saved.generatedClaimBody)
         setGeneratedClaimBody(saved.generatedClaimBody);
-      if (typeof saved.claimReady === "boolean") setClaimReady(saved.claimReady);
+      if (typeof saved.claimReady === "boolean") setClaimReady(saved.claimReady && saved.generatedClaimBody?.trim() !== LEGACY_EMPTY_CLAIM);
       if (typeof saved.sent === "boolean") setSent(saved.sent);
       if (saved.claimSendContact) setClaimSendContact(saved.claimSendContact);
       if (saved.claimSendMethod) setClaimSendMethod(saved.claimSendMethod);
@@ -1062,7 +1064,7 @@ export default function WebHome() {
       setOcrConfirmed(false);
       setAnalysisDone(false);
       setGeneratedClaimBody(currentDraft?.body ?? "");
-      setClaimReady(Boolean(currentDraft));
+      setClaimReady(Boolean(currentDraft && currentDraft.body.trim() !== LEGACY_EMPTY_CLAIM));
       setSent(false);
       setMessages(restoredMessages.filter((message) => message.role === "assistant" || message.role === "user").map((message) => ({ role: message.role as "assistant" | "user", text: message.text })));
       setHomeConversationOpen(true);
@@ -1635,19 +1637,21 @@ export default function WebHome() {
       go("profile");
       return;
     }
-    if (claimReady && generatedClaimBody) { go("claimDraft"); return; }
+    if (claimReady && generatedClaimBody && generatedClaimBody.trim() !== LEGACY_EMPTY_CLAIM) { go("claimDraft"); return; }
     if (claimBusyRef.current) return;
     claimBusyRef.current = true;
     setClaimBusy(true);
     setSyncState("Формирую претензию...");
     try {
       const userId = await ensureUser();
-      const templates = (await apiJson("/templates")) as { id: string }[];
+      const templates = (await apiJson("/templates")) as { id: string; code: string; language: string; version: string }[];
+      const template = templates.find((item) => item.code === "pretrial_claim" && item.language === "ru" && item.version === "v2") ?? templates.find((item) => item.code === "pretrial_claim" && item.language === "ru");
+      if (!template) throw new Error("Шаблон претензии недоступен");
       const generated = (await apiJson("/documents/generate", {
         method: "POST",
         headers: { "x-user-id": userId },
         body: JSON.stringify({
-          templateId: templates[0]?.id ?? "tpl-pretrial-claim-ru-v1",
+          templateId: template.id,
           caseId: remoteCaseId,
           fields: {
             claimantName: profileName,
@@ -3879,6 +3883,7 @@ export default function WebHome() {
                       value={generatedClaimBody} placeholder="Сначала сформируйте проект претензии"
                       onChange={event => setGeneratedClaimBody(event.target.value)} />
                     <p className="claimPrintBody">{generatedClaimBody}</p>
+                    {generatedClaimBody.trim() === LEGACY_EMPTY_CLAIM && <button className="primary" onClick={() => go("claim")}>Сформировать полный проект</button>}
                   </div>
                 </section>
                 <section>
