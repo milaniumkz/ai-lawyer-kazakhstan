@@ -26,7 +26,7 @@ void main() {
 
     await expectLater(
         find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_light.png'));
-  });
+  }, tags: ['golden']);
 
   testWidgets('home screen matches dark design regression golden',
       (tester) async {
@@ -39,7 +39,7 @@ void main() {
 
     await expectLater(
         find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_dark.png'));
-  });
+  }, tags: ['golden']);
 
   testWidgets('core release screens render in light and dark themes',
       (tester) async {
