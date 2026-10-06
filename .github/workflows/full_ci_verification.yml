@@ -1,5 +1,10 @@
 ---
-name: CI
+name: Full CI Verification
+'on':
+  push:
+    branches:
+    - codex/full-ci-pilot
+  workflow_dispatch: {}
 permissions:
   contents: read
 jobs:
@@ -34,6 +39,8 @@ jobs:
     - run: npm run typecheck
     - run: npm test
     - run: npm run build
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && github.event_name
+      != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/full-ci-pilot')
   python:
     runs-on: ${{ github.event_name != 'pull_request' && fromJSON('["milanium-mac-arm64",
       "repo-ai-lawyer-kazakhstan"]') || fromJSON('["ubuntu-latest"]') }}
@@ -66,6 +73,8 @@ jobs:
     - run: python -m pip install -e "services/ai[dev]"
     - run: PYTHONPATH=services/ai/app python -m unittest discover -s services/ai/app
         -p "*test*.py"
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && github.event_name
+      != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/full-ci-pilot')
   flutter:
     runs-on: ${{ github.event_name != 'pull_request' && fromJSON('["milanium-mac-arm64",
       "repo-ai-lawyer-kazakhstan"]') || fromJSON('["ubuntu-latest"]') }}
@@ -104,6 +113,8 @@ jobs:
       working-directory: apps/mobile
     - run: flutter test --exclude-tags golden
       working-directory: apps/mobile
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && github.event_name
+      != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/full-ci-pilot')
   docker-config:
     runs-on: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main'
       || github.ref == 'refs/heads/codex/full-ci-pilot') && fromJSON('["milanium-linux-arm64",
@@ -111,8 +122,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run: docker compose -f infra/docker-compose.yml config
-'on':
-  pull_request: 
-  push:
-    branches:
-    - main
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && github.event_name
+      != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/full-ci-pilot')
