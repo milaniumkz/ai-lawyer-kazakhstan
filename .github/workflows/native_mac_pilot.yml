@@ -103,7 +103,13 @@ jobs:
         run: |
           echo /Volumes/PD1000/job/flutter/bin >> "$GITHUB_PATH"
           /Volumes/PD1000/job/flutter/bin/flutter --version --machine | python3 -c 'import json,sys; assert json.load(sys.stdin)["frameworkVersion"] == "3.41.1"'
-      - run: flutter pub get ${{ github.event_name != 'pull_request' && '--enforce-lockfile' || '' }}
+      - name: Resolve Flutter dependencies
+        run: |
+          if [[ "${{ github.event_name }}" != pull_request && -f pubspec.lock ]]; then
+            flutter pub get --enforce-lockfile
+          else
+            flutter pub get
+          fi
         working-directory: apps/mobile
       - run: flutter analyze
         working-directory: apps/mobile
