@@ -1,15 +1,20 @@
-name: CI
+name: Native Mac Pilot
 
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches: [codex/mac-ci-pilot]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: native-mac-ai-lawyer-kazakhstan-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   node:
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && (github.ref == 'refs/heads/codex/mac-ci-pilot' || github.ref == 'refs/heads/main')
     runs-on: ${{ github.event_name != 'pull_request' && fromJSON('["milanium-mac-arm64", "repo-ai-lawyer-kazakhstan"]') || fromJSON('["ubuntu-latest"]') }}
     timeout-minutes: 45
     env:
@@ -41,6 +46,7 @@ jobs:
       - run: npm run build
 
   python:
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && (github.ref == 'refs/heads/codex/mac-ci-pilot' || github.ref == 'refs/heads/main')
     runs-on: ${{ github.event_name != 'pull_request' && fromJSON('["milanium-mac-arm64", "repo-ai-lawyer-kazakhstan"]') || fromJSON('["ubuntu-latest"]') }}
     timeout-minutes: 45
     env:
@@ -72,6 +78,7 @@ jobs:
       - run: PYTHONPATH=services/ai/app python -m unittest discover -s services/ai/app -p "*test*.py"
 
   flutter:
+    if: github.repository == 'milaniumkz/ai-lawyer-kazakhstan' && (github.ref == 'refs/heads/codex/mac-ci-pilot' || github.ref == 'refs/heads/main')
     runs-on: ${{ github.event_name != 'pull_request' && fromJSON('["milanium-mac-arm64", "repo-ai-lawyer-kazakhstan"]') || fromJSON('["ubuntu-latest"]') }}
     timeout-minutes: 45
     env:
@@ -103,8 +110,3 @@ jobs:
       - run: flutter test --exclude-tags golden
         working-directory: apps/mobile
 
-  docker-config:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker compose -f infra/docker-compose.yml config
