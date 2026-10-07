@@ -9,6 +9,21 @@ import { IdentityRepository } from './identity.repository';
 export class PostgresIdentityRepository implements IdentityRepository {
   constructor(private readonly db: DatabaseService) {}
 
+  async exportOwnedData(userId: string): Promise<Record<string, unknown>> {
+    const queries: Record<string,string> = {
+      cases: 'SELECT * FROM legal_cases WHERE owner_user_id=$1 ORDER BY created_at',
+      messages: 'SELECT m.* FROM messages m JOIN legal_cases c ON c.id=m.case_id WHERE c.owner_user_id=$1 ORDER BY m.created_at',
+      documents: 'SELECT f.id,f.case_id,f.file_name,f.mime_type,f.size_bytes,f.sha256,f.status,f.extracted_fields,f.created_at FROM files f JOIN legal_cases c ON c.id=f.case_id WHERE c.owner_user_id=$1 ORDER BY f.created_at',
+      drafts: 'SELECT d.* FROM generated_documents d JOIN legal_cases c ON c.id=d.case_id WHERE c.owner_user_id=$1 ORDER BY d.created_at',
+      classifications: 'SELECT * FROM case_classifications WHERE owner_user_id=$1 ORDER BY created_at',
+      tasks: 'SELECT payload FROM user_tasks WHERE owner_user_id=$1 ORDER BY created_at',
+      dispatches: 'SELECT payload FROM document_dispatches WHERE owner_user_id=$1 ORDER BY created_at',
+      supportTickets: 'SELECT payload FROM support_tickets WHERE owner_user_id=$1 ORDER BY created_at',
+    };
+    const entries = await Promise.all(Object.entries(queries).map(async ([key,sql]) => [key,(await this.db.query(sql,[userId])).rows]));
+    return Object.fromEntries(entries);
+  }
+
   async findUserByContact(input: { phone?: string; email?: string }) {
     const result = await this.db.query<UserRow>(
       'SELECT * FROM users WHERE ($1::text IS NOT NULL AND phone = $1) OR ($2::text IS NOT NULL AND email = $2) LIMIT 1',

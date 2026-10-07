@@ -1,3 +1,4 @@
+import '../../widgets/mounted_state.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -17,7 +18,8 @@ class SubscriptionScreen extends StatefulWidget {
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState extends State<SubscriptionScreen> {
+class _SubscriptionScreenState extends State<SubscriptionScreen>
+    with MountedState<SubscriptionScreen> {
   late final BillingApiPort billingApi;
   var status = 'Лимиты не загружены';
   var plan = 'Free';
@@ -35,14 +37,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> loadSubscription() async {
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы загрузить лимиты из API');
+      updateState(() => status = 'Войдите, чтобы загрузить лимиты из API');
       return;
     }
     try {
       final current = await billingApi.current(AuthRuntime.userId);
       final nextPlans = await billingApi.plans(AuthRuntime.userId);
       final nextPayments = await billingApi.paymentHistory(AuthRuntime.userId);
-      setState(() {
+      updateState(() {
         plan = current.plan;
         percent = current.percent;
         ttsDisabled = current.ttsDisabled;
@@ -51,25 +53,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         status = 'Лимиты и история загружены из API';
       });
     } catch (error) {
-      setState(() => status = 'Подписка API ошибка: $error');
+      updateState(() => status = 'Подписка API ошибка: $error');
     }
   }
 
   Future<void> startPayment(String targetPlan) async {
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы открыть оплату');
+      updateState(() => status = 'Войдите, чтобы открыть оплату');
       return;
     }
     try {
       final result =
           await billingApi.createPaymentIntent(AuthRuntime.userId, targetPlan);
       if (!mounted) return;
-      setState(() {
+      updateState(() {
         status =
             '${result.blocker}: ${result.amountKzt} ₸. Подключите payment provider env.';
       });
     } catch (error) {
-      setState(() => status = 'Оплата API ошибка: $error');
+      updateState(() => status = 'Оплата API ошибка: $error');
     }
   }
 

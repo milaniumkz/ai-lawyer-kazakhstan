@@ -1,3 +1,7 @@
+import 'package:flutter/services.dart';
+import '../workflows/workflow_screens.dart';
+import '../../widgets/mounted_state.dart';
+import '../../api/draft_store.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -64,7 +68,8 @@ class CasesListScreen extends StatefulWidget {
   State<CasesListScreen> createState() => _CasesListScreenState();
 }
 
-class _CasesListScreenState extends State<CasesListScreen> {
+class _CasesListScreenState extends State<CasesListScreen>
+    with MountedState<CasesListScreen> {
   late final CaseApiPort caseApi;
   var selectedFilter = 'Все';
   var status = 'Данные из БД еще не загружены';
@@ -82,20 +87,20 @@ class _CasesListScreenState extends State<CasesListScreen> {
 
   Future<void> refreshCases() async {
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы загрузить дела из API');
+      updateState(() => status = 'Войдите, чтобы загрузить дела из API');
       return;
     }
-    setState(() => status = 'Загружаю дела из API...');
+    updateState(() => status = 'Загружаю дела из API...');
     try {
       final remote = await caseApi.listCases(AuthRuntime.userId);
-      setState(() {
+      updateState(() {
         cases = remote;
         status = remote.isEmpty
             ? 'В БД пока нет дел'
             : 'Дела загружены из API: ${remote.length}';
       });
     } catch (error) {
-      setState(() => status = 'Cases API ошибка: $error');
+      updateState(() => status = 'Cases API ошибка: $error');
     }
   }
 
@@ -143,7 +148,8 @@ class _CasesListScreenState extends State<CasesListScreen> {
                   ChoiceChip(
                     label: Text(filter),
                     selected: selectedFilter == filter,
-                    onSelected: (_) => setState(() => selectedFilter = filter),
+                    onSelected: (_) =>
+                        updateState(() => selectedFilter = filter),
                   ),
               ],
             ),
@@ -159,7 +165,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     MobileCaseRuntime.startDraft();
-                    context.go('/case/new');
+                    context.go('/');
                   },
                 ),
               )
@@ -197,16 +203,55 @@ class CaseDetailsScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Поделиться',
-            onPressed: () =>
-                _showAction(context, 'Ссылка на дело подготовлена'),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(
+                  text:
+                      'https://89-207-250-217.sslip.io/?case=${MobileCaseRuntime.activeCaseId}'));
+              if (context.mounted) {
+                _showAction(context,
+                    'Ссылка скопирована. Доступ остаётся только у владельца.');
+              }
+            },
             icon: const Icon(Icons.ios_share_outlined),
           ),
           PopupMenuButton<String>(
-            onSelected: (value) => _showAction(context, value),
+            onSelected: (value) async {
+              if (value == 'refresh') {
+                try {
+                  final items =
+                      await HttpCaseApi().listCases(AuthRuntime.userId);
+                  final item = items
+                      .where(
+                          (item) => item.id == MobileCaseRuntime.activeCaseId)
+                      .first;
+                  MobileCaseRuntime.selectCase(item);
+                  if (context.mounted) {
+                    context.go('/case/details');
+                    _showAction(context, 'Данные обновлены из аккаунта');
+                  }
+                } catch (error) {
+                  if (context.mounted) {
+                    _showAction(context, 'Не удалось обновить дело');
+                  }
+                }
+              } else {
+                final favorites = List<String>.from(
+                    DraftStore.values['favorites']?['ids'] as List? ?? []);
+                final id = MobileCaseRuntime.activeCaseId;
+                if (favorites.contains(id)) {
+                  favorites.remove(id);
+                } else {
+                  favorites.add(id);
+                }
+                await DraftStore.put('favorites', {'ids': favorites});
+                if (context.mounted) {
+                  _showAction(context, 'Избранное сохранено на устройстве');
+                }
+              }
+            },
             itemBuilder: (context) => const [
-              PopupMenuItem(value: 'Статус обновлен', child: Text('Обновить')),
-              PopupMenuItem(
-                  value: 'Дело отмечено важным', child: Text('Важное')),
+              PopupMenuItem(value: 'refresh', child: Text('Обновить')),
+              PopupMenuItem(value: 'favorite', child: Text('Важное')),
             ],
           ),
         ],
@@ -230,7 +275,7 @@ class CaseDetailsScreen extends StatelessWidget {
             const _DetailsGrid(),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => context.go('/case/chat'),
+              onPressed: () => context.go('/'),
               icon: const Icon(Icons.auto_awesome_outlined),
               label: const Text('Продолжить работу'),
             ),
@@ -255,8 +300,10 @@ class NewCaseScreen extends StatefulWidget {
       this.voiceApi,
       this.caseApi,
       this.homeMode = false,
-      this.onReset});
+      this.onReset,
+      this.onTranscriptConfirmed});
 
+  final ValueChanged<String>? onTranscriptConfirmed;
   final VoidCallback? onReset;
   final bool homeMode;
   final VoiceRecorderPort? recorder;
@@ -511,16 +558,18 @@ void _showAction(BuildContext context, String message) {
 
 class CaseListItem {
   const CaseListItem(this.title, this.subtitle, this.status, this.icon,
-      [this.id = '']);
+      [this.id = '', this.problemText = '']);
 
   final String title;
   final String subtitle;
   final String status;
   final IconData icon;
   final String id;
+  final String problemText;
 }
 
-class _NewCaseScreenState extends State<NewCaseScreen> {
+class _NewCaseScreenState extends State<NewCaseScreen>
+    with MountedState<NewCaseScreen> {
   late final TextEditingController transcriptController;
   late final VoiceRecorderPort voiceRecorder;
   late final SpeechRecognizerPort speechRecognizer;
@@ -546,10 +595,19 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     speechRecognizer = widget.speechRecognizer ?? DeviceSpeechRecognizer();
     voiceApi = widget.voiceApi ?? HttpVoiceTranscriptApi();
     caseApi = widget.caseApi ?? HttpCaseApi();
-    transcript = MobileCaseRuntime.confirmedText;
+    showingCategory = widget.onTranscriptConfirmed == null &&
+        (MobileCaseRuntime.currentDraftCreated ||
+            MobileCaseRuntime.draftClassification != null);
+    transcript = widget.onTranscriptConfirmed == null
+        ? MobileCaseRuntime.confirmedText
+        : '';
     transcriptController = TextEditingController(text: transcript);
-    transcriptController.addListener(
-        () => MobileCaseRuntime.confirmedText = transcriptController.text);
+    transcriptController.addListener(() {
+      if (widget.onTranscriptConfirmed == null) {
+        MobileCaseRuntime.confirmedText = transcriptController.text;
+        MobileCaseRuntime.persist();
+      }
+    });
     if (MobileCaseRuntime.preferVoiceInput) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) toggleRecording();
@@ -568,11 +626,20 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
 
   Future<void> submitCase() async {
     if (isBusy) return;
-    setState(() => isBusy = true);
+    updateState(() => isBusy = true);
     try {
       final confirmedText = transcriptController.text.trim();
+      if (widget.onTranscriptConfirmed != null) {
+        if (confirmedText.isEmpty) {
+          updateState(
+              () => speechStatus = 'Введите текст или подтвердите расшифровку');
+          return;
+        }
+        widget.onTranscriptConfirmed!(confirmedText);
+        return;
+      }
       if (confirmedText.length < 12) {
-        setState(() =>
+        updateState(() =>
             speechStatus = 'Опишите ситуацию подробнее: минимум 12 символов.');
         return;
       }
@@ -580,7 +647,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         MobileCaseRuntime.confirmedText = confirmedText;
         if (mounted) {
           if (widget.homeMode) {
-            setState(() => showingCategory = true);
+            updateState(() => showingCategory = true);
           } else {
             context.go('/case/category');
           }
@@ -589,12 +656,12 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       }
       if (AuthRuntime.userId.isEmpty) {
         MobileCaseRuntime.confirmedText = confirmedText;
-        setState(() {
+        updateState(() {
           speechStatus = 'Текст распознан локально. Войдите для синхронизации';
         });
         if (mounted) {
           if (widget.homeMode) {
-            setState(() => showingCategory = true);
+            updateState(() => showingCategory = true);
           } else {
             context.go('/case/category');
           }
@@ -608,7 +675,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             transcript: confirmedText,
           )
           .timeout(const Duration(seconds: 8));
-      setState(() {
+      updateState(() {
         transcriptJobId = job.id;
         transcript = job.transcript;
         transcriptController.text = job.transcript;
@@ -616,7 +683,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       MobileCaseRuntime.confirmedText = job.transcript;
       if (mounted) {
         if (widget.homeMode) {
-          setState(() => showingCategory = true);
+          updateState(() => showingCategory = true);
         } else {
           context.go('/case/category');
         }
@@ -624,22 +691,22 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     } catch (_) {
       MobileCaseRuntime.confirmedText = transcriptController.text.trim();
       if (mounted) {
-        setState(() => speechStatus =
+        updateState(() => speechStatus =
             'Текст сохранен. Не удалось отправить аудио: проверьте сеть и повторите.');
       }
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
   Future<void> toggleRecording() async {
     if (isBusy) return;
-    setState(() => isBusy = true);
+    updateState(() => isBusy = true);
     try {
       if (!isRecording) {
         final allowed = await voiceRecorder.hasPermission();
         if (!allowed) {
-          setState(() => speechStatus = 'Разрешите доступ к микрофону');
+          updateState(() => speechStatus = 'Разрешите доступ к микрофону');
           return;
         }
         final path =
@@ -648,10 +715,10 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         recordingTimer?.cancel();
         recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
           if (mounted && isRecording && !isPaused) {
-            setState(() => elapsedSeconds++);
+            updateState(() => elapsedSeconds++);
           }
         });
-        setState(() {
+        updateState(() {
           isRecording = true;
           isPaused = false;
           elapsedSeconds = 0;
@@ -664,7 +731,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
           localeId: 'ru_RU',
           onText: (text, isFinal) {
             if (!mounted || text.trim().isEmpty) return;
-            setState(() {
+            updateState(() {
               recognizedSpeech = text.trim();
               transcript = [speechPrefix, recognizedSpeech]
                   .where((part) => part.isNotEmpty)
@@ -677,10 +744,10 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             });
           },
           onStatus: (status) {
-            if (mounted) setState(() => speechStatus = status);
+            if (mounted) updateState(() => speechStatus = status);
           },
         );
-        setState(() {
+        updateState(() {
           if (!speechStarted && recognizedSpeech.isEmpty) {
             speechStatus = 'Распознавание недоступно. Введите текст вручную.';
           }
@@ -693,7 +760,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
       final path = await voiceRecorder.stop();
       recordingTimer?.cancel();
       final lastSpeech = await speechRecognizer.stop();
-      setState(() {
+      updateState(() {
         isRecording = false;
         isPaused = false;
         recordedPath = path;
@@ -717,7 +784,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         await voiceRecorder.stop();
       } catch (_) {/* No active recorder. */}
       if (mounted) {
-        setState(() {
+        updateState(() {
           isRecording = false;
           isPaused = false;
           speechStatus =
@@ -725,7 +792,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         });
       }
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -742,7 +809,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             localeId: 'ru_RU',
             onText: (text, isFinal) {
               if (mounted && text.trim().isNotEmpty) {
-                setState(() {
+                updateState(() {
                   recognizedSpeech = text;
                   transcriptController.text = [speechPrefix, text]
                       .where((part) => part.isNotEmpty)
@@ -753,16 +820,17 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
               }
             },
             onStatus: (status) {
-              if (mounted) setState(() => speechStatus = status);
+              if (mounted) updateState(() => speechStatus = status);
             });
       } else {
         await recorder.pause();
         await speechRecognizer.stop();
       }
-      if (mounted) setState(() => isPaused = !isPaused);
+      if (mounted) updateState(() => isPaused = !isPaused);
     } catch (_) {
       if (mounted) {
-        setState(() => speechStatus = 'Не удалось изменить состояние записи.');
+        updateState(
+            () => speechStatus = 'Не удалось изменить состояние записи.');
       }
     }
   }
@@ -1041,6 +1109,73 @@ abstract final class MobileCaseRuntime {
   static String draftCaseId = 'draft-initial';
   static String createdDraftCaseId = '';
 
+  static Future<void> persist() => DraftStore.put('case', {
+        'activeCaseId': activeCaseId,
+        'activeCaseTitle': activeCaseTitle,
+        'activeCaseSubtitle': activeCaseSubtitle,
+        'activeCaseStatus': activeCaseStatus,
+        'confirmedText': confirmedText,
+        'confirmedClassificationId': confirmedClassificationId,
+        'draftCaseId': draftCaseId,
+        'createdDraftCaseId': createdDraftCaseId,
+        if (draftClassification != null)
+          'classification': {
+            'id': draftClassification!.id,
+            'categoryLabel': draftClassification!.categoryLabel,
+            'subcategoryLabel': draftClassification!.subcategoryLabel,
+            'subcategoryCode': draftClassification!.subcategoryCode,
+            'confidence': draftClassification!.confidence,
+            'missingFacts': draftClassification!.missingFacts,
+            'alternatives': draftClassification!.alternatives,
+            'riskLevel': draftClassification!.riskLevel,
+            'requiredHumanReview': draftClassification!.requiredHumanReview,
+            'questions': draftClassification!.questions,
+            'facts': draftClassification!.facts,
+          }
+      });
+  static void restore() {
+    try {
+      final data = DraftStore.values['case'] as Map<String, dynamic>?;
+      activeCaseId = '';
+      activeCaseTitle = '';
+      activeCaseSubtitle = '';
+      activeCaseStatus = '';
+      confirmedText = '';
+      confirmedClassificationId = '';
+      draftClassification = null;
+      draftCaseId = 'draft-initial';
+      createdDraftCaseId = '';
+      if (data == null) return;
+      activeCaseId = data['activeCaseId'] as String? ?? '';
+      activeCaseTitle = data['activeCaseTitle'] as String? ?? '';
+      activeCaseSubtitle = data['activeCaseSubtitle'] as String? ?? '';
+      activeCaseStatus = data['activeCaseStatus'] as String? ?? '';
+      confirmedText = data['confirmedText'] as String? ?? '';
+      confirmedClassificationId =
+          data['confirmedClassificationId'] as String? ?? '';
+      draftCaseId = data['draftCaseId'] as String? ?? 'draft-initial';
+      createdDraftCaseId = data['createdDraftCaseId'] as String? ?? '';
+      final c = data['classification'] as Map<String, dynamic>?;
+      if (c != null) {
+        draftClassification = CaseClassificationResult(
+            id: c['id'] as String,
+            categoryLabel: c['categoryLabel'] as String,
+            subcategoryLabel: c['subcategoryLabel'] as String,
+            subcategoryCode: c['subcategoryCode'] as String,
+            confidence: (c['confidence'] as num).toDouble(),
+            missingFacts: List<String>.from(c['missingFacts'] as List),
+            alternatives: List<String>.from(c['alternatives'] as List),
+            riskLevel: c['riskLevel'] as String,
+            requiredHumanReview: c['requiredHumanReview'] == true,
+            questions: Map<String, String>.from(c['questions'] as Map),
+            facts: Map<String, dynamic>.from(c['facts'] as Map? ?? {}));
+      }
+    } catch (_) {
+      DraftStore.values.remove('case');
+      restore();
+    }
+  }
+
   static bool get currentDraftCreated =>
       activeCaseId.isNotEmpty && createdDraftCaseId == draftCaseId;
 
@@ -1055,13 +1190,32 @@ abstract final class MobileCaseRuntime {
     confirmedClassificationId = '';
     draftClassification = null;
     preferVoiceInput = false;
+    WorkflowRuntime.generatedBody = '';
+    WorkflowRuntime.generatedId = '';
+    WorkflowRuntime.generationJobId = '';
+    WorkflowRuntime.persist();
+    DraftStore.put('claimForm', {});
+    DraftStore.put('dispatch', {});
+    persist();
   }
 
   static void selectCase(CaseListItem item) {
+    draftClassification = null;
+    confirmedClassificationId = '';
+    confirmedText = item.problemText.isNotEmpty ? item.problemText : item.title;
+    draftCaseId = 'selected-${item.id}';
+    createdDraftCaseId = draftCaseId;
+    WorkflowRuntime.generatedBody = '';
+    WorkflowRuntime.generatedId = '';
+    WorkflowRuntime.generationJobId = '';
+    WorkflowRuntime.persist();
+    DraftStore.put('claimForm', {});
+    DraftStore.put('dispatch', {});
     activeCaseId = item.id;
     activeCaseTitle = item.title;
     activeCaseSubtitle = item.subtitle;
     activeCaseStatus = item.status;
+    persist();
   }
 
   static void markCreated(String caseId) {
@@ -1070,6 +1224,7 @@ abstract final class MobileCaseRuntime {
     activeCaseSubtitle = 'Создано из подтвержденного текста';
     activeCaseStatus = '● В работе';
     createdDraftCaseId = draftCaseId;
+    persist();
   }
 }
 
@@ -1085,6 +1240,7 @@ class CaseClassificationResult {
     required this.riskLevel,
     required this.requiredHumanReview,
     this.questions = const {},
+    this.facts = const {},
   });
 
   final String id;
@@ -1097,6 +1253,7 @@ class CaseClassificationResult {
   final String riskLevel;
   final bool requiredHumanReview;
   final Map<String, String> questions;
+  final Map<String, dynamic> facts;
 }
 
 class ChatMessageItem {
@@ -1256,11 +1413,19 @@ class HttpCaseApi implements CaseApiPort, CaseClarificationPort {
   }) async {
     final messagePath =
         ApiContract.casesCaseIdMessages.replaceFirst('{caseId}', caseId);
+    final pending =
+        DraftStore.values['pendingMessage'] as Map<String, dynamic>?;
+    final key = pending?['caseId'] == caseId && pending?['text'] == text
+        ? pending!['key'] as String
+        : 'message-${DateTime.now().microsecondsSinceEpoch}';
+    await DraftStore.put(
+        'pendingMessage', {'caseId': caseId, 'text': text, 'key': key});
     final post = await http.post(
       Uri.parse('$baseUrl${ApiContract.basePath}$messagePath'),
       headers: {
         'content-type': 'application/json',
         'x-correlation-id': 'mobile-chat',
+        'idempotency-key': key,
         'x-user-id': AuthRuntime.userId,
       },
       body: jsonEncode({'role': 'user', 'text': text}),
@@ -1276,6 +1441,7 @@ class HttpCaseApi implements CaseApiPort, CaseClarificationPort {
     if (get.statusCode < 200 || get.statusCode >= 300) {
       throw HttpException('messages list failed: ${get.statusCode}');
     }
+    await DraftStore.put('pendingMessage', {});
     return [
       for (final item in body as List<dynamic>)
         if ((item as Map<String, dynamic>)['role'] != 'system')
@@ -1295,6 +1461,7 @@ CaseListItem caseFromJson(Map<String, dynamic> json) {
     json['status'] == 'consultation' ? '● В работе' : '● Требует уточнения',
     Icons.balance_outlined,
     id,
+    json['problemText'] as String? ?? '',
   );
 }
 
@@ -1323,6 +1490,7 @@ CaseClassificationResult classificationFromResponse(http.Response response) {
     ],
     riskLevel: result['risk_level'] as String? ?? 'medium',
     requiredHumanReview: result['required_human_review'] == true,
+    facts: Map<String, dynamic>.from(result['facts'] as Map? ?? {}),
     questions: {
       for (final q
           in (result['clarification_questions'] as List<dynamic>? ?? []))
@@ -1349,11 +1517,14 @@ class CategoryScreen extends StatefulWidget {
   State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
+class _CategoryScreenState extends State<CategoryScreen>
+    with MountedState<CategoryScreen> {
   late final CaseApiPort caseApi;
   late final TextEditingController answerController;
   CaseClassificationResult? classification;
   var status = 'Готовлю анализ категории';
+  var voiceReply = false;
+  final homeMessages = <ChatMessageItem>[];
   var isBusy = false;
 
   @override
@@ -1362,7 +1533,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
     caseApi = widget.caseApi ?? HttpCaseApi();
     answerController = TextEditingController();
     classification = MobileCaseRuntime.draftClassification;
-    if (classification == null) {
+    if (MobileCaseRuntime.currentDraftCreated && caseApi is HttpCaseApi) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) restoreConversation();
+      });
+    } else if (classification == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) classify();
       });
@@ -1373,6 +1548,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void dispose() {
     answerController.dispose();
     super.dispose();
+  }
+
+  Future<void> restoreConversation() async {
+    try {
+      final api = caseApi as HttpCaseApi;
+      final response = await http.get(Uri.parse(
+          '${api.baseUrl}/api/v1/cases/${MobileCaseRuntime.activeCaseId}/messages'));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось загрузить переписку');
+      }
+      final records =
+          (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+      updateState(() {
+        homeMessages
+          ..clear()
+          ..addAll(records
+              .where((message) =>
+                  message['role'] == 'user' || message['role'] == 'assistant')
+              .map((message) => ChatMessageItem(
+                  text: message['text'] as String,
+                  assistant: message['role'] == 'assistant')));
+        status = 'Дело открыто';
+      });
+    } catch (error) {
+      updateState(() => status = '$error');
+    }
   }
 
   int progressValue() {
@@ -1424,10 +1625,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return;
     }
     if (api is! CaseClarificationPort) {
-      setState(() => status = 'Уточнения недоступны. Повторите позже.');
+      updateState(() => status = 'Уточнения недоступны. Повторите позже.');
       return;
     }
-    setState(() => isBusy = true);
+    updateState(() => isBusy = true);
     try {
       final updated = await (api as CaseClarificationPort).answerClarification(
           ownerUserId: AuthRuntime.userId,
@@ -1436,19 +1637,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
       MobileCaseRuntime.confirmedText =
           '${MobileCaseRuntime.confirmedText.trim()}\n${nextAiQuestion()} $value';
       MobileCaseRuntime.draftClassification = updated;
+      await MobileCaseRuntime.persist();
       if (!mounted) return;
       answerController.clear();
-      setState(() {
+      updateState(() {
         classification = updated;
         status = 'Ответ сохранён';
       });
     } catch (_) {
       if (mounted) {
-        setState(() =>
+        updateState(() =>
             status = 'Не удалось сохранить ответ. Текст сохранён — повторите.');
       }
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -1456,29 +1658,30 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (isBusy) return;
     final text = MobileCaseRuntime.confirmedText.trim();
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы сохранить категорию в БД');
+      updateState(() => status = 'Войдите, чтобы сохранить категорию в БД');
       return;
     }
     if (text.length < 4) {
-      setState(() => status = 'Вернитесь и подтвердите текст обращения');
+      updateState(() => status = 'Вернитесь и подтвердите текст обращения');
       return;
     }
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Анализирую категорию через API...';
     });
     try {
       final result = await caseApi.classifyDispute(
           ownerUserId: AuthRuntime.userId, text: text);
-      setState(() {
+      updateState(() {
         classification = result;
         MobileCaseRuntime.draftClassification = result;
+        MobileCaseRuntime.persist();
         status = 'Категория определена';
       });
     } catch (error) {
-      setState(() => status = 'Ошибка классификации: $error');
+      updateState(() => status = 'Ошибка классификации: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -1486,10 +1689,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final result = classification;
     if (isBusy || result == null || AuthRuntime.userId.isEmpty) return;
     if (result.missingFacts.isNotEmpty) {
-      setState(() => status = 'Сначала ответьте на вопросы AI');
+      updateState(() => status = 'Сначала ответьте на вопросы AI');
       return;
     }
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Подтверждаю категорию и создаю дело...';
     });
@@ -1497,6 +1700,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       await caseApi.confirmClassification(
           ownerUserId: AuthRuntime.userId, classificationId: result.id);
       MobileCaseRuntime.confirmedClassificationId = result.id;
+      await MobileCaseRuntime.persist();
       final created = await caseApi.createCase(
         ownerUserId: AuthRuntime.userId,
         problemText:
@@ -1505,63 +1709,118 @@ class _CategoryScreenState extends State<CategoryScreen> {
       MobileCaseRuntime.markCreated(created.id);
       if (mounted) {
         if (widget.homeMode) {
-          setState(() => status = 'Дело сохранено. Можно продолжить разговор.');
+          updateState(
+              () => status = 'Дело сохранено. Можно продолжить разговор.');
         } else {
           context.go('/case/details');
         }
       }
     } catch (error) {
-      setState(() => status = 'Ошибка сохранения: $error');
+      updateState(() => status = 'Ошибка сохранения: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
   Future<void> sendHomeMessage() async {
     final text = answerController.text.trim();
     if (isBusy || text.isEmpty) return;
-    setState(() => isBusy = true);
+    updateState(() => isBusy = true);
     try {
       final messages = await caseApi.sendMessage(
           caseId: MobileCaseRuntime.activeCaseId, text: text);
       if (!mounted) return;
       answerController.clear();
-      setState(
-          () => status = messages.map((message) => message.text).join('\n\n'));
+      updateState(() {
+        homeMessages
+          ..clear()
+          ..addAll(messages);
+        status = 'Сообщение сохранено';
+      });
     } catch (_) {
       if (mounted) {
-        setState(
+        updateState(
             () => status = 'Не удалось отправить. Повторите — текст сохранён.');
       }
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
   Future<void> overrideCategory(String code) async {
     final result = classification;
     if (isBusy || result == null || AuthRuntime.userId.isEmpty) return;
-    setState(() => isBusy = true);
+    updateState(() => isBusy = true);
     try {
       final updated = await caseApi.overrideClassification(
         ownerUserId: AuthRuntime.userId,
         classificationId: result.id,
         subcategoryCode: code,
       );
-      setState(() {
+      updateState(() {
         classification = updated;
         MobileCaseRuntime.draftClassification = updated;
+        MobileCaseRuntime.persist();
         status = 'Категория изменена вручную';
       });
     } catch (error) {
-      setState(() => status = 'Ошибка ручного выбора: $error');
+      updateState(() => status = 'Ошибка ручного выбора: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (voiceReply) {
+      return NewCaseScreen(
+          homeMode: true,
+          caseApi: caseApi,
+          onReset: widget.onReset,
+          onTranscriptConfirmed: (text) {
+            MobileCaseRuntime.preferVoiceInput = false;
+            answerController.text = text;
+            updateState(() => voiceReply = false);
+          });
+    }
+    if (widget.homeMode && MobileCaseRuntime.currentDraftCreated) {
+      return _CaseScaffold(
+          title: 'Разговор по делу',
+          showTitle: false,
+          homeMode: true,
+          onReset: widget.onReset,
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(MobileCaseRuntime.activeCaseTitle),
+            const SizedBox(height: 12),
+            for (final message in homeMessages)
+              _MessageBubble(text: message.text, assistant: message.assistant),
+            Text(status),
+            TextField(
+                controller: answerController,
+                minLines: 2,
+                maxLines: 6,
+                decoration: const InputDecoration(labelText: 'Ваше сообщение')),
+            FilledButton(
+                onPressed: isBusy ? null : sendHomeMessage,
+                child: Text(isBusy ? 'Отправляю…' : 'Отправить')),
+            OutlinedButton.icon(
+                onPressed: isBusy
+                    ? null
+                    : () {
+                        MobileCaseRuntime.preferVoiceInput = true;
+                        updateState(() => voiceReply = true);
+                      },
+                icon: const Icon(Icons.mic),
+                label: const Text('Говорить')),
+            TextButton(
+                onPressed: () => context.go('/documents/add'),
+                child: const Text('Добавить документ')),
+            TextButton(
+                onPressed: () => context.go('/workflow/pretrial-claim'),
+                child: const Text('Подготовить претензию')),
+          ]));
+    }
     final result = classification;
     return _CaseScaffold(
       title: 'Категория определена',
@@ -1617,7 +1876,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             onPressed: isBusy || classification == null
                 ? null
                 : classification!.missingFacts.isNotEmpty
-                    ? () => setState(
+                    ? () => updateState(
                         () => status = 'Сначала ответьте на вопросы AI')
                     : confirmAndCreate,
             icon: const Icon(Icons.auto_awesome),
@@ -1694,7 +1953,8 @@ class CaseChatScreen extends StatefulWidget {
   State<CaseChatScreen> createState() => _CaseChatScreenState();
 }
 
-class _CaseChatScreenState extends State<CaseChatScreen> {
+class _CaseChatScreenState extends State<CaseChatScreen>
+    with MountedState<CaseChatScreen> {
   late final CaseApiPort caseApi;
   final controller = TextEditingController();
   final messages = <ChatMessageItem>[
@@ -1761,13 +2021,13 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
           context, 'Сначала создайте или откройте дело. Текст сохранён.');
       return;
     }
-    setState(() => sending = true);
+    updateState(() => sending = true);
     try {
       final remote = await caseApi.sendMessage(
           caseId: MobileCaseRuntime.activeCaseId, text: text);
       if (!mounted) return;
       controller.clear();
-      setState(() => messages
+      updateState(() => messages
         ..clear()
         ..addAll(remote));
     } catch (_) {
@@ -1776,7 +2036,7 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
             context, 'Не удалось отправить. Текст сохранён — повторите.');
       }
     } finally {
-      if (mounted) setState(() => sending = false);
+      if (mounted) updateState(() => sending = false);
     }
   }
 }

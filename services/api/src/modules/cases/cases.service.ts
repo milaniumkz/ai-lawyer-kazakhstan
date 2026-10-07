@@ -296,26 +296,39 @@ export class CasesService {
     return record;
   }
 
-  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }, ownerUserId?: string) {
+  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }, ownerUserId?: string, key?: string) {
     const legalCase = await this.getCase(caseId, ownerUserId);
-    if (!input.text?.trim()) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
-    const message: MessageRecord = { id: randomUUID(), caseId, role: input.role, text: input.text, createdAt: new Date().toISOString() };
-    if (this.repository) await this.repository.createMessage(message);
-    const list = this.messages.get(caseId) ?? [];
-    if (!this.repository) list.push(message);
-    if (input.role === 'user') {
-      const answer = this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
-      const fallback = {
-        id: randomUUID(),
-        caseId,
-        role: 'assistant',
-        text: answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.',
-        createdAt: new Date().toISOString(),
-      } as const;
-      if (this.repository) await this.repository.createMessage(fallback);
-      else list.push(fallback);
+    if (input.role !== 'user') throw new BadRequestException('USER_MESSAGE_REQUIRED');
+    if (typeof input.text !== 'string' || !input.text.trim() || input.text.length>20000) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
+    if(key && key.length>160) throw new BadRequestException('IDEMPOTENCY_KEY_INVALID');
+    const stableId = (suffix:string) => {
+      if(!key) return randomUUID();
+      const hex=createHash('sha256').update(`${ownerUserId}:${caseId}:${key}:${suffix}`).digest('hex');
+      return `${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20,32)}`;
+    };
+    const message: MessageRecord = { id: stableId('user'), caseId, role: 'user', text: input.text.trim(), createdAt: new Date().toISOString() };
+    const existing = this.repository?.findMessage ? await this.repository.findMessage(message.id) : (this.messages.get(caseId)??[]).find(item=>item.id===message.id);
+    if(existing) {
+      if(existing.text!==message.text) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
+      return existing;
     }
-    if (!this.repository) this.messages.set(caseId, list);
+    // Resolve before saving: a failed provider must not leave a half-written turn.
+    const answer = this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
+    const procedural = /что дальше|следующ|документ.*нуж|какие.*документ/i.test(input.text)
+      ? `По делу «${legalCase.title}» сохраните подтверждающие документы, проверьте факты и подготовьте проект претензии. В разделе документа можно исправить текст и скачать PDF. Сроки задавайте после проверки.\n` : '';
+    const fallback: MessageRecord = {id:stableId('assistant'),caseId,role:'assistant',text:procedural+(answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.'),createdAt:new Date().toISOString()};
+    if(this.repository?.saveTurn) {
+      await this.repository.saveTurn([message,fallback]);
+      const saved=await this.repository.findMessage!(message.id);
+      if(saved?.text!==message.text) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
+      return saved;
+    }
+    if(this.repository) {await this.repository.createMessage(message);await this.repository.createMessage(fallback);}
+    else {
+      const list=this.messages.get(caseId)??[];
+      if(!list.some(item=>item.id===message.id)) list.push(message,fallback);
+      this.messages.set(caseId,list);
+    }
     return message;
   }
 

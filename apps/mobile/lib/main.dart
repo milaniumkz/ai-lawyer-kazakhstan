@@ -1,3 +1,4 @@
+import 'src/api/draft_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,9 @@ Future<void> main() async {
     AuthRuntime.userId = saved['userId'] as String;
     AuthRuntime.profileComplete = saved['profileComplete'] == true;
     AuthRuntime.displayName = saved['displayName'] as String? ?? '';
+    await DraftStore.restore(AuthRuntime.userId);
+    MobileCaseRuntime.restore();
+    WorkflowRuntime.restore();
   }
   const initialRoute = String.fromEnvironment(
     'AI_LAWYER_INITIAL_ROUTE',

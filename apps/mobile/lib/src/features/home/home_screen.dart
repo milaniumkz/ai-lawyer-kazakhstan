@@ -1,3 +1,4 @@
+import '../../widgets/mounted_state.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -120,11 +121,12 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  bool conversationOpen = false;
+class _HomeScreenState extends State<HomeScreen> with MountedState<HomeScreen> {
+  bool conversationOpen = MobileCaseRuntime.confirmedText.isNotEmpty ||
+      MobileCaseRuntime.activeCaseId.isNotEmpty;
   void resetDraft() {
     MobileCaseRuntime.startDraft();
-    setState(() => conversationOpen = false);
+    updateState(() => conversationOpen = false);
   }
 
   @override
@@ -153,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(110),
                       onTap: () {
                         MobileCaseRuntime.preferVoiceInput = true;
-                        setState(() => conversationOpen = true);
+                        updateState(() => conversationOpen = true);
                       },
                       child:
                           const AizanArt(AizanArtwork.microphone, width: 200),
@@ -172,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       key: const ValueKey('home-text'),
                       onPressed: () {
                         MobileCaseRuntime.preferVoiceInput = false;
-                        setState(() => conversationOpen = true);
+                        updateState(() => conversationOpen = true);
                       },
                       icon: const Icon(Icons.keyboard_outlined, size: 27),
                       label: const Text('Ввести текст'),

@@ -4,5 +4,7 @@ export interface TemplatesRepository {
   listTemplates(): Promise<TemplateRecord[]>;
   findTemplateById(id: string): Promise<TemplateRecord | undefined>;
   createGeneratedDocument(input: Omit<GeneratedDocument, 'id' | 'createdAt'>): Promise<GeneratedDocument>;
+  findGenerated(id: string): Promise<GeneratedDocument | undefined>;
+  updateGenerated(id: string, body: string): Promise<GeneratedDocument>;
   listGenerated(caseId: string): Promise<GeneratedDocument[]>;
 }

@@ -38,9 +38,19 @@ export class TemplatesService {
   }
 
   async generate(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }, ownerUserId?: string) {
+    const document = await this.buildDocument(input, ownerUserId);
+    if (this.repository) return this.repository.createGeneratedDocument(document);
+    this.generatedDocuments.set(document.id, document);
+    return document;
+  }
+
+  storeLocalDocument(document: GeneratedDocument) { this.generatedDocuments.set(document.id, document); }
+
+  async buildDocument(input: { templateId: string; caseId: string; fields: Record<string, string>; confirmedCitationIds?: string[] }, ownerUserId?: string) {
     await this.assertCaseOwner(input.caseId, ownerUserId);
     const template = this.repository ? await this.repository.findTemplateById(input.templateId) : this.templates.get(input.templateId);
     if (!template) throw new NotFoundException('TEMPLATE_NOT_FOUND');
+    if (!input.fields || typeof input.fields !== 'object' || Object.values(input.fields).some(value => typeof value !== 'string' || value.length > 20000)) throw new BadRequestException('DOCUMENT_FIELDS_INVALID');
     const missing = template.requiredFields.filter((field) => !input.fields[field]);
     if (missing.length) throw new BadRequestException({ code: 'REQUIRED_FIELDS_MISSING', missing });
     const absent = template.requiredFields.filter((field) => !template.body.includes(`{{${field}}}`));
@@ -62,8 +72,6 @@ export class TemplatesService {
       expertReviewRequired: template.status !== 'published' || !(input.confirmedCitationIds?.length),
       createdAt: new Date().toISOString(),
     };
-    if (this.repository) return this.repository.createGeneratedDocument(document);
-    this.generatedDocuments.set(document.id, document);
     return document;
   }
 
@@ -71,6 +79,20 @@ export class TemplatesService {
     await this.assertCaseOwner(caseId, ownerUserId);
     if (this.repository) return this.repository.listGenerated(caseId);
     return [...this.generatedDocuments.values()].filter((document) => document.caseId === caseId);
+  }
+
+  async getGenerated(id: string, ownerUserId: string) {
+    const document = this.repository ? await this.repository.findGenerated(id) : this.generatedDocuments.get(id);
+    if (!document) throw new NotFoundException('GENERATED_DOCUMENT_NOT_FOUND');
+    await this.assertCaseOwner(document.caseId, ownerUserId);
+    return document;
+  }
+  async editGenerated(id: string, body: string, ownerUserId: string) {
+    if (typeof body !== 'string' || !body.trim() || body.length > 100000) throw new BadRequestException('DOCUMENT_BODY_INVALID');
+    const document = await this.getGenerated(id, ownerUserId);
+    if (this.repository) return this.repository.updateGenerated(id, body);
+    Object.assign(document,{body, status:'draft_requires_user_confirmation', expertReviewRequired:true});
+    return document;
   }
 
   private async assertCaseOwner(caseId: string, ownerUserId?: string) {

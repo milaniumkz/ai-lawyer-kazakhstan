@@ -1,3 +1,4 @@
+import '../../widgets/mounted_state.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -33,7 +34,8 @@ class DocumentsScreen extends StatefulWidget {
   State<DocumentsScreen> createState() => _DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends State<DocumentsScreen> {
+class _DocumentsScreenState extends State<DocumentsScreen>
+    with MountedState<DocumentsScreen> {
   late final DocumentFilePickerPort filePicker;
   late final DocumentApiPort documentApi;
   var uploaded = false;
@@ -69,7 +71,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     try {
       final files = await api.listDocuments(MobileCaseRuntime.activeCaseId);
       if (!mounted) return;
-      setState(() {
+      updateState(() {
         DocumentRuntime.documents
           ..clear()
           ..addAll(files);
@@ -79,14 +81,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       });
     } catch (error) {
       if (mounted) {
-        setState(() => status = 'Не удалось получить документы: $error');
+        updateState(() => status = 'Не удалось получить документы: $error');
       }
     }
   }
 
   Future<void> uploadDocument({bool camera = false}) async {
     if (busy) return;
-    setState(() {
+    updateState(() {
       busy = true;
       status = 'Открываю выбор файла...';
     });
@@ -96,23 +98,23 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           ? await picker.pickCamera()
           : await picker.pick();
       if (file == null) {
-        setState(() => status = 'Выбор файла отменен');
+        updateState(() => status = 'Выбор файла отменен');
         return;
       }
       if (MobileCaseRuntime.activeCaseId.isEmpty) {
-        setState(
+        updateState(
             () => status = 'Сначала создайте дело, затем загрузите документ');
         return;
       }
       if (file.sizeBytes > 25 * 1024 * 1024) {
-        setState(() => status = 'Размер файла должен быть не более 25 МБ');
+        updateState(() => status = 'Размер файла должен быть не более 25 МБ');
         return;
       }
       final saved = await documentApi.uploadMetadata(
         caseId: MobileCaseRuntime.activeCaseId,
         file: file,
       );
-      setState(() {
+      updateState(() {
         uploaded = true;
         DocumentRuntime.documents.add(saved);
         documentId = saved.id;
@@ -121,34 +123,34 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             'Файл сохранён: ${saved.fileName}. Автоматический OCR пока недоступен — проверьте поля вручную.';
       });
     } catch (error) {
-      setState(() => status = 'Документ API ошибка: $error');
+      updateState(() => status = 'Документ API ошибка: $error');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) updateState(() => busy = false);
     }
   }
 
   Future<void> confirmOcr() async {
     if (busy) return;
     if (documentId == null) {
-      setState(() => status = 'Сначала загрузите документ');
+      updateState(() => status = 'Сначала загрузите документ');
       return;
     }
-    setState(() => busy = true);
+    updateState(() => busy = true);
     try {
       await documentApi.confirmOcr(documentId!, {
         'documentTitle': documentTitleController.text.trim(),
         'details': documentDetailsController.text.trim(),
         'reviewRequired': 'false',
       });
-      setState(() {
+      updateState(() {
         confirmed = true;
         DocumentRuntime.confirmedIds.add(documentId!);
         status = 'Поля подтверждены через API';
       });
     } catch (error) {
-      setState(() => status = 'OCR API ошибка: $error');
+      updateState(() => status = 'OCR API ошибка: $error');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) updateState(() => busy = false);
     }
   }
 
@@ -211,7 +213,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         (index) => Expanded(
                                 child: TextButton(
                               onPressed: () =>
-                                  setState(() => selectedTab = index),
+                                  updateState(() => selectedTab = index),
                               style: TextButton.styleFrom(
                                   foregroundColor: selectedTab == index
                                       ? AizanDesign.gold
@@ -227,7 +229,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                             )))),
                 TextField(
                     controller: searchController,
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) => updateState(() {}),
                     decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.search),
                         hintText: 'Поиск по документам')),
@@ -510,7 +512,8 @@ class DocumentAnalysisScreen extends StatefulWidget {
   State<DocumentAnalysisScreen> createState() => _DocumentAnalysisScreenState();
 }
 
-class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
+class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen>
+    with MountedState<DocumentAnalysisScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: const AizanHeader(compact: true),

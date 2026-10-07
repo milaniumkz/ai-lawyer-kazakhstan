@@ -1,3 +1,7 @@
+import '../../api/session_credentials.dart';
+import '../../widgets/mounted_state.dart';
+import 'package:crypto/crypto.dart';
+import '../../api/draft_store.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -21,7 +25,8 @@ class PretrialClaimScreen extends StatefulWidget {
   State<PretrialClaimScreen> createState() => _PretrialClaimScreenState();
 }
 
-class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
+class _PretrialClaimScreenState extends State<PretrialClaimScreen>
+    with MountedState<PretrialClaimScreen> {
   late final WorkflowApiPort workflowApi;
   late final TextEditingController claimantController;
   late final TextEditingController respondentController;
@@ -38,7 +43,35 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     claimantController = TextEditingController(text: AuthRuntime.displayName);
     respondentController = TextEditingController();
     amountController = TextEditingController();
-    reasonController = TextEditingController();
+    final form = DraftStore.values['claimForm'] as Map<String, dynamic>?;
+    respondentController.text = form?['respondent'] as String? ?? '';
+    amountController.text = form?['amount'] as String? ??
+        MobileCaseRuntime.draftClassification?.facts['amount'] as String? ??
+        '';
+    reasonController = TextEditingController(
+        text: form?['reason'] as String? ?? MobileCaseRuntime.confirmedText);
+    for (final controller in [
+      claimantController,
+      respondentController,
+      amountController,
+      reasonController
+    ]) {
+      controller.addListener(() => DraftStore.put('claimForm', {
+            'respondent': respondentController.text,
+            'amount': amountController.text,
+            'reason': reasonController.text
+          }));
+    }
+    if (workflowApi is HttpWorkflowApi &&
+        SessionCredentials.token.isNotEmpty &&
+        MobileCaseRuntime.activeCaseId.isNotEmpty &&
+        WorkflowRuntime.generationJobId.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => restoreCaseDraft());
+    }
+    if (WorkflowRuntime.generationJobId.isNotEmpty &&
+        workflowApi is HttpWorkflowApi) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => resumeGeneration());
+    }
   }
 
   @override
@@ -50,21 +83,106 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     super.dispose();
   }
 
+  Future<void> restoreCaseDraft() async {
+    updateState(() => busy = true);
+    final caseId = MobileCaseRuntime.activeCaseId;
+    final origin = (workflowApi as HttpWorkflowApi).baseUrl;
+    try {
+      final classification = await http
+          .get(Uri.parse('$origin/api/v1/cases/$caseId/classification'));
+      if (!mounted || caseId != MobileCaseRuntime.activeCaseId) return;
+      if (classification.statusCode == 200) {
+        final result = classificationFromResponse(classification);
+        MobileCaseRuntime.draftClassification = result;
+        MobileCaseRuntime.confirmedClassificationId = result.id;
+        if (amountController.text.isEmpty) {
+          amountController.text = result.facts['amount'] as String? ?? '';
+        }
+        await MobileCaseRuntime.persist();
+      } else if (classification.statusCode != 404) {
+        throw const HttpException('Не удалось восстановить данные дела');
+      }
+      final drafts = await http
+          .get(Uri.parse('$origin/api/v1/cases/$caseId/generated-documents'));
+      if (drafts.statusCode != 200) {
+        throw const HttpException('Не удалось загрузить проекты');
+      }
+      final records = jsonDecode(drafts.body) as List;
+      if (!mounted || caseId != MobileCaseRuntime.activeCaseId) return;
+      if (records.isNotEmpty && WorkflowRuntime.generatedId.isEmpty) {
+        WorkflowRuntime.generatedId = records.first['id'] as String;
+        WorkflowRuntime.generatedBody = records.first['body'] as String;
+        await WorkflowRuntime.persist();
+        updateState(() => generated = true);
+      }
+      final jobs = await http
+          .get(Uri.parse('$origin/api/v1/cases/$caseId/generation-jobs'));
+      if (jobs.statusCode != 200) {
+        throw const HttpException('Не удалось восстановить подготовку');
+      }
+      final pending = (jsonDecode(jobs.body) as List)
+          .where(
+              (job) => job['status'] == 'queued' || job['status'] == 'running')
+          .firstOrNull;
+      if (pending != null) {
+        WorkflowRuntime.generationJobId = pending['id'] as String;
+        await WorkflowRuntime.persist();
+        updateState(() => busy = false);
+        await resumeGeneration();
+      }
+    } catch (error) {
+      updateState(() => status = '$error');
+    } finally {
+      updateState(() => busy = false);
+    }
+  }
+
+  Future<void> resumeGeneration() async {
+    if (busy || workflowApi is! HttpWorkflowApi) return;
+    updateState(() {
+      busy = true;
+      status = 'Восстанавливаю серверную задачу';
+    });
+    try {
+      final result = await (workflowApi as HttpWorkflowApi).resumeJob();
+      if (!mounted) return;
+      updateState(() {
+        generated = true;
+        status = 'Проект сохранён';
+      });
+      WorkflowRuntime.generatedBody = result.body;
+      context.go('/workflow/pretrial-claim/draft');
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    } finally {
+      if (mounted) updateState(() => busy = false);
+    }
+  }
+
+  Future<void> cancelGeneration() async {
+    if (workflowApi is! HttpWorkflowApi) return;
+    try {
+      await (workflowApi as HttpWorkflowApi).cancelJob();
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    }
+  }
+
   Future<void> generateDraft() async {
     if (busy) return;
     if (MobileCaseRuntime.activeCaseId.isEmpty) {
-      setState(() => status = 'Сначала создайте дело');
+      updateState(() => status = 'Сначала создайте дело');
       return;
     }
     if (claimantController.text.trim().isEmpty ||
         respondentController.text.trim().isEmpty ||
         amountController.text.trim().isEmpty ||
         reasonController.text.trim().isEmpty) {
-      setState(
+      updateState(
           () => status = 'Заполните заявителя, ответчика, сумму и основание');
       return;
     }
-    setState(() {
+    updateState(() {
       busy = true;
       status = 'Формирую проект через API...';
     });
@@ -76,16 +194,19 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
         claimAmount: amountController.text.trim(),
         claimReason: reasonController.text.trim(),
       );
+      if (!mounted) return;
       WorkflowRuntime.generatedBody = draft.body;
-      setState(() {
+      WorkflowRuntime.generatedId = draft.id;
+      await WorkflowRuntime.persist();
+      updateState(() {
         generated = true;
         status = 'Проект сформирован: ${draft.id.substring(0, 8)}';
       });
       if (mounted) context.go('/workflow/pretrial-claim/draft');
     } catch (error) {
-      setState(() => status = 'Генерация API ошибка: $error');
+      if (mounted) updateState(() => status = 'Генерация API ошибка: $error');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) updateState(() => busy = false);
     }
   }
 
@@ -164,17 +285,17 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
             const SizedBox(height: 16),
             TextField(
                 controller: claimantController,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => updateState(() {}),
                 decoration: InputDecoration(labelText: 'Заявитель')),
             const SizedBox(height: 12),
             TextField(
                 controller: respondentController,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => updateState(() {}),
                 decoration: const InputDecoration(labelText: 'Ответчик')),
             const SizedBox(height: 12),
             TextField(
               controller: amountController,
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => updateState(() {}),
               keyboardType: TextInputType.number,
               decoration:
                   const InputDecoration(labelText: 'Сумма требования, ₸'),
@@ -182,7 +303,7 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => updateState(() {}),
               minLines: 3,
               maxLines: 5,
               decoration:
@@ -191,8 +312,22 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
             const SizedBox(height: 16),
             Text(status),
             const SizedBox(height: 12),
+            if (WorkflowRuntime.generatedId.isNotEmpty)
+              OutlinedButton(
+                  onPressed: busy
+                      ? null
+                      : () => context.go('/workflow/pretrial-claim/draft'),
+                  child: const Text('Открыть сохранённый проект')),
+            if (busy && workflowApi is HttpWorkflowApi)
+              TextButton(
+                  onPressed: cancelGeneration,
+                  child: const Text('Отменить подготовку')),
             FilledButton.icon(
-              onPressed: busy ? null : generateDraft,
+              onPressed: busy
+                  ? null
+                  : WorkflowRuntime.generationJobId.isNotEmpty
+                      ? resumeGeneration
+                      : generateDraft,
               icon: const Icon(Icons.article_outlined),
               label: Text(busy
                   ? 'Формирую'
@@ -225,7 +360,8 @@ class ClaimDraftScreen extends StatefulWidget {
   State<ClaimDraftScreen> createState() => _ClaimDraftScreenState();
 }
 
-class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
+class _ClaimDraftScreenState extends State<ClaimDraftScreen>
+    with MountedState<ClaimDraftScreen> {
   var approved = false;
   late final TextEditingController bodyController;
   final bodyFocus = FocusNode();
@@ -291,8 +427,9 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
                           decoration: const InputDecoration(
                               fillColor: Colors.transparent,
                               hintText: 'Сначала сформируйте проект'),
-                          onChanged: (value) => setState(() {
+                          onChanged: (value) => updateState(() {
                                 WorkflowRuntime.generatedBody = value;
+                                WorkflowRuntime.persist();
                                 approved = false;
                               })),
                     ]))),
@@ -311,9 +448,27 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
                       icon: const Icon(Icons.picture_as_pdf_outlined),
                       label: const Text('Скачать PDF')))
             ]),
+            TextButton(
+                onPressed: () async {
+                  try {
+                    await HttpWorkflowApi().saveDraft(
+                        WorkflowRuntime.generatedId, bodyController.text);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Проект сохранён на сервере')));
+                    }
+                  } catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('$error')));
+                    }
+                  }
+                },
+                child: const Text('Сохранить проект')),
             CheckboxListTile(
                 value: approved,
-                onChanged: (value) => setState(() => approved = value ?? false),
+                onChanged: (value) =>
+                    updateState(() => approved = value ?? false),
                 title: const Text('Проверено пользователем')),
             AizanButton(
                 label: 'Перейти к отправке',
@@ -345,6 +500,24 @@ abstract class WorkflowApiPort {
 
 abstract final class WorkflowRuntime {
   static String generatedBody = '';
+  static String generatedId = '';
+  static String generationJobId = '';
+  static Future<void> persist() => DraftStore.put('workflow', {
+        'generatedBody': generatedBody,
+        'generatedId': generatedId,
+        'generationJobId': generationJobId
+      });
+  static void restore() {
+    final raw = DraftStore.values['workflow'];
+    final data = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
+    generatedBody =
+        data['generatedBody'] is String ? data['generatedBody'] as String : '';
+    generatedId =
+        data['generatedId'] is String ? data['generatedId'] as String : '';
+    generationJobId = data['generationJobId'] is String
+        ? data['generationJobId'] as String
+        : '';
+  }
 }
 
 class HttpWorkflowApi implements WorkflowApiPort {
@@ -385,36 +558,91 @@ class HttpWorkflowApi implements WorkflowApiPort {
       throw const HttpException('Нет доступного шаблона претензии');
     }
     final templateId = template['id'] as String;
-    final response = await http.post(
-      Uri.parse(
-          '$baseUrl${ApiContract.basePath}${ApiContract.documentsGenerate}'),
-      headers: {
-        'content-type': 'application/json',
-        'x-correlation-id': 'mobile-workflow',
-        'x-user-id': AuthRuntime.userId,
+    final input = {
+      'templateId': templateId,
+      'caseId': caseId,
+      'fields': {
+        'claimantName': claimantName,
+        'respondentName': respondentName,
+        'claimAmount': claimAmount,
+        'claimReason': claimReason,
+        'deadlineDate': 'Срок требует проверки и подтверждения пользователем',
       },
-      body: jsonEncode({
-        'templateId': templateId,
-        'caseId': caseId,
-        'fields': {
-          'claimantName': claimantName,
-          'respondentName': respondentName,
-          'claimAmount': claimAmount,
-          'claimReason': claimReason,
-          'deadlineDate': '14 сентября 2026',
-        },
-        'confirmedCitationIds': <String>[],
-      }),
-    );
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException(
-          '${body['message'] ?? body['error'] ?? 'generate failed'}');
+      'confirmedCitationIds': <String>[],
+    };
+    if (WorkflowRuntime.generationJobId.isEmpty) {
+      final response = await http.post(
+          Uri.parse(
+              '$baseUrl${ApiContract.basePath}/documents/generation-jobs'),
+          headers: {
+            'content-type': 'application/json',
+            'idempotency-key':
+                sha256.convert(utf8.encode(jsonEncode(input))).toString()
+          },
+          body: jsonEncode(input));
+      final job = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw HttpException(
+            '${job['message'] ?? 'Не удалось начать подготовку'}');
+      }
+      WorkflowRuntime.generationJobId = job['id'] as String;
+      await WorkflowRuntime.persist();
     }
-    return GeneratedClaimDraft(
-      id: body['id'] as String,
-      body: body['body'] as String,
-    );
+    return resumeJob();
+  }
+
+  Future<GeneratedClaimDraft> resumeJob() async {
+    final id = WorkflowRuntime.generationJobId;
+    if (id.isEmpty) throw const HttpException('Нет сохранённой задачи');
+    for (var attempt = 0; attempt < 400; attempt++) {
+      final response = await http.get(Uri.parse(
+          '$baseUrl${ApiContract.basePath}/documents/generation-jobs/$id'));
+      final job = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw HttpException(
+            '${job['message'] ?? 'Не удалось получить задачу'}');
+      }
+      if (job['status'] == 'completed') {
+        final document = job['document'] as Map<String, dynamic>;
+        WorkflowRuntime.generatedId = document['id'] as String;
+        WorkflowRuntime.generatedBody = document['body'] as String;
+        WorkflowRuntime.generationJobId = '';
+        await WorkflowRuntime.persist();
+        return GeneratedClaimDraft(
+            id: WorkflowRuntime.generatedId,
+            body: WorkflowRuntime.generatedBody);
+      }
+      if (job['status'] == 'cancelled' || job['status'] == 'failed') {
+        WorkflowRuntime.generationJobId = '';
+        await WorkflowRuntime.persist();
+        throw HttpException(job['status'] == 'cancelled'
+            ? 'Подготовка отменена'
+            : 'Ошибка подготовки. Повторите попытку.');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 750));
+    }
+    throw const HttpException(
+        'Задача сохранена. Откройте подготовку снова, чтобы получить результат.');
+  }
+
+  Future<void> cancelJob() async {
+    if (WorkflowRuntime.generationJobId.isEmpty) return;
+    final response = await http.post(Uri.parse(
+        '$baseUrl${ApiContract.basePath}/documents/generation-jobs/${WorkflowRuntime.generationJobId}/cancel'));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const HttpException('Не удалось отменить задачу');
+    }
+  }
+
+  Future<void> saveDraft(String id, String body) async {
+    if (id.isEmpty) throw const HttpException('Нет сохранённого проекта');
+    final response = await http.patch(
+        Uri.parse('$baseUrl${ApiContract.basePath}/generated-documents/$id'),
+        headers: {'content-type': 'application/json'},
+        body: jsonEncode({'body': body}));
+    if (response.statusCode != 200) {
+      throw const HttpException('Не удалось сохранить проект');
+    }
   }
 }
 
@@ -425,8 +653,10 @@ class ClaimSendScreen extends StatefulWidget {
   State<ClaimSendScreen> createState() => _ClaimSendScreenState();
 }
 
-class _ClaimSendScreenState extends State<ClaimSendScreen> {
+class _ClaimSendScreenState extends State<ClaimSendScreen>
+    with MountedState<ClaimSendScreen> {
   var sent = false;
+  var busy = false;
   var selectedMethod = 'WhatsApp';
   var status = 'Выберите канал и укажите контакт получателя';
   late final TextEditingController recipientController;
@@ -434,7 +664,12 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
   @override
   void initState() {
     super.initState();
-    recipientController = TextEditingController();
+    final data = DraftStore.values['dispatch'] as Map<String, dynamic>?;
+    recipientController =
+        TextEditingController(text: data?['contact'] as String? ?? '');
+    selectedMethod = data?['method'] as String? ?? 'WhatsApp';
+    recipientController.addListener(() => DraftStore.put('dispatch',
+        {'contact': recipientController.text, 'method': selectedMethod}));
   }
 
   @override
@@ -445,7 +680,7 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
 
   Future<void> recordAssistedSend() async {
     if (recipientController.text.trim().isEmpty) {
-      setState(() => status = 'Укажите контакт получателя');
+      updateState(() => status = 'Укажите контакт получателя');
       return;
     }
     final accepted = await showDialog<bool>(
@@ -464,11 +699,58 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
               ],
             ));
     if (accepted != true || !mounted) return;
-    setState(() {
-      sent = true;
-      status =
-          'Ручной статус зафиксирован: $selectedMethod, ${recipientController.text.trim()}';
-    });
+    await saveDispatch(true);
+  }
+
+  Future<void> saveDispatch(bool manual) async {
+    if (busy) return;
+    if (WorkflowRuntime.generatedId.isEmpty) {
+      updateState(() => status = 'Сначала сформируйте и сохраните проект');
+      return;
+    }
+    updateState(() => busy = true);
+    try {
+      await HttpWorkflowApi().saveDraft(
+          WorkflowRuntime.generatedId, WorkflowRuntime.generatedBody);
+      final method = {
+        'E-mail': 'email',
+        'WhatsApp': 'whatsapp',
+        'SMS': 'sms',
+        'Почтовая отправка': 'post'
+      }[selectedMethod];
+      final response = await http.post(
+          Uri.parse(
+              '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/generated-documents/${WorkflowRuntime.generatedId}/dispatches'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({
+            'method': method,
+            'contact': recipientController.text,
+            'status': manual ? 'manual_sent_unverified' : 'draft',
+            'confirmed': manual
+          }));
+      final record = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 201) {
+        throw HttpException(
+            '${record['message'] ?? 'Не удалось сохранить отправку'}');
+      }
+      await DraftStore.put('dispatch', {
+        'contact': recipientController.text,
+        'method': selectedMethod,
+        'sent': manual
+      });
+      if (mounted) {
+        updateState(() {
+          sent = manual;
+          status = manual
+              ? 'Ручная отправка записана. Доставка не подтверждена.'
+              : 'Черновик отправки сохранён на сервере';
+        });
+      }
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    } finally {
+      updateState(() => busy = false);
+    }
   }
 
   @override
@@ -507,7 +789,7 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
             const SizedBox(height: 12),
             _SendMethodGrid(
               selected: selectedMethod,
-              onSelect: (value) => setState(() {
+              onSelect: (value) => updateState(() {
                 selectedMethod = value;
                 sent = false;
                 status = 'Канал выбран: $value. Укажите контакт получателя.';
@@ -520,7 +802,7 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: recipientController,
-              onChanged: (_) => setState(() {
+              onChanged: (_) => updateState(() {
                 sent = false;
                 status =
                     'Контакт введен. Можно зафиксировать assisted отправку.';
@@ -541,21 +823,18 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
                 leading:
                     Icon(Icons.verified_user_outlined, color: AppColors.gold),
                 title: Text(
-                    'Доставка сообщения зависит от внешнего сервиса. Статус отправки фиксируется вручную или через официальный adapter.'),
+                    'Доставка сообщения зависит от внешнего сервиса. Статус отправки фиксируется вручную после подключения сервиса.'),
               ),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: recordAssistedSend,
+              onPressed: busy ? null : recordAssistedSend,
               icon: const Icon(Icons.mark_email_read_outlined),
               label: Text(sent ? 'Ручной статус зафиксирован' : 'Отправить'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => setState(() {
-                sent = false;
-                status = 'Черновик сохранен локально до внешней отправки';
-              }),
+              onPressed: busy ? null : () => saveDispatch(false),
               icon: const Icon(Icons.description_outlined),
               label: const Text('Сохранить как черновик'),
             ),

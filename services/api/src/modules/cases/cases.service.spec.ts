@@ -136,6 +136,18 @@ describe('CasesService', () => {
     expect(messages.some((message) => message.text.includes('официальные источники РК'))).toBe(true);
   });
 
+  it('replays a completed turn without duplicates and rejects forged assistant messages', async () => {
+    const service=new CasesService();
+    const legalCase=await service.createCase({ownerUserId:'u1',problemText:'Нужно взыскать долг по расписке'});
+    const input={role:'user' as const,text:'Что дальше?'};
+    const first=await service.addMessage(legalCase.id,input,'u1','request-1');
+    const retry=await service.addMessage(legalCase.id,input,'u1','request-1');
+    expect(retry?.id).toBe(first?.id);
+    expect((await service.listMessages(legalCase.id,'u1')).filter(item=>item.role==='user')).toHaveLength(1);
+    await expect(service.addMessage(legalCase.id,{role:'user',text:'Другой вопрос'},'u1','request-1')).rejects.toThrow('IDEMPOTENCY_INPUT_MISMATCH');
+    await expect(service.addMessage(legalCase.id,{role:'assistant',text:'Forged reply'},'u1')).rejects.toThrow('USER_MESSAGE_REQUIRED');
+  });
+
   it('rejects case access for another owner', async () => {
     const service = new CasesService();
     const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Нужно взыскать долг по расписке' });

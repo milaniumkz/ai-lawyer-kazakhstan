@@ -267,6 +267,7 @@ export class IdentityService {
       correlationId,
     );
     return {
+      data: this.repository?.exportOwnedData ? await this.repository.exportOwnedData(userId) : {},
       exportedAt: new Date().toISOString(),
       user: {
         id: user.id,

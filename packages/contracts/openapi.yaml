@@ -808,6 +808,10 @@ paths:
           schema:
             type: string
             format: uuid
+        - in: header
+          name: idempotency-key
+          required: false
+          schema: {type: string, maxLength: 160}
       requestBody:
         required: true
         content:
@@ -1292,6 +1296,395 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Template"
+  /tasks:
+    get:
+      operationId: listUserTasks
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserTask"
+    post:
+      operationId: createUserTask
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreate"
+      responses:
+        "201":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTask"
+  /tasks/{taskId}:
+    patch:
+      operationId: updateUserTask
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+        - in: path
+          name: taskId
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTask"
+    delete:
+      operationId: deleteUserTask
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+        - in: path
+          name: taskId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+  /generated-documents/{documentId}/dispatches:
+    get:
+      operationId: listManualDispatches
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+        - in: path
+          name: documentId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DispatchRecord"
+    post:
+      operationId: createManualDispatch
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+        - in: path
+          name: documentId
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DispatchCreate"
+      responses:
+        "201":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchRecord"
+  /generated-documents/{documentId}/pdf:
+    get:
+      operationId: downloadGeneratedPdf
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+        - in: path
+          name: documentId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Authenticated PDF download
+          content:
+            application/pdf:
+              schema: {type: string, format: binary}
+  /support/tickets:
+    get:
+      operationId: listSupportTickets
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupportTicket"
+    post:
+      operationId: createSupportTicket
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupportCreate"
+      responses:
+        "201":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportTicket"
+  /admin/support/tickets:
+    get:
+      operationId: adminSupportTickets
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: header
+          name: x-user-role
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Persisted user activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupportTicket"
+  /admin/overview:
+    get:
+      operationId: adminOverview
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: header
+          name: x-user-role
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Actual database totals, null when persistence is unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  caseCount: {type: integer, nullable: true}
+                  documentReviewCount: {type: integer, nullable: true}
+                  openTicketCount: {type: integer}
+                  aiCostKzt: {type: number, nullable: true}
+  /admin/support/tickets/{ticketId}:
+    patch:
+      operationId: replySupportTicket
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: header
+          name: x-user-role
+          required: true
+          schema: {type: string}
+        - in: path
+          name: ticketId
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reply, status]
+              properties:
+                reply: {type: string, minLength: 1, maxLength: 20000}
+                status: {type: string, enum: [open, resolved]}
+      responses:
+        "200":
+          description: Saved staff response visible to the ticket owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportTicket"
+  /documents/generation-jobs:
+    post:
+      operationId: enqueueDocumentGeneration
+      summary: Enqueue durable document preparation
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: header
+          name: idempotency-key
+          required: true
+          schema: {type: string, maxLength: 160}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDocumentRequest"
+      responses:
+        "201":
+          description: Persisted generation task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationJob"
+  /documents/generation-jobs/{jobId}:
+    get:
+      operationId: getGenerationJob
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: jobId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Current task state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationJob"
+  /documents/generation-jobs/{jobId}/cancel:
+    post:
+      operationId: cancelGenerationJob
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: jobId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "201":
+          description: Cancelled task or completed result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationJob"
+  /cases/{caseId}/generation-jobs:
+    get:
+      operationId: listGenerationJobs
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: caseId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Tasks owned by current user for case
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GenerationJob"
+  /generated-documents/{documentId}:
+    get:
+      operationId: getGeneratedDraft
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: documentId
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Saved editable document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedDocument"
+    patch:
+      operationId: saveGeneratedDraft
+      parameters:
+        - in: header
+          name: x-user-id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: documentId
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: {type: string, minLength: 1, maxLength: 100000}
+      responses:
+        "200":
+          description: Saved draft requiring renewed review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedDocument"
   /documents/generate:
     post:
       operationId: generateDocument
@@ -1533,6 +1926,78 @@ paths:
                 $ref: "#/components/schemas/PaymentHistoryRecord"
 components:
   schemas:
+    TaskCreate:
+      type: object
+      required: [title, dueDate]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        dueDate: {type: string, format: date}
+        caseId: {type: string, format: uuid}
+    TaskUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [pending, completed]}
+    UserTask:
+      allOf:
+        - $ref: "#/components/schemas/TaskCreate"
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            status: {type: string, enum: [pending, completed]}
+            basis: {type: string, enum: [user_defined]}
+    DeleteResult:
+      type: object
+      properties:
+        deleted: {type: boolean}
+    DispatchCreate:
+      type: object
+      required: [method, contact]
+      properties:
+        method: {type: string, enum: [email, whatsapp, sms, post]}
+        contact: {type: string, maxLength: 300}
+        message: {type: string, maxLength: 20000}
+        status: {type: string, enum: [draft, manual_sent_unverified]}
+        confirmed: {type: boolean}
+    DispatchRecord:
+      allOf:
+        - $ref: "#/components/schemas/DispatchCreate"
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            documentId: {type: string, format: uuid}
+            confirmedAt: {type: string, format: date-time}
+    SupportCreate:
+      type: object
+      required: [topic, text]
+      properties:
+        topic: {type: string, minLength: 1, maxLength: 100}
+        text: {type: string, minLength: 8, maxLength: 20000}
+    SupportTicket:
+      allOf:
+        - $ref: "#/components/schemas/SupportCreate"
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            status: {type: string, enum: [open, resolved]}
+            reply: {type: string}
+            repliedAt: {type: string, format: date-time}
+            createdAt: {type: string, format: date-time}
+
+    GenerationJob:
+      type: object
+      required: [id, caseId, status, stage, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        caseId: {type: string, format: uuid}
+        status: {type: string, enum: [queued, running, completed, cancelled, failed]}
+        stage: {type: string, enum: [queued, rendering, completed, cancelled, failed]}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        error: {type: string}
+        document:
+          $ref: "#/components/schemas/GeneratedDocument"
+
     HealthResponse:
       type: object
       required: [status, service, jurisdiction]
@@ -2075,7 +2540,7 @@ components:
       properties:
         role:
           type: string
-          enum: [user, assistant]
+          enum: [user]
         text:
           type: string
     CreateTranscriptRequest:

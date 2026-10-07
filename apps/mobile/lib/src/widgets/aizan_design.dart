@@ -203,7 +203,7 @@ class AizanHeader extends StatelessWidget implements PreferredSizeWidget {
                         }
                         if (newCase) {
                           MobileCaseRuntime.startDraft();
-                          context.go(home ? '/' : '/case/new');
+                          context.go('/');
                         } else if (context.canPop()) {
                           context.pop();
                         } else {

@@ -1,3 +1,6 @@
+import '../../widgets/mounted_state.dart';
+import '../../api/session_credentials.dart';
+import '../cases/case_screens.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -17,7 +20,8 @@ class LegalSourcesScreen extends StatefulWidget {
   State<LegalSourcesScreen> createState() => _LegalSourcesScreenState();
 }
 
-class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
+class _LegalSourcesScreenState extends State<LegalSourcesScreen>
+    with MountedState<LegalSourcesScreen> {
   late final LegalApiPort legalApi;
   late final TextEditingController queryController;
   var searched = false;
@@ -70,7 +74,7 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
 
   Future<void> searchNorm() async {
     if (busy) return;
-    setState(() {
+    updateState(() {
       busy = true;
       searched = true;
       answer = 'Идет поиск по официальным источникам РК...';
@@ -78,27 +82,29 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen> {
     });
     try {
       final result = await legalApi.answer(queryController.text.trim());
-      setState(() {
+      updateState(() {
         answer = result.message;
         fragment = result.fragment;
       });
     } catch (error) {
-      setState(() => answer = 'Нет подтвержденной нормы. API ошибка: $error');
+      updateState(
+          () => answer = 'Нет подтвержденной нормы. API ошибка: $error');
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) updateState(() => busy = false);
     }
   }
 
   Future<void> validateCitation() async {
     if (fragment == null) {
-      setState(() => answer = 'Нет подтвержденной нормы для проверки цитаты.');
+      updateState(
+          () => answer = 'Нет подтвержденной нормы для проверки цитаты.');
       return;
     }
     try {
       final message = await legalApi.validateCitation(fragment!);
-      setState(() => answer = message);
+      updateState(() => answer = message);
     } catch (error) {
-      setState(() => answer = 'Citation API ошибка: $error');
+      updateState(() => answer = 'Citation API ошибка: $error');
     }
   }
 
@@ -208,74 +214,154 @@ class DeadlinesScreen extends StatefulWidget {
   State<DeadlinesScreen> createState() => _DeadlinesScreenState();
 }
 
-class _DeadlinesScreenState extends State<DeadlinesScreen> {
-  var reminderEnabled = true;
+class _DeadlinesScreenState extends State<DeadlinesScreen>
+    with MountedState<DeadlinesScreen> {
+  final titleController = TextEditingController();
+  DateTime? date;
+  List<Map<String, dynamic>> tasks = [];
+  var busy = false;
+  var filter = 'Все';
+  var status = 'Добавьте задачу и подтвердите дату самостоятельно';
+  @override
+  void initState() {
+    super.initState();
+    if (SessionCredentials.token.isNotEmpty) loadTasks();
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  void dispose() {
+    titleController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadTasks() async {
+    if (busy) return;
+    updateState(() => busy = true);
+    try {
+      final response = await http.get(Uri.parse(
+          '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/tasks'));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось загрузить задачи');
+      }
+      final list =
+          (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+      if (mounted) updateState(() => tasks = list);
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    } finally {
+      if (mounted) updateState(() => busy = false);
+    }
+  }
+
+  Future<void> addTask() async {
+    if (date == null || titleController.text.trim().isEmpty || busy) return;
+    try {
+      final response = await http.post(
+          Uri.parse(
+              '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/tasks'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({
+            'title': titleController.text.trim(),
+            'dueDate': date!.toIso8601String().substring(0, 10),
+            if (MobileCaseRuntime.activeCaseId.isNotEmpty)
+              'caseId': MobileCaseRuntime.activeCaseId
+          }));
+      if (response.statusCode != 201) {
+        throw const HttpException('Не удалось сохранить задачу');
+      }
+      titleController.clear();
+      await loadTasks();
+      if (mounted) updateState(() => status = 'Задача сохранена на сервере');
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    }
+  }
+
+  Future<void> updateTask(Map<String, dynamic> task) async {
+    try {
+      final response = await http.patch(
+          Uri.parse(
+              '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/tasks/${task['id']}'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({
+            'status': task['status'] == 'completed' ? 'pending' : 'completed'
+          }));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось сохранить статус');
+      }
+      await loadTasks();
+    } catch (error) {
+      if (mounted) updateState(() => status = '$error');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Сроки')),
       bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              'Календарь и сроки',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(color: AppColors.goldDark),
-            ),
-            const SizedBox(height: 16),
-            const _EmptyDeadlinesCalendar(),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                    selected: true,
-                    label: const Text('Все'),
-                    onSelected: (_) {}),
-                ChoiceChip(
-                    selected: false,
-                    label: const Text('Срочно'),
-                    onSelected: (_) {}),
-                ChoiceChip(
-                    selected: false,
-                    label: const Text('Суд'),
-                    onSelected: (_) {}),
-                FilterChip(
-                  selected: reminderEnabled,
-                  label: const Text('Напоминания'),
-                  onSelected: (value) =>
-                      setState(() => reminderEnabled = value),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const _DeadlineCard(
+          child: ListView(padding: const EdgeInsets.all(24), children: [
+        Text('Календарь и сроки',
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(color: AppColors.goldDark)),
+        const SizedBox(height: 16),
+        const _EmptyDeadlinesCalendar(),
+        const SizedBox(height: 16),
+        TextField(
+            controller: titleController,
+            maxLength: 200,
+            decoration: const InputDecoration(labelText: 'Название задачи'),
+            onChanged: (_) => updateState(() {})),
+        OutlinedButton.icon(
+            onPressed: () async {
+              final picked = await showDatePicker(
+                  context: context,
+                  initialDate: date ?? DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100));
+              if (picked != null && mounted) updateState(() => date = picked);
+            },
+            icon: const Icon(Icons.calendar_today),
+            label: Text(date == null
+                ? 'Выбрать дату'
+                : date!.toIso8601String().substring(0, 10))),
+        FilledButton(
+            onPressed:
+                busy || date == null || titleController.text.trim().isEmpty
+                    ? null
+                    : addTask,
+            child: const Text('Добавить задачу')),
+        TextButton(
+            onPressed: busy ? null : loadTasks, child: const Text('Обновить')),
+        Text(status),
+        const Text(
+            'Юридические сроки требуют проверки. Даты задач задаются вами.'),
+        Wrap(spacing: 8, children: [
+          for (final value in ['Все', 'Активные', 'Выполненные'])
+            ChoiceChip(
+                selected: filter == value,
+                label: Text(value),
+                onSelected: (_) => updateState(() => filter = value))
+        ]),
+        if (busy) const LinearProgressIndicator(),
+        if (tasks.isEmpty)
+          const _DeadlineCard(
               'Нет рассчитанных сроков',
               'После выбора дела',
-              'Сроки появятся после создания дела и подтверждения исходных дат',
-              Icons.event_busy_outlined,
-            ),
-            const Card(
-              child: ListTile(
-                leading:
-                    Icon(Icons.auto_awesome_outlined, color: AppColors.gold),
-                title: Text('Сроки рассчитываются автоматически'),
-                subtitle: Text(
-                    'Мы учитываем нормы РК и особенности ваших дел, чтобы вы ничего не пропустили.'),
-                trailing: Icon(Icons.chevron_right),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+              'Добавьте задачу с подтверждённой датой',
+              Icons.event_busy_outlined),
+        for (final task in tasks.where((task) =>
+            filter == 'Все' ||
+            (filter == 'Выполненные') == (task['status'] == 'completed')))
+          Card(
+              child: CheckboxListTile(
+                  value: task['status'] == 'completed',
+                  title: Text(task['title'] as String),
+                  subtitle: Text(task['dueDate'] as String),
+                  onChanged: busy ? null : (_) => updateTask(task))),
+      ])));
 }
 
 class _DeadlineCard extends StatelessWidget {

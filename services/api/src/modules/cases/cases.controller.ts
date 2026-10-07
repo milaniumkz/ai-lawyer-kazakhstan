@@ -147,8 +147,8 @@ export class CasesController {
   }
 
   @Post('cases/:caseId/messages')
-  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }, @Headers('x-user-id') userId?: string | string[]) {
-    return this.cases.addMessage(caseId, body, assertUserId(userId));
+  addMessage(@Param('caseId') caseId: string, @Body() body: { role: 'user' | 'assistant'; text: string }, @Headers('x-user-id') userId?: string | string[], @Headers('idempotency-key') key?:string) {
+    return this.cases.addMessage(caseId, body, assertUserId(userId), key);
   }
 
   @Get('cases/:caseId/messages')

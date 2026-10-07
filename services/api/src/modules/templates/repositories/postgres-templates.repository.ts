@@ -27,6 +27,14 @@ export class PostgresTemplatesRepository implements TemplatesRepository {
     return mapGeneratedDocument(result.rows[0]!);
   }
 
+  async findGenerated(id: string) {
+    const result = await this.db.query<GeneratedDocumentRow>('SELECT * FROM generated_documents WHERE id=$1',[id]);
+    return result.rows[0] ? mapGeneratedDocument(result.rows[0]) : undefined;
+  }
+  async updateGenerated(id: string, body: string) {
+    const result = await this.db.query<GeneratedDocumentRow>("UPDATE generated_documents SET body=$2, status='draft_requires_user_confirmation', expert_review_required=true WHERE id=$1 RETURNING *",[id,body]);
+    return mapGeneratedDocument(result.rows[0]!);
+  }
   async listGenerated(caseId: string) {
     const result = await this.db.query<GeneratedDocumentRow>(
       'SELECT * FROM generated_documents WHERE case_id = $1 ORDER BY created_at DESC',

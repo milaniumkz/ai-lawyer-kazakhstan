@@ -584,6 +584,34 @@ void main() {
     expect(find.text('Карточка дела'), findsOneWidget);
   });
 
+  testWidgets('home conversation continues without leaving the home surface',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'user-1';
+    MobileCaseRuntime.startDraft();
+    MobileCaseRuntime.confirmedText = 'Хочу подать на алименты на ребёнка';
+    final cases = _FakeCaseApi();
+    await tester.pumpWidget(MaterialApp.router(
+        routerConfig: GoRouter(routes: [
+      GoRoute(
+          path: '/',
+          builder: (_, __) => CategoryScreen(caseApi: cases, homeMode: true)),
+    ])));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Продолжить'));
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Какие документы нужны?');
+    await tester.ensureVisible(find.text('Отправить'));
+    await tester.tap(find.text('Отправить'));
+    await tester.pumpAndSettle();
+    expect(cases.sentText, 'Какие документы нужны?');
+    expect(find.text('Ответ из API'), findsOneWidget);
+    expect(find.text('Ваше сообщение'), findsOneWidget);
+    expect(find.text('Говорить'), findsOneWidget);
+    expect(find.text('Подготовить претензию'), findsOneWidget);
+  });
+
   testWidgets('category blocks case creation when AI needs missing facts',
       (tester) async {
     await setLargeViewport(tester);

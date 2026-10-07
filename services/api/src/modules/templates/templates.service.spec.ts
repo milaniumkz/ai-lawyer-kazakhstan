@@ -112,6 +112,8 @@ function createRepositoryMock(): jest.Mocked<TemplatesRepository> {
         createdAt: '2026-09-04T00:00:00.000Z',
       }),
     ),
+    findGenerated: jest.fn(),
+    updateGenerated: jest.fn(),
     listGenerated: jest.fn().mockResolvedValue([]),
   };
 }

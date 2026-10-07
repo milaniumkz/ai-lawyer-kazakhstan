@@ -24,9 +24,13 @@ abstract final class ApiContract {
       '/admin/legal-categories/change-requests/{id}/approve';
   static const adminLegalCategoriesChangeRequestsIdReject =
       '/admin/legal-categories/change-requests/{id}/reject';
+  static const adminOverview = '/admin/overview';
   static const adminProviders = '/admin/providers';
   static const adminSubscriptionsPaymentsManual =
       '/admin/subscriptions/payments/manual';
+  static const adminSupportTickets = '/admin/support/tickets';
+  static const adminSupportTicketsTicketId =
+      '/admin/support/tickets/{ticketId}';
   static const aiClassifications = '/ai/classifications';
   static const aiClassificationsId = '/ai/classifications/{id}';
   static const aiClassificationsIdClarifications =
@@ -47,9 +51,15 @@ abstract final class ApiContract {
   static const casesCaseIdEvidence = '/cases/{caseId}/evidence';
   static const casesCaseIdGeneratedDocuments =
       '/cases/{caseId}/generated-documents';
+  static const casesCaseIdGenerationJobs = '/cases/{caseId}/generation-jobs';
   static const casesCaseIdMessages = '/cases/{caseId}/messages';
   static const citationsValidate = '/citations/validate';
   static const documentsGenerate = '/documents/generate';
+  static const documentsGenerationJobs = '/documents/generation-jobs';
+  static const documentsGenerationJobsJobId =
+      '/documents/generation-jobs/{jobId}';
+  static const documentsGenerationJobsJobIdCancel =
+      '/documents/generation-jobs/{jobId}/cancel';
   static const documentsDocumentIdContent = '/documents/{documentId}/content';
   static const documentsDocumentIdOcrConfirm =
       '/documents/{documentId}/ocr-confirm';
@@ -57,6 +67,12 @@ abstract final class ApiContract {
   static const filesComplete = '/files/complete';
   static const filesUploadSessions = '/files/upload-sessions';
   static const filesUploadsTokenContent = '/files/uploads/{token}/content';
+  static const generatedDocumentsDocumentId =
+      '/generated-documents/{documentId}';
+  static const generatedDocumentsDocumentIdDispatches =
+      '/generated-documents/{documentId}/dispatches';
+  static const generatedDocumentsDocumentIdPdf =
+      '/generated-documents/{documentId}/pdf';
   static const health = '/health';
   static const legalCategories = '/legal-categories';
   static const legalCategoriesTree = '/legal-categories/tree';
@@ -69,6 +85,9 @@ abstract final class ApiContract {
   static const subscriptionsPaymentHistory = '/subscriptions/payment-history';
   static const subscriptionsPaymentIntent = '/subscriptions/payment-intent';
   static const subscriptionsPlans = '/subscriptions/plans';
+  static const supportTickets = '/support/tickets';
+  static const tasks = '/tasks';
+  static const tasksTaskId = '/tasks/{taskId}';
   static const templates = '/templates';
   static const usageAi = '/usage/ai';
   static const voiceTranscripts = '/voice/transcripts';

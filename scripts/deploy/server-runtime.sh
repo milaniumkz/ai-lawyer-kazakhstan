@@ -98,6 +98,10 @@ SQL
   fi
   sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
     -f "$APP_ROOT/app/infra/db/migrations/0010_document_content.sql"
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 -f "$APP_ROOT/app/infra/db/migrations/0011_generation_jobs.sql"
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 -c "GRANT SELECT, INSERT, UPDATE, DELETE ON document_generation_jobs TO ai_lawyer_app;"
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 -f "$APP_ROOT/app/infra/db/migrations/0012_user_activity.sql"
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 -c "GRANT SELECT, INSERT, UPDATE, DELETE ON user_tasks, document_dispatches, support_tickets TO ai_lawyer_app;"
   sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
     -f "$APP_ROOT/app/infra/db/seeds/0002_pretrial_claim_v2.sql"
 fi

@@ -108,6 +108,34 @@ try {
   assert.match(await page.locator('.claimPrintBody').textContent(), /100000 тенге/);
   const generated = await request(`/cases/${cases[0].id}/generated-documents`);
   assert.equal(generated.length, 1);
+  const edited=generated[0].body+'\nДополнение пользователя: Қазақстан. Проверено вручную.';
+  await request(`/generated-documents/${generated[0].id}`,{body:edited},'PATCH');
+  assert.equal((await request(`/generated-documents/${generated[0].id}`)).body,edited);
+  const generatedPdf=await context.request.get(`${api}/api/v1/generated-documents/${generated[0].id}/pdf`);
+  assert.equal(generatedPdf.status(),200);
+  assert.equal((await generatedPdf.body()).subarray(0,5).toString(),'%PDF-');
+  const task=await request('/tasks',{title:'Проверить проект',dueDate:'2026-10-20',caseId:cases[0].id});
+  assert.equal(task.basis,'user_defined');
+  await request(`/tasks/${task.id}`,{status:'completed'},'PATCH');
+  assert((await request('/tasks')).some(item=>item.id===task.id && item.status==='completed'));
+  await request(`/tasks/${task.id}`,undefined,'DELETE');
+  assert(!(await request('/tasks')).some(item=>item.id===task.id));
+  const dispatch=await request(`/generated-documents/${generated[0].id}/dispatches`,{method:'email',contact:'qa@example.invalid',status:'draft'});
+  assert.equal(dispatch.status,'draft');
+  const manualSend=await request(`/generated-documents/${generated[0].id}/dispatches`,{method:'email',contact:'qa@example.invalid',status:'manual_sent_unverified',confirmed:true});
+  assert.equal(manualSend.status,'manual_sent_unverified');
+  assert.equal((await request(`/generated-documents/${generated[0].id}/dispatches`)).length,2);
+  const ticket=await request('/support/tickets',{topic:'QA',text:'Синтетическое обращение для проверки сохранения'});
+  assert((await request('/support/tickets')).some(item=>item.id===ticket.id && !item.reply));
+  const exported=await request('/account/export');
+  assert(exported.data.cases.some(item=>item.id===cases[0].id));
+  assert(exported.data.drafts.some(item=>item.id===generated[0].id && item.body===edited));
+  assert(exported.data.supportTickets.some(item=>item.payload.id===ticket.id));
+  const replayKey=crypto.randomUUID();
+  const replayBody={role:'user',text:'Проверка повторного запроса'};
+  const replayUrl=`${api}/api/v1/cases/${cases[0].id}/messages`;
+  for(let n=0;n<2;n++) assert((await context.request.post(replayUrl,{data:replayBody,headers:{'idempotency-key':replayKey}})).ok());
+  assert.equal((await request(`/cases/${cases[0].id}/messages`)).filter(item=>item.text===replayBody.text).length,1);
   await page.reload();
   await page.locator('.claimPrintBody').waitFor({state:'attached'});
   assert.match(await page.locator('.claimPrintBody').textContent(), /100000 тенге/);
@@ -132,7 +160,7 @@ try {
   const forged = await context.request.get(`${api}/api/v1/admin/documents/review-queue`, { headers: { 'x-user-role': 'admin' } });
   if (process.env.WEB_TEST_SECURE_AUTH === '1') assert.equal(forged.status(), 403);
   assert.equal(jsErrors.length, 0, jsErrors.join('\n'));
-  console.log('Real API intake E2E passed: one initial classification, sequential saved answers, outage/retry without duplicate messages, reload, confirmed case/facts, contextual legal answer, generated draft and reopening a saved case with its own facts/documents/history.');
+  console.log('Real API draft edits/PDF/tasks/manual dispatch/support/account export/message replay and intake E2E passed: one initial classification, sequential saved answers, outage/retry without duplicate messages, reload, confirmed case/facts, contextual legal answer, generated draft and reopening a saved case with its own facts/documents/history.');
 } catch (error) {
   if (page) {
     console.error('Intake failure:', await page.locator('.appShell').getAttribute('data-view'), await page.locator('.aizanFeedback').allTextContents());

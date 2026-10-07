@@ -15,7 +15,7 @@ npm run test:admin-ui
 npm run test:web-ui
 npm run test:web-visual
 npm run test:security
-npm run test:audit:runtime
+npm run test:audit
 npm run test:ai
 if command -v docker >/dev/null 2>&1; then
   npm run docker:config >/dev/null

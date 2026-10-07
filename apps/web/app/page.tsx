@@ -48,7 +48,7 @@ type DocumentItem = {
   source?: "file" | "camera";
   sha256?: string;
 };
-type TaskItem = { title: string; due: string; done: boolean };
+type TaskItem = { id?: string; title: string; due: string; done: boolean };
 type LegalNorm = {
   title: string;
   article: string;
@@ -186,6 +186,8 @@ type SavedState = {
   remoteCaseDraftId: string;
   remoteDocumentId: string;
   generatedClaimBody: string;
+  generationJobId: string;
+  generatedClaimId: string;
   claimReady: boolean;
   sent: boolean;
   claimSendMethod: string;
@@ -470,6 +472,7 @@ export default function WebHome() {
   const clientSequenceRef = useRef(0);
   const intakeBusyRef = useRef(false);
   const claimBusyRef = useRef(false);
+  const uploadBusyRef=useRef(false);
   const [view, setView] = useState<View>("login");
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -505,6 +508,8 @@ export default function WebHome() {
   const [remoteCaseDraftId, setRemoteCaseDraftId] = useState("");
   const [remoteDocumentId, setRemoteDocumentId] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
+  const [generationJobId, setGenerationJobId] = useState("");
+  const [generatedClaimId, setGeneratedClaimId] = useState("");
   const [generatedClaimBody, setGeneratedClaimBody] = useState("");
   const [claimSendMethod, setClaimSendMethod] = useState("WhatsApp");
   const [claimSendContact, setClaimSendContact] = useState("");
@@ -562,13 +567,18 @@ export default function WebHome() {
   const [autoPlayback, setAutoPlayback] = useState(false);
   const [saveVoiceRecords, setSaveVoiceRecords] = useState(false);
   const [usageAnalytics, setUsageAnalytics] = useState(false);
+  const [supportText,setSupportText]=useState("");
+  const [supportBusy,setSupportBusy]=useState(false);
+  const [supportTickets,setSupportTickets]=useState<Array<{id:string;topic:string;text:string;status:string;reply?:string}>>([]);
   const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [tasks, setTasks] = useState<TaskItem[]>([
-    { title: "Проверить расписку", due: "Сегодня", done: false },
-    { title: "Подготовить претензию", due: "10 дней", done: false },
-    { title: "Сверить срок исковой давности", due: "До подачи", done: true },
-  ]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [taskTitle,setTaskTitle]=useState("");
+  const [taskDate,setTaskDate]=useState("");
+  const [calendarMonth,setCalendarMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1));
+  const [taskFilter,setTaskFilter]=useState("Все");
+  const [claimConfirmed,setClaimConfirmed]=useState(false);
+  const [sendBusy,setSendBusy]=useState(false);
 
   const activeCase =
     cases.find((item) => item.id === activeCaseId) ?? cases[0] ?? null;
@@ -729,6 +739,8 @@ export default function WebHome() {
       if (saved.remoteCaseId) setRemoteCaseId(saved.remoteCaseId);
       if (saved.remoteCaseDraftId) setRemoteCaseDraftId(saved.remoteCaseDraftId);
       if (saved.remoteDocumentId) setRemoteDocumentId(saved.remoteDocumentId);
+      if (saved.generationJobId) setGenerationJobId(saved.generationJobId);
+      if (saved.generatedClaimId) setGeneratedClaimId(saved.generatedClaimId);
       if (saved.generatedClaimBody)
         setGeneratedClaimBody(saved.generatedClaimBody);
       if (typeof saved.claimReady === "boolean") setClaimReady(saved.claimReady && saved.generatedClaimBody?.trim() !== LEGACY_EMPTY_CLAIM);
@@ -805,6 +817,8 @@ export default function WebHome() {
       remoteCaseId,
       remoteCaseDraftId,
       remoteDocumentId,
+      generationJobId,
+      generatedClaimId,
       generatedClaimBody,
       claimReady,
       sent,
@@ -853,6 +867,8 @@ export default function WebHome() {
     remoteCaseId,
     remoteCaseDraftId,
     remoteDocumentId,
+    generationJobId,
+    generatedClaimId,
     generatedClaimBody,
     claimReady,
     sent,
@@ -896,6 +912,7 @@ export default function WebHome() {
       setView("register");
       return;
     }
+    if(nextView==="chat") {setHomeConversationOpen(true);setView("home");return;}
     setView(nextView);
   }, [authUserId, profileComplete]);
 
@@ -906,6 +923,7 @@ export default function WebHome() {
   }
 
   function startNewCaseDraft(options: { startVoice?: boolean } = {}) {
+    if(uploadBusyRef.current) {setSyncState("Дождитесь завершения загрузки файла");return;}
     if (intakeBusyRef.current || classificationBusy || voiceBusy) return;
     const nextDraftId = nextClientId("draft");
     speechRecognitionRef.current?.stop();
@@ -941,6 +959,8 @@ export default function WebHome() {
     setOcrConfirmed(false);
     setAnalysisDone(false);
     setGeneratedClaimBody("");
+    setGenerationJobId("");
+    setGeneratedClaimId("");
     setClaimReady(false);
     setSent(false);
     setSyncState("Начато новое дело: черновик очищен");
@@ -1022,6 +1042,7 @@ export default function WebHome() {
   }
 
   async function openSavedCase(item: CaseItem) {
+    if(uploadBusyRef.current) {setSyncState("Дождитесь завершения загрузки файла");return;}
     if (classificationBusy || intakeBusyRef.current || recording || voiceBusy) return;
     intakeBusyRef.current = true;
     setClassificationBusy(true);
@@ -1046,7 +1067,10 @@ export default function WebHome() {
       const restoredDocuments = results[1].status === "fulfilled" ? results[1].value as ApiDocument[] : [];
       const restoredMessages = results[2].status === "fulfilled" ? results[2].value as { role: string; text: string }[] : [];
       const drafts = results[3].status === "fulfilled" ? results[3].value as ApiGeneratedDocument[] : [];
-      const currentDraft = drafts.at(-1);
+      const currentDraft = drafts[0];
+      setGeneratedClaimId(currentDraft?.id ?? "");
+      const jobs = await apiJson(`/cases/${id}/generation-jobs`, {headers}) as {id: string; status: string}[];
+      setGenerationJobId(jobs.find(job => job.status === "queued" || job.status === "running")?.id ?? "");
       const nextDraftId = nextClientId("saved-case");
       setActiveCaseId(record.id.slice(0, 8));
       setRemoteCaseId(record.id);
@@ -1191,13 +1215,8 @@ export default function WebHome() {
   }
 
   function categoryStageProgress() {
-    if (currentDraftCaseCreated) return 100;
-    if (documents.length > 0) return classification ? 88 : 80;
-    if (classification)
-      return classification.result.missing_facts.length ? 64 : 72;
-    if (classificationBusy) return 45;
-    if (caseText.trim().length >= 12 || audioUrl || transcriptJobId) return 25;
-    return 10;
+    const timeline=categoryTimeline();
+    return Math.round(100*timeline.filter(item=>item.done).length/timeline.length);
   }
 
   async function appendInterviewFact() {
@@ -1375,6 +1394,9 @@ export default function WebHome() {
       return;
     }
     if (file.size > 25 * 1024 * 1024) { setSyncState("Размер файла должен быть не более 25 МБ"); return; }
+    if(uploadBusyRef.current) {setSyncState("Другой файл уже загружается");return;}
+    uploadBusyRef.current=true;
+    try {
     const sha256 = await fileSha256(file);
     if (documents.some(item => item.sha256 === sha256 && item.id)) { setSyncState("Этот файл уже сохранён в деле"); return; }
     const localDoc: DocumentItem = {
@@ -1440,6 +1462,9 @@ export default function WebHome() {
           : "Ошибка загрузки документа",
       );
     }
+    } catch(error) {
+      setSyncState(error instanceof Error?error.message:"Не удалось прочитать файл");
+    } finally {uploadBusyRef.current=false;}
   }
 
   async function downloadDocument(document: DocumentItem) {
@@ -1457,12 +1482,20 @@ export default function WebHome() {
   }
 
   async function apiJson(path: string, init?: RequestInit) {
+    const messageKey=path.endsWith('/messages')&&init?.method==='POST' ? `aizan-pending:${authUserId}:${path}` : '';
+    let key='';
+    if(messageKey) {
+      const pending=JSON.parse(localStorage.getItem(messageKey)||'null') as {body:string;key:string}|null;
+      key=pending && pending.body===init?.body ? pending.key : nextClientId('message');
+      localStorage.setItem(messageKey,JSON.stringify({body:init?.body,key}));
+    }
     const response = await fetch(`/api/v1${path}`, {
       signal: AbortSignal.timeout(30000),
       ...init,
       headers: {
         ...(init?.body !== undefined ? { "content-type": "application/json" } : {}),
         "x-correlation-id": "web-app-sync",
+        ...(key?{"idempotency-key":key}:{}),
         ...(init?.headers ?? {}),
       },
     });
@@ -1479,6 +1512,7 @@ export default function WebHome() {
         typeof message === "string" ? message : JSON.stringify(message),
       );
     }
+    if(path.endsWith('/messages')&&(!init?.method||init.method==='GET')) localStorage.removeItem(`aizan-pending:${authUserId}:${path}`);
     return body;
   }
 
@@ -1676,10 +1710,7 @@ export default function WebHome() {
       const templates = (await apiJson("/templates")) as { id: string; code: string; language: string; version: string }[];
       const template = templates.find((item) => item.code === "pretrial_claim" && item.language === "ru" && item.version === "v2") ?? templates.find((item) => item.code === "pretrial_claim" && item.language === "ru");
       if (!template) throw new Error("Шаблон претензии недоступен");
-      const generated = (await apiJson("/documents/generate", {
-        method: "POST",
-        headers: { "x-user-id": userId },
-        body: JSON.stringify({
+      const input = {
           templateId: template.id,
           caseId: remoteCaseId,
           fields: {
@@ -1690,13 +1721,12 @@ export default function WebHome() {
             deadlineDate: "Срок рассчитывается после проверки",
           },
           confirmedCitationIds: [],
-        }),
-      })) as ApiGeneratedDocument;
-      setGeneratedClaimBody(generated.body);
-      setClaimReady(true);
-      updateActiveCase("Проект претензии готов", 91);
-      setSyncState(`Проект создан в API: ${generated.id.slice(0, 8)}`);
-      go("claimDraft");
+      };
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input)));
+      const key = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,"0")).join("");
+      const job = await apiJson("/documents/generation-jobs", {method:"POST", headers:{"x-user-id":userId,"idempotency-key":key},body:JSON.stringify(input)}) as {id:string};
+      setGenerationJobId(job.id);
+      go("claim");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1704,6 +1734,44 @@ export default function WebHome() {
           : "Не удалось сформировать претензию",
       );
     } finally { claimBusyRef.current = false; setClaimBusy(false); }
+  }
+
+  useEffect(() => {
+    if (!generationJobId || !authUserId) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const job = await apiJson(`/documents/generation-jobs/${generationJobId}`, {headers:{"x-user-id":authUserId}}) as {status:string; document?:ApiGeneratedDocument};
+        if (!active) return;
+        if (job.status === "completed" && job.document) {
+          setGeneratedClaimBody(job.document.body); setGeneratedClaimId(job.document.id); setClaimReady(true);
+          setGenerationJobId(""); setClaimBusy(false); setSyncState("Проект сохранён на сервере"); go("claimDraft");
+        } else if (job.status === "cancelled" || job.status === "failed") {
+          setGenerationJobId(""); setClaimBusy(false); setSyncState(job.status === "cancelled" ? "Подготовка отменена" : "Не удалось подготовить документ. Повторите попытку.");
+        } else {
+          setClaimBusy(true); setSyncState(job.status === "queued" ? "Проект в очереди" : "Сервер формирует проект"); timer = setTimeout(poll,750);
+        }
+      } catch {
+        if (active) { setSyncState("Соединение прервано. Задача сохранена; проверяю повторно."); timer=setTimeout(poll,3000); }
+      }
+    };
+    void poll();
+    return () => { active=false; clearTimeout(timer); };
+    // State setters are stable; polling restarts only when the selected job/session changes.
+  }, [generationJobId,authUserId]);
+
+  async function cancelGeneration() {
+    if (!generationJobId) return;
+    try { await apiJson(`/documents/generation-jobs/${generationJobId}/cancel`,{method:"POST"}); }
+    catch (error) { setSyncState(error instanceof Error ? error.message : "Не удалось отменить задачу"); }
+  }
+  async function saveClaimDraft() {
+    if (!generatedClaimId || !generatedClaimBody.trim()) return false;
+    try {
+      await apiJson(`/generated-documents/${generatedClaimId}`,{method:"PATCH",body:JSON.stringify({body:generatedClaimBody})});
+      setSyncState("Проект сохранён на сервере"); return true;
+    } catch (error) { setSyncState(error instanceof Error ? error.message : "Не удалось сохранить проект"); return false; }
   }
 
   async function analyzeDocuments() {
@@ -1736,32 +1804,52 @@ export default function WebHome() {
     go("analysis");
   }
 
-  function confirmClaimSent() {
-    if (!claimReady) {
-      setSyncState("Сначала сформируйте проект претензии");
-      return;
-    }
-    if (!claimSendContact.trim()) {
-      setSyncState("Укажите контакт получателя перед фиксацией отправки");
-      go("claimSend");
-      return;
-    }
-    if (!window.confirm("Зафиксировать ручную отправку? Приложение не отправляет документ получателю и не подтверждает доставку.")) return;
-    const sentAt = new Date().toLocaleString("ru-KZ");
-    setSent(true);
-    updateActiveCase("Assisted отправка претензии зафиксирована", 100);
-    setTasks((items) => [
-      {
-        title: `Assisted отправка (${claimSendMethod}) ${sentAt}`,
-        due: "Manual status",
-        done: true,
-      },
-      ...items,
-    ]);
-    setSyncState(
-      `Manual status зафиксирован: ${claimSendMethod}, ${claimSendContact.trim()}, ${sentAt}`,
-    );
-    go("claimSend");
+  useEffect(() => {
+    if(!generatedClaimId || !authUserId) return;
+    let active=true;
+    void apiJson(`/generated-documents/${generatedClaimId}/dispatches`).then((records:{method:string;contact:string;message:string;status:string}[])=>{
+      if(!active) return; const latest=records[0];
+      if(latest) {setClaimSendMethod(({email:"E-mail",whatsapp:"WhatsApp",sms:"SMS",post:"Почтовая отправка"} as Record<string,string>)[latest.method]);setClaimSendContact(latest.contact);setClaimSendMessage(latest.message);setSent(latest.status==="manual_sent_unverified");}
+    }).catch(()=>setSyncState("Не удалось восстановить черновик отправки"));
+    return()=>{active=false;};
+  },[generatedClaimId,authUserId]);
+
+  async function saveDispatch(manual: boolean) {
+    if(sendBusy) return;
+    if(!generatedClaimId || !claimReady) {setSyncState("Сначала сформируйте проект");return;}
+    if(manual && !window.confirm("Зафиксировать ручную отправку? Приложение не отправляет документ получателю и не подтверждает доставку.")) return;
+    setSendBusy(true);
+    try {
+      if(!await saveClaimDraft()) return;
+      const method=({"E-mail":"email","WhatsApp":"whatsapp","SMS":"sms","Почтовая отправка":"post"} as Record<string,string>)[claimSendMethod];
+      await apiJson(`/generated-documents/${generatedClaimId}/dispatches`,{method:"POST",body:JSON.stringify({method,contact:claimSendContact,message:claimSendMessage,status:manual?"manual_sent_unverified":"draft",confirmed:manual})});
+      setSent(manual);setSyncState(manual?"Ручная отправка записана. Доставка не подтверждена.":"Черновик отправки сохранён на сервере");
+    } catch(error) {setSyncState(error instanceof Error?error.message:"Не удалось сохранить отправку");}
+    finally {setSendBusy(false);}
+  }
+  async function confirmClaimSent() { await saveDispatch(true); }
+
+  useEffect(() => {
+    if(!hydrated || !authUserId) return;
+    void loadTasks();
+    // Session changes select another user's task list.
+  },[hydrated,authUserId]);
+  async function loadTasks() {
+    try {const records=await apiJson("/tasks") as {id:string;title:string;dueDate:string;status:string}[];
+      setTasks(records.map(task=>({id:task.id,title:task.title,due:task.dueDate,done:task.status==="completed"})));
+    } catch {setDeadlineStatus("Не удалось загрузить задачи. Повторите запрос.");}
+  }
+  async function addTask() {
+    try {await apiJson("/tasks",{method:"POST",body:JSON.stringify({title:taskTitle,dueDate:taskDate,...(remoteCaseId?{caseId:remoteCaseId}:{})})});setTaskTitle("");await loadTasks();}
+    catch(error) {setDeadlineStatus(error instanceof Error?error.message:"Не удалось создать задачу");}
+  }
+  async function downloadClaimPdf() {
+    if(!await saveClaimDraft()) return;
+    try {
+      const response=await fetch(`/api/v1/generated-documents/${generatedClaimId}/pdf`,{signal:AbortSignal.timeout(30000)});
+      if(!response.ok) throw new Error("Не удалось скачать PDF");
+      const url=URL.createObjectURL(await response.blob()); const link=document.createElement("a");link.href=url;link.download="Претензия.pdf";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } catch(error) {setSyncState(error instanceof Error?error.message:"Ошибка PDF");}
   }
 
   function saveSettings() {
@@ -1825,42 +1913,21 @@ export default function WebHome() {
     );
   }
 
+  async function loadSupportTickets() {
+    try { setSupportTickets(await apiJson("/support/tickets")); }
+    catch(error) {setHelpStatus(error instanceof Error?error.message:"Не удалось загрузить обращения");}
+  }
   async function createSupportRequest() {
-    const supportText = caseText.trim() || "Запрос в службу поддержки";
-    if (supportText.length < 8) {
-      setSyncState("Опишите обращение подробнее");
-      return;
-    }
-    const ticketId = nextClientId("SUP");
-    if (remoteCaseId) {
-      try {
-        const userId = await ensureUser();
-        await apiJson(`/cases/${remoteCaseId}/messages`, {
-          method: "POST",
-          headers: { "x-user-id": userId },
-          body: JSON.stringify({
-            role: "user",
-            text: `Поддержка: ${supportText}`,
-          }),
-        });
-      } catch {
-        // Support request still remains in local case history when API message sync is unavailable.
-      }
-    }
-    setHelpStatus(`Обращение ${ticketId} создано`);
-    setMessages((items) => [
-      ...items,
-      { role: "user", text: `Поддержка: ${supportText}` },
-      {
-        role: "assistant",
-        text: `Обращение ${ticketId} принято в ручную проверку.`,
-      },
-    ]);
-    setTasks((items) => [
-      { title: `Ответ поддержки ${ticketId}`, due: "24 часа", done: false },
-      ...items,
-    ]);
-    setSyncState(`Поддержка создана: ${ticketId}`);
+    if(supportBusy) return;
+    if(supportText.trim().length<8) {setHelpStatus("Опишите вопрос подробнее: минимум 8 символов");return;}
+    setSupportBusy(true);
+    try {
+      const ticket=await apiJson("/support/tickets",{method:"POST",body:JSON.stringify({topic:"Общие вопросы",text:supportText.trim()})}) as {id:string};
+      setHelpStatus(`Обращение ${ticket.id.slice(0,8)} сохранено`);
+      setSupportText("");
+      await loadSupportTickets();
+    } catch(error) {setHelpStatus(error instanceof Error?error.message:"Не удалось сохранить обращение");}
+    finally {setSupportBusy(false);}
   }
 
   async function loadSubscription() {
@@ -1907,13 +1974,10 @@ export default function WebHome() {
     }
   }
 
-  function toggleTask(title: string) {
-    setTasks((items) =>
-      items.map((item) =>
-        item.title === title ? { ...item, done: !item.done } : item,
-      ),
-    );
-    setDeadlineStatus(`Срок обновлен: ${title}`);
+  async function toggleTask(title: string) {
+    const task=tasks.find(item=>item.id===title || item.title===title); if(!task?.id) return;
+    try {await apiJson(`/tasks/${task.id}`,{method:"PATCH",body:JSON.stringify({status:task.done?"pending":"completed"})});await loadTasks();setDeadlineStatus("Задача сохранена");}
+    catch(error) {setDeadlineStatus(error instanceof Error?error.message:"Не удалось сохранить задачу");}
   }
 
   function formatDuration(seconds: number) {
@@ -2284,6 +2348,9 @@ export default function WebHome() {
         sessions?: unknown[];
         exportedAt?: string;
       };
+      const url=URL.createObjectURL(new Blob([JSON.stringify(exported,null,2)],{type:'application/json'}));
+      const link=document.createElement('a');link.href=url;link.download='aizan-account.json';link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
       const profileCount = exported.profiles?.length ?? 0;
       const sessionCount = exported.sessions?.length ?? 0;
       setSyncState(
@@ -3060,14 +3127,14 @@ export default function WebHome() {
               <h2>{activeCase.title}</h2>
               <p>{activeCase.status}</p>
             </div>
-            <strong>{activeCase.progress}%</strong>
+            <strong>{activeCase.status}</strong>
           </div>
           <div className="caseMetricGrid">
             <Info label="Категория" value={activeCase.type} />
             <Info label="Стадия" value="Досудебная подготовка" />
             <Info label="Суд / Маршрут" value="Assisted mode" />
             <Info label="Срок" value={activeCase.date} />
-            <Info label="Готовность" value={`${activeCase.progress}%`} />
+            <Info label="Готовность" value="Проверьте документы и проект" />
           </div>
           <h3 className="goldSection">Прогресс дела</h3>
           <div className="caseProgressRail">
@@ -3302,12 +3369,11 @@ export default function WebHome() {
                 <span className="largeIcon">⚖</span>
                 <div>
                   <h3>
-                    Готовность дела: <b>{documents.length ? "68%" : "0%"}</b>
+                    Документы в деле: <b>{documents.filter(item=>item.id).length}</b>
                   </h3>
-                  <progress value={documents.length ? 68 : 0} max="100" />
+                  <p>{ocrConfirmed ? "Реквизиты подтверждены пользователем" : "Проверьте реквизиты документов"}</p>
                   <p>
-                    Чем выше готовность, тем больше шансов на успешный исход
-                    дела.
+                    Количество файлов не определяет исход дела. Проверьте факты и применимость документов.
                   </p>
                 </div>
               </div>
@@ -3521,7 +3587,7 @@ export default function WebHome() {
     }
 
     if (view === "deadlines") {
-      const calendarLabel = new Date().toLocaleDateString("ru-KZ", {
+      const calendarLabel = calendarMonth.toLocaleDateString("ru-KZ", {
         month: "long",
         year: "numeric",
       });
@@ -3531,100 +3597,45 @@ export default function WebHome() {
             title="Календарь и сроки"
             subtitle="Контроль процессуальных дат"
           />
+          <div className="taskCreate">
+            <input aria-label="Название задачи" placeholder="Название задачи" value={taskTitle} onChange={event=>setTaskTitle(event.target.value)} maxLength={200}/>
+            <input aria-label="Дата задачи" type="date" value={taskDate} onChange={event=>setTaskDate(event.target.value)}/>
+            <button className="primary" disabled={!taskTitle.trim() || !taskDate} onClick={addTask}>Добавить задачу</button>
+            <button onClick={loadTasks}>Обновить</button>
+            <p>Даты задаются вами. Юридические сроки требуют проверки.</p>
+          </div>
           <div className="calendar caseCalendar">
             <div className="calendarTop">
               <button
-                onClick={() =>
-                  setDeadlineStatus(
-                    "Предыдущий месяц недоступен в локальном календаре",
-                  )
-                }
+                onClick={()=>setCalendarMonth(date=>new Date(date.getFullYear(),date.getMonth()-1,1))}
               >
                 ‹
               </button>
               <strong>{calendarLabel}</strong>
               <button
-                onClick={() =>
-                  setDeadlineStatus(
-                    "Следующий месяц недоступен в локальном календаре",
-                  )
-                }
+                onClick={()=>setCalendarMonth(date=>new Date(date.getFullYear(),date.getMonth()+1,1))}
               >
                 ›
               </button>
             </div>
             <div className="calendarGrid">
-              {[
-                "Пн",
-                "Вт",
-                "Ср",
-                "Чт",
-                "Пт",
-                "Сб",
-                "Вс",
-                "29",
-                "30",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "11",
-                "12",
-                "13",
-                "14",
-                "15",
-                "16",
-                "17",
-                "18",
-                "19",
-                "20",
-                "21",
-                "22",
-                "23",
-                "24",
-                "25",
-                "26",
-                "27",
-                "28",
-                "29",
-                "30",
-                "31",
-                "1",
-                "2",
-              ].map((day, index) => (
-                <button
-                  className={["9", "16", "22"].includes(day) ? "marked" : ""}
-                  key={`${day}-${index}`}
-                  onClick={() => setDeadlineStatus(`Выбрана дата: ${day} мая`)}
-                >
-                  {day}
-                </button>
-              ))}
+              {["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(day=><b key={day}>{day}</b>)}
+              {Array.from({length:(calendarMonth.getDay()+6)%7},(_,index)=><span key={`empty-${index}`}/>)}
+              {Array.from({length:new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate()},(_,index)=>{
+                const day=index+1;const value=`${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth()+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                return <button key={value} className={tasks.some(task=>task.due===value)?"marked":""} onClick={()=>{setTaskDate(value);setDeadlineStatus(`Выбрана дата: ${value}`);}}>{day}</button>;
+              })}
             </div>
           </div>
           <div className="caseFilters deadlineFilters">
-            {["Все", "Срочно", "Суд", "Напоминания"].map((filter) => (
-              <button
-                className={filter === caseFilter ? "active" : ""}
-                key={filter}
-                onClick={() => setDeadlineStatus(`Фильтр сроков: ${filter}`)}
-              >
-                {filter}
-              </button>
-            ))}
+            {["Все","Активные","Выполненные"].map(filter=><button key={filter} className={taskFilter===filter?"active":""} onClick={()=>setTaskFilter(filter)}>{filter}</button>)}
           </div>
           <div className="deadlineList">
-            {tasks.map((task, index) => (
+            {tasks.filter(task=>taskFilter==="Все"||(taskFilter==="Выполненные")===task.done).map((task, index) => (
               <button
                 className={task.done ? "deadlineRow done" : "deadlineRow"}
                 key={task.title}
-                onClick={() => toggleTask(task.title)}
+                onClick={() => toggleTask(task.id ?? task.title)}
               >
                 <span className="roundIcon">
                   {index === 0 ? "⚖" : index === 1 ? "▤" : "🔔"}
@@ -3638,7 +3649,7 @@ export default function WebHome() {
                   </small>
                   <small>{task.done ? "Готово" : task.due}</small>
                 </p>
-                <em>{index === 0 ? "Срочно" : "Важно"} ›</em>
+                <em>{task.done?"Выполнено":"Задано вами"} ›</em>
               </button>
             ))}
           </div>
@@ -3872,7 +3883,8 @@ export default function WebHome() {
               <button className="primary wide heroCta" onClick={generateClaim} disabled={claimBusy}>
                 {claimBusy ? "Формирую…" : claimReady ? "Открыть проект" : "Сформировать проект"}
               </button>
-              <button className="wide outlineGold" disabled={claimBusy} onClick={() => go("home")}>
+              {generationJobId && <button className="wide outlineGold" onClick={cancelGeneration}>Отменить подготовку</button>}
+              <button className="wide outlineGold" onClick={() => go("home")}>
                 Назад
               </button>
             </>
@@ -3907,7 +3919,7 @@ export default function WebHome() {
                     <b>Суть требования</b>
                     <textarea className="claimBodyEditor" aria-label="Текст проекта претензии"
                       value={generatedClaimBody} placeholder="Сначала сформируйте проект претензии"
-                      onChange={event => setGeneratedClaimBody(event.target.value)} />
+                      onChange={event => {setGeneratedClaimBody(event.target.value);setClaimConfirmed(false);}} />
                     <p className="claimPrintBody">{generatedClaimBody}</p>
                     {generatedClaimBody.trim() === LEGACY_EMPTY_CLAIM && <button className="primary" onClick={() => go("claim")}>Сформировать полный проект</button>}
                   </div>
@@ -3933,18 +3945,20 @@ export default function WebHome() {
               </article>
               <div className="claimDraftActions">
                 <button onClick={() => document.querySelector<HTMLTextAreaElement>(".claimBodyEditor")?.focus()}>✎ Редактировать</button>
+                <button disabled={!generatedClaimId || !generatedClaimBody.trim()} onClick={() => void saveClaimDraft()}>Сохранить проект</button>
                 <button
-                  disabled={!generatedClaimBody.trim()} onClick={() => window.print()}
+                  disabled={!generatedClaimBody.trim()} onClick={() => void downloadClaimPdf()}
                 >
                   ▣ Скачать PDF
                 </button>
               </div>
               <button
                 className="primary wide heroCta"
-                onClick={() => go("claimSend")} disabled={!generatedClaimBody.trim()}
+                onClick={async () => {if(await saveClaimDraft()) go("claimSend");}} disabled={!generatedClaimBody.trim() || !claimConfirmed}
               >
                 ✧ Перейти к отправке
               </button>
+              <label><input type="checkbox" checked={claimConfirmed} onChange={event=>setClaimConfirmed(event.target.checked)}/> Я проверил текст и реквизиты</label>
               <p className="claimSecure">
                 Проверьте текст и реквизиты перед отправкой
               </p>
@@ -3963,7 +3977,7 @@ export default function WebHome() {
                         setClaimSendMethod(method);
                         setSent(false);
                         setSyncState(
-                          `${method}: внешний канал, требуется ручная отправка или provider adapter`,
+                          `${method}: отправьте документ самостоятельно, затем зафиксируйте это здесь`,
                         );
                       }}
                     >
@@ -4037,13 +4051,12 @@ export default function WebHome() {
                 className="primary wide heroCta"
                 onClick={confirmClaimSent}
               >
-                {sent ? "Manual status зафиксирован" : "✧ Зафиксировать assisted отправку"}
+                {sendBusy?"Сохраняю…":sent ? "Ручная отправка записана" : "✧ Зафиксировать ручную отправку"}
               </button>
               <button
                 className="wide outlineGold"
                 onClick={() => {
-                  setClaimReady(true);
-                  setSyncState("Черновик отправки сохранен локально");
+                  void saveDispatch(false);
                 }}
               >
                 ▤ Сохранить как черновик
@@ -4397,7 +4410,7 @@ export default function WebHome() {
             {[
               "Частые вопросы|Ответы на популярные темы",
               "Инструкции|Пошаговые руководства",
-              "WhatsApp adapter|Внешний канал без fake-доставки",
+              "Связаться с поддержкой|Обращение в вашем аккаунте",
               "Сообщить о проблеме|Ошибка или предложение",
             ].map((row, index) => {
               const [title, sub] = row.split("|");
@@ -4405,7 +4418,7 @@ export default function WebHome() {
                 <button
                   key={title}
                   onClick={() =>
-                    setHelpStatus(`${title}: создан локальный запрос`)
+                    setHelpStatus(index===0?"Создайте дело на главной, прикрепите документы и проверьте проект перед сохранением PDF.":index===1?"Опишите ситуацию → ответьте на уточнения → подтвердите категорию → подготовьте и проверьте документ.":"Опишите вопрос в форме ниже. Обращение сохранится в аккаунте.")
                   }
                 >
                   <span>{index + 1}</span>
@@ -4417,15 +4430,15 @@ export default function WebHome() {
           </div>
           <div className="supportOnline">
             <strong>Служба поддержки</strong>
-            <span>Manual</span>
-            <p>Обращение фиксируется локально и, при наличии дела, отправляется в API-сообщения.</p>
+            <span>Обращения в аккаунте</span>
+            <p>Обращение сохраняется в вашем аккаунте. Ответ появится после обработки сотрудником поддержки.</p>
             <button
               className="primary"
               onClick={() => {
                 void createSupportRequest();
               }}
             >
-              Открыть чат
+              Обновить обращения
             </button>
           </div>
           <h3 className="goldSection">Разделы помощи</h3>
@@ -4443,7 +4456,7 @@ export default function WebHome() {
                 <button
                   key={title}
                   onClick={() =>
-                    setHelpStatus(`${title}: открыт раздел помощи`)
+                    setHelpStatus(title=== "Безопасность данных"?"Дела доступны только владельцу. В профиле можно выгрузить данные и удалить аккаунт.":title=== "Дела и документы"?"Загружайте документы в нужное дело. Исправьте распознанный текст вручную и проверьте проект перед экспортом.":"Внешние способы входа, оплаты и отправки требуют подключения соответствующих сервисов. Доступны ручная работа с делами и обращение в поддержку.")
                   }
                 >
                   <p>
@@ -4459,12 +4472,15 @@ export default function WebHome() {
             <strong>Статус обращения</strong>
             <p>{helpStatus}</p>
           </div>
+          {supportTickets.map(ticket=><div className="analysisBox" key={ticket.id}><strong>{ticket.topic} · {ticket.status==="resolved"?"Закрыто":"Открыто"}</strong><p>{ticket.text}</p><p>{ticket.reply || "Ответ пока не получен"}</p></div>)}
           <textarea
-            value={caseText}
-            onChange={(event) => setCaseText(event.target.value)}
+            aria-label="Вопрос поддержке"
+            value={supportText}
+            onChange={(event) => setSupportText(event.target.value)}
           />
           <button
             className="primary wide"
+            disabled={supportBusy}
             onClick={() => {
               void createSupportRequest();
             }}
@@ -4616,7 +4632,7 @@ export default function WebHome() {
               showDraftContext
                 ? `${categoryStageProgress()}%`
                 : activeCase
-                  ? `${activeCase.progress}%`
+                  ? "Проверьте документы"
                   : "0%"
             }
           />
@@ -4638,7 +4654,7 @@ export default function WebHome() {
               <button
                 className={task.done ? "taskRow done" : "taskRow"}
                 key={task.title}
-                onClick={() => toggleTask(task.title)}
+                onClick={() => toggleTask(task.id ?? task.title)}
               >
                 <span>{task.done ? "✓" : ""}</span>
                 <strong>{task.title}</strong>

@@ -67,6 +67,14 @@ export class PostgresCasesRepository implements CasesRepository {
     return mapMessage(result.rows[0]!);
   }
 
+  async findMessage(id: string) {
+    const result=await this.db.query<MessageRow>('SELECT * FROM messages WHERE id=$1',[id]);
+    return result.rows[0] ? mapMessage(result.rows[0]) : undefined;
+  }
+  async saveTurn(messages: MessageRecord[]) {
+    await this.db.query(`INSERT INTO messages (id,case_id,role,text,created_at) VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10) ON CONFLICT(id) DO NOTHING`, messages.flatMap(message=>[message.id,message.caseId,message.role,message.text,message.createdAt]));
+  }
+
   async listMessages(caseId: string) {
     const result = await this.db.query<MessageRow>('SELECT * FROM messages WHERE case_id = $1 ORDER BY created_at ASC', [caseId]);
     return result.rows.map(mapMessage);

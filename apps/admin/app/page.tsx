@@ -4,12 +4,7 @@ import { useState } from 'react';
 import { tokens } from '../src/design-system/tokens';
 import { apiPaths } from '../src/api/api-paths';
 
-const cards = [
-  ['Активные дела', '128'],
-  ['На проверке эксперта', '17'],
-  ['Расход AI за месяц', '₸ 482 000'],
-  ['OTP / stub auth', 'local'],
-];
+
 
 const auditEvents = ['otp_requested', 'login', 'session_created', 'profile_created', 'logout_all_devices'];
 const caseStatuses = ['consultation', 'clarification_required', 'transcribing', 'classifying', 'ready'];
@@ -70,22 +65,41 @@ export default function AdminHome() {
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
   const [selectedChangeRequest, setSelectedChangeRequest] = useState<ChangeRequest | null>(null);
   const [documentQueue, setDocumentQueue] = useState<AdminDocument[]>([]);
-  const [draftCode, setDraftCode] = useState('family.admin_review_test');
-  const [draftName, setDraftName] = useState('Админская тестовая категория');
+  const [draftCode, setDraftCode] = useState('');
+  const [draftName, setDraftName] = useState('');
   const [paymentUserId, setPaymentUserId] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [overview,setOverview]=useState<{caseCount:number|null;documentReviewCount:number|null;openTicketCount:number;aiCostKzt:number|null}|null>(null);
+  const [supportTickets,setSupportTickets]=useState<{id:string;topic:string;text:string;status:string;reply?:string}[]>([]);
+  const [supportReply,setSupportReply]=useState("");
+  const [supportStatus,setSupportStatus]=useState("Обращения не загружены");
+  const [sourceTitle,setSourceTitle]=useState("");
+  const [sourceUrl,setSourceUrl]=useState("");
+  const [sourceText,setSourceText]=useState("");
+  const [sourceDate,setSourceDate]=useState("");
+  const cards=[["Всего дел",overview?.caseCount],["Документы на проверке",overview?.documentReviewCount],["Открытые обращения",overview?.openTicketCount],["Расход AI за месяц",overview?.aiCostKzt]].map(([label,value])=>[label,value===null||value===undefined?"—":String(value)]);
+  async function loadOverview() {setOverview(await apiJson('/admin/overview'));}
+  async function loadSupportTickets() {
+    try {setSupportTickets(await apiJson('/admin/support/tickets'));setSupportStatus("Обращения загружены");await loadOverview();}
+    catch(error) {setSupportStatus(error instanceof Error?error.message:"Не удалось загрузить обращения");}
+  }
+  async function replySupport(id:string) {
+    try {await apiJson(`/admin/support/tickets/${id}`,{method:"PATCH",body:JSON.stringify({reply:supportReply,status:"resolved"})});setSupportReply("");await loadSupportTickets();}
+    catch(error) {setSupportStatus(error instanceof Error?error.message:"Не удалось сохранить ответ");}
+  }
   async function apiJson(path: string, init?: RequestInit) {
     const response = await fetch(`/api/v1${path}`, {
+      signal:AbortSignal.timeout(30000),
       ...init,
       headers: {
-        'content-type': 'application/json',
+        ...(init?.body!==undefined?{'content-type':'application/json'}:{}),
         'x-correlation-id': 'admin-ops',
-        'x-user-role': 'admin',
         ...(init?.headers ?? {}),
       },
     });
     const body = await response.json();
+    if(response.status===401 || response.status===403) throw new Error("Войдите в аккаунт с правами администратора");
     if (!response.ok) throw new Error(body.message ?? body.error ?? path);
     return body;
   }
@@ -123,23 +137,24 @@ export default function AdminHome() {
     }
   }
 
-  async function importLegalSourceFixture() {
+  async function importLegalSource() {
+    if(!sourceTitle.trim() || !sourceText.trim() || !sourceUrl.trim() || !sourceDate) {setLegalStatus("Заполните официальный источник, текст и дату редакции");return;}
     setBusy(true);
     try {
       const source = (await apiJson('/legal-sources/manual-import', {
         method: 'POST',
         body: JSON.stringify({
-          officialId: `admin:fixture:${Date.now()}`,
-          title: 'Admin RC официальный фрагмент',
+          officialId: sourceUrl.trim(),
+          title: sourceTitle.trim(),
           sourceType: 'law',
           authority: 'Әділет',
           language: 'ru',
-          article: '1',
-          text: 'Официальный тестовый фрагмент РК для проверки ручного импорта.',
-          sourceUrl: 'https://adilet.zan.kz/rus/docs/admin-rc',
-          effectiveFrom: '2024-01-01T00:00:00.000Z',
-          sourceVersion: '2024-01-01',
-          status: 'active',
+
+          text: sourceText.trim(),
+          sourceUrl: sourceUrl.trim(),
+          effectiveFrom: `${sourceDate}T00:00:00.000Z`,
+          sourceVersion: sourceDate,
+          status: 'draft',
         }),
       })) as { id: string };
       setLegalStatus(`Legal source imported: ${source.id.slice(0, 8)}`);
@@ -324,30 +339,11 @@ export default function AdminHome() {
     }
   }
 
-  async function recordAiUsageFixture() {
+  async function loadAiUsageSummary() {
     setBusy(true);
-    try {
-      const result = (await apiJson('/usage/ai', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: 'admin-rc-user',
-          provider: 'stub',
-          modelAlias: 'simple',
-          inputUnits: 12,
-          outputUnits: 8,
-          durationMs: 240,
-          estimatedCostKzt: 1,
-          complexity: 'simple',
-          risk: 'low',
-          correlationId: 'admin-ops',
-        }),
-      })) as { budget: { usedKzt: number; monthlyLimitKzt: number } };
-      setUsageStatus(`AI usage recorded: ₸ ${result.budget.usedKzt}/${result.budget.monthlyLimitKzt}`);
-    } catch (error) {
-      setUsageStatus(error instanceof Error ? `AI usage API error: ${error.message}` : 'AI usage API error');
-    } finally {
-      setBusy(false);
-    }
+    try {await loadOverview();setUsageStatus('AI usage summary: данные получены из серверного журнала');}
+    catch(error) {setUsageStatus(error instanceof Error?error.message:'Не удалось загрузить расходы');}
+    finally {setBusy(false);}
   }
 
   async function loadSubscriptionPlans() {
@@ -447,6 +443,8 @@ export default function AdminHome() {
         <p>AI-Юрист Казахстан</p>
         <h1>Панель контроля качества и бюджета</h1>
       </section>
+      <p><a href="/">Войти в основной аккаунт</a></p>
+      <button onClick={()=>void loadOverview().catch(error=>setSupportStatus(error.message))}>Обновить показатели</button>
       <section className="grid">
         {cards.map(([label, value]) => (
           <article className="card" key={label}>
@@ -454,6 +452,12 @@ export default function AdminHome() {
             <strong>{value}</strong>
           </article>
         ))}
+      </section>
+      <section className="notice">
+        <strong>Обращения поддержки</strong>
+        <button onClick={loadSupportTickets}>Загрузить обращения</button><small>{supportStatus}</small>
+        <textarea aria-label="Ответ поддержки" value={supportReply} onChange={event=>setSupportReply(event.target.value)} maxLength={20000}/>
+        {supportTickets.map(ticket=><article key={ticket.id}><b>{ticket.topic}</b><p>{ticket.text}</p><p>{ticket.reply ?? "Ответ ещё не записан"}</p><small>{ticket.status}</small><button disabled={!supportReply.trim()} onClick={()=>void replySupport(ticket.id)}>Сохранить ответ</button></article>)}
       </section>
       <section className="notice">
         <strong>Юридический guardrail</strong>
@@ -559,7 +563,12 @@ export default function AdminHome() {
       <section className="notice">
         <strong>Legal RAG</strong>
         <span>Юридический ответ показывается только с подтвержденной официальной цитатой РК; иначе safe refusal.</span>
-        <button disabled={busy} onClick={() => { void importLegalSourceFixture(); }}>Импортировать legal source</button>
+        <input aria-label="Название источника" placeholder="Название источника" value={sourceTitle} onChange={event=>setSourceTitle(event.target.value)}/>
+        <input aria-label="Официальный URL" placeholder="Официальный URL" value={sourceUrl} onChange={event=>setSourceUrl(event.target.value)}/>
+        <input aria-label="Дата редакции" type="date" value={sourceDate} onChange={event=>setSourceDate(event.target.value)}/>
+        <textarea aria-label="Текст источника" placeholder="Текст источника" value={sourceText} onChange={event=>setSourceText(event.target.value)}/>
+        <p>Ручной импорт сохраняется как черновик и не подтверждает достоверность источника.</p>
+        <button disabled={busy} onClick={() => { void importLegalSource(); }}>Импортировать legal source</button>
         <small>{legalStatus}</small>
         <div className="pills">
           {ragStatuses.map((status) => (
@@ -579,7 +588,7 @@ export default function AdminHome() {
       <section className="notice">
         <strong>Budget operations</strong>
         <span>Usage ledger хранит provider/model alias, units, cost, complexity, risk и correlation ID без raw PII.</span>
-        <button disabled={busy} onClick={() => { void recordAiUsageFixture(); }}>Записать AI usage</button>
+        <button disabled={busy} onClick={() => { void loadAiUsageSummary(); }}>Обновить AI usage</button>
         <small>{usageStatus}</small>
         <button disabled={busy} onClick={() => { void toggleStubProvider(); }}>Переключить provider kill switch</button>
         <small>{providerStatus}</small>

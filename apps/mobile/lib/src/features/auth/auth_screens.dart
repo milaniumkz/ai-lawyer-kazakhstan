@@ -1,3 +1,9 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import '../../widgets/mounted_state.dart';
+import '../cases/case_screens.dart';
+import '../workflows/workflow_screens.dart';
+import '../../api/draft_store.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -20,12 +26,14 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with MountedState<LoginScreen> {
   late final AuthApiPort authApi;
   late final TextEditingController loginController;
   var isBusy = false;
   var status = 'Введите номер телефона';
   var language = 'RU';
+  final emailController = TextEditingController();
 
   @override
   void initState() {
@@ -37,27 +45,29 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     loginController.dispose();
+    emailController.dispose();
     super.dispose();
   }
 
-  Future<void> requestOtp() async {
+  Future<void> requestOtp({bool email = false}) async {
     if (isBusy) return;
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Запрашиваю OTP через API...';
     });
     try {
       final result = await authApi.register(
-        channel: 'phone',
-        phone: loginController.text.trim(),
+        channel: email ? 'email' : 'phone',
+        phone: email ? null : loginController.text.trim(),
+        email: email ? emailController.text.trim() : null,
       );
       AuthRuntime.otpId = result.otpId;
       AuthRuntime.otpCodeHint = result.testCode;
       if (mounted) context.go('/otp');
     } catch (error) {
-      setState(() => status = 'Auth API ошибка: $error');
+      updateState(() => status = 'Auth API ошибка: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -92,6 +102,36 @@ class _LoginScreenState extends State<LoginScreen> {
             ]),
       ),
     );
+  }
+
+  Future<void> openEmailLogin() async {
+    await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => Padding(
+            padding: EdgeInsets.fromLTRB(
+                24, 24, 24, MediaQuery.viewInsetsOf(sheetContext).bottom + 24),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Вход по e-mail',
+                      style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+                  TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      autofocus: true,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: const InputDecoration(labelText: 'E-mail')),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        requestOtp(email: true);
+                      },
+                      child: const Text('Получить код')),
+                ])));
   }
 
   @override
@@ -130,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                                 showSelectedIcon: false,
                                 onSelectionChanged: (value) =>
-                                    setState(() => language = value.first)),
+                                    updateState(() => language = value.first)),
                           ])),
                 ]),
                 const SizedBox(height: 17),
@@ -167,12 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 _loginAction(Icons.phone_outlined, 'Войти по номеру телефона',
                     loginController.text, openPhoneLogin),
                 const SizedBox(height: 10),
-                _loginAction(
-                    Icons.mail_outline,
-                    'Войти по e-mail',
-                    'Используйте вашу почту',
-                    () => _showAction(context,
-                        'Вход по e-mail пока недоступен. Используйте телефон.')),
+                _loginAction(Icons.mail_outline, 'Войти по e-mail',
+                    'Используйте вашу почту', openEmailLogin),
                 const SizedBox(height: 10),
                 _loginAction(
                     Icons.fingerprint,
@@ -231,7 +267,8 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends State<RegisterScreen>
+    with MountedState<RegisterScreen> {
   late final ProfileApiPort profileApi;
   late final TextEditingController lastNameController;
   late final TextEditingController firstNameController;
@@ -278,10 +315,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (lastNameController.text.trim().isEmpty ||
         firstNameController.text.trim().isEmpty ||
         cityController.text.trim().isEmpty) {
-      setState(() => status = 'Заполните фамилию, имя и город');
+      updateState(() => status = 'Заполните фамилию, имя и город');
       return;
     }
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Сохраняю профиль через API...';
     });
@@ -300,12 +337,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           accessToken: SessionCredentials.token,
           profileComplete: true,
           displayName: AuthRuntime.displayName);
-      setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
+      updateState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
       if (mounted) context.go('/');
     } catch (error) {
-      setState(() => status = 'Регистрация API ошибка: $error');
+      updateState(() => status = 'Регистрация API ошибка: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -364,13 +401,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 12),
                 _ProfileTypeSelector(
                   selected: profileType,
-                  onSelected: (value) => setState(() => profileType = value),
+                  onSelected: (value) => updateState(() => profileType = value),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   value: consent,
                   onChanged: (value) =>
-                      setState(() => consent = value ?? false),
+                      updateState(() => consent = value ?? false),
                   title: const Text('Согласие с обработкой данных v1'),
                 ),
               ],
@@ -444,6 +481,9 @@ class OtpScreen extends StatelessWidget {
                     profileComplete: !session.profileRequired,
                     displayName: AuthRuntime.displayName);
                 AuthRuntime.userId = session.userId;
+                await DraftStore.restore(session.userId);
+                MobileCaseRuntime.restore();
+                WorkflowRuntime.restore();
                 AuthRuntime.profileComplete = !session.profileRequired;
                 if (context.mounted) {
                   context.go(session.isNewUser || session.profileRequired
@@ -482,7 +522,8 @@ class BiometricScreen extends StatefulWidget {
   State<BiometricScreen> createState() => _BiometricScreenState();
 }
 
-class _BiometricScreenState extends State<BiometricScreen> {
+class _BiometricScreenState extends State<BiometricScreen>
+    with MountedState<BiometricScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
@@ -609,7 +650,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with MountedState<ProfileScreen> {
   late final ProfileApiPort profileApi;
   late final TextEditingController nameController;
   late final TextEditingController iinController;
@@ -647,7 +689,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> saveProfile() async {
     if (isBusy) return;
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Сохраняю профиль через API...';
     });
@@ -666,11 +708,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           accessToken: SessionCredentials.token,
           profileComplete: true,
           displayName: AuthRuntime.displayName);
-      setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
+      updateState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
     } catch (error) {
-      setState(() => status = 'Профиль API ошибка: $error');
+      updateState(() => status = 'Профиль API ошибка: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -694,7 +736,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 10),
           _ProfileTypeSelector(
             selected: profileType,
-            onSelected: (value) => setState(() => profileType = value),
+            onSelected: (value) => updateState(() => profileType = value),
           ),
           const SizedBox(height: 16),
           Text('Данные и безопасность',
@@ -705,7 +747,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: nameController,
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => updateState(() {}),
             decoration: const InputDecoration(
               labelText: 'Ф.И.О. / название',
               prefixIcon: Icon(Icons.badge_outlined),
@@ -714,7 +756,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: iinController,
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => updateState(() {}),
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'ИИН/БИН',
@@ -724,7 +766,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: addressController,
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => updateState(() {}),
             decoration: const InputDecoration(
               labelText: 'Адрес в РК',
               prefixIcon: Icon(Icons.location_on_outlined),
@@ -903,9 +945,10 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with MountedState<SettingsScreen> {
   late final AccountApiPort accountApi;
-  var darkMode = false;
+  var darkMode = true;
   var notifications = true;
   var piiMasking = true;
   var isBusy = false;
@@ -914,27 +957,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    notifications = DraftStore.values['settings']?['voiceAnswers'] == true;
     accountApi = widget.accountApi ?? HttpAccountApi();
   }
 
   Future<void> exportAccount() async {
     if (isBusy) return;
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы экспортировать данные');
+      updateState(() => status = 'Войдите, чтобы экспортировать данные');
       return;
     }
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Готовлю экспорт через API...';
     });
     try {
       final exported = await accountApi.exportAccount(AuthRuntime.userId);
-      setState(() => status =
+      if (exported.json.isNotEmpty) {
+        final path = await FilePicker.platform.saveFile(
+            dialogTitle: 'Сохранить данные аккаунта',
+            fileName: 'aizan-account.json',
+            type: FileType.custom,
+            allowedExtensions: ['json'],
+            bytes: Uint8List.fromList(utf8.encode(exported.json)));
+        if (path == null) {
+          updateState(() => status = 'Сохранение отменено');
+          return;
+        }
+      }
+      updateState(() => status =
           'Экспорт готов: ${exported.profileCount} профилей, ${exported.sessionCount} сессий');
     } catch (error) {
-      setState(() => status = 'Экспорт API ошибка: $error');
+      updateState(() => status = 'Экспорт API ошибка: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -965,24 +1021,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> deleteAccount() async {
     if (AuthRuntime.userId.isEmpty) {
-      setState(() => status = 'Войдите, чтобы удалить аккаунт');
+      updateState(() => status = 'Войдите, чтобы удалить аккаунт');
       return;
     }
-    setState(() {
+    updateState(() {
       isBusy = true;
       status = 'Удаляю аккаунт через API...';
     });
     try {
       await accountApi.deleteAccount(AuthRuntime.userId);
+      await DraftStore.clear();
       await SessionCredentials.clear();
       AuthRuntime.userId = '';
       AuthRuntime.otpId = '';
       AuthRuntime.otpCodeHint = null;
-      setState(() => status = 'Аккаунт удален, сессии отозваны');
+      updateState(() => status = 'Аккаунт удален, сессии отозваны');
     } catch (error) {
-      setState(() => status = 'Удаление API ошибка: $error');
+      updateState(() => status = 'Удаление API ошибка: $error');
     } finally {
-      if (mounted) setState(() => isBusy = false);
+      if (mounted) updateState(() => isBusy = false);
     }
   }
 
@@ -996,19 +1053,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsGroup(title: 'Основные', children: [
             ListTile(
                 title: const Text('Язык приложения'),
-                trailing: const Text('Русский ›'),
-                onTap: () {}),
+                trailing: const Text('Русский')),
             SwitchListTile(
                 value: darkMode,
-                onChanged: (value) => setState(() => darkMode = value),
-                title: const Text('Темная тема')),
+                onChanged: null,
+                title: const Text('Тёмная тема AIZAN')),
             const ListTile(
                 title: Text('Размер текста'), trailing: Text('Средний ›')),
           ]),
           _SettingsGroup(title: 'Голосовой помощник', children: [
             SwitchListTile(
                 value: notifications,
-                onChanged: (value) => setState(() => notifications = value),
+                onChanged: null,
                 title: const Text('Голосовые ответы')),
             const SwitchListTile(
                 value: false,
@@ -1020,7 +1076,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsGroup(title: 'Конфиденциальность', children: [
             SwitchListTile(
                 value: piiMasking,
-                onChanged: (value) => setState(() => piiMasking = value),
+                onChanged: null,
                 title: const Text('Обезличивать данные перед AI')),
             const SwitchListTile(
                 value: false,
@@ -1037,7 +1093,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: isBusy
                 ? null
                 : () {
-                    setState(() => status = 'Настройки сохранены локально');
+                    DraftStore.put('settings', {'voiceAnswers': notifications});
+                    updateState(
+                        () => status = 'Настройки сохранены на устройстве');
                     _showAction(context, 'Настройки сохранены');
                   },
             icon: const Icon(Icons.save_outlined),
@@ -1094,9 +1152,65 @@ class HelpScreen extends StatefulWidget {
   State<HelpScreen> createState() => _HelpScreenState();
 }
 
-class _HelpScreenState extends State<HelpScreen> {
+class _HelpScreenState extends State<HelpScreen> with MountedState<HelpScreen> {
   var requestCreated = false;
   var selectedTopic = 'Общие вопросы';
+
+  final supportController = TextEditingController();
+  var busy = false;
+  var supportStatus = 'Обращение пока не отправлено';
+  List<Map<String, dynamic>> tickets = [];
+  Future<void> loadTickets() async {
+    try {
+      final response = await http.get(Uri.parse(
+          '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/support/tickets'));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось загрузить обращения');
+      }
+      final records =
+          (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+      updateState(() => tickets = records);
+    } catch (error) {
+      updateState(() => supportStatus = '$error');
+    }
+  }
+
+  @override
+  void dispose() {
+    supportController.dispose();
+    super.dispose();
+  }
+
+  Future<void> createTicket() async {
+    if (busy || supportController.text.trim().length < 8) return;
+    updateState(() => busy = true);
+    try {
+      final response = await http.post(
+          Uri.parse(
+              '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/support/tickets'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode(
+              {'topic': selectedTopic, 'text': supportController.text}));
+      final ticket = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 201) {
+        throw HttpException(
+            '${ticket['message'] ?? 'Не удалось сохранить обращение'}');
+      }
+      if (mounted) {
+        updateState(() {
+          requestCreated = true;
+          supportStatus =
+              'Обращение сохранено: ${(ticket['id'] as String).substring(0, 8)}. Ответ пока не получен.';
+        });
+      }
+      if (mounted) supportController.clear();
+      await loadTickets();
+    } catch (error) {
+      if (mounted) updateState(() => supportStatus = '$error');
+    } finally {
+      if (mounted) updateState(() => busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1113,7 +1227,7 @@ class _HelpScreenState extends State<HelpScreen> {
           ),
           _HelpQuickGrid(
             selected: selectedTopic,
-            onSelect: (value) => setState(() => selectedTopic = value),
+            onSelect: (value) => updateState(() => selectedTopic = value),
           ),
           const SizedBox(height: 12),
           Card(
@@ -1122,21 +1236,43 @@ class _HelpScreenState extends State<HelpScreen> {
                   color: AppColors.gold),
               title: const Text('Служба поддержки онлайн'),
               subtitle: Text('Тема: $selectedTopic'),
-              trailing: const Text('Adapter',
+              trailing: const Text('Обращение',
                   style: TextStyle(color: AppColors.gold)),
-              onTap: () => setState(() => requestCreated = true),
+              onTap: () => FocusScope.of(context).nextFocus(),
             ),
           ),
           const ListTile(
             leading: Icon(Icons.privacy_tip_outlined),
             title: Text('Безопасность данных'),
-            subtitle: Text('PII маскируется, внешние провайдеры отключены'),
+            subtitle:
+                Text('Персональные данные защищены; чужие дела недоступны'),
           ),
+          TextButton(
+              onPressed: loadTickets, child: const Text('Обновить обращения')),
+          for (final ticket in tickets)
+            Card(
+                child: ListTile(
+                    title: Text(ticket['text'] as String),
+                    subtitle: Text(ticket['reply'] as String? ??
+                        'Ответ пока не получен'))),
+          TextField(
+              controller: supportController,
+              minLines: 3,
+              maxLines: 6,
+              maxLength: 20000,
+              decoration: const InputDecoration(labelText: 'Текст обращения'),
+              onChanged: (_) => updateState(() {})),
+          Text(supportStatus),
           FilledButton.icon(
-            onPressed: () => setState(() => requestCreated = true),
+            onPressed: busy || supportController.text.trim().length < 8
+                ? null
+                : createTicket,
             icon: const Icon(Icons.send_outlined),
-            label: Text(
-                requestCreated ? 'Обращение создано' : 'Написать в поддержку'),
+            label: Text(busy
+                ? 'Сохраняю…'
+                : requestCreated
+                    ? 'Обращение создано'
+                    : 'Написать в поддержку'),
           ),
         ],
       ),
@@ -1155,7 +1291,7 @@ class _HelpQuickGrid extends StatelessWidget {
     const items = [
       ('1', 'Частые вопросы', 'Ответы на популярные темы'),
       ('2', 'Инструкции', 'Пошаговые руководства'),
-      ('3', 'WhatsApp blocker', 'Внешний канал через adapter'),
+      ('3', 'Внешние каналы', 'Отправка выполняется самостоятельно'),
       ('4', 'Сообщить о проблеме', 'Ошибка или предложение'),
     ];
     return GridView.count(
@@ -1284,10 +1420,12 @@ class AccountExportResult {
   const AccountExportResult({
     required this.profileCount,
     required this.sessionCount,
+    this.json = "",
   });
 
   final int profileCount;
   final int sessionCount;
+  final String json;
 }
 
 abstract final class AuthRuntime {
@@ -1429,6 +1567,7 @@ class HttpAccountApi implements AccountApiPort {
           '${body['message'] ?? body['error'] ?? 'account export failed'}');
     }
     return AccountExportResult(
+      json: response.body,
       profileCount: (body['profiles'] as List<dynamic>? ?? const []).length,
       sessionCount: (body['sessions'] as List<dynamic>? ?? const []).length,
     );
