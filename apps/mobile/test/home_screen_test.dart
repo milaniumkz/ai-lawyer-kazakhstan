@@ -772,6 +772,35 @@ void main() {
     expect(DocumentRuntime.confirmedIds, contains('document-1'));
   });
 
+  testWidgets(
+      'manual sending restores its own document contact and unverified status',
+      (tester) async {
+    await setLargeViewport(tester);
+    WorkflowRuntime.generatedId = 'document-own';
+    DraftStore.values['dispatch'] = {
+      'documentId': 'document-own',
+      'contact': 'qa@example.invalid',
+      'method': 'E-mail',
+      'sent': true
+    };
+    await tester.pumpWidget(const MaterialApp(home: ClaimSendScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Ручная отправка записана. Доставка не подтверждена.'),
+        findsOneWidget);
+    await tester.scrollUntilVisible(find.byType(TextField), 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'qa@example.invalid');
+    await tester.pumpWidget(const SizedBox.shrink());
+    WorkflowRuntime.generatedId = 'document-other';
+    await tester.pumpWidget(const MaterialApp(home: ClaimSendScreen()));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(TextField), 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty);
+  });
+
   testWidgets('empty draft cannot be approved or submitted', (tester) async {
     await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: ClaimDraftScreen()));

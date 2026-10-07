@@ -660,16 +660,85 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
   var selectedMethod = 'WhatsApp';
   var status = 'Выберите канал и укажите контакт получателя';
   late final TextEditingController recipientController;
+  var restoring = false;
+  var hasLocalDraft = false;
 
   @override
   void initState() {
     super.initState();
-    final data = DraftStore.values['dispatch'] as Map<String, dynamic>?;
+    final raw = DraftStore.values['dispatch'];
+    final data = raw is Map<String, dynamic> &&
+            raw['documentId'] == WorkflowRuntime.generatedId
+        ? raw
+        : null;
     recipientController =
         TextEditingController(text: data?['contact'] as String? ?? '');
     selectedMethod = data?['method'] as String? ?? 'WhatsApp';
-    recipientController.addListener(() => DraftStore.put('dispatch',
-        {'contact': recipientController.text, 'method': selectedMethod}));
+    sent = data?['sent'] == true;
+    hasLocalDraft =
+        data != null && !sent && recipientController.text.trim().isNotEmpty;
+    if (sent) status = 'Ручная отправка записана. Доставка не подтверждена.';
+    recipientController.addListener(() {
+      if (!restoring) {
+        sent = false;
+        hasLocalDraft = true;
+      }
+      persistDispatch();
+    });
+    if (SessionCredentials.token.isNotEmpty &&
+        WorkflowRuntime.generatedId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => restoreDispatch());
+    }
+  }
+
+  Future<void> persistDispatch() => DraftStore.put('dispatch', {
+        'documentId': WorkflowRuntime.generatedId,
+        'contact': recipientController.text,
+        'method': selectedMethod,
+        'sent': sent,
+      });
+  Future<void> restoreDispatch() async {
+    if (!mounted || busy || WorkflowRuntime.generatedId.isEmpty) return;
+    updateState(() => busy = true);
+    final documentId = WorkflowRuntime.generatedId;
+    try {
+      final response = await http.get(Uri.parse(
+          '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/generated-documents/$documentId/dispatches'));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось восстановить статус отправки');
+      }
+      final records = jsonDecode(response.body) as List;
+      if (!mounted || documentId != WorkflowRuntime.generatedId) return;
+      if (records.isNotEmpty && !hasLocalDraft) {
+        final record = records.first as Map<String, dynamic>;
+        restoring = true;
+        updateState(() {
+          selectedMethod = {
+                'email': 'E-mail',
+                'whatsapp': 'WhatsApp',
+                'sms': 'SMS',
+                'post': 'Почтовая отправка'
+              }[record['method']] ??
+              'WhatsApp';
+          recipientController.text = record['contact'] as String;
+          sent = record['status'] == 'manual_sent_unverified';
+          status = sent
+              ? 'Ручная отправка записана. Доставка не подтверждена.'
+              : 'Черновик отправки восстановлен';
+        });
+        restoring = false;
+        await persistDispatch();
+      } else {
+        updateState(() => status = records.isEmpty
+            ? 'Записей отправки пока нет'
+            : 'Предыдущая запись на сервере сохранена. Текущий черновик не отправлен.');
+      }
+    } catch (error) {
+      updateState(() => status = '$error');
+    } finally {
+      restoring = false;
+      updateState(() => busy = false);
+    }
   }
 
   @override
@@ -733,11 +802,9 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
         throw HttpException(
             '${record['message'] ?? 'Не удалось сохранить отправку'}');
       }
-      await DraftStore.put('dispatch', {
-        'contact': recipientController.text,
-        'method': selectedMethod,
-        'sent': manual
-      });
+      sent = manual;
+      hasLocalDraft = false;
+      await persistDispatch();
       if (mounted) {
         updateState(() {
           sent = manual;
@@ -789,11 +856,16 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
             const SizedBox(height: 12),
             _SendMethodGrid(
               selected: selectedMethod,
-              onSelect: (value) => updateState(() {
-                selectedMethod = value;
-                sent = false;
-                status = 'Канал выбран: $value. Укажите контакт получателя.';
-              }),
+              onSelect: (value) {
+                if (busy) return;
+                updateState(() {
+                  selectedMethod = value;
+                  sent = false;
+                  status = 'Канал выбран: $value. Укажите контакт получателя.';
+                  hasLocalDraft = true;
+                  persistDispatch();
+                });
+              },
             ),
             const SizedBox(height: 12),
             const _RecipientCard(),
@@ -801,6 +873,7 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
             const _AttachmentCard(),
             const SizedBox(height: 12),
             TextField(
+              enabled: !busy,
               controller: recipientController,
               onChanged: (_) => updateState(() {
                 sent = false;
@@ -838,6 +911,11 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
               icon: const Icon(Icons.description_outlined),
               label: const Text('Сохранить как черновик'),
             ),
+            TextButton(
+                onPressed: busy || WorkflowRuntime.generatedId.isEmpty
+                    ? null
+                    : restoreDispatch,
+                child: const Text('Обновить статус')),
           ],
         ),
       ),
