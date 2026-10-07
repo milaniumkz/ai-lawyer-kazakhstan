@@ -118,7 +118,13 @@ try {
   assert.equal(task.basis,'user_defined');
   await request(`/tasks/${task.id}`,{status:'completed'},'PATCH');
   assert((await request('/tasks')).some(item=>item.id===task.id && item.status==='completed'));
-  await request(`/tasks/${task.id}`,undefined,'DELETE');
+  await page.evaluate(()=>{window.location.hash='deadlines';});
+  await page.getByRole('button',{name:'Обновить',exact:true}).click();
+  await page.locator('.deadlineRow').filter({hasText:'Проверить проект'}).waitFor();
+  page.once('dialog',dialog=>dialog.accept());
+  await page.getByRole('button',{name:'Удалить задачу',exact:true}).click();
+  await page.locator('.deadlineRow').filter({hasText:'Проверить проект'}).waitFor({state:'detached'});
+  await page.evaluate(()=>{window.location.hash='claimDraft';});
   assert(!(await request('/tasks')).some(item=>item.id===task.id));
   const dispatch=await request(`/generated-documents/${generated[0].id}/dispatches`,{method:'email',contact:'qa@example.invalid',status:'draft'});
   assert.equal(dispatch.status,'draft');

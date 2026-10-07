@@ -961,6 +961,26 @@ class _SettingsScreenState extends State<SettingsScreen>
     accountApi = widget.accountApi ?? HttpAccountApi();
   }
 
+  Future<void> logout() async {
+    if (isBusy) return;
+    updateState(() => isBusy = true);
+    try {
+      await accountApi.logoutAll(AuthRuntime.userId);
+      await DraftStore.clear();
+      await SessionCredentials.clear();
+      AuthRuntime.userId = '';
+      AuthRuntime.displayName = '';
+      AuthRuntime.profileComplete = false;
+      MobileCaseRuntime.startDraft();
+      WorkflowRuntime.restore();
+      if (mounted) context.go('/login');
+    } catch (error) {
+      updateState(() => status = '$error');
+    } finally {
+      updateState(() => isBusy = false);
+    }
+  }
+
   Future<void> exportAccount() async {
     if (isBusy) return;
     if (AuthRuntime.userId.isEmpty) {
@@ -1033,6 +1053,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       await DraftStore.clear();
       await SessionCredentials.clear();
       AuthRuntime.userId = '';
+      AuthRuntime.profileComplete = false;
+      AuthRuntime.displayName = '';
+      MobileCaseRuntime.startDraft();
+      WorkflowRuntime.restore();
       AuthRuntime.otpId = '';
       AuthRuntime.otpCodeHint = null;
       updateState(() => status = 'Аккаунт удален, сессии отозваны');
@@ -1113,6 +1137,9 @@ class _SettingsScreenState extends State<SettingsScreen>
             icon: const Icon(Icons.delete_outline),
             label: const Text('Удалить аккаунт'),
           ),
+          TextButton(
+              onPressed: isBusy ? null : logout,
+              child: const Text('Выйти из аккаунта')),
         ],
       ),
     );
@@ -1391,6 +1418,7 @@ abstract class ProfileApiPort {
 }
 
 abstract class AccountApiPort {
+  Future<void> logoutAll(String userId);
   Future<AccountExportResult> exportAccount(String userId);
   Future<void> deleteAccount(String userId);
 }
@@ -1554,6 +1582,17 @@ class HttpAccountApi implements AccountApiPort {
   });
 
   final String baseUrl;
+
+  @override
+  Future<void> logoutAll(String userId) async {
+    final response = await http.post(
+        Uri.parse('$baseUrl/api/v1/auth/logout-all'),
+        headers: {'content-type': 'application/json', 'x-user-id': userId},
+        body: jsonEncode({'userId': userId}));
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw const HttpException('Не удалось отозвать сессии. Повторите выход.');
+    }
+  }
 
   @override
   Future<AccountExportResult> exportAccount(String userId) async {

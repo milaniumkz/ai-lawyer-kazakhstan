@@ -5,9 +5,10 @@ import 'session_credentials.dart';
 abstract final class DraftStore {
   static const _storage = FlutterSecureStorage();
   static Map<String, dynamic> values = {};
-  static Future<void> _pending = Future.value();
+  static Future<void>? _pending;
   static String _owner = '';
   static Future<void> restore(String owner) async {
+    if (_pending != null) await _pending!.catchError((_) {});
     _owner = owner;
     values = {};
     if (SessionCredentials.token.isEmpty) return;
@@ -26,14 +27,15 @@ abstract final class DraftStore {
     }
     final key = 'aizan_drafts_$_owner';
     final value = jsonEncode(values);
-    _pending = _pending
+    _pending = (_pending ?? Future<void>.value())
         .catchError((_) {})
         .then((_) => _storage.write(key: key, value: value));
-    return _pending;
+    return _pending!;
   }
 
   static Future<void> clear() async {
-    await _pending.catchError((_) {});
+    if (_pending != null) await _pending!.catchError((_) {});
+    _pending = null;
     if (_owner.isNotEmpty && SessionCredentials.token.isNotEmpty) {
       await _storage.delete(key: 'aizan_drafts_$_owner');
     }

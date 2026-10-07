@@ -277,6 +277,31 @@ class _DeadlinesScreenState extends State<DeadlinesScreen>
     }
   }
 
+  Future<void> deleteTask(Map<String, dynamic> task) async {
+    final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) =>
+            AlertDialog(title: const Text('Удалить задачу?'), actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Отмена')),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Удалить'))
+            ]));
+    if (accepted != true || !mounted) return;
+    try {
+      final response = await http.delete(Uri.parse(
+          '${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://89-207-250-217.sslip.io')}/api/v1/tasks/${task['id']}'));
+      if (response.statusCode != 200) {
+        throw const HttpException('Не удалось удалить задачу');
+      }
+      await loadTasks();
+    } catch (error) {
+      updateState(() => status = '$error');
+    }
+  }
+
   Future<void> updateTask(Map<String, dynamic> task) async {
     try {
       final response = await http.patch(
@@ -360,6 +385,10 @@ class _DeadlinesScreenState extends State<DeadlinesScreen>
                   value: task['status'] == 'completed',
                   title: Text(task['title'] as String),
                   subtitle: Text(task['dueDate'] as String),
+                  secondary: IconButton(
+                      tooltip: 'Удалить задачу',
+                      onPressed: busy ? null : () => deleteTask(task),
+                      icon: const Icon(Icons.delete_outline)),
                   onChanged: busy ? null : (_) => updateTask(task))),
       ])));
 }

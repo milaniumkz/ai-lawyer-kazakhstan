@@ -1,3 +1,4 @@
+import '../documents/document_screens.dart';
 import 'package:flutter/services.dart';
 import '../workflows/workflow_screens.dart';
 import '../../widgets/mounted_state.dart';
@@ -1134,6 +1135,8 @@ abstract final class MobileCaseRuntime {
           }
       });
   static void restore() {
+    DocumentRuntime.documents.clear();
+    DocumentRuntime.confirmedIds.clear();
     try {
       final data = DraftStore.values['case'] as Map<String, dynamic>?;
       activeCaseId = '';
@@ -1180,6 +1183,8 @@ abstract final class MobileCaseRuntime {
       activeCaseId.isNotEmpty && createdDraftCaseId == draftCaseId;
 
   static void startDraft() {
+    DocumentRuntime.documents.clear();
+    DocumentRuntime.confirmedIds.clear();
     draftCaseId = 'draft-${DateTime.now().microsecondsSinceEpoch}';
     createdDraftCaseId = '';
     activeCaseId = '';
@@ -1200,6 +1205,8 @@ abstract final class MobileCaseRuntime {
   }
 
   static void selectCase(CaseListItem item) {
+    DocumentRuntime.documents.clear();
+    DocumentRuntime.confirmedIds.clear();
     draftClassification = null;
     confirmedClassificationId = '';
     confirmedText = item.problemText.isNotEmpty ? item.problemText : item.title;

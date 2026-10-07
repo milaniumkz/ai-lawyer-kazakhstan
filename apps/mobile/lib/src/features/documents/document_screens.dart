@@ -69,8 +69,9 @@ class _DocumentsScreenState extends State<DocumentsScreen>
     final api = documentApi;
     if (api is! HttpDocumentApi) return;
     try {
-      final files = await api.listDocuments(MobileCaseRuntime.activeCaseId);
-      if (!mounted) return;
+      final caseId = MobileCaseRuntime.activeCaseId;
+      final files = await api.listDocuments(caseId);
+      if (!mounted || caseId != MobileCaseRuntime.activeCaseId) return;
       updateState(() {
         DocumentRuntime.documents
           ..clear()
@@ -88,6 +89,12 @@ class _DocumentsScreenState extends State<DocumentsScreen>
 
   Future<void> uploadDocument({bool camera = false}) async {
     if (busy) return;
+    final caseId = MobileCaseRuntime.activeCaseId;
+    if (caseId.isEmpty) {
+      updateState(
+          () => status = 'Сначала создайте дело, затем загрузите документ');
+      return;
+    }
     updateState(() {
       busy = true;
       status = 'Открываю выбор файла...';
@@ -97,6 +104,7 @@ class _DocumentsScreenState extends State<DocumentsScreen>
       final file = camera && picker is NativeDocumentFilePicker
           ? await picker.pickCamera()
           : await picker.pick();
+      if (!mounted || caseId != MobileCaseRuntime.activeCaseId) return;
       if (file == null) {
         updateState(() => status = 'Выбор файла отменен');
         return;
@@ -111,9 +119,10 @@ class _DocumentsScreenState extends State<DocumentsScreen>
         return;
       }
       final saved = await documentApi.uploadMetadata(
-        caseId: MobileCaseRuntime.activeCaseId,
+        caseId: caseId,
         file: file,
       );
+      if (!mounted || caseId != MobileCaseRuntime.activeCaseId) return;
       updateState(() {
         uploaded = true;
         DocumentRuntime.documents.add(saved);

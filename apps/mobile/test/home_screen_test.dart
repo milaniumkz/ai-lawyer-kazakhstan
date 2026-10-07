@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/auth/auth_screens.dart';
 import 'package:ai_lawyer_kz/src/features/cases/case_screens.dart';
@@ -678,6 +679,46 @@ void main() {
     expect(find.textContaining('Сначала создайте'), findsOneWidget);
   });
 
+  testWidgets('file selection cannot upload into a different case',
+      (tester) async {
+    await setLargeViewport(tester);
+    MobileCaseRuntime.activeCaseId = 'case-original';
+    final picker = _DelayedDocumentPicker();
+    final api = _FakeDocumentApi();
+    await tester.pumpWidget(MaterialApp(
+        home: DocumentsScreen(
+            filePicker: picker, documentApi: api, addMode: true)));
+    await tester.tap(find.text('Загрузить файл'));
+    await tester.pump();
+    MobileCaseRuntime.activeCaseId = 'case-other';
+    picker.result.complete(await _FakeDocumentPicker().pick());
+    await tester.pumpAndSettle();
+    expect(api.uploadedFileName, isNull);
+  });
+
+  testWidgets(
+      'logout revokes sessions and removes the current case from memory',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'owner';
+    MobileCaseRuntime.activeCaseId = 'case-original';
+    final api = _FakeAccountApi();
+    await tester.pumpWidget(MaterialApp.router(
+        routerConfig: GoRouter(routes: [
+      GoRoute(path: '/', builder: (_, __) => SettingsScreen(accountApi: api)),
+      GoRoute(
+          path: '/login',
+          builder: (_, __) => const Scaffold(body: Text('Вход после выхода'))),
+    ])));
+    await tester.ensureVisible(find.text('Выйти из аккаунта'));
+    await tester.tap(find.text('Выйти из аккаунта'));
+    await tester.pumpAndSettle();
+    expect(api.logoutUserId, 'owner');
+    expect(AuthRuntime.userId, isEmpty);
+    expect(MobileCaseRuntime.activeCaseId, isEmpty);
+    expect(find.text('Вход после выхода'), findsOneWidget);
+  });
+
   testWidgets('document upload and manual field confirmation reach API',
       (tester) async {
     await setLargeViewport(tester);
@@ -1114,6 +1155,12 @@ class _FakeBillingApi implements BillingApiPort {
 }
 
 class _FakeAccountApi implements AccountApiPort {
+  String? logoutUserId;
+  @override
+  Future<void> logoutAll(String userId) async {
+    logoutUserId = userId;
+  }
+
   String? exportedUserId;
   String? deletedUserId;
 
@@ -1136,4 +1183,10 @@ Future<void> setLargeViewport(WidgetTester tester) async {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+}
+
+class _DelayedDocumentPicker implements DocumentFilePickerPort {
+  final result = Completer<PickedDocumentFile?>();
+  @override
+  Future<PickedDocumentFile?> pick() => result.future;
 }

@@ -48,7 +48,7 @@ type DocumentItem = {
   source?: "file" | "camera";
   sha256?: string;
 };
-type TaskItem = { id?: string; title: string; due: string; done: boolean };
+type TaskItem = { id?: string; caseId?: string; title: string; due: string; done: boolean };
 type LegalNorm = {
   title: string;
   article: string;
@@ -1718,7 +1718,7 @@ export default function WebHome() {
             respondentName: String(classification?.result.facts?.debtor_identity ?? classification?.result.facts?.employer ?? "Ответчик уточняется пользователем"),
             claimAmount: String(classification?.result.facts?.amount ?? classification?.result.facts?.paid_amount ?? "Сумма уточняется пользователем"),
             claimReason: caseText || "Основание уточняется пользователем",
-            deadlineDate: "Срок рассчитывается после проверки",
+            deadlineDate: "даты, указанной после ручной проверки",
           },
           confirmedCitationIds: [],
       };
@@ -1835,8 +1835,8 @@ export default function WebHome() {
     // Session changes select another user's task list.
   },[hydrated,authUserId]);
   async function loadTasks() {
-    try {const records=await apiJson("/tasks") as {id:string;title:string;dueDate:string;status:string}[];
-      setTasks(records.map(task=>({id:task.id,title:task.title,due:task.dueDate,done:task.status==="completed"})));
+    try {const records=await apiJson("/tasks") as {id:string;caseId?:string;title:string;dueDate:string;status:string}[];
+      setTasks(records.map(task=>({id:task.id,caseId:task.caseId,title:task.title,due:task.dueDate,done:task.status==="completed"})));
     } catch {setDeadlineStatus("Не удалось загрузить задачи. Повторите запрос.");}
   }
   async function addTask() {
@@ -1974,6 +1974,11 @@ export default function WebHome() {
     }
   }
 
+  async function deleteTask(id?:string) {
+    if(!id || !window.confirm('Удалить задачу?')) return;
+    try {await apiJson(`/tasks/${id}`,{method:'DELETE'});await loadTasks();setDeadlineStatus('Задача удалена');}
+    catch(error) {setDeadlineStatus(error instanceof Error?error.message:'Не удалось удалить задачу');}
+  }
   async function toggleTask(title: string) {
     const task=tasks.find(item=>item.id===title || item.title===title); if(!task?.id) return;
     try {await apiJson(`/tasks/${task.id}`,{method:"PATCH",body:JSON.stringify({status:task.done?"pending":"completed"})});await loadTasks();setDeadlineStatus("Задача сохранена");}
@@ -3632,9 +3637,8 @@ export default function WebHome() {
           </div>
           <div className="deadlineList">
             {tasks.filter(task=>taskFilter==="Все"||(taskFilter==="Выполненные")===task.done).map((task, index) => (
-              <button
+              <div key={task.id ?? task.title}><button
                 className={task.done ? "deadlineRow done" : "deadlineRow"}
-                key={task.title}
                 onClick={() => toggleTask(task.id ?? task.title)}
               >
                 <span className="roundIcon">
@@ -3643,21 +3647,18 @@ export default function WebHome() {
                 <p>
                   <strong>{task.title}</strong>
                   <small>
-                    {activeCase
-                      ? `Дело №${activeCase.id} · ${activeCase.title}`
-                      : "Нет выбранного дела из БД"}
+                    {task.caseId ? `Дело №${task.caseId.slice(0,8)}` : "Личная задача"}
                   </small>
                   <small>{task.done ? "Готово" : task.due}</small>
                 </p>
                 <em>{task.done?"Выполнено":"Задано вами"} ›</em>
-              </button>
+              </button><button aria-label="Удалить задачу" onClick={()=>void deleteTask(task.id)}>Удалить</button></div>
             ))}
           </div>
           <div className="docHint">
             <span>✦</span>
             <p>
-              Сроки рассчитываются автоматически по календарю дела и
-              подтвержденным правилам РК.
+              Даты задаются вами. Юридические сроки требуют проверки.
             </p>
           </div>
           <div className="docHint">
@@ -4653,7 +4654,7 @@ export default function WebHome() {
             {tasks.slice(0, 3).map((task) => (
               <button
                 className={task.done ? "taskRow done" : "taskRow"}
-                key={task.title}
+                key={task.id ?? task.title}
                 onClick={() => toggleTask(task.id ?? task.title)}
               >
                 <span>{task.done ? "✓" : ""}</span>
