@@ -1,3 +1,4 @@
+import 'package:ai_lawyer_kz/src/api/draft_store.dart';
 import 'dart:async';
 import 'package:ai_lawyer_kz/main.dart';
 import 'package:ai_lawyer_kz/src/features/auth/auth_screens.dart';
@@ -15,6 +16,7 @@ import 'package:go_router/go_router.dart';
 
 void main() {
   setUp(() {
+    DraftStore.values = {};
     AuthRuntime.otpId = '';
     AuthRuntime.otpCodeHint = null;
     AuthRuntime.userId = '';
@@ -611,6 +613,34 @@ void main() {
     expect(find.text('Ваше сообщение'), findsOneWidget);
     expect(find.text('Говорить'), findsOneWidget);
     expect(find.text('Подготовить претензию'), findsOneWidget);
+  });
+
+  testWidgets('home restores an unsent message for its own draft only',
+      (tester) async {
+    await setLargeViewport(tester);
+    AuthRuntime.userId = 'owner';
+    MobileCaseRuntime.draftCaseId = 'draft-1';
+    MobileCaseRuntime.createdDraftCaseId = 'draft-1';
+    MobileCaseRuntime.activeCaseId = 'case-1';
+    DraftStore.values['caseComposer'] = {
+      'draftId': 'draft-1',
+      'text': 'Несохранённый вопрос'
+    };
+    await tester.pumpWidget(MaterialApp(
+        home: CategoryScreen(caseApi: _FakeCaseApi(), homeMode: true)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Несохранённый вопрос');
+    await tester.enterText(find.byType(TextField), 'Продолжение вопроса');
+    expect(DraftStore.values['caseComposer']['text'], 'Продолжение вопроса');
+    await tester.pumpWidget(const SizedBox.shrink());
+    MobileCaseRuntime.draftCaseId = 'draft-other';
+    MobileCaseRuntime.createdDraftCaseId = 'draft-other';
+    await tester.pumpWidget(MaterialApp(
+        home: CategoryScreen(caseApi: _FakeCaseApi(), homeMode: true)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty);
   });
 
   testWidgets('category blocks case creation when AI needs missing facts',

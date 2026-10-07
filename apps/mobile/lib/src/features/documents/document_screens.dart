@@ -362,6 +362,9 @@ class NativeDocumentFilePicker implements DocumentFilePickerPort {
     final image = await ImagePicker()
         .pickImage(source: ImageSource.camera, imageQuality: 90);
     if (image == null) return null;
+    if (await image.length() > 25 * 1024 * 1024) {
+      throw const HttpException('Размер файла должен быть не более 25 МБ');
+    }
     final bytes = await image.readAsBytes();
     return PickedDocumentFile(
         name: image.name,
@@ -389,6 +392,9 @@ class NativeDocumentFilePicker implements DocumentFilePickerPort {
     final file = result?.files.single;
     final path = file?.path;
     if (file == null || path == null) return null;
+    if (file.size > 25 * 1024 * 1024) {
+      throw const HttpException('Размер файла должен быть не более 25 МБ');
+    }
     final bytes = await File(path).readAsBytes();
     return PickedDocumentFile(
       name: file.name,

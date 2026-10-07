@@ -1019,11 +1019,6 @@ export default function WebHome() {
       setRemoteCaseDraftId(draftCaseId);
       setCases((items) => [next, ...items.filter((item) => item.id !== next.id)]);
       setActiveCaseId(next.id);
-      setTasks((items) =>
-        items.map((item) =>
-          item.title === "Проверить расписку" ? { ...item, done: true } : item,
-        ),
-      );
       setSyncState(
         documents.length
           ? `Дело сохранено в API: №${next.id}. Загрузите pending документы в это дело.`
@@ -1096,31 +1091,9 @@ export default function WebHome() {
     finally { intakeBusyRef.current = false; setClassificationBusy(false); }
   }
 
-  async function ensureRemoteCaseForDocumentUpload(fileName: string) {
+  async function ensureRemoteCaseForDocumentUpload() {
     if (remoteCaseId && remoteCaseDraftId === draftCaseId) return remoteCaseId;
-    const ownerUserId = await ensureUser();
-    const problemText =
-      caseText.trim().length >= 12
-        ? caseText.trim()
-        : `Черновик дела: пользователь загрузил документ ${fileName} для юридической проверки по законодательству Республики Казахстан.`;
-    const legalCase = (await apiJson("/cases", {
-      method: "POST",
-      headers: {
-        "idempotency-key": `web-upload-${draftCaseId}`,
-        "x-user-id": ownerUserId,
-      },
-      body: JSON.stringify({
-        ownerUserId,
-        problemText,
-      }),
-    })) as ApiLegalCase;
-    const next = mapCase(legalCase);
-    setRemoteCaseId(legalCase.id);
-    setRemoteCaseDraftId(draftCaseId);
-    setCases((items) => [next, ...items.filter((item) => item.id !== next.id)]);
-    setActiveCaseId(next.id);
-    if (!caseText.trim()) setCaseText(problemText);
-    return legalCase.id;
+    throw new Error('Сначала опишите ситуацию и подтвердите создание дела. Затем прикрепите документ.');
   }
 
   async function classifyCurrentText(stayHome = false) {
@@ -1389,6 +1362,11 @@ export default function WebHome() {
   }
 
   async function addDocument(file: File, source: "file" | "camera" = "file") {
+    if (!remoteCaseId || remoteCaseDraftId!==draftCaseId) {
+      setHomeConversationOpen(true);
+      setSyncState('Сначала опишите ситуацию и подтвердите создание дела. Затем прикрепите документ.');
+      return;
+    }
     if (!file.size) {
       setSyncState("Файл пустой или недоступен для загрузки");
       return;
@@ -1410,7 +1388,7 @@ export default function WebHome() {
     setDocuments((items) => [localDoc, ...items]);
     try {
       const userId = await ensureUser();
-      const caseId = await ensureRemoteCaseForDocumentUpload(file.name);
+      const caseId = await ensureRemoteCaseForDocumentUpload();
       const session = (await apiJson("/files/upload-sessions", {
         method: "POST",
         headers: { "x-user-id": userId },

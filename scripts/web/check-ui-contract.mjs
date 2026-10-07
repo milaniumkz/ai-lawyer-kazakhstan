@@ -285,7 +285,7 @@ for (const required of [
   "nativeUploadControl",
   'source === "camera"',
   "handleFileSelection(event.target.files?.[0], source)",
-  'caseId = await ensureRemoteCaseForDocumentUpload(file.name)',
+  'caseId = await ensureRemoteCaseForDocumentUpload()',
   'go("documentCheck")',
 ]) {
   if (!page.includes(required))

@@ -35,6 +35,7 @@ async function open(){const context=await NestFactory.createApplicationContext(A
   const overview=await activity.overview();assert.equal(typeof overview.caseCount,'number');
   await app.close();app=await open();
   assert.equal((await app.get(TemplatesService).getGenerated(queued.id,owner)).body,'Изменённый текст пользователя. Қазақстан.');
+  assert.equal((await app.get(GenerationJobsService).get(queued.id,owner)).document.body,'Изменённый текст пользователя. Қазақстан.');
   assert((await app.get(CaseActivityService).listTickets(owner)).some(item=>item.id===ticket.id && item.reply==='Real persisted staff answer'));
   console.log('PostgreSQL durability passed: abandoned lease recovery after runtime restart, stable result ID, cancellation, no duplicate document, edited draft survives restart.');
  } finally {if(app){if(owner)await app.get(DatabaseService).query('DELETE FROM users WHERE id=$1',[owner]);await app.close();}}

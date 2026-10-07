@@ -17,6 +17,7 @@ describe('Document generation jobs',()=> {
     expect(await templates.listGenerated('case-1')).toHaveLength(1);
     await templates.editGenerated(first.id,'Edited draft','owner');
     expect((await templates.getGenerated(first.id,'owner')).body).toBe('Edited draft');
+    expect((await jobs.get(first.id,'owner')).document?.body).toBe('Edited draft');
     expect((await templates.getGenerated(first.id,'owner')).expertReviewRequired).toBe(true);
     await expect(jobs.get(first.id,'other')).rejects.toThrow(NotFoundException);
     await expect(jobs.enqueue({...input,fields:{...input.fields,claimAmount:'2000'}},'owner','same-input')).rejects.toThrow('IDEMPOTENCY_INPUT_MISMATCH');

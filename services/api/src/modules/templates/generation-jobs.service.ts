@@ -34,6 +34,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   async get(id: string, ownerUserId: string) {
     const job = this.persistent ? (await this.db.query<{payload: GenerationJob}>('SELECT payload FROM document_generation_jobs WHERE id=$1 AND owner_user_id=$2', [id, ownerUserId])).rows[0]?.payload : this.jobs.get(id);
     if (!job || job.ownerUserId !== ownerUserId) throw new NotFoundException('GENERATION_JOB_NOT_FOUND');
+    if(job.status==='completed' && job.document) return {...job,document:await this.templates.getGenerated(job.document.id,ownerUserId)};
     return job;
   }
   async list(caseId: string, ownerUserId: string) {

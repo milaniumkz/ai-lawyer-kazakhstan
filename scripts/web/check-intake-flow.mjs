@@ -44,6 +44,11 @@ try {
   await page.evaluate(id => localStorage.setItem('ai-lawyer-web-state', JSON.stringify({ view: 'home', authUserId: id, profileComplete: true, profileName: 'Тестовый пользователь AIZAN', theme: 'dark', cases: [], documents: [] })), userId);
   await page.goto(`${web.replace(/\/$/, '')}/?intake=qa#home`);
   await page.getByRole('button', { name: 'Ввести текст', exact: true }).click();
+  await page.evaluate(()=>{window.location.hash='documentUpload';});
+  await page.locator('.uploadActions input[accept*="application/pdf"]').setInputFiles({name:'before-confirmation.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nSynthetic blocked upload\n%%EOF')});
+  await page.evaluate(()=>{window.location.hash='home';});
+  await page.locator('.aizanFeedback').filter({hasText:'Сначала опишите ситуацию и подтвердите создание дела'}).waitFor();
+  assert.equal((await request('/cases')).length,0);
   const input = page.locator('#home-problem');
   await input.fill('Работодатель не выплатил зарплату');
   // Two submits in one event turn must issue exactly one request.
@@ -111,6 +116,10 @@ try {
   const edited=generated[0].body+'\nДополнение пользователя: Қазақстан. Проверено вручную.';
   await request(`/generated-documents/${generated[0].id}`,{body:edited},'PATCH');
   assert.equal((await request(`/generated-documents/${generated[0].id}`)).body,edited);
+  const jobs=await request(`/cases/${cases[0].id}/generation-jobs`);
+  const generatedJob=jobs.find(job=>job.document?.id===generated[0].id);
+  assert(generatedJob);
+  assert.equal((await request(`/documents/generation-jobs/${generatedJob.id}`)).document.body,edited);
   const generatedPdf=await context.request.get(`${api}/api/v1/generated-documents/${generated[0].id}/pdf`);
   assert.equal(generatedPdf.status(),200);
   assert.equal((await generatedPdf.body()).subarray(0,5).toString(),'%PDF-');

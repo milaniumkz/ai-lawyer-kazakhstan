@@ -1538,7 +1538,16 @@ class _CategoryScreenState extends State<CategoryScreen>
   void initState() {
     super.initState();
     caseApi = widget.caseApi ?? HttpCaseApi();
-    answerController = TextEditingController();
+    final composer = DraftStore.values['caseComposer'];
+    final composerDraftId = MobileCaseRuntime.draftCaseId;
+    final restoredText = composer is Map<String, dynamic> &&
+            composer['draftId'] == composerDraftId &&
+            composer['text'] is String
+        ? composer['text'] as String
+        : '';
+    answerController = TextEditingController(text: restoredText);
+    answerController.addListener(() => DraftStore.put('caseComposer',
+        {'draftId': composerDraftId, 'text': answerController.text}));
     classification = MobileCaseRuntime.draftClassification;
     if (MobileCaseRuntime.currentDraftCreated && caseApi is HttpCaseApi) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
