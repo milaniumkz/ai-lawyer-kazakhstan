@@ -106,243 +106,32 @@ async function expectApiFailure(path, init, expectedStatus) {
 }
 
 async function expectPublicApiDemo() {
-  const suffix = Date.now().toString().slice(-7).padStart(7, '0');
+  // Never grant a test administrator by sending a role header or mutate taxonomy/payment records.
+  await expectApiFailure('/cases', {headers: {'x-user-id': '00000000-0000-4000-8000-000000000001'}}, 401);
   const registered = await apiJson('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({
-      channel: 'phone',
-      phone: `+7701${suffix}`,
-      password: 'Demo12345',
-      consentVersion: 'v1',
-    }),
+    method: 'POST', body: JSON.stringify({channel: 'email', email: `server-qa-${crypto.randomUUID()}@example.invalid`, consentVersion: 'v1'}),
   });
-  if (!registered?.otpId) return;
-
-  const verified = await apiJson('/auth/otp/verify', {
-    method: 'POST',
-    body: JSON.stringify({ otpId: registered.otpId, code: '111111' }),
-  });
+  if (!registered?.otpId || registered.deliveryMode !== 'stub') {
+    failures.push('QA requires explicit OTP stub; real delivery is not exercised');
+    return;
+  }
+  const verified = await apiJson('/auth/otp/verify', {method: 'POST', body: JSON.stringify({otpId: registered.otpId, code: registered.testCode})});
   sessionToken = verified?.accessToken;
   const userId = verified?.user?.id;
-  if (!userId) {
-    failures.push('/api/v1/auth/otp/verify did not return user id');
-    return;
+  if (!userId || !sessionToken) { failures.push('QA login did not return a session'); return; }
+  try {
+    const cases = await apiJson('/cases', {headers: {'x-user-id': userId}});
+    if (!Array.isArray(cases)) failures.push('Authenticated cases did not return an array');
+    await expectApiFailure('/admin/legal-categories', {headers: {'x-user-role': 'admin'}}, 403);
+    const exported = await apiJson('/account/export', {headers: {'x-user-id': userId}});
+    if (exported?.user?.id !== userId) failures.push('Account export returned wrong owner');
+  } finally {
+    const deleted = await apiJson('/account', {method: 'DELETE', headers: {'x-user-id': userId}});
+    if (deleted?.deleted !== true) failures.push('QA account deletion failed');
+    await expectApiFailure('/account/export', {headers: {'x-user-id': userId}}, 401);
+    sessionToken = undefined;
   }
-
-  const subscriptionPlans = await apiJson('/subscriptions/plans', {
-    headers: { 'x-user-id': userId },
-  });
-  if (!Array.isArray(subscriptionPlans) || !subscriptionPlans.some((item) => item.plan === 'standard')) failures.push('/api/v1/subscriptions/plans did not return standard plan');
-
-  const paymentHistory = await apiJson('/subscriptions/payment-history', {
-    headers: { 'x-user-id': userId },
-  });
-  if (!Array.isArray(paymentHistory)) failures.push('/api/v1/subscriptions/payment-history did not return an array');
-
-  const paymentIntent = await apiJson('/subscriptions/payment-intent', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({ plan: 'standard' }),
-  });
-  if (paymentIntent?.blocker !== 'PAYMENT_PROVIDER_REQUIRED' || paymentIntent?.status !== 'provider_required') {
-    failures.push('/api/v1/subscriptions/payment-intent did not return provider blocker');
-  }
-
-  const manualPayment = await apiJson('/admin/subscriptions/payments/manual', {
-    method: 'POST',
-    headers: { 'x-user-role': 'admin' },
-    body: JSON.stringify({
-      userId,
-      plan: 'standard',
-      amountKzt: 7990,
-      externalId: `public-manual-${Date.now()}`,
-    }),
-  });
-  if (manualPayment?.provider !== 'manual' || manualPayment?.status !== 'paid') failures.push('/api/v1/admin/subscriptions/payments/manual did not create paid manual receipt');
-
-  const updatedPaymentHistory = await apiJson('/subscriptions/payment-history', {
-    headers: { 'x-user-id': userId },
-  });
-  if (!Array.isArray(updatedPaymentHistory) || !updatedPaymentHistory.some((item) => item.id === manualPayment?.id)) failures.push('/api/v1/subscriptions/payment-history did not include manual receipt');
-
-  const updatedSubscription = await apiJson('/subscriptions/current', {
-    headers: { 'x-user-id': userId },
-  });
-  if (updatedSubscription?.plan !== 'standard' || updatedSubscription?.monthlyLimitKzt !== 10000) failures.push('/api/v1/subscriptions/current did not reflect manual paid plan');
-
-  const legalCase = await apiJson('/cases', {
-    method: 'POST',
-    headers: { 'idempotency-key': `public-demo-${Date.now()}`, 'x-user-id': userId },
-    body: JSON.stringify({
-      ownerUserId: userId,
-      problemText: 'Нужно взыскать долг по договору займа. Есть расписка и переписка.',
-    }),
-  });
-  if (!legalCase?.id) {
-    failures.push('/api/v1/cases did not return case id');
-    return;
-  }
-
-  const categories = await apiJson('/case-categories', {
-    headers: { 'x-user-id': userId },
-  });
-  if (!Array.isArray(categories) || categories.length < 25) failures.push('/api/v1/case-categories did not return taxonomy');
-
-  const adminCategories = await apiJson('/admin/legal-categories', {
-    headers: { 'x-user-role': 'admin' },
-  });
-  if (!Array.isArray(adminCategories) || adminCategories.length < 10) failures.push('/api/v1/admin/legal-categories did not return category tree');
-
-  const adminCategoryCode = `family.public_release_${Date.now()}`;
-  const changeRequest = await apiJson('/admin/legal-categories/change-requests', {
-    method: 'POST',
-    headers: { 'x-user-role': 'admin' },
-    body: JSON.stringify({
-      action: 'create',
-      categoryCode: adminCategoryCode,
-      reason: 'public release safe taxonomy check',
-      payload: {
-        code: adminCategoryCode,
-        parentCode: 'family',
-        nameRu: 'Публичная проверочная категория',
-        nameKk: 'Жария тексеру санаты',
-        nameEn: 'Public release category',
-        descriptionRu: 'Публичная проверочная категория',
-        descriptionKk: 'Жария тексеру санаты',
-        descriptionEn: 'Public release category',
-        defaultLegalRoute: 'civil',
-      },
-    }),
-  });
-  if (!changeRequest?.id || changeRequest.status !== 'pending') failures.push('/api/v1/admin/legal-categories/change-requests did not create pending request');
-
-  const approvedChange = changeRequest?.id
-    ? await apiJson(`/admin/legal-categories/change-requests/${changeRequest.id}/approve`, {
-        method: 'POST',
-        headers: { 'x-user-role': 'admin' },
-      })
-    : undefined;
-  if (approvedChange?.status !== 'approved') failures.push('/api/v1/admin/legal-categories/change-requests/{id}/approve did not approve request');
-
-  const changeRequests = await apiJson('/admin/legal-categories/change-requests', {
-    headers: { 'x-user-role': 'admin' },
-  });
-  if (!Array.isArray(changeRequests) || !changeRequests.some((item) => item.id === changeRequest?.id)) failures.push('/api/v1/admin/legal-categories/change-requests did not list created request');
-
-  const changeDetails = changeRequest?.id
-    ? await apiJson(`/admin/legal-categories/change-requests/${changeRequest.id}`, {
-        headers: { 'x-user-role': 'admin' },
-      })
-    : undefined;
-  if (changeDetails?.id !== changeRequest?.id || changeDetails?.status !== 'approved') failures.push('/api/v1/admin/legal-categories/change-requests/{id} did not return approved request details');
-
-  const upload = await apiJson('/files/upload-sessions', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({
-      caseId: legalCase.id,
-      fileName: 'raspiska.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 120000,
-    }),
-  });
-  if (!upload?.id) {
-    failures.push('/api/v1/files/upload-sessions did not return upload id');
-    return;
-  }
-
-  const document = await apiJson('/files/complete', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({ uploadSessionId: upload.id, sha256: `public-demo-${Date.now()}` }),
-  });
-  if (!document?.id) {
-    failures.push('/api/v1/files/complete did not return document id');
-    return;
-  }
-
-  const adminDocumentQueue = await apiJson('/admin/documents/review-queue', {
-    headers: { 'x-user-role': 'admin' },
-  });
-  if (!Array.isArray(adminDocumentQueue) || !adminDocumentQueue.some((item) => item.id === document.id)) failures.push('/api/v1/admin/documents/review-queue did not include new OCR document');
-
-  const adminReadyDocument = await apiJson(`/admin/documents/${document.id}/ocr-confirm`, {
-    method: 'POST',
-    headers: { 'x-user-role': 'admin' },
-    body: JSON.stringify({ fields: { documentTitle: 'Расписка', amount: '1250000', adminReviewed: 'true' } }),
-  });
-  if (adminReadyDocument?.status !== 'ready') failures.push('/api/v1/admin/documents/{documentId}/ocr-confirm did not mark document ready');
-
-  const rejectUpload = await apiJson('/files/upload-sessions', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({
-      caseId: legalCase.id,
-      fileName: 'bad-scan.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 2000,
-    }),
-  });
-  const rejectDocument = await apiJson('/files/complete', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({ uploadSessionId: rejectUpload.id, sha256: `public-reject-${Date.now()}` }),
-  });
-  const rejected = await apiJson(`/admin/documents/${rejectDocument.id}/reject`, {
-    method: 'POST',
-    headers: { 'x-user-role': 'admin' },
-    body: JSON.stringify({ reason: 'public release rejected' }),
-  });
-  if (rejected?.status !== 'rejected') failures.push('/api/v1/admin/documents/{documentId}/reject did not reject document');
-
-  await apiJson(`/documents/${document.id}/ocr-confirm`, {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({ fields: { documentTitle: 'Расписка', amount: '1250000' } }),
-  });
-
-  const templates = await apiJson('/templates');
-  const templateId = templates?.find((item) => item.code === "pretrial_claim" && item.language === "ru" && item.version === "v2")?.id ?? templates?.find((item) => item.code === "pretrial_claim" && item.language === "ru")?.id;
-  if (!templateId) {
-    failures.push('/api/v1/templates did not return a template id');
-    return;
-  }
-
-  const generated = await apiJson('/documents/generate', {
-    method: 'POST',
-    headers: { 'x-user-id': userId },
-    body: JSON.stringify({
-      templateId,
-      caseId: legalCase.id,
-      fields: {
-        claimantName: 'ТОО Альфа KZ',
-        respondentName: 'ТОО Бета KZ',
-        claimAmount: '1250000',
-        claimReason: 'договор займа',
-        deadlineDate: '2026-10-01',
-      },
-    }),
-  });
-  if (!generated?.id) failures.push('/api/v1/documents/generate did not return generated document id');
-
-  const answer = await apiJson('/rag/answer', {
-    method: 'POST',
-    body: JSON.stringify({ query: 'Как взыскать долг по расписке?' }),
-  });
-  if (!answer?.status) failures.push('/api/v1/rag/answer did not return answer status');
-
-  const exported = await apiJson('/account/export', {
-    headers: { 'x-user-id': userId },
-  });
-  if (exported?.user?.id !== userId) failures.push('/api/v1/account/export did not return current user');
-  if (JSON.stringify(exported).includes('Demo12345')) failures.push('/api/v1/account/export leaked password');
-
-  const deleted = await apiJson('/account', {
-    method: 'DELETE',
-    headers: { 'x-user-id': userId },
-  });
-  if (deleted?.deleted !== true) failures.push('/api/v1/account did not confirm deletion');
-  await expectApiFailure('/account/export', { headers: { 'x-user-id': userId } }, 401);
+  // Full case/clarification/actual-file/generation flow is the following deployment browser E2E gate.
 }
 
 function canConnect(port) {
