@@ -3,9 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import '../../api/session_http.dart' as http;
 
 import '../../api/api_contract.dart';
+import '../../api/session_credentials.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/aizan_design.dart';
@@ -62,18 +63,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> openPhoneLogin() async {
     await showModalBottomSheet<void>(
-      context: context, isScrollControlled: true,
+      context: context,
+      isScrollControlled: true,
       builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.viewInsetsOf(sheetContext).bottom + 24),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Вход по телефону', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 16),
-          TextField(controller: loginController, keyboardType: TextInputType.phone, autofocus: true,
-            autofillHints: const [AutofillHints.telephoneNumber],
-            decoration: const InputDecoration(labelText: '+7 номер телефона')),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: () { Navigator.pop(sheetContext); requestOtp(); }, child: const Text('Получить SMS-код')),
-        ]),
+        padding: EdgeInsets.fromLTRB(
+            24, 24, 24, MediaQuery.viewInsetsOf(sheetContext).bottom + 24),
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Вход по телефону',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 16),
+              TextField(
+                  controller: loginController,
+                  keyboardType: TextInputType.phone,
+                  autofocus: true,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  decoration:
+                      const InputDecoration(labelText: '+7 номер телефона')),
+              const SizedBox(height: 16),
+              FilledButton(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    requestOtp();
+                  },
+                  child: const Text('Получить SMS-код')),
+            ]),
       ),
     );
   }
@@ -89,41 +105,92 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
               children: [
                 Stack(children: [
-                  const Padding(padding: EdgeInsets.only(top: 18), child: AizanArt(AizanArtwork.authBrand)),
-                  Positioned(top: 0, left: 0, right: 0, child:
-Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  IconButton.outlined(tooltip: 'Назад', onPressed: () => context.go('/onboarding'), icon: const Icon(Icons.chevron_left)),
-                  SegmentedButton<String>(segments: const [
-                    ButtonSegment(value: 'RU', label: Text('RU')), ButtonSegment(value: 'KZ', label: Text('KZ')), ButtonSegment(value: 'EN', label: Text('EN')),
-                  ], selected: {language}, showSelectedIcon: false, onSelectionChanged: (value) => setState(() => language = value.first)),
-                ])),
+                  const Padding(
+                      padding: EdgeInsets.only(top: 18),
+                      child: AizanArt(AizanArtwork.authBrand)),
+                  Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton.outlined(
+                                tooltip: 'Назад',
+                                onPressed: () => context.go('/onboarding'),
+                                icon: const Icon(Icons.chevron_left)),
+                            SegmentedButton<String>(
+                                segments: const [
+                                  ButtonSegment(value: 'RU', label: Text('RU')),
+                                  ButtonSegment(value: 'KZ', label: Text('KZ')),
+                                  ButtonSegment(value: 'EN', label: Text('EN')),
+                                ],
+                                selected: {
+                                  language
+                                },
+                                showSelectedIcon: false,
+                                onSelectionChanged: (value) =>
+                                    setState(() => language = value.first)),
+                          ])),
                 ]),
                 const SizedBox(height: 17),
-                Text(switch (language) {
-                  'KZ' => 'Істерді, құжаттарды және мерзімдерді сақтау үшін кіріңіз немесе аккаунт жасаңыз',
-                  'EN' => 'Sign in or create an account to save cases, documents and deadlines',
-                  _ => 'Войдите или создайте аккаунт,\nчтобы сохранять дела, документы и сроки',
-                }, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5)),
+                Text(
+                    switch (language) {
+                      'KZ' =>
+                        'Істерді, құжаттарды және мерзімдерді сақтау үшін кіріңіз немесе аккаунт жасаңыз',
+                      'EN' =>
+                        'Sign in or create an account to save cases, documents and deadlines',
+                      _ =>
+                        'Войдите или создайте аккаунт,\nчтобы сохранять дела, документы и сроки',
+                    },
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: AppColors.muted, fontSize: 12, height: 1.5)),
                 const SizedBox(height: 14),
-                const Text('ПРАВО. ТЕХНОЛОГИИ. ДЛЯ ЛЮДЕЙ.', textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 7, letterSpacing: 3, color: AppColors.muted)),
+                const Text('ПРАВО. ТЕХНОЛОГИИ. ДЛЯ ЛЮДЕЙ.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 7, letterSpacing: 3, color: AppColors.muted)),
                 const SizedBox(height: 18),
                 Row(children: [
-                  Expanded(child: AizanButton(label: 'Вход', onPressed: isBusy ? null : openPhoneLogin, icon: Icons.login)),
-                  Expanded(child: TextButton(onPressed: isBusy ? null : openPhoneLogin, child: const Text('Регистрация'))),
+                  Expanded(
+                      child: AizanButton(
+                          label: 'Вход',
+                          onPressed: isBusy ? null : openPhoneLogin,
+                          icon: Icons.login)),
+                  Expanded(
+                      child: TextButton(
+                          onPressed: isBusy ? null : openPhoneLogin,
+                          child: const Text('Регистрация'))),
                 ]),
                 const SizedBox(height: 16),
-                _loginAction(Icons.phone_outlined, 'Войти по номеру телефона', loginController.text, openPhoneLogin),
+                _loginAction(Icons.phone_outlined, 'Войти по номеру телефона',
+                    loginController.text, openPhoneLogin),
                 const SizedBox(height: 10),
-                _loginAction(Icons.mail_outline, 'Войти по e-mail', 'Используйте вашу почту', () => _showAction(context, 'Вход по e-mail пока недоступен. Используйте телефон.')),
+                _loginAction(
+                    Icons.mail_outline,
+                    'Войти по e-mail',
+                    'Используйте вашу почту',
+                    () => _showAction(context,
+                        'Вход по e-mail пока недоступен. Используйте телефон.')),
                 const SizedBox(height: 10),
-                _loginAction(Icons.fingerprint, 'Войти по Face ID / Touch ID', 'Быстро и безопасно', () => _showAction(context, 'Биометрический вход пока не подключён. Используйте телефон.')),
+                _loginAction(
+                    Icons.fingerprint,
+                    'Войти по Face ID / Touch ID',
+                    'Быстро и безопасно',
+                    () => _showAction(context,
+                        'Биометрический вход пока не подключён. Используйте телефон.')),
                 if (isBusy || status != 'Введите номер телефона') ...[
-                  const SizedBox(height: 12), Text(status, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted)),
+                  const SizedBox(height: 12),
+                  Text(status,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.muted)),
                 ],
                 const SizedBox(height: 17),
                 const _AuthDivider(),
-                TextButton(onPressed: isBusy ? null : openPhoneLogin, child: const Text('Нет аккаунта? Зарегистрироваться  ›')),
+                TextButton(
+                    onPressed: isBusy ? null : openPhoneLogin,
+                    child: const Text('Нет аккаунта? Зарегистрироваться  ›')),
               ],
             ),
           ),
@@ -132,17 +199,26 @@ Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
     );
   }
 
-  Widget _loginAction(IconData icon, String title, String subtitle, VoidCallback onTap) => Card(
-    margin: EdgeInsets.zero,
-    child: ListTile(
-      onTap: isBusy ? null : onTap, minVerticalPadding: 10,
-      leading: Container(width: 39, height: 39, decoration: BoxDecoration(shape: BoxShape.circle,
-        border: Border.all(color: AppColors.gold)), child: Icon(icon, color: AppColors.goldDark, size: 23)),
-      title: Text(title, style: const TextStyle(fontSize: 13)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.gold),
-    ),
-  );
+  Widget _loginAction(
+          IconData icon, String title, String subtitle, VoidCallback onTap) =>
+      Card(
+        margin: EdgeInsets.zero,
+        child: ListTile(
+          onTap: isBusy ? null : onTap,
+          minVerticalPadding: 10,
+          leading: Container(
+              width: 39,
+              height: 39,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.gold)),
+              child: Icon(icon, color: AppColors.goldDark, size: 23)),
+          title: Text(title, style: const TextStyle(fontSize: 13)),
+          subtitle: Text(subtitle,
+              style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+          trailing: const Icon(Icons.chevron_right, color: AppColors.gold),
+        ),
+      );
 }
 
 class RegisterScreen extends StatefulWidget {
@@ -219,6 +295,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       AuthRuntime.displayName = fullName;
       AuthRuntime.profileComplete = true;
+      await SessionCredentials.save(
+          userId: AuthRuntime.userId,
+          accessToken: SessionCredentials.token,
+          profileComplete: true,
+          displayName: AuthRuntime.displayName);
       setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
       if (mounted) context.go('/');
     } catch (error) {
@@ -357,6 +438,11 @@ class OtpScreen extends StatelessWidget {
                   otpId: AuthRuntime.otpId,
                   code: controller.text.trim(),
                 );
+                await SessionCredentials.save(
+                    userId: session.userId,
+                    accessToken: session.accessToken,
+                    profileComplete: !session.profileRequired,
+                    displayName: AuthRuntime.displayName);
                 AuthRuntime.userId = session.userId;
                 AuthRuntime.profileComplete = !session.profileRequired;
                 if (context.mounted) {
@@ -397,8 +483,6 @@ class BiometricScreen extends StatefulWidget {
 }
 
 class _BiometricScreenState extends State<BiometricScreen> {
-  var enabled = false;
-
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
@@ -409,18 +493,16 @@ class _BiometricScreenState extends State<BiometricScreen> {
           const _AuthEmblem(icon: Icons.face_outlined),
           const SizedBox(height: 28),
           Text(
-            enabled
-                ? 'Биометрия включена локально для тестирования'
-                : 'Включите локальный secure flag для быстрого входа',
+            'Биометрический вход пока недоступен. Используйте телефон или e-mail.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
           const _AuthDivider(),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => setState(() => enabled = true),
+            onPressed: null,
             icon: const Icon(Icons.auto_awesome),
-            label: Text(enabled ? 'Включено' : 'Включить биометрию'),
+            label: const Text('Недоступно'),
           ),
           OutlinedButton(
             onPressed: () => context.go('/profile'),
@@ -428,7 +510,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Биометрические данные хранятся только на устройстве',
+            'Продолжите обычный вход',
             textAlign: TextAlign.center,
           ),
         ],
@@ -533,7 +615,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final TextEditingController iinController;
   late final TextEditingController addressController;
   var profileType = 'Физлицо';
-  var biometricEnabled = false;
   var isBusy = false;
   var status = 'Профиль еще не сохранен';
 
@@ -580,6 +661,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       AuthRuntime.displayName = nameController.text.trim();
       AuthRuntime.profileComplete = true;
+      await SessionCredentials.save(
+          userId: AuthRuntime.userId,
+          accessToken: SessionCredentials.token,
+          profileComplete: true,
+          displayName: AuthRuntime.displayName);
       setState(() => status = 'Профиль сохранен: ${id.substring(0, 8)}');
     } catch (error) {
       setState(() => status = 'Профиль API ошибка: $error');
@@ -655,13 +741,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 10),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            value: biometricEnabled,
-            onChanged: (value) => setState(() => biometricEnabled = value),
+            value: false,
+            onChanged: null,
             title: const Text('Быстрый вход по биометрии'),
-            subtitle: Text(biometricEnabled
-                ? 'Локальный secure flag включен'
-                : 'Можно включить после проверки устройства'),
+            subtitle: const Text('Биометрический вход пока недоступен'),
           ),
+          ListTile(
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: const Text('Календарь и сроки'),
+              onTap: () => context.go('/deadlines')),
           ListTile(
             leading: const Icon(Icons.workspace_premium_outlined),
             title: const Text('Подписка'),
@@ -886,6 +974,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     try {
       await accountApi.deleteAccount(AuthRuntime.userId);
+      await SessionCredentials.clear();
       AuthRuntime.userId = '';
       AuthRuntime.otpId = '';
       AuthRuntime.otpCodeHint = null;
@@ -1182,11 +1271,13 @@ class AuthSessionResult {
     required this.userId,
     this.isNewUser = false,
     this.profileRequired = true,
+    this.accessToken = '',
   });
 
   final String userId;
   final bool isNewUser;
   final bool profileRequired;
+  final String accessToken;
 }
 
 class AccountExportResult {
@@ -1249,6 +1340,7 @@ class HttpAuthApi implements AuthApiPort {
     final user = body['user'] as Map<String, dynamic>;
     return AuthSessionResult(
       userId: user['id'] as String,
+      accessToken: body['accessToken'] as String? ?? '',
       isNewUser: body['isNewUser'] as bool? ?? false,
       profileRequired: body['profileRequired'] as bool? ?? true,
     );

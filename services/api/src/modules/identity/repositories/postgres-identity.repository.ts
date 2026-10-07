@@ -1,3 +1,4 @@
+import { removeCaseStorage } from '../../documents/document-storage';
 import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../common/database/database.service';
@@ -84,7 +85,9 @@ export class PostgresIdentityRepository implements IdentityRepository {
   }
 
   async deleteAccount(userId: string) {
+    const cases = await this.db.query<{ id: string }>('SELECT id FROM legal_cases WHERE owner_user_id = $1', [userId]);
     await this.db.query('DELETE FROM users WHERE id = $1', [userId]);
+    for (const item of cases.rows) await removeCaseStorage(item.id);
   }
 
   async createAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>) {

@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import '../../api/session_http.dart' as http;
 
 import '../../api/api_contract.dart';
 import '../cases/case_screens.dart';
@@ -89,7 +89,9 @@ class _PretrialClaimScreenState extends State<PretrialClaimScreen> {
     }
   }
 
-  double progressValue() => workflowStages().where((step) => step.done).length / workflowStages().length;
+  double progressValue() =>
+      workflowStages().where((step) => step.done).length /
+      workflowStages().length;
 
   bool get hasRequiredFields =>
       claimantController.text.trim().isNotEmpty &&
@@ -228,40 +230,100 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen> {
   late final TextEditingController bodyController;
   final bodyFocus = FocusNode();
   @override
-  void initState() { super.initState(); bodyController = TextEditingController(text: WorkflowRuntime.generatedBody); }
-  @override
-  void dispose() { bodyController.dispose(); bodyFocus.dispose(); super.dispose(); }
-  Future<void> exportPdf() async {
-    try { await exportClaimPdf(bodyController.text); }
-    catch (error) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось создать PDF: $error'))); }
+  void initState() {
+    super.initState();
+    bodyController = TextEditingController(text: WorkflowRuntime.generatedBody);
   }
+
+  @override
+  void dispose() {
+    bodyController.dispose();
+    bodyFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> exportPdf() async {
+    try {
+      await exportClaimPdf(bodyController.text);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Не удалось создать PDF: $error')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: const AizanHeader(compact: true),
-    body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
-      child: ListView(padding: const EdgeInsets.all(20), children: [
-        Text('Предпросмотр документа', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 16),
-        const _ClaimStatusChips(),
-        const SizedBox(height: 18),
-        Card(color: const Color(0xFFF4EDDE), child: Padding(padding: const EdgeInsets.all(20), child: Column(children: [
-          const Icon(Icons.balance_outlined, color: Color(0xFF9C6F21), size: 44),
-          const SizedBox(height: 14),
-          const Text('Досудебная претензия', style: TextStyle(fontFamily: 'AizanSerif', fontSize: 24, color: Color(0xFF3C2A0F))),
-          TextField(controller: bodyController, focusNode: bodyFocus, minLines: 12, maxLines: null,
-            style: const TextStyle(color: Color(0xFF332513), fontFamily: 'AizanSerif', height: 1.5),
-            decoration: const InputDecoration(fillColor: Colors.transparent, hintText: 'Сначала сформируйте проект'),
-            onChanged: (value) => setState(() { WorkflowRuntime.generatedBody = value; approved = false; })),
-        ]))),
-        const SizedBox(height: 14),
-        Row(children: [Expanded(child: OutlinedButton.icon(onPressed: bodyFocus.requestFocus, icon: const Icon(Icons.edit_outlined), label: const Text('Редактировать'))),
-          const SizedBox(width: 8), Expanded(child: OutlinedButton.icon(onPressed: bodyController.text.trim().isEmpty ? null : exportPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('Скачать PDF')))]),
-        CheckboxListTile(value: approved, onChanged: (value) => setState(() => approved = value ?? false), title: const Text('Проверено пользователем')),
-        AizanButton(label: 'Перейти к отправке', icon: Icons.send_outlined,
-          onPressed: approved && bodyController.text.trim().isNotEmpty ? () => context.go('/workflow/pretrial-claim/send') : null),
-      ]),
-    )),
-  );
+        appBar: const AizanHeader(compact: true),
+        body: Center(
+            child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: ListView(padding: const EdgeInsets.all(20), children: [
+            Text('Предпросмотр документа',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
+            const _ClaimStatusChips(),
+            const SizedBox(height: 18),
+            Card(
+                color: const Color(0xFFF4EDDE),
+                child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(children: [
+                      const Icon(Icons.balance_outlined,
+                          color: Color(0xFF9C6F21), size: 44),
+                      const SizedBox(height: 14),
+                      const Text('Досудебная претензия',
+                          style: TextStyle(
+                              fontFamily: 'AizanSerif',
+                              fontSize: 24,
+                              color: Color(0xFF3C2A0F))),
+                      TextField(
+                          controller: bodyController,
+                          focusNode: bodyFocus,
+                          minLines: 12,
+                          maxLines: null,
+                          style: const TextStyle(
+                              color: Color(0xFF332513),
+                              fontFamily: 'AizanSerif',
+                              height: 1.5),
+                          decoration: const InputDecoration(
+                              fillColor: Colors.transparent,
+                              hintText: 'Сначала сформируйте проект'),
+                          onChanged: (value) => setState(() {
+                                WorkflowRuntime.generatedBody = value;
+                                approved = false;
+                              })),
+                    ]))),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(
+                  child: OutlinedButton.icon(
+                      onPressed: bodyFocus.requestFocus,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Редактировать'))),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: OutlinedButton.icon(
+                      onPressed:
+                          bodyController.text.trim().isEmpty ? null : exportPdf,
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('Скачать PDF')))
+            ]),
+            CheckboxListTile(
+                value: approved,
+                onChanged: (value) => setState(() => approved = value ?? false),
+                title: const Text('Проверено пользователем')),
+            AizanButton(
+                label: 'Перейти к отправке',
+                icon: Icons.send_outlined,
+                onPressed: approved && bodyController.text.trim().isNotEmpty
+                    ? () => context.go('/workflow/pretrial-claim/send')
+                    : null),
+          ]),
+        )),
+      );
 }
 
 class GeneratedClaimDraft {
@@ -311,11 +373,18 @@ class HttpWorkflowApi implements WorkflowApiPort {
       throw HttpException('templates failed: ${templates.statusCode}');
     }
     final templateList = jsonDecode(templates.body) as List<dynamic>;
-    final firstTemplate = templateList.isEmpty
-        ? null
-        : templateList.first as Map<String, dynamic>;
-    final templateId =
-        firstTemplate?['id'] as String? ?? 'tpl-pretrial-claim-ru-v1';
+    final candidates = templateList
+        .cast<Map<String, dynamic>>()
+        .where((item) =>
+            item['code'] == 'pretrial_claim' && item['language'] == 'ru')
+        .toList();
+    final template =
+        candidates.where((item) => item['version'] == 'v2').firstOrNull ??
+            candidates.firstOrNull;
+    if (template == null) {
+      throw const HttpException('Нет доступного шаблона претензии');
+    }
+    final templateId = template['id'] as String;
     final response = await http.post(
       Uri.parse(
           '$baseUrl${ApiContract.basePath}${ApiContract.documentsGenerate}'),
@@ -379,12 +448,21 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
       setState(() => status = 'Укажите контакт получателя');
       return;
     }
-    final accepted = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
-      title: const Text('Зафиксировать ручную отправку?'),
-      content: const Text('Приложение не отправляет документ получателю и не подтверждает доставку.'),
-      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Подтвердить'))],
-    ));
+    final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Зафиксировать ручную отправку?'),
+              content: const Text(
+                  'Приложение не отправляет документ получателю и не подтверждает доставку.'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Отмена')),
+                FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Подтвердить'))
+              ],
+            ));
     if (accepted != true || !mounted) return;
     setState(() {
       sent = true;
@@ -415,7 +493,10 @@ class _ClaimSendScreenState extends State<ClaimSendScreen> {
             ),
             const SizedBox(height: 12),
             _ClaimStageRail(items: [
-              (title: '1. Проект', done: WorkflowRuntime.generatedBody.isNotEmpty),
+              (
+                title: '1. Проект',
+                done: WorkflowRuntime.generatedBody.isNotEmpty
+              ),
               (title: '2. Канал', done: selectedMethod.isNotEmpty),
               (
                 title: '3. Контакт',

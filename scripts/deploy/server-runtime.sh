@@ -59,6 +59,7 @@ After=network.target
 [Service]
 Type=simple
 EnvironmentFile=$API_ENV_FILE
+Environment=DOCUMENT_UPLOAD_DIR=$APP_ROOT/data/documents
 WorkingDirectory=$APP_ROOT/app/services/api
 ExecStart=/usr/bin/npm run start
 Restart=always
@@ -95,6 +96,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON subscription_payments TO ai_lawyer_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO ai_lawyer_app;
 SQL
   fi
+  sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
+    -f "$APP_ROOT/app/infra/db/migrations/0010_document_content.sql"
   sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1 \
     -f "$APP_ROOT/app/infra/db/seeds/0002_pretrial_claim_v2.sql"
 fi

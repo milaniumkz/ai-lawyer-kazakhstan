@@ -15,6 +15,7 @@ describe('AppModule HTTP smoke', () => {
   beforeAll(async () => {
     voiceUploadDir = await mkdtemp(join(tmpdir(), 'app-smoke-voice-'));
     process.env.VOICE_UPLOAD_DIR = voiceUploadDir;
+    process.env.DOCUMENT_UPLOAD_DIR = voiceUploadDir;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     await app.register(multipart, { limits: { fileSize: 25 * 1024 * 1024 } });
@@ -27,7 +28,24 @@ describe('AppModule HTTP smoke', () => {
   afterAll(async () => {
     await app.close();
     delete process.env.VOICE_UPLOAD_DIR;
+    delete process.env.DOCUMENT_UPLOAD_DIR;
     await rm(voiceUploadDir, { recursive: true, force: true });
+  });
+
+  it('enforces real sessions, rejects forged identities/roles and revokes sessions', async () => {
+    process.env.AUTH_MODE = 'secure';
+    try {
+      await request(app.getHttpServer()).get('/api/v1/cases').set('x-user-id', 'forged-user').expect(401);
+      const agent = request.agent(app.getHttpServer());
+      const otp = await agent.post('/api/v1/auth/register').send({ channel: 'email', email: 'session-security@example.invalid', consentVersion: 'v1' }).expect(201);
+      const auth = await agent.post('/api/v1/auth/otp/verify').send({ otpId: otp.body.otpId, code: otp.body.testCode }).expect(201);
+      expect(auth.headers['set-cookie'][0].includes('HttpOnly')).toBe(true);
+      await agent.get('/api/v1/cases').expect(200);
+      await agent.get('/api/v1/cases').set('x-user-id', 'forged-user').expect(403);
+      await agent.get('/api/v1/admin/documents/review-queue').set('x-user-role', 'admin').expect(403);
+      await agent.post('/api/v1/auth/logout-all').send({ userId: auth.body.user.id }).expect(201);
+      await agent.get('/api/v1/cases').expect(401);
+    } finally { delete process.env.AUTH_MODE; }
   });
 
   it('serves health through the public API prefix', async () => {
@@ -154,10 +172,15 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-id', userId)
       .send({ caseId: legalCase.body.id, fileName: 'claim.pdf', mimeType: 'application/pdf', sizeBytes: 1024 })
       .expect(201);
+    const uploadBytes = Buffer.alloc(1024);
+    uploadBytes.write('%PDF-1.4');
+    await request(app.getHttpServer()).post(`/api/v1${upload.body.uploadUrl}`)
+      .set('x-user-id', userId).set('x-upload-session-id', upload.body.id)
+      .attach('file', uploadBytes, { filename: 'fixture.pdf', contentType: 'application/pdf' }).expect(201);
     const document = await request(app.getHttpServer())
       .post('/api/v1/files/complete')
       .set('x-user-id', userId)
-      .send({ uploadSessionId: upload.body.id, sha256: 'smoke-hash-1' })
+      .send({ uploadSessionId: upload.body.id })
       .expect(201);
     await request(app.getHttpServer()).get('/api/v1/admin/documents/review-queue').expect(403);
     await request(app.getHttpServer())
@@ -170,10 +193,15 @@ describe('AppModule HTTP smoke', () => {
       .set('x-user-id', userId)
       .send({ caseId: legalCase.body.id, fileName: 'bad-scan.pdf', mimeType: 'application/pdf', sizeBytes: 2048 })
       .expect(201);
+    const rejectUploadBytes = Buffer.alloc(2048);
+    rejectUploadBytes.write('%PDF-1.4');
+    await request(app.getHttpServer()).post(`/api/v1${rejectUpload.body.uploadUrl}`)
+      .set('x-user-id', userId).set('x-upload-session-id', rejectUpload.body.id)
+      .attach('file', rejectUploadBytes, { filename: 'fixture.pdf', contentType: 'application/pdf' }).expect(201);
     const rejectDocument = await request(app.getHttpServer())
       .post('/api/v1/files/complete')
       .set('x-user-id', userId)
-      .send({ uploadSessionId: rejectUpload.body.id, sha256: 'smoke-hash-reject-1' })
+      .send({ uploadSessionId: rejectUpload.body.id })
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/v1/admin/documents/${rejectDocument.body.id}/reject`)

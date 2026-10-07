@@ -112,14 +112,29 @@ class _GoldDivider extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.caseApi});
   final CaseApiPort? caseApi;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool conversationOpen = false;
+  void resetDraft() {
+    MobileCaseRuntime.startDraft();
+    setState(() => conversationOpen = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (conversationOpen) {
+      return NewCaseScreen(
+          caseApi: widget.caseApi, homeMode: true, onReset: resetDraft);
+    }
     return Scaffold(
-      appBar: const AizanHeader(home: true, newCase: true),
+      appBar: AizanHeader(home: true, newCase: true, onNewCase: resetDraft),
       bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
       body: SafeArea(
         top: false,
@@ -131,21 +146,24 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Center(
                   child: Semantics(
-                    label: 'Рассказать проблему', button: true,
+                    label: 'Рассказать проблему',
+                    button: true,
                     child: InkWell(
                       key: const ValueKey('home-voice'),
                       borderRadius: BorderRadius.circular(110),
                       onTap: () {
                         MobileCaseRuntime.preferVoiceInput = true;
-                        context.go('/case/new');
+                        setState(() => conversationOpen = true);
                       },
-                      child: const AizanArt(AizanArtwork.microphone, width: 200),
+                      child:
+                          const AizanArt(AizanArtwork.microphone, width: 200),
                     ),
                   ),
                 ),
                 const SizedBox(height: 23),
-                const Text('Нажмите, чтобы говорить', textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.white)),
+                const Text('Нажмите, чтобы говорить',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, color: Colors.white)),
                 const SizedBox(height: 25),
                 Center(
                   child: SizedBox(
@@ -154,7 +172,7 @@ class HomeScreen extends StatelessWidget {
                       key: const ValueKey('home-text'),
                       onPressed: () {
                         MobileCaseRuntime.preferVoiceInput = false;
-                        context.go('/case/new');
+                        setState(() => conversationOpen = true);
                       },
                       icon: const Icon(Icons.keyboard_outlined, size: 27),
                       label: const Text('Ввести текст'),

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 
 const web = process.env.WEB_BASE_URL;
@@ -89,6 +90,18 @@ try {
   const messages = await request(`/cases/${cases[0].id}/messages`);
   assert(messages.some(message => message.role === 'assistant' && /источник|юридич|подтвержд/i.test(message.text)));
   assert.equal(await page.locator('.appShell').getAttribute('data-view'), 'home');
+  // Exercise real bytes through the browser and authenticated API; no upload success is mocked.
+  const pdf = Buffer.from('%PDF-1.4\n% AIZAN synthetic QA file ' + crypto.randomUUID() + '\n%%EOF');
+  await page.locator('.aizanHomeActions input[type=file]').setInputFiles({ name: 'synthetic-qa.pdf', mimeType: 'application/pdf', buffer: pdf });
+  await page.getByText('synthetic-qa.pdf: Файл сохранён · требуется проверка', { exact: true }).waitFor();
+  const files = await request(`/cases/${cases[0].id}/documents`);
+  assert.equal(files.length, 1);
+  assert.equal(files[0].sha256, createHash('sha256').update(pdf).digest('hex'));
+  const download = await context.request.get(`${api}/api/v1/documents/${files[0].id}/content`, { headers: { 'x-user-id': userId } });
+  assert.equal(download.status(), 200);
+  assert.deepEqual(await download.body(), pdf);
+  const forbidden = await context.request.get(`${api}/api/v1/documents/${files[0].id}/content`, { headers: { 'x-user-id': '00000000-0000-4000-8000-000000000002' } });
+  assert.equal(forbidden.status(), 403);
   await page.getByRole('button', { name: 'Подготовить претензию', exact: true }).click();
   await page.getByRole('button', { name: 'Сформировать проект', exact: true }).click();
   await page.locator('.claimPrintBody').waitFor({state:'attached'});
@@ -116,6 +129,8 @@ try {
   assert.equal(manualReload.result.subcategory_code, 'civil.debt.loan');
   assert.equal(manualReload.result.confidence, 1);
   assert.deepEqual(manualReload.result.missing_facts, ['loan_date','amount','debtor_identity']);
+  const forged = await context.request.get(`${api}/api/v1/admin/documents/review-queue`, { headers: { 'x-user-role': 'admin' } });
+  if (process.env.WEB_TEST_SECURE_AUTH === '1') assert.equal(forged.status(), 403);
   assert.equal(jsErrors.length, 0, jsErrors.join('\n'));
   console.log('Real API intake E2E passed: one initial classification, sequential saved answers, outage/retry without duplicate messages, reload, confirmed case/facts, contextual legal answer, generated draft and reopening a saved case with its own facts/documents/history.');
 } catch (error) {

@@ -32,3 +32,9 @@ secrets/
 apps/mobile/android/key.properties
 
 artifacts/aizan-web/
+
+# Local document bytes and generated test failure artifacts
+var/
+apps/mobile/test/failures/
+
+!apps/mobile/pubspec.lock

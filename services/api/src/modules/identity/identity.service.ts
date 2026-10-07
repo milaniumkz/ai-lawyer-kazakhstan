@@ -7,7 +7,7 @@ import {
   Optional,
   UnauthorizedException,
 } from "@nestjs/common";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   AuditEvent,
   AuthChannel,
@@ -163,6 +163,13 @@ export class IdentityService {
       correlationId,
     );
     return this.issueTokens(user, correlationId);
+  }
+
+  async authenticateSession(token: string) {
+    const session = this.repository ? await this.repository.findSessionByRefreshToken(token) :
+      [...this.sessions.values()].find(item => item.refreshToken === token && !item.revokedAt);
+    if (!session || session.revokedAt || Date.now() - Date.parse(session.createdAt) > 30 * 24 * 60 * 60 * 1000) throw new UnauthorizedException('SESSION_EXPIRED');
+    return this.mustGetUser(session.userId);
   }
 
   async refresh(input: { refreshToken: string }, correlationId: string) {
@@ -335,7 +342,7 @@ export class IdentityService {
     const session: SessionRecord = {
       id: randomUUID(),
       userId: user.id,
-      refreshToken: `stub_refresh_${randomUUID()}`,
+      refreshToken: randomBytes(32).toString("base64url"),
       createdAt: new Date().toISOString(),
     };
     const storedSession = this.repository
@@ -351,7 +358,7 @@ export class IdentityService {
     );
     const profiles = await this.listProfiles(user.id);
     return {
-      accessToken: `stub_access_${user.id}`,
+      accessToken: session.refreshToken,
       refreshToken: session.refreshToken,
       tokenType: "Bearer",
       user: {

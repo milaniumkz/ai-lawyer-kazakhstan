@@ -519,7 +519,7 @@ export default function WebHome() {
   );
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const biometricEnabled = false;
   const [authModal, setAuthModal] = useState<"phone" | "email" | null>(null);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("");
@@ -714,8 +714,6 @@ export default function WebHome() {
       if (saved.city) setCity(saved.city);
       if (typeof saved.profileComplete === "boolean")
         setProfileComplete(saved.profileComplete);
-      if (typeof saved.biometricEnabled === "boolean")
-        setBiometricEnabled(saved.biometricEnabled);
       if (typeof saved.maskPii === "boolean") setMaskPii(saved.maskPii);
       if (typeof saved.budgetAlerts === "boolean")
         setBudgetAlerts(saved.budgetAlerts);
@@ -1378,6 +1376,7 @@ export default function WebHome() {
     }
     if (file.size > 25 * 1024 * 1024) { setSyncState("Размер файла должен быть не более 25 МБ"); return; }
     const sha256 = await fileSha256(file);
+    if (documents.some(item => item.sha256 === sha256 && item.id)) { setSyncState("Этот файл уже сохранён в деле"); return; }
     const localDoc: DocumentItem = {
       name: file.name,
       status: "Загрузка в API...",
@@ -1387,7 +1386,6 @@ export default function WebHome() {
     };
     setSelectedDocument(file.name);
     setDocuments((items) => [localDoc, ...items]);
-    updateActiveCase("Документы загружены", 76);
     try {
       const userId = await ensureUser();
       const caseId = await ensureRemoteCaseForDocumentUpload(file.name);
@@ -1401,6 +1399,9 @@ export default function WebHome() {
           sizeBytes: file.size,
         }),
       })) as ApiUploadSession;
+      const payload = new FormData();
+      payload.append("file", file);
+      await apiForm(session.uploadUrl, payload, userId, session.id);
       const document = (await apiJson("/files/complete", {
         method: "POST",
         headers: { "x-user-id": userId },
@@ -1413,12 +1414,13 @@ export default function WebHome() {
       setDocuments((items) =>
         items.map((item) =>
           item.sha256 === sha256
-            ? { ...item, id: document.id, name: document.fileName, status: "Метаданные сохранены · требуется проверка" }
+            ? { ...item, id: document.id, name: document.fileName, status: "Файл сохранён · требуется проверка" }
             : item,
         ),
       );
       setOcrConfirmed(false);
-      setSyncState(`Метаданные сохранены: ${document.fileName}. Хранилище файлов и автоматический OCR пока не подключены.`);
+      setSyncState(`Файл сохранён: ${document.fileName}. Проверьте реквизиты вручную — автоматический OCR пока недоступен.`);
+      updateActiveCase("Документ сохранён", 76);
       if (view !== "home") go("documentCheck");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -1440,6 +1442,20 @@ export default function WebHome() {
     }
   }
 
+  async function downloadDocument(document: DocumentItem) {
+    if (!document.id || !authUserId) { setSyncState("Сначала сохраните файл на сервере"); return; }
+    try {
+      const response = await fetch(`/api/v1/documents/${document.id}/content`, {
+        headers: { "x-user-id": authUserId }, signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) throw new Error(response.status === 404 ? "Содержимое старого файла отсутствует. Загрузите его повторно." : "Не удалось скачать файл. Повторите позже.");
+      const url = URL.createObjectURL(await response.blob());
+      const link = window.document.createElement("a"); link.href = url; link.download = document.name; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      setSyncState("Файл скачан");
+    } catch (error) { setSyncState(error instanceof Error ? error.message : "Не удалось скачать файл"); }
+  }
+
   async function apiJson(path: string, init?: RequestInit) {
     const response = await fetch(`/api/v1${path}`, {
       signal: AbortSignal.timeout(30000),
@@ -1451,6 +1467,12 @@ export default function WebHome() {
       },
     });
     const body = await response.json();
+    if (response.status === 401 && authUserId) {
+      setAuthUserId("");
+      setProfileComplete(false);
+      go("login");
+      throw new Error("Сессия истекла. Войдите снова; текст сохранён.");
+    }
     if (!response.ok) {
       const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
@@ -1460,17 +1482,24 @@ export default function WebHome() {
     return body;
   }
 
-  async function apiForm(path: string, formData: FormData, userId?: string) {
+  async function apiForm(path: string, formData: FormData, userId?: string, uploadSessionId?: string) {
     const response = await fetch(`/api/v1${path}`, {
       signal: AbortSignal.timeout(30000),
       method: "POST",
       headers: {
-        "x-correlation-id": "web-voice-upload",
+        "x-correlation-id": "web-file-upload",
+        ...(uploadSessionId ? { "x-upload-session-id": uploadSessionId } : {}),
         ...(userId ? { "x-user-id": userId } : {}),
       },
       body: formData,
     });
     const body = await response.json();
+    if (response.status === 401 && authUserId) {
+      setAuthUserId("");
+      setProfileComplete(false);
+      go("login");
+      throw new Error("Сессия истекла. Войдите снова; текст сохранён.");
+    }
     if (!response.ok) {
       const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
@@ -2754,15 +2783,12 @@ export default function WebHome() {
               <div className="authExactPanel">
               <BiometricMark />
               <h2>{authText.biometricTitle}</h2>
-              <p>{authText.biometricSubtitle}</p>
+              <p>{language === "RU" ? "Биометрический вход пока недоступен. Используйте телефон или e-mail." : language === "KZ" ? "Биометриялық кіру әзірге қолжетімсіз. Телефон немесе e-mail пайдаланыңыз." : "Biometric sign-in is currently unavailable. Use phone or email."}</p>
               <button
                 className="primary wide heroCta"
-                onClick={() => {
-                  setBiometricEnabled(true);
-                  setSyncState("Биометрия включена локально");
-                }}
+                disabled
               >
-                {biometricEnabled ? authText.biometricEnabled : authText.biometricEnable}
+                {language === "RU" ? "Недоступно" : language === "KZ" ? "Қолжетімсіз" : "Unavailable"}
               </button>
               <button
                 className="wide outlineGold"
@@ -2771,7 +2797,7 @@ export default function WebHome() {
                 {authText.later}
               </button>
               <p className="hint secureHint">
-                {authText.biometricHint}
+                {language === "RU" ? "Продолжите обычный вход" : language === "KZ" ? "Қалыпты кіруді жалғастырыңыз" : "Continue with standard sign-in"}
               </p>
               </div>
             </div>
@@ -3251,8 +3277,8 @@ export default function WebHome() {
                     key={`${doc.name}-${doc.sha256 ?? doc.id ?? ""}`}
                     onClick={() => {
                       setSelectedDocument(doc.name);
-                      setDocumentTab("recent");
-                      setSyncState(`Файл выбран для OCR: ${doc.name}`);
+                      setRemoteDocumentId(doc.id ?? "");
+                      void downloadDocument(doc);
                     }}
                   >
                     <span className="fileBadge"><DesignIcon name="document" /></span>
@@ -3260,7 +3286,7 @@ export default function WebHome() {
                       <strong>{doc.name}</strong>
                       <small>{doc.status}</small>
                     </p>
-                    <em>Из API/upload</em>
+                    <em>Скачать</em>
                     <b>›</b>
                   </button>
                 ))}
@@ -4472,7 +4498,7 @@ export default function WebHome() {
               {categoryOptions.length > 0 && <label>Категория<select aria-label="Категория дела" value={classification.result.subcategory_code} disabled={classificationBusy} onChange={(event) => void overrideCategory(event.target.value)}>{categoryOptions.filter((item) => item.parentId && item.code !== "clarification_required.other").map((item) => <option key={item.code} value={item.code}>{item.nameRu}</option>)}</select></label>}
               <button type="button" className="primary wide" disabled={classificationBusy || classification.result.missing_facts.length > 0 || classification.result.category_code === "clarification_required"} onClick={() => void confirmCategoryAndCreateCase(true)}>Подтвердить и создать дело</button>
             </>}
-            {documents.length > 0 && <div aria-label="Прикреплённые документы">{documents.map((document) => <p key={document.id ?? document.sha256 ?? document.name}>{document.name}: {document.status}</p>)}<p>Автоматический OCR не подключён. Сохранение метаданных не означает анализа содержимого.</p></div>}
+            {documents.length > 0 && <div aria-label="Прикреплённые документы">{documents.map((document) => <p key={document.id ?? document.sha256 ?? document.name}>{document.name}: {document.status}</p>)}<p>Файлы сохраняются на сервере. Автоматический OCR пока недоступен — проверьте поля вручную.</p></div>}
             {remoteCaseId && <div className="aizanHomeActions">
               <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
               <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
@@ -4549,8 +4575,9 @@ export default function WebHome() {
           </button>
         </div>
         {notificationOpen && <aside className="aizanNotifications"><strong>Уведомления</strong><p>{tasks.filter((task) => !task.done).map((task) => `${task.title}: ${task.due}`).join("; ") || "Активных уведомлений нет"}</p></aside>}
-        {renderView()}
         {view !== "home" && /ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|проверьте|зафиксирован|метаданные|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
+        {renderView()}
+
         <nav className="bottomNav" aria-label="Основная навигация">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}><DesignIcon name="home" />Главная</button>
           <button className={["cases", "case", "chat"].includes(view) ? "active" : ""} onClick={() => go("cases")}><DesignIcon name="folder" />Мои дела</button>

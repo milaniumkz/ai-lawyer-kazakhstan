@@ -4,24 +4,36 @@ abstract final class ApiContract {
   static const account = '/account';
   static const accountExport = '/account/export';
   static const adminAuditEvents = '/admin/audit-events';
-  static const adminClassificationsReviewQueue = '/admin/classifications/review-queue';
-  static const adminClassificationsIdConfirm = '/admin/classifications/{id}/confirm';
-  static const adminClassificationsIdOverride = '/admin/classifications/{id}/override';
+  static const adminClassificationsReviewQueue =
+      '/admin/classifications/review-queue';
+  static const adminClassificationsIdConfirm =
+      '/admin/classifications/{id}/confirm';
+  static const adminClassificationsIdOverride =
+      '/admin/classifications/{id}/override';
   static const adminDocumentsReviewQueue = '/admin/documents/review-queue';
-  static const adminDocumentsDocumentIdOcrConfirm = '/admin/documents/{documentId}/ocr-confirm';
-  static const adminDocumentsDocumentIdReject = '/admin/documents/{documentId}/reject';
+  static const adminDocumentsDocumentIdOcrConfirm =
+      '/admin/documents/{documentId}/ocr-confirm';
+  static const adminDocumentsDocumentIdReject =
+      '/admin/documents/{documentId}/reject';
   static const adminLegalCategories = '/admin/legal-categories';
-  static const adminLegalCategoriesChangeRequests = '/admin/legal-categories/change-requests';
-  static const adminLegalCategoriesChangeRequestsId = '/admin/legal-categories/change-requests/{id}';
-  static const adminLegalCategoriesChangeRequestsIdApprove = '/admin/legal-categories/change-requests/{id}/approve';
-  static const adminLegalCategoriesChangeRequestsIdReject = '/admin/legal-categories/change-requests/{id}/reject';
+  static const adminLegalCategoriesChangeRequests =
+      '/admin/legal-categories/change-requests';
+  static const adminLegalCategoriesChangeRequestsId =
+      '/admin/legal-categories/change-requests/{id}';
+  static const adminLegalCategoriesChangeRequestsIdApprove =
+      '/admin/legal-categories/change-requests/{id}/approve';
+  static const adminLegalCategoriesChangeRequestsIdReject =
+      '/admin/legal-categories/change-requests/{id}/reject';
   static const adminProviders = '/admin/providers';
-  static const adminSubscriptionsPaymentsManual = '/admin/subscriptions/payments/manual';
+  static const adminSubscriptionsPaymentsManual =
+      '/admin/subscriptions/payments/manual';
   static const aiClassifications = '/ai/classifications';
   static const aiClassificationsId = '/ai/classifications/{id}';
-  static const aiClassificationsIdClarifications = '/ai/classifications/{id}/clarifications';
+  static const aiClassificationsIdClarifications =
+      '/ai/classifications/{id}/clarifications';
   static const aiClassificationsIdConfirm = '/ai/classifications/{id}/confirm';
-  static const aiClassificationsIdOverride = '/ai/classifications/{id}/override';
+  static const aiClassificationsIdOverride =
+      '/ai/classifications/{id}/override';
   static const authLogin = '/auth/login';
   static const authLogoutAll = '/auth/logout-all';
   static const authOtpVerify = '/auth/otp/verify';
@@ -33,14 +45,18 @@ abstract final class ApiContract {
   static const casesCaseIdClassification = '/cases/{caseId}/classification';
   static const casesCaseIdDocuments = '/cases/{caseId}/documents';
   static const casesCaseIdEvidence = '/cases/{caseId}/evidence';
-  static const casesCaseIdGeneratedDocuments = '/cases/{caseId}/generated-documents';
+  static const casesCaseIdGeneratedDocuments =
+      '/cases/{caseId}/generated-documents';
   static const casesCaseIdMessages = '/cases/{caseId}/messages';
   static const citationsValidate = '/citations/validate';
   static const documentsGenerate = '/documents/generate';
-  static const documentsDocumentIdOcrConfirm = '/documents/{documentId}/ocr-confirm';
+  static const documentsDocumentIdContent = '/documents/{documentId}/content';
+  static const documentsDocumentIdOcrConfirm =
+      '/documents/{documentId}/ocr-confirm';
   static const evidence = '/evidence';
   static const filesComplete = '/files/complete';
   static const filesUploadSessions = '/files/upload-sessions';
+  static const filesUploadsTokenContent = '/files/uploads/{token}/content';
   static const health = '/health';
   static const legalCategories = '/legal-categories';
   static const legalCategoriesTree = '/legal-categories/tree';

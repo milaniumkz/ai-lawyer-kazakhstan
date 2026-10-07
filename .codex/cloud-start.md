@@ -1,0 +1,6 @@
+# Cloud development
+Read AGENTS.md and cloud runtime skill. Preserve proxy/CA and existing credential bindings. Do not print secrets or load .env.example wholesale.
+Setup: bash .codex/cloud-setup.sh. Flutter 3.47.6 uses /workspace/flutter-sdk, PUB_CACHE=/workspace/.pub-cache, XDG_CONFIG_HOME=/workspace/.config via scripts/mobile/flutter.mjs.
+Run local API with AUTH_MODE=secure PERSISTENCE_MODE=local AI_PROVIDER=stub (DATABASE_URL absent), npm run start --workspace @ai-lawyer-kz/api. Web: API_ORIGIN=http://127.0.0.1:3001 npm run start --workspace @ai-lawyer-kz/web -- --port 3000. Admin uses 3002. Health /api/v1/health must return status=ok. Use real OTP API stub testCode to obtain a session; forged x-user-id alone must return 401.
+Run npm run check, npm run analyze:flutter, npm run test:flutter, npm run test:ai, npm run docker:config. Full check currently stops at the dev-only sprintf-js advisory; runtime audit must have zero findings. Mobile analyzer requires its standard Dart cache. Browser E2E: CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium WEB_BASE_URL=http://127.0.0.1:3000 WEB_TEST_SECURE_AUTH=1 npm run test:web-intake. This creates/removes one synthetic QA account and uploads actual bytes.
+See docs/project/AIZAN_TZ_AUDIT_2026-10-07.md for verified scope and unresolved acceptance items. No signed mobile release or full pixel-match claim.

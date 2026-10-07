@@ -3,6 +3,7 @@ import net from 'node:net';
 const baseUrl = process.env.PUBLIC_SERVER_URL ?? 'http://89.207.250.217';
 const host = new URL(baseUrl).hostname;
 const failures = [];
+let sessionToken;
 
 async function expectHttp(path, expectedStatus = 200) {
   const response = await fetch(`${baseUrl}${path}`, { redirect: 'follow' });
@@ -74,6 +75,7 @@ async function apiJson(path, init) {
     ...init,
     headers: {
       'x-correlation-id': 'public-api-demo-check',
+      ...(sessionToken ? {authorization: `Bearer ${sessionToken}`} : {}),
       ...(hasBody ? { 'content-type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
@@ -92,6 +94,7 @@ async function expectApiFailure(path, init, expectedStatus) {
     ...init,
     headers: {
       'x-correlation-id': 'public-api-demo-check',
+      ...(sessionToken ? {authorization: `Bearer ${sessionToken}`} : {}),
       ...(hasBody ? { 'content-type': 'application/json' } : {}),
       ...(init?.headers ?? {}),
     },
@@ -119,6 +122,7 @@ async function expectPublicApiDemo() {
     method: 'POST',
     body: JSON.stringify({ otpId: registered.otpId, code: '111111' }),
   });
+  sessionToken = verified?.accessToken;
   const userId = verified?.user?.id;
   if (!userId) {
     failures.push('/api/v1/auth/otp/verify did not return user id');

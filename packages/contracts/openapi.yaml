@@ -907,7 +907,7 @@ paths:
   /files/upload-sessions:
     post:
       operationId: createUploadSession
-      summary: Create secure upload session metadata
+      summary: Create authenticated upload session
       parameters:
         - in: header
           name: x-user-id
@@ -923,11 +923,59 @@ paths:
               $ref: "#/components/schemas/CreateUploadSessionRequest"
       responses:
         "201":
-          description: Upload session with short-lived stub URL
+          description: Upload session with authenticated content URL
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UploadSession"
+  /files/uploads/{token}/content:
+    post:
+      operationId: uploadFileContent
+      summary: Store validated file bytes before completion
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+        - in: header
+          name: x-user-id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: x-upload-session-id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "201":
+          description: Validated SHA-256 and byte count
+  /documents/{documentId}/content:
+    get:
+      operationId: downloadFileContent
+      summary: Download original bytes of an owned document
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: x-user-id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Original document as an attachment
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
   /files/complete:
     post:
       operationId: completeUpload

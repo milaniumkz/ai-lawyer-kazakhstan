@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import '../../api/session_http.dart' as http;
 import 'package:record/record.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
@@ -109,14 +109,30 @@ class _CasesListScreenState extends State<CasesListScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             Row(children: [
-              Expanded(child: Text('Мои дела', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontFamily: 'AizanSans', fontSize: 32))),
-              IconButton(tooltip: 'Поиск дела', icon: const Icon(Icons.search), onPressed: () async {
-                final title = await showSearch(context: context, delegate: _CaseSearchDelegate(cases));
-                if (title == null || !mounted) return;
-                final match = cases.where((item) => item.title == title).firstOrNull;
-                if (match != null) { MobileCaseRuntime.selectCase(match); if (context.mounted) context.go('/case/details'); }
-              }),
-              IconButton(tooltip: 'Обновить из API', icon: const Icon(Icons.sync_outlined), onPressed: refreshCases),
+              Expanded(
+                  child: Text('Мои дела',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(fontFamily: 'AizanSans', fontSize: 32))),
+              IconButton(
+                  tooltip: 'Поиск дела',
+                  icon: const Icon(Icons.search),
+                  onPressed: () async {
+                    final title = await showSearch(
+                        context: context, delegate: _CaseSearchDelegate(cases));
+                    if (title == null || !mounted) return;
+                    final match =
+                        cases.where((item) => item.title == title).firstOrNull;
+                    if (match != null) {
+                      MobileCaseRuntime.selectCase(match);
+                      if (context.mounted) context.go('/case/details');
+                    }
+                  }),
+              IconButton(
+                  tooltip: 'Обновить из API',
+                  icon: const Icon(Icons.sync_outlined),
+                  onPressed: refreshCases),
             ]),
             const SizedBox(height: 14),
             Wrap(
@@ -148,10 +164,14 @@ class _CasesListScreenState extends State<CasesListScreen> {
                 ),
               )
             else
-              for (final item in cases.where((item) => selectedFilter == 'Все' ||
-                  (selectedFilter == 'В работе' && item.status.toLowerCase().contains('работ')) ||
-                  (selectedFilter == 'Суд' && item.status.toLowerCase().contains('суд')) ||
-                  (selectedFilter == 'Претензии' && item.status.toLowerCase().contains('претенз'))))
+              for (final item in cases.where((item) =>
+                  selectedFilter == 'Все' ||
+                  (selectedFilter == 'В работе' &&
+                      item.status.toLowerCase().contains('работ')) ||
+                  (selectedFilter == 'Суд' &&
+                      item.status.toLowerCase().contains('суд')) ||
+                  (selectedFilter == 'Претензии' &&
+                      item.status.toLowerCase().contains('претенз'))))
                 _ReferenceCaseListTile(
                   item: item,
                   onTap: () {
@@ -233,8 +253,12 @@ class NewCaseScreen extends StatefulWidget {
       this.recorder,
       this.speechRecognizer,
       this.voiceApi,
-      this.caseApi});
+      this.caseApi,
+      this.homeMode = false,
+      this.onReset});
 
+  final VoidCallback? onReset;
+  final bool homeMode;
   final VoiceRecorderPort? recorder;
   final SpeechRecognizerPort? speechRecognizer;
   final VoiceTranscriptPort? voiceApi;
@@ -502,6 +526,7 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
   late final SpeechRecognizerPort speechRecognizer;
   late final VoiceTranscriptPort voiceApi;
   late final CaseApiPort caseApi;
+  var showingCategory = false;
   var isRecording = false;
   var isPaused = false;
   var elapsedSeconds = 0;
@@ -523,9 +548,12 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     caseApi = widget.caseApi ?? HttpCaseApi();
     transcript = MobileCaseRuntime.confirmedText;
     transcriptController = TextEditingController(text: transcript);
-    transcriptController.addListener(() => MobileCaseRuntime.confirmedText = transcriptController.text);
+    transcriptController.addListener(
+        () => MobileCaseRuntime.confirmedText = transcriptController.text);
     if (MobileCaseRuntime.preferVoiceInput) {
-      WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) toggleRecording(); });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) toggleRecording();
+      });
     }
   }
 
@@ -544,12 +572,19 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     try {
       final confirmedText = transcriptController.text.trim();
       if (confirmedText.length < 12) {
-        setState(() => speechStatus = 'Опишите ситуацию подробнее: минимум 12 символов.');
+        setState(() =>
+            speechStatus = 'Опишите ситуацию подробнее: минимум 12 символов.');
         return;
       }
       if (recordedPath == null) {
         MobileCaseRuntime.confirmedText = confirmedText;
-        if (mounted) context.go('/case/category');
+        if (mounted) {
+          if (widget.homeMode) {
+            setState(() => showingCategory = true);
+          } else {
+            context.go('/case/category');
+          }
+        }
         return;
       }
       if (AuthRuntime.userId.isEmpty) {
@@ -557,24 +592,41 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         setState(() {
           speechStatus = 'Текст распознан локально. Войдите для синхронизации';
         });
-        if (mounted) context.go('/case/category');
+        if (mounted) {
+          if (widget.homeMode) {
+            setState(() => showingCategory = true);
+          } else {
+            context.go('/case/category');
+          }
+        }
         return;
       }
-      final job = await voiceApi.uploadAudio(
-        userId: AuthRuntime.userId,
-        path: recordedPath!,
-        transcript: confirmedText,
-      ).timeout(const Duration(seconds: 8));
+      final job = await voiceApi
+          .uploadAudio(
+            userId: AuthRuntime.userId,
+            path: recordedPath!,
+            transcript: confirmedText,
+          )
+          .timeout(const Duration(seconds: 8));
       setState(() {
         transcriptJobId = job.id;
         transcript = job.transcript;
         transcriptController.text = job.transcript;
       });
       MobileCaseRuntime.confirmedText = job.transcript;
-      if (mounted) context.go('/case/category');
+      if (mounted) {
+        if (widget.homeMode) {
+          setState(() => showingCategory = true);
+        } else {
+          context.go('/case/category');
+        }
+      }
     } catch (_) {
       MobileCaseRuntime.confirmedText = transcriptController.text.trim();
-      if (mounted) setState(() => speechStatus = 'Текст сохранен. Не удалось отправить аудио: проверьте сеть и повторите.');
+      if (mounted) {
+        setState(() => speechStatus =
+            'Текст сохранен. Не удалось отправить аудио: проверьте сеть и повторите.');
+      }
     } finally {
       if (mounted) setState(() => isBusy = false);
     }
@@ -595,7 +647,9 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
         await voiceRecorder.start(path);
         recordingTimer?.cancel();
         recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-          if (mounted && isRecording && !isPaused) setState(() => elapsedSeconds++);
+          if (mounted && isRecording && !isPaused) {
+            setState(() => elapsedSeconds++);
+          }
         });
         setState(() {
           isRecording = true;
@@ -612,7 +666,9 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             if (!mounted || text.trim().isEmpty) return;
             setState(() {
               recognizedSpeech = text.trim();
-              transcript = [speechPrefix, recognizedSpeech].where((part) => part.isNotEmpty).join('\n');
+              transcript = [speechPrefix, recognizedSpeech]
+                  .where((part) => part.isNotEmpty)
+                  .join('\n');
               transcriptController.text = transcript;
               transcriptController.selection = TextSelection.fromPosition(
                 TextPosition(offset: transcriptController.text.length),
@@ -645,7 +701,9 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
             (lastSpeech.trim().isNotEmpty ? lastSpeech : recognizedSpeech)
                 .trim();
         if (finalText.isNotEmpty) {
-          transcript = [speechPrefix, finalText].where((part) => part.isNotEmpty).join('\n');
+          transcript = [speechPrefix, finalText]
+              .where((part) => part.isNotEmpty)
+              .join('\n');
           transcriptController.text = transcript;
           speechStatus = 'Текст распознан';
         } else {
@@ -655,12 +713,17 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
     } catch (_) {
       recordingTimer?.cancel();
       await speechRecognizer.stop();
-      try { await voiceRecorder.stop(); } catch (_) { /* No active recorder. */ }
-      if (mounted) setState(() {
-        isRecording = false;
-        isPaused = false;
-        speechStatus = 'Запись недоступна. Текст сохранён: проверьте микрофон или введите текст.';
-      });
+      try {
+        await voiceRecorder.stop();
+      } catch (_) {/* No active recorder. */}
+      if (mounted) {
+        setState(() {
+          isRecording = false;
+          isPaused = false;
+          speechStatus =
+              'Запись недоступна. Текст сохранён: проверьте микрофон или введите текст.';
+        });
+      }
     } finally {
       if (mounted) setState(() => isBusy = false);
     }
@@ -668,64 +731,131 @@ class _NewCaseScreenState extends State<NewCaseScreen> {
 
   Future<void> pauseRecording() async {
     final recorder = voiceRecorder;
-    if (recorder is! PausableVoiceRecorderPort || !isRecording || isBusy) return;
+    if (recorder is! PausableVoiceRecorderPort || !isRecording || isBusy) {
+      return;
+    }
     try {
       if (isPaused) {
         speechPrefix = transcriptController.text.trim();
         await recorder.resume();
-        await speechRecognizer.start(localeId: 'ru_RU', onText: (text, isFinal) {
-          if (mounted && text.trim().isNotEmpty) setState(() {
-            recognizedSpeech = text;
-            transcriptController.text = [speechPrefix, text].where((part) => part.isNotEmpty).join('\n');
-            speechStatus = isFinal ? 'Текст распознан' : 'Распознаю речь...';
-          });
-        }, onStatus: (status) { if (mounted) setState(() => speechStatus = status); });
+        await speechRecognizer.start(
+            localeId: 'ru_RU',
+            onText: (text, isFinal) {
+              if (mounted && text.trim().isNotEmpty) {
+                setState(() {
+                  recognizedSpeech = text;
+                  transcriptController.text = [speechPrefix, text]
+                      .where((part) => part.isNotEmpty)
+                      .join('\n');
+                  speechStatus =
+                      isFinal ? 'Текст распознан' : 'Распознаю речь...';
+                });
+              }
+            },
+            onStatus: (status) {
+              if (mounted) setState(() => speechStatus = status);
+            });
+      } else {
+        await recorder.pause();
+        await speechRecognizer.stop();
       }
-      else { await recorder.pause(); await speechRecognizer.stop(); }
       if (mounted) setState(() => isPaused = !isPaused);
     } catch (_) {
-      if (mounted) setState(() => speechStatus = 'Не удалось изменить состояние записи.');
+      if (mounted) {
+        setState(() => speechStatus = 'Не удалось изменить состояние записи.');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final timer = '${(elapsedSeconds ~/ 60).toString().padLeft(2, '0')}:${(elapsedSeconds % 60).toString().padLeft(2, '0')}';
+    if (showingCategory) {
+      return CategoryScreen(
+          caseApi: caseApi, homeMode: widget.homeMode, onReset: widget.onReset);
+    }
+    final timer =
+        '${(elapsedSeconds ~/ 60).toString().padLeft(2, '0')}:${(elapsedSeconds % 60).toString().padLeft(2, '0')}';
     return _CaseScaffold(
-      title: 'Новое дело', showTitle: false,
+      title: 'Новое дело',
+      showTitle: false,
+      homeMode: widget.homeMode,
+      onReset: widget.onReset,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Center(child: Semantics(button: true, label: isRecording ? 'Остановить запись' : 'Записать голос',
-          child: InkWell(onTap: isBusy ? null : toggleRecording,
-            child: const AizanArt(AizanArtwork.voice, width: 330)))),
+        Center(
+            child: Semantics(
+                button: true,
+                label: isRecording ? 'Остановить запись' : 'Записать голос',
+                child: InkWell(
+                    onTap: isBusy ? null : toggleRecording,
+                    child: AizanArt(
+                        widget.homeMode
+                            ? AizanArtwork.microphone
+                            : AizanArtwork.voice,
+                        width: widget.homeMode ? 200 : 330)))),
         const SizedBox(height: 18),
-        const Text('Опишите проблему', textAlign: TextAlign.center, style: TextStyle(fontSize: 23)),
+        const Text('Опишите проблему',
+            textAlign: TextAlign.center, style: TextStyle(fontSize: 23)),
         const SizedBox(height: 6),
-        Text(isRecording ? (isPaused ? 'Запись на паузе' : 'Нажмите и говорите') : 'Нажмите микрофон или введите текст',
-          textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 14)),
+        Text(
+            isRecording
+                ? (isPaused ? 'Запись на паузе' : 'Нажмите и говорите')
+                : 'Нажмите микрофон или введите текст',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.muted, fontSize: 14)),
         const SizedBox(height: 22),
-        Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
-          Row(children: [
-            Expanded(child: Icon(Icons.graphic_eq, size: 42, color: isRecording ? AppColors.goldDark : AppColors.muted)),
-            Text(timer, style: const TextStyle(color: AppColors.goldDark)),
-          ]),
-          const SizedBox(height: 10),
-          TextField(controller: transcriptController, minLines: 3, maxLines: 6,
-            autofocus: !MobileCaseRuntime.preferVoiceInput,
-            decoration: const InputDecoration(labelText: 'Проверьте описание проблемы', alignLabelWithHint: true)),
-        ]))),
+        Card(
+            child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(children: [
+                  Row(children: [
+                    Expanded(
+                        child: Icon(Icons.graphic_eq,
+                            size: 42,
+                            color: isRecording
+                                ? AppColors.goldDark
+                                : AppColors.muted)),
+                    Text(timer,
+                        style: const TextStyle(color: AppColors.goldDark)),
+                  ]),
+                  const SizedBox(height: 10),
+                  TextField(
+                      controller: transcriptController,
+                      minLines: 3,
+                      maxLines: 6,
+                      autofocus: !MobileCaseRuntime.preferVoiceInput,
+                      decoration: const InputDecoration(
+                          labelText: 'Проверьте описание проблемы',
+                          alignLabelWithHint: true)),
+                ]))),
         const SizedBox(height: 18),
         Row(children: [
-          Expanded(flex: 3, child: AizanButton(label: isRecording ? 'Завершить запись' : 'Начать запись',
-            onPressed: isBusy ? null : toggleRecording, icon: isRecording ? Icons.stop : Icons.mic_none)),
+          Expanded(
+              flex: 3,
+              child: AizanButton(
+                  label: isRecording ? 'Завершить запись' : 'Начать запись',
+                  onPressed: isBusy ? null : toggleRecording,
+                  icon: isRecording ? Icons.stop : Icons.mic_none)),
           const SizedBox(width: 10),
-          Expanded(flex: 2, child: OutlinedButton.icon(
-            onPressed: isRecording && voiceRecorder is PausableVoiceRecorderPort ? pauseRecording : null,
-            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause), label: Text(isPaused ? 'Продолжить' : 'Пауза'))),
+          Expanded(
+              flex: 2,
+              child: OutlinedButton.icon(
+                  onPressed:
+                      isRecording && voiceRecorder is PausableVoiceRecorderPort
+                          ? pauseRecording
+                          : null,
+                  icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                  label: Text(isPaused ? 'Продолжить' : 'Пауза'))),
         ]),
         const SizedBox(height: 12),
-        Text(speechStatus, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+        Text(speechStatus,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: AppColors.muted)),
         const SizedBox(height: 12),
-        if (!isRecording) AizanButton(label: isBusy ? 'Отправляю аудио' : 'Подтвердить текст', onPressed: isBusy ? null : submitCase, icon: Icons.check_circle_outline),
+        if (!isRecording)
+          AizanButton(
+              label: isBusy ? 'Отправляю аудио' : 'Подтвердить текст',
+              onPressed: isBusy ? null : submitCase,
+              icon: Icons.check_circle_outline),
       ]),
     );
   }
@@ -811,7 +941,8 @@ class VoiceTranscriptJob {
 }
 
 class RecordVoiceRecorder implements PausableVoiceRecorderPort {
-  final AudioRecorder _recorder = AudioRecorder();
+  AudioRecorder? _instance;
+  AudioRecorder get _recorder => _instance ??= AudioRecorder();
 
   @override
   Future<bool> hasPermission() => _recorder.hasPermission();
@@ -829,7 +960,9 @@ class RecordVoiceRecorder implements PausableVoiceRecorderPort {
   Future<void> resume() => _recorder.resume();
 
   @override
-  Future<void> dispose() => _recorder.dispose();
+  Future<void> dispose() async {
+    await _instance?.dispose();
+  }
 }
 
 class HttpVoiceTranscriptApi implements VoiceTranscriptPort {
@@ -903,6 +1036,8 @@ abstract final class MobileCaseRuntime {
   static String activeCaseSubtitle = '';
   static String activeCaseStatus = '';
   static String confirmedText = '';
+  static String confirmedClassificationId = '';
+  static CaseClassificationResult? draftClassification;
   static String draftCaseId = 'draft-initial';
   static String createdDraftCaseId = '';
 
@@ -917,6 +1052,8 @@ abstract final class MobileCaseRuntime {
     activeCaseSubtitle = '';
     activeCaseStatus = '';
     confirmedText = '';
+    confirmedClassificationId = '';
+    draftClassification = null;
     preferVoiceInput = false;
   }
 
@@ -947,6 +1084,7 @@ class CaseClassificationResult {
     required this.alternatives,
     required this.riskLevel,
     required this.requiredHumanReview,
+    this.questions = const {},
   });
 
   final String id;
@@ -958,6 +1096,7 @@ class CaseClassificationResult {
   final List<String> alternatives;
   final String riskLevel;
   final bool requiredHumanReview;
+  final Map<String, String> questions;
 }
 
 class ChatMessageItem {
@@ -967,7 +1106,14 @@ class ChatMessageItem {
   final bool assistant;
 }
 
-class HttpCaseApi implements CaseApiPort {
+abstract class CaseClarificationPort {
+  Future<CaseClassificationResult> answerClarification(
+      {required String ownerUserId,
+      required String classificationId,
+      required Map<String, String> answers});
+}
+
+class HttpCaseApi implements CaseApiPort, CaseClarificationPort {
   HttpCaseApi({
     this.baseUrl = const String.fromEnvironment(
       'API_BASE_URL',
@@ -1008,6 +1154,24 @@ class HttpCaseApi implements CaseApiPort {
       },
       body: jsonEncode({'text': text}),
     );
+    return classificationFromResponse(response);
+  }
+
+  @override
+  Future<CaseClassificationResult> answerClarification(
+      {required String ownerUserId,
+      required String classificationId,
+      required Map<String, String> answers}) async {
+    final path = ApiContract.aiClassificationsIdClarifications
+        .replaceFirst('{id}', classificationId);
+    final response = await http
+        .post(Uri.parse('$baseUrl${ApiContract.basePath}$path'),
+            headers: {
+              'content-type': 'application/json',
+              'x-user-id': ownerUserId
+            },
+            body: jsonEncode({'answers': answers}))
+        .timeout(const Duration(seconds: 30));
     return classificationFromResponse(response);
   }
 
@@ -1065,12 +1229,16 @@ class HttpCaseApi implements CaseApiPort {
       headers: {
         'content-type': 'application/json',
         'idempotency-key':
-            'mobile-case-${DateTime.now().millisecondsSinceEpoch}',
+            'mobile-case-$ownerUserId-${MobileCaseRuntime.draftCaseId}',
         'x-correlation-id': 'mobile-case-create',
         'x-user-id': ownerUserId,
       },
-      body:
-          jsonEncode({'ownerUserId': ownerUserId, 'problemText': problemText}),
+      body: jsonEncode({
+        'ownerUserId': ownerUserId,
+        'problemText': problemText,
+        if (MobileCaseRuntime.confirmedClassificationId.isNotEmpty)
+          'classificationId': MobileCaseRuntime.confirmedClassificationId
+      }),
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -1155,6 +1323,12 @@ CaseClassificationResult classificationFromResponse(http.Response response) {
     ],
     riskLevel: result['risk_level'] as String? ?? 'medium',
     requiredHumanReview: result['required_human_review'] == true,
+    questions: {
+      for (final q
+          in (result['clarification_questions'] as List<dynamic>? ?? []))
+        (q as Map<String, dynamic>)['id'] as String:
+            q['questionRu'] as String? ?? 'Уточните обстоятельства'
+    },
   );
 }
 
@@ -1163,7 +1337,11 @@ String _categoryTitle(String? value) {
 }
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({super.key, this.caseApi});
+  const CategoryScreen(
+      {super.key, this.caseApi, this.homeMode = false, this.onReset});
+
+  final bool homeMode;
+  final VoidCallback? onReset;
 
   final CaseApiPort? caseApi;
 
@@ -1183,7 +1361,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
     super.initState();
     caseApi = widget.caseApi ?? HttpCaseApi();
     answerController = TextEditingController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => classify());
+    classification = MobileCaseRuntime.draftClassification;
+    if (classification == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) classify();
+      });
+    }
   }
 
   @override
@@ -1226,28 +1409,47 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ? 'Проверю описание, определю категорию и скажу, каких фактов не хватает.'
           : 'Подтвердите категорию, и я создам дело в базе данных.';
     }
-    if (missing == 'employer') {
-      return 'Укажите работодателя, должность и период, за который возник спор.';
-    }
-    if (missing == 'contract_date') {
-      return 'Уточните дату договора, сумму и что именно не оплатил заказчик.';
-    }
-    return 'Уточните недостающий факт: $missing.';
+    return classification?.questions[missing] ??
+        'Уточните обстоятельства обращения';
   }
 
-  void appendAnswer() {
+  Future<void> appendAnswer() async {
     final value = answerController.text.trim();
-    if (value.isEmpty) {
-      setState(() => status = 'Введите ответ для AI');
+    final result = classification;
+    final api = caseApi;
+    if (isBusy ||
+        value.isEmpty ||
+        result == null ||
+        result.missingFacts.isEmpty) {
       return;
     }
-    MobileCaseRuntime.confirmedText =
-        '${MobileCaseRuntime.confirmedText.trim()}\nУточнение: $value'.trim();
-    answerController.clear();
-    setState(() {
-      classification = null;
-      status = 'Ответ добавлен. Повторите анализ AI.';
-    });
+    if (api is! CaseClarificationPort) {
+      setState(() => status = 'Уточнения недоступны. Повторите позже.');
+      return;
+    }
+    setState(() => isBusy = true);
+    try {
+      final updated = await (api as CaseClarificationPort).answerClarification(
+          ownerUserId: AuthRuntime.userId,
+          classificationId: result.id,
+          answers: {result.missingFacts.first: value});
+      MobileCaseRuntime.confirmedText =
+          '${MobileCaseRuntime.confirmedText.trim()}\n${nextAiQuestion()} $value';
+      MobileCaseRuntime.draftClassification = updated;
+      if (!mounted) return;
+      answerController.clear();
+      setState(() {
+        classification = updated;
+        status = 'Ответ сохранён';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() =>
+            status = 'Не удалось сохранить ответ. Текст сохранён — повторите.');
+      }
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
   }
 
   Future<void> classify() async {
@@ -1270,6 +1472,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ownerUserId: AuthRuntime.userId, text: text);
       setState(() {
         classification = result;
+        MobileCaseRuntime.draftClassification = result;
         status = 'Категория определена';
       });
     } catch (error) {
@@ -1293,15 +1496,43 @@ class _CategoryScreenState extends State<CategoryScreen> {
     try {
       await caseApi.confirmClassification(
           ownerUserId: AuthRuntime.userId, classificationId: result.id);
+      MobileCaseRuntime.confirmedClassificationId = result.id;
       final created = await caseApi.createCase(
         ownerUserId: AuthRuntime.userId,
         problemText:
             '${MobileCaseRuntime.confirmedText}\nКатегория: ${result.subcategoryCode}',
       );
       MobileCaseRuntime.markCreated(created.id);
-      if (mounted) context.go('/case/details');
+      if (mounted) {
+        if (widget.homeMode) {
+          setState(() => status = 'Дело сохранено. Можно продолжить разговор.');
+        } else {
+          context.go('/case/details');
+        }
+      }
     } catch (error) {
       setState(() => status = 'Ошибка сохранения: $error');
+    } finally {
+      if (mounted) setState(() => isBusy = false);
+    }
+  }
+
+  Future<void> sendHomeMessage() async {
+    final text = answerController.text.trim();
+    if (isBusy || text.isEmpty) return;
+    setState(() => isBusy = true);
+    try {
+      final messages = await caseApi.sendMessage(
+          caseId: MobileCaseRuntime.activeCaseId, text: text);
+      if (!mounted) return;
+      answerController.clear();
+      setState(
+          () => status = messages.map((message) => message.text).join('\n\n'));
+    } catch (_) {
+      if (mounted) {
+        setState(
+            () => status = 'Не удалось отправить. Повторите — текст сохранён.');
+      }
     } finally {
       if (mounted) setState(() => isBusy = false);
     }
@@ -1319,6 +1550,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       );
       setState(() {
         classification = updated;
+        MobileCaseRuntime.draftClassification = updated;
         status = 'Категория изменена вручную';
       });
     } catch (error) {
@@ -1333,18 +1565,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final result = classification;
     return _CaseScaffold(
       title: 'Категория определена',
+      homeMode: widget.homeMode,
+      onReset: widget.onReset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Card(child: Padding(padding: const EdgeInsets.all(22), child: Column(children: [
-            const Icon(Icons.balance_outlined, size: 64, color: AizanDesign.gold),
-            const SizedBox(height: 18),
-            Text(result?.categoryLabel ?? 'Категория пока не определена', textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 10),
-            Text(result?.subcategoryLabel ?? 'Запустите анализ вашего обращения', textAlign: TextAlign.center),
-            if (result != null) ...[const SizedBox(height: 14), Text('Уверенность: ${(result.confidence * 100).round()}%')],
-          ]))),
+          Card(
+              child: Padding(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(children: [
+                    const Icon(Icons.balance_outlined,
+                        size: 64, color: AizanDesign.gold),
+                    const SizedBox(height: 18),
+                    Text(
+                        result?.categoryLabel ?? 'Категория пока не определена',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 10),
+                    Text(
+                        result?.subcategoryLabel ??
+                            'Запустите анализ вашего обращения',
+                        textAlign: TextAlign.center),
+                    if (result != null) ...[
+                      const SizedBox(height: 14),
+                      Text('Уверенность: ${(result.confidence * 100).round()}%')
+                    ],
+                  ]))),
           const SizedBox(height: 18),
           Text(status),
           if (result?.missingFacts.isNotEmpty == true) Text(nextAiQuestion()),
@@ -1456,8 +1702,6 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
         text:
             'AI может ошибаться. Нужны подтвержденные официальные источники РК.',
         assistant: true),
-    const ChatMessageItem(
-        text: 'Нужно взыскать долг по договору займа.', assistant: false),
   ];
 
   @override
@@ -1498,28 +1742,7 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
               labelText: 'Сообщение',
               suffixIcon: IconButton(
                 tooltip: 'Отправить',
-                onPressed: () {
-                  final text = controller.text.trim();
-                  if (text.isEmpty) return;
-                  if (MobileCaseRuntime.activeCaseId.isNotEmpty) {
-                    caseApi
-                        .sendMessage(
-                            caseId: MobileCaseRuntime.activeCaseId, text: text)
-                        .then((remote) {
-                      if (mounted) {
-                        setState(() => messages
-                          ..clear()
-                          ..addAll(remote));
-                      }
-                    }).catchError((_) {
-                      if (mounted) _appendLocalMessage(text);
-                    });
-                    controller.clear();
-                    return;
-                  }
-                  _appendLocalMessage(text);
-                  controller.clear();
-                },
+                onPressed: sending ? null : sendMessage,
                 icon: const Icon(Icons.send_outlined),
               ),
             ),
@@ -1529,14 +1752,32 @@ class _CaseChatScreenState extends State<CaseChatScreen> {
     );
   }
 
-  void _appendLocalMessage(String text) {
-    setState(() {
-      messages.add(ChatMessageItem(text: text, assistant: false));
-      messages.add(const ChatMessageItem(
-          text:
-              'Принято. Для ответа потребуется подтвержденная норма РК или ручная проверка юриста.',
-          assistant: true));
-    });
+  bool sending = false;
+  Future<void> sendMessage() async {
+    final text = controller.text.trim();
+    if (sending || text.isEmpty) return;
+    if (MobileCaseRuntime.activeCaseId.isEmpty) {
+      _showAction(
+          context, 'Сначала создайте или откройте дело. Текст сохранён.');
+      return;
+    }
+    setState(() => sending = true);
+    try {
+      final remote = await caseApi.sendMessage(
+          caseId: MobileCaseRuntime.activeCaseId, text: text);
+      if (!mounted) return;
+      controller.clear();
+      setState(() => messages
+        ..clear()
+        ..addAll(remote));
+    } catch (_) {
+      if (mounted) {
+        _showAction(
+            context, 'Не удалось отправить. Текст сохранён — повторите.');
+      }
+    } finally {
+      if (mounted) setState(() => sending = false);
+    }
   }
 }
 
@@ -1617,26 +1858,37 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _CaseScaffold extends StatelessWidget {
-  const _CaseScaffold({required this.title, required this.child, this.showTitle = true});
+  const _CaseScaffold(
+      {required this.title,
+      required this.child,
+      this.showTitle = true,
+      this.homeMode = false,
+      this.onReset});
 
+  final VoidCallback? onReset;
   final String title;
   final Widget child;
   final bool showTitle;
+  final bool homeMode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AizanHeader(),
-      bottomNavigationBar: title == 'Новое дело' ? const AppBottomNav(selectedIndex: 0) : null,
+      appBar:
+          AizanHeader(home: homeMode, newCase: homeMode, onNewCase: onReset),
+      bottomNavigationBar: homeMode || title == 'Новое дело'
+          ? const AppBottomNav(selectedIndex: 0)
+          : null,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            if (showTitle) Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(color: AppColors.goldDark)),
+            if (showTitle)
+              Text(title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(color: AppColors.goldDark)),
             if (showTitle) const SizedBox(height: 24),
             child,
           ],

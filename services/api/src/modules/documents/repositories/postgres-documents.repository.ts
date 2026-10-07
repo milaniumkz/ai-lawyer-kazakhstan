@@ -37,8 +37,8 @@ export class PostgresDocumentsRepository implements DocumentsRepository {
     return result.rows[0] ? mapDocument(result.rows[0]) : undefined;
   }
 
-  async findDocumentBySha256(sha256: string) {
-    const result = await this.db.query<DocumentRow>('SELECT * FROM files WHERE sha256 = $1 LIMIT 1', [sha256]);
+  async findDocumentBySha256(sha256: string, caseId?: string) {
+    const result = await this.db.query<DocumentRow>('SELECT * FROM files WHERE sha256 = $1 AND ($2::uuid IS NULL OR case_id = $2) LIMIT 1', [sha256, caseId ?? null]);
     return result.rows[0] ? mapDocument(result.rows[0]) : undefined;
   }
 

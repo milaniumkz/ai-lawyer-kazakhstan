@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Headers, Post } from '@nestjs/common';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { Body, Controller, Delete, Get, Headers, Post, Req, Res } from '@nestjs/common';
 import { assertAdminRole } from '../../common/admin-rbac';
 import { assertSameUser, assertUserId } from '../../common/user-context';
 import { IdentityService } from './identity.service';
@@ -17,18 +18,24 @@ export class IdentityController {
   }
 
   @Post('auth/otp/verify')
-  verifyOtp(@Body() body: { otpId: string; code: string }, @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.verifyOtp(body, correlationId);
+  async verifyOtp(@Body() body: { otpId: string; code: string }, @Headers('x-correlation-id') correlationId = 'local', @Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+    const result = await this.identity.verifyOtp(body, correlationId);
+    setSessionCookie(reply, request, result.accessToken);
+    return result;
   }
 
   @Post('auth/login')
-  login(@Body() body: { phone?: string; email?: string; password?: string }, @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.login(body, correlationId);
+  async login(@Body() body: { phone?: string; email?: string; password?: string }, @Headers('x-correlation-id') correlationId = 'local', @Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+    const result = await this.identity.login(body, correlationId);
+    setSessionCookie(reply, request, result.accessToken);
+    return result;
   }
 
   @Post('auth/refresh')
-  refresh(@Body() body: { refreshToken: string }, @Headers('x-correlation-id') correlationId = 'local') {
-    return this.identity.refresh(body, correlationId);
+  async refresh(@Body() body: { refreshToken: string }, @Headers('x-correlation-id') correlationId = 'local', @Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+    const result = await this.identity.refresh(body, correlationId);
+    setSessionCookie(reply, request, result.accessToken);
+    return result;
   }
 
   @Post('auth/logout-all')
@@ -72,4 +79,10 @@ export class IdentityController {
     assertAdminRole(userRole);
     return this.identity.listAuditEvents();
   }
+}
+
+function setSessionCookie(reply: FastifyReply, request: FastifyRequest, token: string) {
+  const secure = request.protocol === 'https' || request.headers['x-forwarded-proto'] === 'https';
+  reply.header('Set-Cookie', `aizan_session=${token}; HttpOnly; SameSite=Lax; Path=/api/v1; Max-Age=2592000${secure ? '; Secure' : ''}`);
+  reply.header('Cache-Control', 'no-store');
 }

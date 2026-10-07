@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../api/session_http.dart' as http;
 
 import '../../api/api_contract.dart';
 import '../../theme/app_theme.dart';

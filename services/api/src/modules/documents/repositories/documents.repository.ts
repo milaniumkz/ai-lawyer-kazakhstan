@@ -5,7 +5,7 @@ export interface DocumentsRepository {
   findUploadSessionById(id: string): Promise<UploadSession | undefined>;
   createDocument(input: Omit<DocumentRecord, 'id' | 'createdAt'>): Promise<DocumentRecord>;
   findDocumentById(id: string): Promise<DocumentRecord | undefined>;
-  findDocumentBySha256(sha256: string): Promise<DocumentRecord | undefined>;
+  findDocumentBySha256(sha256: string, caseId?: string): Promise<DocumentRecord | undefined>;
   listDocuments(caseId: string): Promise<DocumentRecord[]>;
   listDocumentsForAdminReview(limit: number): Promise<DocumentRecord[]>;
   updateDocumentOcr(input: { documentId: string; fields: Record<string, string>; status: DocumentRecord['status'] }): Promise<DocumentRecord>;

@@ -7,8 +7,8 @@
     "services/api"
   ],
   "scripts": {
-    "bootstrap": "npm install && npm --prefix services/ai run setup --if-present && /Volumes/PD1000/job/flutter/bin/flutter pub get --directory apps/mobile",
-    "format": "dart format apps/mobile/lib apps/mobile/test",
+    "bootstrap": "npm install && npm --prefix services/ai run setup --if-present && node scripts/mobile/flutter.mjs pub get --directory apps/mobile",
+    "format": "node scripts/mobile/flutter.mjs dart format apps/mobile/lib apps/mobile/test",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
@@ -28,8 +28,8 @@
     "test:audit": "npm audit --audit-level=moderate",
     "test:ai": "PYTHONPATH=services/ai/app python3 -m unittest discover -s services/ai/app -p \"*test*.py\"",
     "generate:clients": "node scripts/contracts/generate-clients.mjs",
-    "test:flutter": "cd apps/mobile && /Volumes/PD1000/job/flutter/bin/flutter test",
-    "analyze:flutter": "/Volumes/PD1000/job/flutter/bin/flutter analyze apps/mobile",
+    "test:flutter": "cd apps/mobile && node ../../scripts/mobile/flutter.mjs test",
+    "analyze:flutter": "node scripts/mobile/flutter.mjs analyze apps/mobile",
     "build": "npm run build --workspaces --if-present",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:contract && npm run test:migrations && npm run test:design-source && npm run test:design-pixel && npm run test:web-pixel-diff && npm run test:admin-ui && npm run test:web-ui && npm run test:web-visual && npm run test:security && npm run test:audit && npm run analyze:flutter && npm run test:flutter && npm run test:ai",
     "docker:config": "docker compose -f infra/docker-compose.yml config",
@@ -50,7 +50,8 @@
     "release:blockers": "node scripts/release/check-release-blockers.mjs",
     "release:blockers:report": "node scripts/release/write-release-blockers-report.mjs",
     "test:web-aizan": "node scripts/web/check-aizan-behavior.mjs",
-    "test:web-intake": "node scripts/web/check-intake-flow.mjs"
+    "test:web-intake": "node scripts/web/check-intake-flow.mjs",
+    "test:audit:runtime": "npm audit --omit=dev --audit-level=moderate"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

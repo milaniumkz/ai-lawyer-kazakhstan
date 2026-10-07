@@ -24,6 +24,11 @@ void main() {
     MobileCaseRuntime.activeCaseSubtitle = '';
     MobileCaseRuntime.activeCaseStatus = '';
     MobileCaseRuntime.confirmedText = '';
+    MobileCaseRuntime.draftClassification = null;
+    MobileCaseRuntime.confirmedClassificationId = '';
+    MobileCaseRuntime.preferVoiceInput = false;
+    DocumentRuntime.documents.clear();
+    DocumentRuntime.confirmedIds.clear();
     MobileCaseRuntime.draftCaseId = 'draft-initial';
     MobileCaseRuntime.createdDraftCaseId = '';
     WorkflowRuntime.generatedBody = '';
@@ -40,29 +45,27 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
 
-    expect(find.text('Рассказать проблему'), findsOneWidget);
-    await tester.drag(find.text('Рассказать проблему'), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    expect(find.text('Последние дела'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-voice')), findsOneWidget);
+    expect(find.text('Ввести текст'), findsOneWidget);
   });
 
-  testWidgets('main voice button opens case intake route', (tester) async {
-    MobileCaseRuntime.activeCaseId = 'old-case';
-    MobileCaseRuntime.confirmedText = 'старый текст';
+  testWidgets('home text keeps input and conversation on home', (tester) async {
+    await setLargeViewport(tester);
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
-
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(find.byKey(const ValueKey('home-text')));
     await tester.pumpAndSettle();
-    expect(find.text('Новое дело'), findsWidgets);
-    expect(MobileCaseRuntime.activeCaseId, isEmpty);
-    expect(MobileCaseRuntime.confirmedText, isEmpty);
-    expect(MobileCaseRuntime.currentDraftCreated, isFalse);
+    expect(find.byType(NewCaseScreen), findsOneWidget);
+    expect(tester.widget<NewCaseScreen>(find.byType(NewCaseScreen)).homeMode,
+        isTrue);
+    await tester.enterText(
+        find.byType(TextField), 'Сохранённое описание проблемы');
+    expect(MobileCaseRuntime.confirmedText, 'Сохранённое описание проблемы');
+    expect(find.byType(AppBottomNav), findsOneWidget);
   });
 
-  testWidgets('profile icon opens profile route', (tester) async {
+  testWidgets('profile navigation opens profile', (tester) async {
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
-
-    await tester.tap(find.byKey(const ValueKey('home-profile')));
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
     await tester.pumpAndSettle();
     expect(find.text('Профиль пользователя'), findsWidgets);
   });
@@ -74,13 +77,13 @@ void main() {
     expect(find.text('AI Юрист Казахстан'), findsOneWidget);
     await tester.tap(find.text('Начать работу'));
     await tester.pumpAndSettle();
-    expect(find.text('Вход и регистрация'), findsWidgets);
+    expect(find.text('Войти по номеру телефона'), findsWidgets);
 
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/onboarding'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Войти в аккаунт'));
     await tester.pumpAndSettle();
-    expect(find.text('Вход и регистрация'), findsWidgets);
+    expect(find.text('Войти по номеру телефона'), findsWidgets);
   });
 
   testWidgets('phone otp requires profile before home on first login',
@@ -104,6 +107,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Войти по номеру телефона'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Получить SMS-код'));
     await tester.pumpAndSettle();
     expect(api.registerCalled, isTrue);
@@ -120,7 +125,7 @@ void main() {
     await tester.tap(find.text('Завершить регистрацию'));
     await tester.pumpAndSettle();
     expect(profileApi.savedUserId, 'user-1');
-    expect(find.text('Рассказать проблему'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-voice')), findsOneWidget);
   });
 
   testWidgets('auth and registration screens do not show bottom navigation',
@@ -145,9 +150,9 @@ void main() {
   testWidgets('all release routes open through app router', (tester) async {
     await setLargeViewport(tester);
     const routes = [
-      ['/', 'Рассказать проблему'],
+      ['/', 'Ввести текст'],
       ['/onboarding', 'AI Юрист Казахстан'],
-      ['/login', 'Вход и регистрация'],
+      ['/login', 'Войти по номеру телефона'],
       ['/register', 'Регистрация пользователя'],
       ['/otp', 'Подтверждение SMS'],
       ['/biometric', 'Быстрый вход по биометрии'],
@@ -156,20 +161,21 @@ void main() {
       ['/help', 'Помощь и поддержка'],
       ['/cases', 'Мои дела'],
       ['/case/details', 'Карточка дела'],
-      ['/case/new', 'Новое дело'],
-      ['/case/category', 'AI интервью'],
+      ['/case/new', 'Опишите проблему'],
+      ['/case/category', 'Категория определена'],
       ['/case/chat', 'Чат по делу'],
       ['/documents', 'Документы и доказательства'],
       ['/documents/analysis', 'Анализ документов'],
       ['/deadlines', 'Календарь и сроки'],
       ['/legal', 'AI поиск нормы'],
       ['/workflow/pretrial-claim', 'Формирование претензии'],
-      ['/workflow/pretrial-claim/draft', 'Проект досудебной претензии'],
-      ['/workflow/pretrial-claim/send', 'Отправка претензии'],
+      ['/workflow/pretrial-claim/draft', 'Предпросмотр документа'],
+      ['/workflow/pretrial-claim/send', 'Выберите способ отправки'],
       ['/subscription', 'Подписка'],
     ];
 
     for (final route in routes) {
+      await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(AiLawyerApp(initialLocation: route[0]));
       await tester.pumpAndSettle();
       expect(find.text(route[1]), findsWidgets, reason: route[0]);
@@ -183,16 +189,18 @@ void main() {
     expect(find.text('Подтвердить текст'), findsOneWidget);
   });
 
-  testWidgets('case category flow opens documents', (tester) async {
+  testWidgets('home intake validates description without leaving home',
+      (tester) async {
     await setLargeViewport(tester);
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
+    await tester.tap(find.byKey(const ValueKey('home-text')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Новое дело'));
+    await tester.ensureVisible(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Подтвердить текст'));
     await tester.pumpAndSettle();
-    expect(find.text('AI интервью'), findsWidgets);
-    expect(find.textContaining('Войдите'), findsWidgets);
+    expect(find.textContaining('минимум 12'), findsOneWidget);
+    expect(find.byType(NewCaseScreen), findsOneWidget);
   });
 
   testWidgets('bottom navigation opens cases documents deadlines and profile',
@@ -209,7 +217,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Документы и доказательства'), findsWidgets);
 
-    await tester.tap(find.byKey(const ValueKey('nav-deadlines')));
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Календарь и сроки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь и сроки'));
     await tester.pumpAndSettle();
     expect(find.text('Календарь и сроки'), findsOneWidget);
     expect(find.text('Календарь пуст'), findsOneWidget);
@@ -268,15 +280,12 @@ void main() {
     expect(find.text('Продолжить работу'), findsOneWidget);
   });
 
-  testWidgets('shows documents OCR review screen', (tester) async {
+  testWidgets('documents expose real empty state and upload action',
+      (tester) async {
     await tester.pumpWidget(const MaterialApp(home: DocumentsScreen()));
-
-    expect(find.text('AI проверка документов'), findsOneWidget);
-    expect(find.textContaining('AI запрос документов'), findsOneWidget);
-    expect(find.textContaining('Документы · этап'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('OCR-review'), 220);
-    expect(find.text('OCR-review'), findsOneWidget);
-    expect(find.text('Подтвердить поля'), findsOneWidget);
+    expect(find.text('Документы и доказательства'), findsOneWidget);
+    expect(find.text('Добавить документ'), findsOneWidget);
+    expect(find.textContaining('OCR завершён'), findsNothing);
   });
 
   testWidgets('shows legal citation guardrails screen', (tester) async {
@@ -313,43 +322,12 @@ void main() {
     expect(api.validatedFragmentId, 'fragment-1');
   });
 
-  testWidgets('profile settings help and biometric actions work',
-      (tester) async {
-    await setLargeViewport(tester);
-    await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Индивидуальный предприниматель'));
-    await tester.tap(find.text('Индивидуальный предприниматель'));
-    await tester.pumpAndSettle();
-    expect(find.text('Индивидуальный предприниматель'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Быстрый вход по биометрии'));
-    await tester.tap(find.text('Быстрый вход по биометрии'));
-    await tester.pumpAndSettle();
-    expect(find.text('Локальный secure flag включен'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Настройки'));
-    await tester.tap(find.text('Настройки'));
-    await tester.pumpAndSettle();
-    expect(find.text('Конфиденциальность'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Сохранить настройки'));
-    await tester.tap(find.text('Сохранить настройки'));
-    await tester.pumpAndSettle();
-    expect(find.text('Настройки сохранены'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Помощь и поддержка'));
-    await tester.tap(find.text('Помощь и поддержка'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Написать в поддержку'));
-    await tester.tap(find.text('Написать в поддержку'));
-    await tester.pumpAndSettle();
-    expect(find.text('Обращение создано'), findsOneWidget);
+  testWidgets('biometric does not fake successful enrollment', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: BiometricScreen()));
+    expect(find.text('Недоступно'), findsOneWidget);
+    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull);
+    expect(find.textContaining('локально'), findsNothing);
   });
 
   testWidgets('profile save calls API with confirmed user', (tester) async {
@@ -372,17 +350,15 @@ void main() {
     expect(find.textContaining('Профиль сохранен'), findsWidgets);
   });
 
-  testWidgets('shows pretrial claim builder', (tester) async {
+  testWidgets('claim generation requires a selected case', (tester) async {
     await setLargeViewport(tester);
-    MobileCaseRuntime.activeCaseId = '';
     await tester.pumpWidget(const MaterialApp(home: PretrialClaimScreen()));
-
-    expect(find.text('Формирование претензии'), findsOneWidget);
-    expect(find.text('AI подготовка претензии'), findsOneWidget);
-    expect(find.textContaining('Претензия не формируется без реального caseId'),
-        findsOneWidget);
     await tester.ensureVisible(find.text('Открыть проект'));
-    expect(find.text('Открыть проект'), findsOneWidget);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Открыть проект'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('дело'), findsWidgets);
+    expect(WorkflowRuntime.generatedBody, isEmpty);
   });
 
   testWidgets('pretrial claim builder generates draft through API',
@@ -417,11 +393,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Открыть проект'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Открыть проект'));
     await tester.pumpAndSettle();
 
     expect(api.generatedCaseId, 'case-1');
-    expect(find.text('Проект досудебной претензии'), findsWidgets);
+    expect(find.text('Предпросмотр документа'), findsWidgets);
     expect(find.textContaining('API проект претензии'), findsOneWidget);
   });
 
@@ -432,14 +409,18 @@ void main() {
             recorder: _FakeRecorder(),
             speechRecognizer: _FakeSpeechRecognizer())));
 
+    await tester.ensureVisible(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
-    expect(find.text('Запись активна'), findsOneWidget);
+    expect(find.text('Завершить запись'), findsOneWidget);
     expect(find.text('Распознанный текст из микрофона'), findsOneWidget);
 
+    await tester.ensureVisible(find.byIcon(Icons.stop));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
-    expect(find.text('Голос готов к обработке'), findsOneWidget);
+    expect(find.text('Начать запись'), findsOneWidget);
     expect(find.text('Текст распознан'), findsOneWidget);
   });
 
@@ -467,7 +448,11 @@ void main() {
       ),
     ));
 
+    await tester.ensureVisible(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
@@ -505,7 +490,11 @@ void main() {
       ),
     ));
 
+    await tester.ensureVisible(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
@@ -518,7 +507,8 @@ void main() {
     expect(find.text('Категория готова'), findsOneWidget);
   });
 
-  testWidgets('case intake continues to category when audio upload fails',
+  testWidgets(
+      'case intake preserves text and offers retry when audio upload fails',
       (tester) async {
     AuthRuntime.userId = 'user-1';
     MobileCaseRuntime.confirmedText = '';
@@ -540,7 +530,11 @@ void main() {
       ),
     ));
 
+    await tester.ensureVisible(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
@@ -550,7 +544,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(MobileCaseRuntime.confirmedText, 'Распознанный текст из микрофона');
-    expect(find.text('Категория готова'), findsOneWidget);
+    expect(find.text('Категория готова'), findsNothing);
+    expect(find.textContaining('Не удалось отправить аудио'), findsOneWidget);
   });
 
   testWidgets('category screen classifies confirms and creates case',
@@ -576,9 +571,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cases.classifiedText, 'Хочу подать на алименты на ребёнка');
-    expect(find.text('AI интервью'), findsWidgets);
-    expect(find.text('Этап 4 из 5'), findsOneWidget);
-    expect(find.text('AI Юрист'), findsWidgets);
+    expect(find.text('Категория определена'), findsWidgets);
     expect(find.text('Брачно-семейные отношения'), findsOneWidget);
     expect(find.text('Взыскание алиментов на ребёнка'), findsOneWidget);
 
@@ -613,14 +606,12 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Не хватает данных'), findsWidgets);
-    expect(find.text('Ответьте AI'), findsWidgets);
-    expect(find.textContaining('Уточните дату договора'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Ответьте AI'));
     await tester.pumpAndSettle();
 
     expect(cases.createdText, isNull);
-    expect(find.text('Ответьте AI'), findsWidgets);
+    expect(find.text('Сначала ответьте на вопросы AI'), findsOneWidget);
   });
 
   testWidgets('chat sends messages through case API when case exists',
@@ -632,6 +623,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'Какие документы нужны?');
     await tester.ensureVisible(find.byTooltip('Отправить'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Отправить'));
     await tester.pumpAndSettle();
 
@@ -639,119 +631,61 @@ void main() {
     expect(find.text('Ответ из API'), findsOneWidget);
   });
 
-  testWidgets('chat send button adds user and assistant messages',
+  testWidgets('chat without a case preserves input and does not fake an answer',
       (tester) async {
     await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: CaseChatScreen()));
 
     await tester.enterText(find.byType(TextField), 'Какие документы нужны?');
     await tester.ensureVisible(find.byTooltip('Отправить'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Отправить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Какие документы нужны?'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -300));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Для ответа потребуется'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Какие документы нужны?');
+    expect(find.textContaining('Сначала создайте'), findsOneWidget);
   });
 
-  testWidgets('document upload scan and OCR confirmation buttons work',
+  testWidgets('document upload and manual field confirmation reach API',
       (tester) async {
     await setLargeViewport(tester);
-    tester.view.physicalSize = const Size(941, 3000);
-    MobileCaseRuntime.activeCaseId = '11111111-1111-1111-1111-111111111111';
-    final docs = _FakeDocumentApi();
-    await tester.pumpWidget(MaterialApp.router(
-      routerConfig: GoRouter(
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (_, __) => DocumentsScreen(
-              filePicker: _FakeDocumentPicker(),
-              documentApi: docs,
-            ),
-          ),
-          GoRoute(
-            path: '/documents/analysis',
-            builder: (_, __) => const DocumentAnalysisScreen(),
-          ),
-          GoRoute(
-            path: '/workflow/pretrial-claim',
-            builder: (_, __) => const PretrialClaimScreen(),
-          ),
-        ],
-      ),
-    ));
+    MobileCaseRuntime.activeCaseId = 'case-1';
+    AuthRuntime.userId = 'user-1';
+    final api = _FakeDocumentApi();
+    await tester.pumpWidget(MaterialApp(
+        home: DocumentsScreen(
+            filePicker: _FakeDocumentPicker(),
+            documentApi: api,
+            addMode: true)));
+    await tester.tap(find.text('Загрузить файл'));
     await tester.pumpAndSettle();
-    expect(find.text('Файлы не загружены'), findsOneWidget);
-    expect(find.textContaining('Свидетельство_о_браке'), findsNothing);
-    expect(find.textContaining('Справка_о_доходах'), findsNothing);
-
-    await tester.tap(find.text('Загрузить файл'), warnIfMissed: false);
+    expect(api.uploadedFileName, 'claim.pdf');
+    expect(find.textContaining('Файл сохранён'), findsOneWidget);
+    await tester.ensureVisible(find.text('Подтвердить поля'));
     await tester.pumpAndSettle();
-    expect(find.text('Файл добавлен'), findsOneWidget);
-    expect(find.text('claim.pdf'), findsOneWidget);
-    expect(find.textContaining('нужен OCR-review'), findsOneWidget);
-    expect(docs.uploadedFileName, 'claim.pdf');
-
-    await tester.tap(find.text('Анализировать документы'), warnIfMissed: false);
+    await tester.tap(find.text('Подтвердить поля'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Сначала загрузите документ и подтвердите OCR'),
-        findsWidgets);
-
-    await tester.tap(find.text('Сканировать документ'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(find.text('Скан готов'), findsOneWidget);
-
-    final confirmFieldsButton =
-        find.widgetWithText(FilledButton, 'Подтвердить поля');
-    await tester.tap(confirmFieldsButton, warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(find.text('Поля подтверждены'), findsOneWidget);
-    expect(find.textContaining('можно анализировать'), findsOneWidget);
-    expect(docs.ocrDocumentId, 'document-1');
-
-    await tester.tap(find.text('Договор и переписка'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(docs.evidenceCaseId, MobileCaseRuntime.activeCaseId);
-
-    await tester.tap(find.text('Анализировать документы'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(find.text('Анализ документов'), findsWidgets);
-    await tester.tap(find.text('Подтвердить анализ'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(find.text('Анализ завершен'), findsOneWidget);
+    expect(api.ocrDocumentId, 'document-1');
+    expect(DocumentRuntime.confirmedIds, contains('document-1'));
   });
 
-  testWidgets('pretrial claim draft and send flow works', (tester) async {
+  testWidgets('empty draft cannot be approved or submitted', (tester) async {
     await setLargeViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: ClaimDraftScreen()));
     await tester.pumpAndSettle();
-
-    expect(find.text('Проект досудебной претензии'), findsWidgets);
-    expect(find.textContaining('Без подтверждения отправка заблокирована'),
-        findsOneWidget);
-    await tester.ensureVisible(find.text('Проверено пользователем'));
-    await tester.tap(find.text('Проверено пользователем'));
-    await tester.pumpAndSettle();
-    await tester
-        .ensureVisible(find.widgetWithText(FilledButton, 'Перейти к отправке'));
-    expect(find.widgetWithText(FilledButton, 'Перейти к отправке'),
-        findsOneWidget);
-
-    await tester.pumpWidget(const MaterialApp(home: ClaimSendScreen()));
-    await tester.pumpAndSettle();
-    expect(find.text('Выберите способ отправки'), findsOneWidget);
-    await tester.ensureVisible(find.text('Отправить'));
-    await tester.tap(find.text('Отправить'));
-    await tester.pumpAndSettle();
-    expect(find.text('Укажите контакт получателя'), findsOneWidget);
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Контакт получателя'), '+77001234567');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Отправить'));
-    await tester.pumpAndSettle();
-    expect(find.text('Ручной статус зафиксирован'), findsOneWidget);
+    expect(find.text('Предпросмотр документа'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty);
+    expect(
+        tester
+            .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'Перейти к отправке'))
+            .onPressed,
+        isNull);
   });
 
   testWidgets('shows subscription budget screen', (tester) async {
@@ -804,6 +738,7 @@ void main() {
         findsOneWidget);
 
     await tester.ensureVisible(find.text('Удалить аккаунт'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Удалить аккаунт'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Удалить'));

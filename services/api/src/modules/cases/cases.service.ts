@@ -4,9 +4,10 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { DatabaseService } from '../../common/database/database.service';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
-import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, classifyStructuredDispute, getLegalCategory, validateStructuredClassification, LegalCategory, StructuredClassification } from './case-taxonomy';
+import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, getLegalCategory, validateStructuredClassification, LegalCategory, StructuredClassification } from './case-taxonomy';
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
+import { classifyWithProvider } from './structured-classifier.adapter';
 import { LegalService } from '../legal/legal.service';
 
 const PROGRESS: ChatProgressStatus[] = ['transcribing', 'classifying', 'retrieving_sources', 'validating', 'generating', 'ready'];
@@ -156,7 +157,7 @@ export class CasesService {
   async classifyDispute(input: { caseId?: string; conversationId?: string; inputMessageId?: string; text: string }, ownerUserId: string) {
     if (!input.text?.trim() || input.text.trim().length < 4) throw new BadRequestException('CLASSIFICATION_TEXT_REQUIRED');
     if (input.caseId) await this.getCase(input.caseId, ownerUserId);
-    const result = validateStructuredClassification(classifyStructuredDispute(input.text));
+    const result = validateStructuredClassification(await classifyWithProvider(input.text));
     const record: ClassificationRecord = {
       id: randomUUID(),
       ownerUserId,

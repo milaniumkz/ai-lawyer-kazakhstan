@@ -1,6 +1,9 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { CasesService } from '../cases/cases.service';
+import { documentStorageRoot as storageRoot } from './document-storage';
 import { DocumentRecord, EvidenceFolder, UploadSession } from './documents.types';
 import { DOCUMENTS_REPOSITORY } from './repositories/documents-repository.provider';
 import { DocumentsRepository } from './repositories/documents.repository';
@@ -39,7 +42,7 @@ export class DocumentsService {
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
       status: 'upload_pending',
-      uploadUrl: `stub://upload/${randomUUID()}`,
+      uploadUrl: `/files/uploads/${randomUUID()}/content`,
       createdAt: new Date().toISOString(),
     };
     if (this.repository) return this.repository.createUploadSession(session);
@@ -53,9 +56,19 @@ export class DocumentsService {
       : this.uploadSessions.get(input.uploadSessionId);
     if (!session) throw new NotFoundException('UPLOAD_SESSION_NOT_FOUND');
     await this.assertCaseOwner(session.caseId, ownerUserId);
-    const sha256 = input.sha256 ?? hashStub(`${session.caseId}:${session.fileName}:${session.sizeBytes}`);
-    const duplicate = this.repository ? await this.repository.findDocumentBySha256(sha256) : this.hashes.has(sha256);
-    if (duplicate) throw new BadRequestException('DUPLICATE_FILE');
+    const token = uploadToken(session);
+    let receipt: { sha256: string; sizeBytes: number };
+    try {
+      receipt = JSON.parse(await readFile(join(storageRoot(session.caseId), `${token}.json`), 'utf8'));
+    } catch { throw new BadRequestException('FILE_CONTENT_NOT_UPLOADED'); }
+    const sha256 = receipt.sha256;
+    if (input.sha256 && input.sha256 !== sha256) throw new BadRequestException('FILE_HASH_MISMATCH');
+    // Check the actual stored bytes, including after a service restart.
+    const bytes = await readFile(join(storageRoot(session.caseId), sha256));
+    if (bytes.length !== session.sizeBytes || hashBytes(bytes) !== sha256) throw new BadRequestException('FILE_CONTENT_INVALID');
+    const duplicate = this.repository ? await this.repository.findDocumentBySha256(sha256, session.caseId) :
+      [...this.documents.values()].find((item) => item.sha256 === sha256 && item.caseId === session.caseId);
+    if (duplicate) return duplicate;
 
     const document: DocumentRecord = {
       id: randomUUID(),
@@ -65,13 +78,38 @@ export class DocumentsService {
       sizeBytes: session.sizeBytes,
       sha256,
       status: 'ocr_review_required',
-      extractedFields: extractFieldsStub(session.fileName),
+      extractedFields: { documentTitle: session.fileName, reviewRequired: 'true', warning: 'Файл сохранён. Автоматический OCR недоступен: проверьте и внесите поля вручную.' },
       createdAt: new Date().toISOString(),
     };
     if (this.repository) return this.repository.createDocument(document);
     this.hashes.set(sha256, document.id);
     this.documents.set(document.id, document);
     return document;
+  }
+
+  async uploadContent(token: string, bytes: Buffer, mimeType: string, ownerUserId: string, sessionId: string) {
+    const session = this.repository ? await this.repository.findUploadSessionById(sessionId) : this.uploadSessions.get(sessionId);
+    if (!session || uploadToken(session) !== token) throw new NotFoundException('UPLOAD_SESSION_NOT_FOUND');
+    await this.assertCaseOwner(session.caseId, ownerUserId);
+    if (Date.now() - Date.parse(session.createdAt) > 60 * 60 * 1000) throw new BadRequestException('UPLOAD_SESSION_EXPIRED');
+    if (bytes.length !== session.sizeBytes || mimeType !== session.mimeType) throw new BadRequestException('FILE_CONTENT_INVALID');
+    validateSignature(bytes, mimeType);
+    const sha256 = hashBytes(bytes);
+    await mkdir(storageRoot(session.caseId), { recursive: true, mode: 0o700 });
+    await writeFile(join(storageRoot(session.caseId), sha256), bytes, { mode: 0o600 });
+    await writeFile(join(storageRoot(session.caseId), `${token}.json`), JSON.stringify({ sha256, sizeBytes: bytes.length }), { mode: 0o600 });
+    return { sha256, sizeBytes: bytes.length, status: 'uploaded' };
+  }
+
+  async downloadContent(documentId: string, ownerUserId: string) {
+    const document = this.repository ? await this.repository.findDocumentById(documentId) : this.documents.get(documentId);
+    if (!document) throw new NotFoundException('DOCUMENT_NOT_FOUND');
+    await this.assertCaseOwner(document.caseId, ownerUserId);
+    if (!/^[a-f0-9]{64}$/.test(document.sha256)) throw new NotFoundException('FILE_CONTENT_NOT_FOUND');
+    try {
+      const bytes = await readFile(join(storageRoot(document.caseId), document.sha256));
+      return { document, bytes };
+    } catch { throw new NotFoundException('FILE_CONTENT_NOT_FOUND'); }
   }
 
   async listDocuments(caseId: string, ownerUserId?: string) {
@@ -150,21 +188,25 @@ export function validateFile(fileName: string, mimeType: string, sizeBytes: numb
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   if (!ALLOWED_EXT.has(ext)) throw new BadRequestException('FILE_EXTENSION_NOT_ALLOWED');
   if (!ALLOWED_MIME.has(mimeType)) throw new BadRequestException('MIME_NOT_ALLOWED');
-  if (sizeBytes <= 0 || sizeBytes > MAX_SIZE_BYTES) throw new BadRequestException('FILE_SIZE_INVALID');
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > MAX_SIZE_BYTES) throw new BadRequestException('FILE_SIZE_INVALID');
 }
 
 export function safeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9а-яА-ЯёЁ._ -]/g, '_').slice(0, 120);
 }
 
-function hashStub(value: string) {
-  return createHash('sha256').update(value).digest('hex');
+function uploadToken(session: UploadSession) {
+  const token = session.uploadUrl.match(/^\/files\/uploads\/([a-f0-9-]{36})\/content$/)?.[1];
+  if (!token) throw new BadRequestException('UPLOAD_SESSION_LEGACY_CREATE_NEW');
+  return token;
 }
-
-function extractFieldsStub(fileName: string) {
-  return {
-    documentTitle: safeFileName(fileName),
-    reviewRequired: 'true',
-    warning: 'OCR stub. Пользователь должен подтвердить извлеченные поля.',
-  };
+function hashBytes(bytes: Buffer) { return createHash('sha256').update(bytes).digest('hex'); }
+function validateSignature(bytes: Buffer, mime: string) {
+  const valid = mime === 'application/pdf' ? bytes.subarray(0, 5).toString() === '%PDF-' :
+    mime === 'image/png' ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) :
+    mime === 'image/jpeg' ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255 :
+    mime === 'image/heic' ? bytes.subarray(4, 8).toString() === 'ftyp' :
+    mime === 'application/msword' ? bytes.subarray(0, 8).equals(Buffer.from([208, 207, 17, 224, 161, 177, 26, 225])) :
+    bytes.subarray(0, 4).equals(Buffer.from([80, 75, 3, 4]));
+  if (!valid) throw new BadRequestException('FILE_SIGNATURE_INVALID');
 }

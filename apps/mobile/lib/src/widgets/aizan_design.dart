@@ -33,18 +33,44 @@ class AizanArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (source, size, crop) = switch (artwork) {
-      AizanArtwork.brand => ('home', const Size(941, 1672), const Rect.fromLTWH(350, 130, 245, 250)),
-      AizanArtwork.microphone => ('home', const Size(941, 1672), const Rect.fromLTWH(225, 535, 495, 475)),
-      AizanArtwork.voice => ('voice', const Size(852, 1846), const Rect.fromLTWH(68, 398, 720, 470)),
-      AizanArtwork.analysis => ('analysis', const Size(852, 1846), const Rect.fromLTWH(200, 220, 445, 295)),
-      AizanArtwork.upload => ('upload', const Size(852, 1846), const Rect.fromLTWH(215, 327, 430, 355)),
-      AizanArtwork.authBrand => ('login', const Size(941, 1672), const Rect.fromLTWH(40, 70, 860, 575)),
+      AizanArtwork.brand => (
+          'home',
+          const Size(941, 1672),
+          const Rect.fromLTWH(350, 130, 245, 250)
+        ),
+      AizanArtwork.microphone => (
+          'home',
+          const Size(941, 1672),
+          const Rect.fromLTWH(225, 535, 495, 475)
+        ),
+      AizanArtwork.voice => (
+          'voice',
+          const Size(852, 1846),
+          const Rect.fromLTWH(68, 398, 720, 470)
+        ),
+      AizanArtwork.analysis => (
+          'analysis',
+          const Size(852, 1846),
+          const Rect.fromLTWH(200, 220, 445, 295)
+        ),
+      AizanArtwork.upload => (
+          'upload',
+          const Size(852, 1846),
+          const Rect.fromLTWH(215, 327, 430, 355)
+        ),
+      AizanArtwork.authBrand => (
+          'login',
+          const Size(941, 1672),
+          const Rect.fromLTWH(40, 70, 860, 575)
+        ),
     };
     return ExcludeSemantics(
       child: SizedBox(
         width: width,
         child: LayoutBuilder(builder: (context, constraints) {
-          final actualWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : width ?? crop.width;
+          final actualWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : width ?? crop.width;
           final scale = actualWidth / crop.width;
           final clippedArt = SizedBox(
             width: actualWidth,
@@ -56,7 +82,8 @@ class AizanArt extends StatelessWidget {
                   top: -crop.top * scale,
                   width: size.width * scale,
                   height: size.height * scale,
-                  child: Image.asset('assets/aizan/$source.png', fit: BoxFit.fill),
+                  child:
+                      Image.asset('assets/aizan/$source.png', fit: BoxFit.fill),
                 ),
               ]),
             ),
@@ -66,9 +93,30 @@ class AizanArt extends StatelessWidget {
               : clippedArt;
           return ShaderMask(
             shaderCallback: (bounds) => (artwork == AizanArtwork.authBrand
-                ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent], stops: [0, .08, .88, 1])
-                : const RadialGradient(colors: [Colors.white, Colors.white, Colors.transparent], stops: [0, .78, 1], radius: .72))
+                    ? const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                            Colors.transparent,
+                            Colors.white,
+                            Colors.white,
+                            Colors.transparent
+                          ],
+                        stops: [
+                            0,
+                            .08,
+                            .88,
+                            1
+                          ])
+                    : const RadialGradient(colors: [
+                        Colors.white,
+                        Colors.white,
+                        Colors.transparent
+                      ], stops: [
+                        0,
+                        .78,
+                        1
+                      ], radius: .72))
                 .createShader(bounds),
             blendMode: BlendMode.dstIn,
             child: decoration,
@@ -96,70 +144,115 @@ class _AuthDecorationClipper extends CustomClipper<Path> {
 }
 
 class AizanHeader extends StatelessWidget implements PreferredSizeWidget {
-  const AizanHeader({super.key, this.home = false, this.newCase = false, this.compact = false});
+  const AizanHeader(
+      {super.key,
+      this.home = false,
+      this.newCase = false,
+      this.compact = false,
+      this.onNewCase});
   final bool home;
   final bool newCase;
   final bool compact;
+  final VoidCallback? onNewCase;
 
   @override
-  Size get preferredSize => Size.fromHeight(home ? 190 : compact ? 130 : 160);
+  Size get preferredSize => Size.fromHeight(home
+      ? 190
+      : compact
+          ? 160
+          : 160);
 
   @override
   Widget build(BuildContext context) => SafeArea(
-    bottom: false,
-    child: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: SizedBox(
-          height: preferredSize.height,
-          child: Stack(children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: home ? 45 : 20),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  AizanArt(AizanArtwork.brand, width: home ? 100 : 80),
-                  const SizedBox(height: 8),
-                  const Text('ВАШ ЮРИДИЧЕСКИЙ\nAI-ПОМОЩНИК', textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 8, letterSpacing: 3, height: 1.6, color: AizanDesign.gold)),
-                ]),
-              ),
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: SizedBox(
+              height: preferredSize.height,
+              child: Stack(children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: home ? 45 : 20),
+                    child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                          AizanArt(AizanArtwork.brand, width: home ? 100 : 80),
+                          const SizedBox(height: 8),
+                          const Text('ВАШ ЮРИДИЧЕСКИЙ\nAI-ПОМОЩНИК',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 8,
+                                  letterSpacing: 3,
+                                  height: 1.6,
+                                  color: AizanDesign.gold)),
+                        ])),
+                  ),
+                ),
+                Positioned(
+                    top: 22,
+                    left: 20,
+                    child: IconButton.outlined(
+                      tooltip: newCase ? 'Новое дело' : 'Назад',
+                      onPressed: () {
+                        if (onNewCase != null) {
+                          onNewCase!();
+                          return;
+                        }
+                        if (newCase) {
+                          MobileCaseRuntime.startDraft();
+                          context.go(home ? '/' : '/case/new');
+                        } else if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/');
+                        }
+                      },
+                      icon: Icon(newCase ? Icons.add : Icons.arrow_back,
+                          color: AizanDesign.gold),
+                    )),
+                Positioned(
+                    top: 22,
+                    right: 20,
+                    child: IconButton(
+                      tooltip: 'Настройки',
+                      onPressed: () => context.go('/settings'),
+                      icon: const Icon(Icons.settings_outlined,
+                          color: AizanDesign.gold, size: 29),
+                    )),
+              ]),
             ),
-            Positioned(top: 22, left: 20, child: IconButton.outlined(
-              tooltip: newCase ? 'Новое дело' : 'Назад',
-              onPressed: () {
-                if (newCase) { MobileCaseRuntime.startDraft(); context.go('/case/new'); }
-                else if (context.canPop()) { context.pop(); }
-                else { context.go('/'); }
-              },
-              icon: Icon(newCase ? Icons.add : Icons.arrow_back, color: AizanDesign.gold),
-            )),
-            Positioned(top: 22, right: 20, child: IconButton(
-              tooltip: 'Настройки', onPressed: () => context.go('/settings'),
-              icon: const Icon(Icons.settings_outlined, color: AizanDesign.gold, size: 29),
-            )),
-          ]),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class AizanButton extends StatelessWidget {
-  const AizanButton({super.key, required this.label, required this.onPressed, this.icon});
+  const AizanButton(
+      {super.key, required this.label, required this.onPressed, this.icon});
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(gradient: AizanDesign.goldGradient, borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFFFFE7A0)), boxShadow: const [BoxShadow(color: Color(0x44F7B635), blurRadius: 12)]),
-    child: FilledButton.icon(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFF1B1002), disabledBackgroundColor: const Color(0x99865D27)),
-      icon: Icon(icon ?? Icons.arrow_forward, size: 22),
-      label: Text(label),
-    ),
-  );
+        decoration: BoxDecoration(
+            gradient: AizanDesign.goldGradient,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFFE7A0)),
+            boxShadow: const [
+              BoxShadow(color: Color(0x44F7B635), blurRadius: 12)
+            ]),
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          style: FilledButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: const Color(0xFF1B1002),
+              disabledBackgroundColor: const Color(0x99865D27)),
+          icon: Icon(icon ?? Icons.arrow_forward, size: 22),
+          label: Text(label),
+        ),
+      );
 }

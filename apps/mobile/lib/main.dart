@@ -10,15 +10,28 @@ import 'src/features/legal/legal_screens.dart';
 import 'src/features/subscription/subscription_screen.dart';
 import 'src/features/workflows/workflow_screens.dart';
 import 'src/theme/app_theme.dart';
+import 'src/api/session_credentials.dart';
 import 'src/widgets/aizan_design.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final saved = await SessionCredentials.restore();
+  if (saved != null) {
+    AuthRuntime.userId = saved['userId'] as String;
+    AuthRuntime.profileComplete = saved['profileComplete'] == true;
+    AuthRuntime.displayName = saved['displayName'] as String? ?? '';
+  }
   const initialRoute = String.fromEnvironment(
     'AI_LAWYER_INITIAL_ROUTE',
     defaultValue: '/login',
   );
-  runApp(const ProviderScope(
-      child: AiLawyerApp(initialLocation: initialRoute)));
+  runApp(ProviderScope(
+      child: AiLawyerApp(
+          initialLocation: saved == null
+              ? initialRoute
+              : AuthRuntime.profileComplete
+                  ? '/'
+                  : '/profile')));
 }
 
 GoRouter _buildRouter(String initialLocation) => GoRouter(
@@ -45,7 +58,11 @@ GoRouter _buildRouter(String initialLocation) => GoRouter(
         GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
         GoRoute(
             path: '/documents', builder: (_, __) => const DocumentsScreen()),
-        GoRoute(path: '/documents/add', builder: (_, state) => DocumentsScreen(addMode: true, openCamera: state.uri.queryParameters['source'] == 'camera')),
+        GoRoute(
+            path: '/documents/add',
+            builder: (_, state) => DocumentsScreen(
+                addMode: true,
+                openCamera: state.uri.queryParameters['source'] == 'camera')),
         GoRoute(
             path: '/documents/analysis',
             builder: (_, __) => const DocumentAnalysisScreen()),
@@ -72,10 +89,12 @@ class AiLawyerApp extends StatelessWidget {
     super.key,
     this.themeMode = ThemeMode.system,
     this.initialLocation = '/login',
+    this.textScaler,
   });
 
   final ThemeMode themeMode;
   final String initialLocation;
+  final TextScaler? textScaler;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +105,17 @@ class AiLawyerApp extends StatelessWidget {
       themeMode: themeMode,
       routerConfig: _buildRouter(initialLocation),
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => DecoratedBox(decoration: AizanDesign.background, child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: child))),
+      builder: (context, child) => DecoratedBox(
+          decoration: AizanDesign.background,
+          child: Center(
+              child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: textScaler == null
+                      ? child
+                      : MediaQuery(
+                          data: MediaQuery.of(context)
+                              .copyWith(textScaler: textScaler),
+                          child: child!)))),
     );
   }
 }

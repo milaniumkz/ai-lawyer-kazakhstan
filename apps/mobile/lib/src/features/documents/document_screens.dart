@@ -6,7 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import '../../api/session_http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../api/api_contract.dart';
 import '../auth/auth_screens.dart';
@@ -16,7 +17,12 @@ import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/aizan_design.dart';
 
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key, this.filePicker, this.documentApi, this.addMode = false, this.openCamera = false});
+  const DocumentsScreen(
+      {super.key,
+      this.filePicker,
+      this.documentApi,
+      this.addMode = false,
+      this.openCamera = false});
 
   final DocumentFilePickerPort? filePicker;
   final DocumentApiPort? documentApi;
@@ -45,8 +51,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     super.initState();
     filePicker = widget.filePicker ?? NativeDocumentFilePicker();
     documentApi = widget.documentApi ?? HttpDocumentApi();
-    if (widget.openCamera) WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) uploadDocument(camera: true); });
-    if (!widget.addMode && MobileCaseRuntime.activeCaseId.isNotEmpty && AuthRuntime.userId.isNotEmpty) loadDocuments();
+    if (widget.openCamera) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) uploadDocument(camera: true);
+      });
+    }
+    if (!widget.addMode &&
+        MobileCaseRuntime.activeCaseId.isNotEmpty &&
+        AuthRuntime.userId.isNotEmpty) {
+      loadDocuments();
+    }
   }
 
   Future<void> loadDocuments() async {
@@ -55,8 +69,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     try {
       final files = await api.listDocuments(MobileCaseRuntime.activeCaseId);
       if (!mounted) return;
-      setState(() { DocumentRuntime.documents..clear()..addAll(files); status = files.isEmpty ? 'Документов в деле пока нет' : 'Документы загружены'; });
-    } catch (error) { if (mounted) setState(() => status = 'Не удалось получить документы: $error'); }
+      setState(() {
+        DocumentRuntime.documents
+          ..clear()
+          ..addAll(files);
+        status = files.isEmpty
+            ? 'Документов в деле пока нет'
+            : 'Документы загружены';
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() => status = 'Не удалось получить документы: $error');
+      }
+    }
   }
 
   Future<void> uploadDocument({bool camera = false}) async {
@@ -92,7 +117,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         DocumentRuntime.documents.add(saved);
         documentId = saved.id;
         documentTitleController.text = saved.fileName;
-        status = 'Метаданные добавлены: ${saved.fileName}. Хранилище файлов и автоматический OCR пока не подключены.';
+        status =
+            'Файл сохранён: ${saved.fileName}. Автоматический OCR пока недоступен — проверьте поля вручную.';
       });
     } catch (error) {
       setState(() => status = 'Документ API ошибка: $error');
@@ -140,62 +166,134 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final files = DocumentRuntime.documents.where((file) =>
-      file.fileName.toLowerCase().contains(searchController.text.toLowerCase())).toList();
+    final files = DocumentRuntime.documents
+        .where((file) => file.fileName
+            .toLowerCase()
+            .contains(searchController.text.toLowerCase()))
+        .toList();
     return Scaffold(
       appBar: AizanHeader(compact: widget.addMode),
-      bottomNavigationBar: widget.addMode ? null : const AppBottomNav(selectedIndex: 2),
-      body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
-        child: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 28), children: [
-          if (widget.addMode) ...[
-            const AizanArt(AizanArtwork.upload, width: 200),
-            const SizedBox(height: 14),
-            Text('Добавьте документ', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 12),
-            const Text('Загрузите файл любым удобным способом для анализа и консультации', textAlign: TextAlign.center),
-            const SizedBox(height: 22),
-            _UploadOptionGrid(busy: busy, uploaded: uploaded, onUpload: uploadDocument, onScan: cameraUnavailable),
-            const SizedBox(height: 22),
-            Text('Недавние загрузки', style: Theme.of(context).textTheme.titleLarge),
-          ] else ...[
-            Text('Документы и доказательства', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 20),
-            Row(children: List.generate(4, (index) => Expanded(child: TextButton(
-              onPressed: () => setState(() => selectedTab = index),
-              style: TextButton.styleFrom(foregroundColor: selectedTab == index ? AizanDesign.gold : Colors.white70),
-              child: Text(['Все', 'По делу', 'Шаблоны', 'Загруженные'][index], style: const TextStyle(fontSize: 11)),
-            )))),
-            TextField(controller: searchController, onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Поиск по документам')),
-            const SizedBox(height: 18),
-          ],
-          if (selectedTab == 2 && !widget.addMode)
-            const Padding(padding: EdgeInsets.all(20), child: Text('Готовые шаблоны появятся после подключения каталога.'))
-          else if (files.isEmpty)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Text('Документов пока нет. Добавьте файл по вашему делу.'))
-          else ...files.map((file) => _RecentDocumentTile(title: file.fileName,
-            subtitle: DocumentRuntime.confirmedIds.contains(file.id) ? 'Поля подтверждены' : 'Требуется проверка')),
-          const SizedBox(height: 18),
-          Text(status, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-          const SizedBox(height: 16),
-          if (!widget.addMode)
-            AizanButton(label: 'Добавить документ', icon: Icons.upload_file_outlined, onPressed: () => context.go('/documents/add'))
-          else ...[
-            const Text('PDF, DOCX, JPG, PNG · до 25 МБ', textAlign: TextAlign.center, style: TextStyle(fontSize: 11)),
-            const SizedBox(height: 16),
-            if (uploaded) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(children: [
-              const Text('Проверьте сведения вручную'),
-              const SizedBox(height: 12),
-              TextField(controller: documentTitleController, decoration: const InputDecoration(labelText: 'Название документа')),
-              const SizedBox(height: 12),
-              TextField(controller: documentDetailsController, decoration: const InputDecoration(labelText: 'Сумма / реквизиты')),
-              const SizedBox(height: 12),
-              OutlinedButton(onPressed: busy ? null : confirmOcr, child: Text(confirmed ? 'Поля подтверждены' : 'Подтвердить поля')),
-            ]))),
-            const SizedBox(height: 12),
-            AizanButton(label: 'Продолжить', onPressed: uploaded ? () => context.go('/documents/analysis') : null),
-          ],
-        ]),
+      bottomNavigationBar:
+          widget.addMode ? null : const AppBottomNav(selectedIndex: 2),
+      body: Center(
+          child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+            children: [
+              if (widget.addMode) ...[
+                const AizanArt(AizanArtwork.upload, width: 200),
+                const SizedBox(height: 14),
+                Text('Добавьте документ',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 12),
+                const Text(
+                    'Загрузите файл любым удобным способом для анализа и консультации',
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 22),
+                _UploadOptionGrid(
+                    busy: busy,
+                    uploaded: uploaded,
+                    onUpload: uploadDocument,
+                    onScan: cameraUnavailable),
+                const SizedBox(height: 22),
+                Text('Недавние загрузки',
+                    style: Theme.of(context).textTheme.titleLarge),
+              ] else ...[
+                Text('Документы и доказательства',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 20),
+                Row(
+                    children: List.generate(
+                        4,
+                        (index) => Expanded(
+                                child: TextButton(
+                              onPressed: () =>
+                                  setState(() => selectedTab = index),
+                              style: TextButton.styleFrom(
+                                  foregroundColor: selectedTab == index
+                                      ? AizanDesign.gold
+                                      : Colors.white70),
+                              child: Text(
+                                  [
+                                    'Все',
+                                    'По делу',
+                                    'Шаблоны',
+                                    'Загруженные'
+                                  ][index],
+                                  style: const TextStyle(fontSize: 11)),
+                            )))),
+                TextField(
+                    controller: searchController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search),
+                        hintText: 'Поиск по документам')),
+                const SizedBox(height: 18),
+              ],
+              if (selectedTab == 2 && !widget.addMode)
+                const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                        'Готовые шаблоны появятся после подключения каталога.'))
+              else if (files.isEmpty)
+                const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                        'Документов пока нет. Добавьте файл по вашему делу.'))
+              else
+                ...files.map((file) => _RecentDocumentTile(
+                    title: file.fileName,
+                    subtitle: DocumentRuntime.confirmedIds.contains(file.id)
+                        ? 'Поля подтверждены'
+                        : 'Требуется проверка')),
+              const SizedBox(height: 18),
+              Text(status,
+                  style: const TextStyle(fontSize: 12, color: Colors.white70)),
+              const SizedBox(height: 16),
+              if (!widget.addMode)
+                AizanButton(
+                    label: 'Добавить документ',
+                    icon: Icons.upload_file_outlined,
+                    onPressed: () => context.go('/documents/add'))
+              else ...[
+                const Text('PDF, DOCX, JPG, PNG · до 25 МБ',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11)),
+                const SizedBox(height: 16),
+                if (uploaded)
+                  Card(
+                      child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(children: [
+                            const Text('Проверьте сведения вручную'),
+                            const SizedBox(height: 12),
+                            TextField(
+                                controller: documentTitleController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Название документа')),
+                            const SizedBox(height: 12),
+                            TextField(
+                                controller: documentDetailsController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Сумма / реквизиты')),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                                onPressed: busy ? null : confirmOcr,
+                                child: Text(confirmed
+                                    ? 'Поля подтверждены'
+                                    : 'Подтвердить поля')),
+                          ]))),
+                const SizedBox(height: 12),
+                AizanButton(
+                    label: 'Продолжить',
+                    onPressed: uploaded
+                        ? () => context.go('/documents/analysis')
+                        : null),
+              ],
+            ]),
       )),
     );
   }
@@ -250,11 +348,16 @@ abstract class DocumentApiPort {
 
 class NativeDocumentFilePicker implements DocumentFilePickerPort {
   Future<PickedDocumentFile?> pickCamera() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+    final image = await ImagePicker()
+        .pickImage(source: ImageSource.camera, imageQuality: 90);
     if (image == null) return null;
     final bytes = await image.readAsBytes();
-    return PickedDocumentFile(name: image.name, path: image.path, sizeBytes: bytes.length,
-      mimeType: _mimeTypeFor(image.name), sha256: sha256.convert(bytes).toString());
+    return PickedDocumentFile(
+        name: image.name,
+        path: image.path,
+        sizeBytes: bytes.length,
+        mimeType: _mimeTypeFor(image.name),
+        sha256: sha256.convert(bytes).toString());
   }
 
   @override
@@ -297,12 +400,16 @@ class HttpDocumentApi implements DocumentApiPort {
   final String baseUrl;
 
   Future<List<UploadedDocumentResult>> listDocuments(String caseId) async {
-    final response = await http.get(Uri.parse('$baseUrl${ApiContract.basePath}/cases/$caseId/documents'),
-      headers: {'x-user-id': AuthRuntime.userId});
-    if (response.statusCode != 200) throw HttpException('Documents API: ${response.statusCode}');
+    final response = await http.get(
+        Uri.parse('$baseUrl${ApiContract.basePath}/cases/$caseId/documents'),
+        headers: {'x-user-id': AuthRuntime.userId});
+    if (response.statusCode != 200) {
+      throw HttpException('Documents API: ${response.statusCode}');
+    }
     return (jsonDecode(response.body) as List<dynamic>).map((value) {
       final item = value as Map<String, dynamic>;
-      return UploadedDocumentResult(id: item['id'] as String, fileName: item['fileName'] as String);
+      return UploadedDocumentResult(
+          id: item['id'] as String, fileName: item['fileName'] as String);
     }).toList();
   }
 
@@ -317,6 +424,20 @@ class HttpDocumentApi implements DocumentApiPort {
       'mimeType': file.mimeType,
       'sizeBytes': file.sizeBytes,
     });
+    final upload = http.MultipartRequest('POST',
+        Uri.parse('$baseUrl${ApiContract.basePath}${session['uploadUrl']}'));
+    upload.headers.addAll({
+      'x-user-id': AuthRuntime.userId,
+      'x-upload-session-id': session['id'] as String
+    });
+    final bytes = await File(file.path).readAsBytes();
+    upload.files.add(http.MultipartFile.fromBytes('file', bytes,
+        filename: file.name, contentType: MediaType.parse(file.mimeType)));
+    final uploaded = await upload.send().timeout(const Duration(seconds: 60));
+    await uploaded.stream.drain<void>();
+    if (uploaded.statusCode != 201) {
+      throw HttpException('File upload failed: ${uploaded.statusCode}');
+    }
     final document = await _postJson(ApiContract.filesComplete, {
       'uploadSessionId': session['id'],
       'sha256': file.sha256,
@@ -392,33 +513,57 @@ class DocumentAnalysisScreen extends StatefulWidget {
 class _DocumentAnalysisScreenState extends State<DocumentAnalysisScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: const AizanHeader(compact: true),
-    body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
-      child: ListView(padding: const EdgeInsets.all(20), children: [
-        const AizanArt(AizanArtwork.analysis, width: 210),
-        const SizedBox(height: 16),
-        Text('Анализ документов', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 12),
-        const Text('Проверьте сведения из ваших файлов перед подготовкой документа', textAlign: TextAlign.center),
-        const SizedBox(height: 20),
-        const _AnalysisTags(),
-        const SizedBox(height: 20),
-        ...[
-          ('Документы добавлены', DocumentRuntime.documents.isNotEmpty),
-          ('Поля подтверждены пользователем', DocumentRuntime.confirmedIds.isNotEmpty),
-          ('Проверка реквизитов', false),
-          ('Поиск норм права', false),
-        ].map((step) => ListTile(leading: Icon(step.$2 ? Icons.check_circle_outline : Icons.radio_button_unchecked, color: AizanDesign.gold),
-          title: Text(step.$1), subtitle: Text(step.$2 ? 'Подтверждено' : 'Ожидает проверки'))),
-        const SizedBox(height: 20),
-        _DocumentHint(text: 'Добавлено документов: ${DocumentRuntime.documents.length}. Автоматический юридический анализ не выполнен.', trailing: 'Проверка'),
-        const SizedBox(height: 16),
-        AizanButton(label: 'Продолжить', onPressed: DocumentRuntime.confirmedIds.isNotEmpty ? () => context.go('/workflow/pretrial-claim') : null),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: () => context.go('/documents/add'), child: const Text('Посмотреть детали')),
-      ]),
-    )),
-  );
+        appBar: const AizanHeader(compact: true),
+        body: Center(
+            child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: ListView(padding: const EdgeInsets.all(20), children: [
+            const AizanArt(AizanArtwork.analysis, width: 210),
+            const SizedBox(height: 16),
+            Text('Анализ документов',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 12),
+            const Text(
+                'Проверьте сведения из ваших файлов перед подготовкой документа',
+                textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            const _AnalysisTags(),
+            const SizedBox(height: 20),
+            ...[
+              ('Документы добавлены', DocumentRuntime.documents.isNotEmpty),
+              (
+                'Поля подтверждены пользователем',
+                DocumentRuntime.confirmedIds.isNotEmpty
+              ),
+              ('Проверка реквизитов', false),
+              ('Поиск норм права', false),
+            ].map((step) => ListTile(
+                leading: Icon(
+                    step.$2
+                        ? Icons.check_circle_outline
+                        : Icons.radio_button_unchecked,
+                    color: AizanDesign.gold),
+                title: Text(step.$1),
+                subtitle: Text(step.$2 ? 'Подтверждено' : 'Ожидает проверки'))),
+            const SizedBox(height: 20),
+            _DocumentHint(
+                text:
+                    'Добавлено документов: ${DocumentRuntime.documents.length}. Автоматический юридический анализ не выполнен.',
+                trailing: 'Проверка'),
+            const SizedBox(height: 16),
+            AizanButton(
+                label: 'Продолжить',
+                onPressed: DocumentRuntime.confirmedIds.isNotEmpty
+                    ? () => context.go('/workflow/pretrial-claim')
+                    : null),
+            const SizedBox(height: 12),
+            OutlinedButton(
+                onPressed: () => context.go('/documents/add'),
+                child: const Text('Посмотреть детали')),
+          ]),
+        )),
+      );
 }
 
 class _UploadOptionGrid extends StatelessWidget {
