@@ -7,6 +7,17 @@ import { IdentityService, isValidIinBin, maskIinBin } from "./identity.service";
 import { IdentityRepository } from "./repositories/identity.repository";
 
 describe("IdentityService", () => {
+  it("rejects refresh after session expiry", async () => {
+    const service = new IdentityService();
+    const otp = service.register({channel: "phone", phone: "+77011234567", consentVersion: "v1"}, "test");
+    const auth = await service.verifyOtp({otpId: otp.otpId, code: "111111"}, "test");
+    const now = Date.now();
+    const clock = jest.spyOn(Date, "now").mockReturnValue(now + 31 * 24 * 60 * 60 * 1000);
+    try {
+      await expect(service.refresh({refreshToken: auth.refreshToken}, "test")).rejects.toThrow(UnauthorizedException);
+    } finally { clock.mockRestore(); }
+  });
+
   it("registers with phone, verifies OTP and rotates refresh token", async () => {
     const service = new IdentityService();
     const otp = service.register(
@@ -225,7 +236,7 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
     email: "repo@example.com",
     roles: ["user" as const],
     consentVersion: "v1",
-    createdAt: "2026-09-04T00:00:00.000Z",
+    createdAt: new Date().toISOString(),
   };
   return {
     findUserByContact: jest
@@ -240,13 +251,13 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
         id: "session-1",
         userId: "user-1",
         refreshToken: "refresh-1",
-        createdAt: "2026-09-04T00:00:00.000Z",
+        createdAt: new Date().toISOString(),
       })
       .mockResolvedValueOnce({
         id: "session-2",
         userId: "user-1",
         refreshToken: "refresh-2",
-        createdAt: "2026-09-04T00:00:00.000Z",
+        createdAt: new Date().toISOString(),
       }),
     findSessionByRefreshToken: jest
       .fn()
@@ -254,7 +265,7 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
         id: "session-1",
         userId: "user-1",
         refreshToken: "refresh-1",
-        createdAt: "2026-09-04T00:00:00.000Z",
+        createdAt: new Date().toISOString(),
       }),
     revokeSession: jest.fn().mockResolvedValue(undefined),
     revokeAllSessions: jest.fn().mockResolvedValue(undefined),
@@ -267,7 +278,7 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
       action: "login",
       metadata: {},
       correlationId: "test",
-      createdAt: "2026-09-04T00:00:00.000Z",
+      createdAt: new Date().toISOString(),
     }),
     listAuditEvents: jest.fn().mockResolvedValue([]),
   };

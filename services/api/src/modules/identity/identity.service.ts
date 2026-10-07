@@ -180,7 +180,7 @@ export class IdentityService {
             candidate.refreshToken === input.refreshToken &&
             !candidate.revokedAt,
         );
-    if (!session) throw new UnauthorizedException("INVALID_REFRESH_TOKEN");
+    if (!session || Date.now() - Date.parse(session.createdAt) > 30 * 24 * 60 * 60 * 1000) throw new UnauthorizedException("INVALID_REFRESH_TOKEN");
     if (this.repository) await this.repository.revokeSession(session.id);
     else session.revokedAt = new Date().toISOString();
     const user = await this.mustGetUser(session.userId);

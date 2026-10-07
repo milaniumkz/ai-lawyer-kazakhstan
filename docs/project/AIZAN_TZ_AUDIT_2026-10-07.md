@@ -31,7 +31,7 @@
 
 ## Проверки
 
-- API: 17 suites, 92 tests.
+- API: 17 suites, 93 tests.
 - Flutter 3.47.6 / Dart 3.13.5: анализатор без замечаний; 48 тестов, включая 12 regression PNG и responsive-матрицу.
 - Flutter release asset bundle собран. Это не подписанный APK/AAB/IPA и не проверка платформенных плагинов на устройстве.
 - Веб/admin/API: lint, typecheck, build; контракт, 10 миграций, дизайн-контракты, security scan и AI unit-тесты.
