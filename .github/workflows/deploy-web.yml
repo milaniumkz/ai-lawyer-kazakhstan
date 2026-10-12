@@ -11,6 +11,10 @@ on:
         description: Verify the existing deployed site without reinstalling it
         type: boolean
         default: false
+      inspect_sources:
+        description: Read-only diagnosis of official text retrieval on the server
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +24,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  inspect-official-sources:
+    if: inputs.inspect_sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect official text reader without accessing credentials or customer data
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/ai-lawyer-kz
+          chmod 600 ~/.ssh/ai-lawyer-kz
+          ssh-keyscan -p "${SERVER_SSH_PORT:-22}" "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'node -' <<'JS'
+          const fs=require('node:fs');const path=require('node:path');const Module=require('node:module');
+          const filename='/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/openai-conversation.adapter.js';
+          const diagnostic=new Module(filename,module);diagnostic.filename=filename;diagnostic.paths=Module._nodeModulePaths(path.dirname(filename));
+          diagnostic._compile(fs.readFileSync(filename,'utf8')+'\nexports.inspectOfficialText=readOfficialText;',filename);
+          (async()=>{
+            for(const host of ['adilet.zan.kz','old.adilet.zan.kz']){
+              const url=`https://${host}/rus/docs/K990000409_`;
+              const started=Date.now();
+              const page=await diagnostic.exports.inspectOfficialText(url);
+              console.log('OFFICIAL_READER '+JSON.stringify({host,elapsedMs:Date.now()-started,resolvedHost:page?new URL(page.url).hostname:null,characters:page?.text.length||0,loanQuotePresent:page?.text.includes('договор займа считается заключенным')||false,returnQuotePresent:page?.text.includes('заемщик обязан возвратить предмет займа')||false}));
+            }
+            const response=await fetch('https://old.adilet.zan.kz/rus/docs/K990000409_', {signal:AbortSignal.timeout(30000)});
+            const text=await response.text();
+            console.log('OFFICIAL_HTTP '+JSON.stringify({status:response.status,type:response.headers.get('content-type'),characters:text.length,closedHtml:/<\/html>/i.test(text),article717Present:/717/.test(text),tail:text.replace(/<[^>]+>/g,' ').slice(-160)}));
+          })().catch(error=>{console.error(error.name);process.exitCode=1;});
+          JS
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/ai-lawyer-kz
+
   verify-deployed:
     if: inputs.verify_only
     runs-on: ubuntu-latest
@@ -68,7 +111,7 @@ jobs:
         run: rm -f ~/.ssh/ai-lawyer-kz
 
   deploy:
-    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only }}
+    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only && !inputs.inspect_sources }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
