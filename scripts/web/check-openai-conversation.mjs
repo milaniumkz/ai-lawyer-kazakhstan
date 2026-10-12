@@ -81,9 +81,15 @@ try {
   console.log('Live OpenAI facts summary received');
   assert.deepEqual(summary.assistant.ai.missingFields,[],'The actual model must retain all supplied facts');
   assert.equal(summary.assistant.ai.readyForDraft,false);
-  const final=await send('Подтверждаю. Все реквизиты, даты и требования в резюме верны. Подготовьте полный проект досудебной претензии по действующим нормам Республики Казахстан с проверенными официальными источниками.');
+  let final=await send('Подтверждаю. Все реквизиты, даты и требования в резюме верны. Подготовьте полный проект досудебной претензии по действующим нормам Республики Казахстан с проверенными официальными источниками.');
   console.log('Live OpenAI confirmed draft response received');
   if (!final.assistant.ai.readyForDraft) console.log(JSON.stringify({missingFields:final.assistant.ai.missingFields,sourceCount:final.assistant.ai.citations.length,answer:final.assistant.text.slice(0,500)}));
+  if (!final.assistant.ai.readyForDraft && final.assistant.ai.factsConfirmed && !final.assistant.ai.missingFields.length) {
+    const confirmedFacts=final.assistant.ai.facts;
+    console.log('Official-source verification unavailable: retrying search once with previously confirmed facts');
+    final=await send('Повторите поиск официальных источников и подготовьте претензию по уже подтверждённым реквизитам. Данные не изменились; не нужно запрашивать их заново. Включайте только проверенные нормы Республики Казахстан.');
+    assert.deepEqual(final.assistant.ai.facts,confirmedFacts,'A repeated source search must retain the confirmed facts');
+  }
   assert.equal(final.assistant.ai.readyForDraft,true,'Must produce an actual source-backed draft, not a stub');
   assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz)\//.test(source.url)));
   assert(final.assistant.ai.draftBody.replace(/\s/g,'').includes('100000'));
