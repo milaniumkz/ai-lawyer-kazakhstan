@@ -28,9 +28,13 @@ function token() {
 }
 
 let cachedToken;
+let cachedTokenExpiresAt = 0;
 
 export async function asc(path, options = {}) {
-  cachedToken ??= token();
+  if (!cachedToken || Date.now() >= cachedTokenExpiresAt) {
+    cachedToken = token();
+    cachedTokenExpiresAt = Date.now() + 15 * 60 * 1000;
+  }
   const response = await fetch(`${apiBase}${path}`, {
     ...options,
     headers: {
