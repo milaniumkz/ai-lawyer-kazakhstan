@@ -12,7 +12,7 @@ if(!udid) throw new Error('No available iPhone simulator');
 const outDir = process.env.IOS_SCREENSHOT_DIR ?? resolve(root, 'docs/project/app-store-screenshots/ios-simulator-native-full');
 const appPath = resolve(root, 'apps/mobile/build/ios/iphonesimulator/Runner.app');
 
-const screens = [
+const allScreens = [
   ['01-onboarding.png','/onboarding'],['02-login.png','/login'],['03-register.png','/register'],
   ['04-otp.png','/otp'],['05-biometric.png','/biometric'],['06-home.png','/'],
   ['07-profile.png','/profile'],['08-settings.png','/settings'],['09-help.png','/help'],
@@ -23,6 +23,11 @@ const screens = [
   ['20-claim.png','/workflow/pretrial-claim'],['21-claim-draft.png','/workflow/pretrial-claim/draft'],
   ['22-claim-send.png','/workflow/pretrial-claim/send'],['23-subscription.png','/subscription'],
 ];
+
+const firstScreen=Number(process.env.IOS_PREVIEW_FIRST || 1);
+const lastScreen=Number(process.env.IOS_PREVIEW_LAST || allScreens.length);
+if(!Number.isInteger(firstScreen)||!Number.isInteger(lastScreen)||firstScreen<1||lastScreen>allScreens.length||firstScreen>lastScreen)throw new Error('Invalid native preview range');
+const screens=allScreens.slice(firstScreen-1,lastScreen);
 
 function run(command, args, options = {}) {
   execFileSync(command, args, {

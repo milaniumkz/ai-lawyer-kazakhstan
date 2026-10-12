@@ -11,6 +11,14 @@ on:
         description: Verify the existing deployed site without reinstalling it
         type: boolean
         default: false
+      ios_preview_first:
+        description: First native preview index (1-23)
+        type: string
+        default: "1"
+      ios_preview_last:
+        description: Last native preview index (1-23)
+        type: string
+        default: "23"
       ios_build_only:
         description: Build an unsigned iOS candidate and native iPhone previews for review
         type: boolean
@@ -53,6 +61,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: node -e 'console.log(JSON.stringify({appStorePrivateKeyConfigured:Boolean(process.env.ASC_PRIVATE_KEY),keyIdConfigured:Boolean(process.env.ASC_KEY_ID),issuerConfigured:Boolean(process.env.ASC_ISSUER_ID)}))'
       - name: Build unsigned release candidate with the new AIZAN icon
+        if: inputs.ios_preview_first == '1'
         working-directory: apps/mobile
         run: |
           flutter pub get
@@ -64,6 +73,8 @@ jobs:
           sips -g pixelWidth -g pixelHeight ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
       - name: Capture all native screens in the iPhone simulator
         env:
+          IOS_PREVIEW_FIRST: ${{ inputs.ios_preview_first }}
+          IOS_PREVIEW_LAST: ${{ inputs.ios_preview_last }}
           IOS_SCREENSHOT_DIR: ${{ runner.temp }}/aizan-native-previews
         run: |
           export FLUTTER_BIN="$(command -v flutter)"
