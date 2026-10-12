@@ -32,7 +32,7 @@ try {
     }
   },userId);
   await page.goto(`${base}/?openai=qa#home`);
-  await page.getByRole('button',{name:'Работать без OpenAI',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Пошаговое заполнение',exact:true}).waitFor();
   await page.getByRole('button',{name:'Ввести текст',exact:true}).click();
   const input=page.locator('#home-problem');
   async function send(text) {

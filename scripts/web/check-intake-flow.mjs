@@ -50,7 +50,7 @@ try {
   await page.locator('.aizanFeedback').filter({hasText:'Сначала опишите ситуацию и подтвердите создание дела'}).waitFor();
   assert.equal((await request('/cases')).length,0);
   await page.waitForTimeout(1000);
-  const manualMode = page.getByRole('button', {name: 'Работать без OpenAI', exact: true});
+  const manualMode = page.getByRole('button', {name: 'Пошаговое заполнение', exact: true});
   if (await manualMode.isVisible()) await manualMode.click();
   const input = page.locator('#home-problem');
   await input.fill('Работодатель не выплатил зарплату');

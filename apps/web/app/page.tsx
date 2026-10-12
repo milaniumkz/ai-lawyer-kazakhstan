@@ -538,14 +538,18 @@ export default function WebHome() {
   const [chatInput, setChatInput] = useState("");
   const [aiAvailable, setAiAvailable] = useState(false);
   const [aiConversationEnabled, setAiConversationEnabled] = useState(false);
+  const [aiConfigLoaded, setAiConfigLoaded] = useState(false);
+  const [aiConfigError, setAiConfigError] = useState(false);
+  const [aiConfigAttempt, setAiConfigAttempt] = useState(0);
   useEffect(() => {
     let active = true;
+    setAiConfigError(false);
     void fetch('/api/v1/health', {signal: AbortSignal.timeout(10000)})
-      .then(response => response.ok ? response.json() : null)
-      .then(body => { if (active) { setAiAvailable(body?.aiConversationEnabled === true); setAiConversationEnabled(body?.aiConversationEnabled === true && localStorage.getItem('aizan-chat-mode') !== 'manual'); } })
-      .catch(() => {});
+      .then(response => { if (!response.ok) throw new Error('HEALTH_UNAVAILABLE'); return response.json(); })
+      .then(body => { if (active) { setAiAvailable(body?.aiConversationEnabled === true); setAiConversationEnabled(body?.aiConversationEnabled === true && localStorage.getItem('aizan-chat-mode') !== 'manual'); setAiConfigLoaded(true); } })
+      .catch(() => { if (active) setAiConfigError(true); });
     return () => { active = false; };
-  }, []);
+  }, [aiConfigAttempt]);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -1242,7 +1246,7 @@ export default function WebHome() {
 
   async function submitHomeMessage() {
     const outgoing = homeInput.trim();
-    if (!outgoing || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
+    if (!outgoing || !aiConfigLoaded || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
     if (!classification && !remoteCaseId && outgoing.length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
     intakeBusyRef.current = true;
     setClassificationBusy(true);
@@ -4506,7 +4510,8 @@ export default function WebHome() {
         <button className="aizanTextEntry" onClick={() => { setHomeConversationOpen(true); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".aizanHomeComposer textarea")?.focus(), 0); }}>
           <span className="keyboardIcon"><DesignIcon name="keyboard" /></span><span>Ввести текст</span>
         </button>
-        {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Ручной режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Работать без OpenAI" : "Включить OpenAI"}</button></div>}
+        {aiConfigError && <div className="aizanChatMode" role="status"><span>Не удалось подключиться к помощнику. Ваш текст сохранён.</span><button className="outlineGold" onClick={() => setAiConfigAttempt(attempt => attempt + 1)}>Повторить подключение</button></div>}
+        {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Пошаговый режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Пошаговое заполнение" : "Включить OpenAI"}</button></div>}
         {homeConversationOpen && <div className="aizanHomeConversation">
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
             {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article} ↗</a>)}</div>)}
@@ -4542,7 +4547,7 @@ export default function WebHome() {
             {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}
             {(recording || audioUrl || voiceBusy) && <small role="status">{speechStatus}</small>}
-            <button type="submit" className="primary wide" disabled={classificationBusy || recording || voiceBusy || !homeInput.trim()}>{classificationBusy ? "Анализирую…" : "Отправить"}</button>
+            <button type="submit" className="primary wide" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || !homeInput.trim()}>{!aiConfigLoaded ? "Подключаю помощника…" : classificationBusy ? "Анализирую…" : "Отправить"}</button>
           </form>
         </div>}
 

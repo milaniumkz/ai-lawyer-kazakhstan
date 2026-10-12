@@ -33,6 +33,7 @@ describe('OpenAI conversation', () => {
     expect(payload.input.at(-1).content).toBe('Хочу подготовить претензию');
     expect(payload.tools[0].filters.allowed_domains).toContain('adilet.zan.kz');
     expect(payload.store).toBe(false);
+    expect(payload.tool_choice).toBe('auto');
   });
   it('produces a draft only after confirmation and an actual official quote match', async () => {
     mock({answer:'Проект подготовлен', facts, draftBody, citations:[citation]});
@@ -40,6 +41,13 @@ describe('OpenAI conversation', () => {
     expect(result.ai.readyForDraft).toBe(true);
     expect(result.ai.draftBody).toBe(draftBody.trim());
     expect(result.ai.citations[0].checkedAt).toBeDefined();
+  });
+  it('keeps the first clarification fast without invoking premature legal search', async () => {
+    const fetchMock=mock({answer:'Кому направляем претензию?',facts:{...facts,respondentName:''},draftBody:null,citations:[]});
+    await generateOpenAiConversation('Невозвращённый долг',[{id:'first',caseId:'case',role:'user',text:'Хочу подготовить претензию',createdAt:''}]);
+    const payload=JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(payload.tool_choice).toBe('none');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it('rejects invented sources and a negated confirmation', async () => {
     mock({answer:'Проект',facts,draftBody,citations:[citation]},[]);

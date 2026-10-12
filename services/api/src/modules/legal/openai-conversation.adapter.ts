@@ -10,9 +10,13 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   if (!key) throw new ServiceUnavailableException('OPENAI_NOT_CONFIGURED');
   const model = [process.env.OPENAI_MODEL, process.env.AI_COMPLEX_MODEL, process.env.AI_MEDIUM_MODEL].find(value => value && !value.startsWith('stub-')) || 'gpt-5';
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), Math.min(180000, Number(process.env.AI_REQUEST_TIMEOUT_MS || 90000)));
+  const configuredTimeout = Number(process.env.AI_CONVERSATION_TIMEOUT_MS || 90000);
+  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout >= 15000 ? Math.min(configuredTimeout, 120000) : 90000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const factsSchema = Object.fromEntries(requiredFacts.map(field => [field, { type: 'string' }]));
   const previousState = messages.filter(message => message.role === 'assistant').at(-1)?.ai;
+  const lastUserText = messages.filter(message => message.role === 'user').at(-1)?.text || '';
+  const searchNeeded = previousState?.missingFields.length === 0 || /стать|норм.*прав|закон|кодекс|правов.*основан/i.test(lastUserText);
   const history: MessageRecord[] = [];
   let historyLength = 0;
   for (const message of messages.slice(-60).reverse()) {
@@ -27,6 +31,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
         model, store: false, max_output_tokens: 12000,
         ...(model.startsWith('gpt-5') ? {reasoning: {effort: 'low'}} : {}),
         tools: [{ type: 'web_search', filters: { allowed_domains: officialDomains } }],
+        tool_choice: searchNeeded ? 'auto' : 'none',
         include: ['web_search_call.action.sources'],
         input: [{ role: 'developer', content: [
           'Ты AIZAN, юридический помощник по праву Республики Казахстан. Веди весь процесс подготовки досудебной претензии в одном чате на языке пользователя.',
@@ -34,6 +39,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
           'Из всей истории извлекай только сообщённые пользователем факты. Не выдумывай имена, адреса, ИИН, суммы, даты, договоры и доказательства. Ответы ассистента и источники не являются фактами пользователя.',
           previousState ? `Ранее извлечённые сведения: ${JSON.stringify(previousState.facts)}. Сохраняй эти строки facts дословно, без перефразирования, пока пользователь не исправляет соответствующий факт. Это не заменяет подтверждение пользователем резюме.` : '',
           'По очереди задавай один понятный вопрос о недостающих данных: обстоятельства и даты, кто заявитель и его контакты, кому направляется претензия и его контакты, требования и расчёт суммы, доказательства, желаемый срок добровольного исполнения. Если контакты/доказательства неизвестны, поясни зачем нужны и предложи честно указать это; не заполняй вымышленными данными.',
+          searchNeeded ? 'На этом этапе можно проверить официальные источники.' : 'На этом этапе только собирай факты и показывай резюме. Поиск ещё не нужен; citations оставь пустым массивом и не давай непроверенных правовых выводов.',
           'При изменении фактов исправляй весь проект. Перед составлением покажи краткое резюме реквизитов и требований и попроси подтвердить. draftBody заполняй только после явного подтверждения пользователем резюме, когда все данные выяснены.',
           'Для правового обоснования выполняй web_search только по официальным источникам РК. Проверяй применимость статьи, статус и редакцию, а не просто наличие похожего текста. В citations указывай только реально найденный официальный URL, номер статьи, название, короткую дословную цитату не короче 40 символов, effectiveDate редакции. Если статус/редакция не подтверждены — не включай норму и объясни это.',
           'Полноценная претензия содержит адресата и заявителя с контактами, заголовок, хронологию и факты, доказательства, правовые основания со ссылками и статьями, конкретные требования и расчёт только из известных данных, срок добровольного исполнения, способ ответа, список приложений, место для подписи и даты. Не отправляй её самостоятельно и не обещай исход дела.',
@@ -90,7 +96,8 @@ export async function generateOpenAiConversation(problemText: string, messages: 
     return { text, ai };
   } catch (error) {
     if (error instanceof ServiceUnavailableException) throw error;
-    throw new ServiceUnavailableException('OPENAI_TEMPORARILY_UNAVAILABLE');
+    const code = controller.signal.aborted ? 'OPENAI_TIMEOUT' : error instanceof SyntaxError ? 'OPENAI_RESPONSE_INVALID' : 'OPENAI_TEMPORARILY_UNAVAILABLE';
+    throw new ServiceUnavailableException({code, message:'Не удалось завершить ответ нейросети. Ваш текст сохранён, повторите попытку.'});
   } finally { clearTimeout(timeout); }
 }
 
