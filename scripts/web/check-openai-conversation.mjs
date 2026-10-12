@@ -24,12 +24,14 @@ try {
   page.setDefaultTimeout(180000);
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(base);
-  await page.evaluate(id=>{
-    localStorage.setItem('aizan-chat-mode','ai');
-    localStorage.setItem('ai-lawyer-web-state',JSON.stringify({view:'home',authUserId:id,profileComplete:true,profileName:'Синтетический тест AIZAN',theme:'dark',cases:[],documents:[]}));
+  await page.addInitScript(id=>{
+    if (localStorage.getItem('aizan-openai-qa-user') !== id) {
+      localStorage.setItem('aizan-openai-qa-user',id);
+      localStorage.setItem('aizan-chat-mode','ai');
+      localStorage.setItem('ai-lawyer-web-state',JSON.stringify({view:'home',authUserId:id,profileComplete:true,profileName:'Синтетический тест AIZAN',theme:'dark',cases:[],documents:[]}));
+    }
   },userId);
-  await page.goto(`${base}/#home`);
+  await page.goto(`${base}/?openai=qa#home`);
   await page.getByRole('button',{name:'Работать без OpenAI',exact:true}).waitFor();
   await page.getByRole('button',{name:'Ввести текст',exact:true}).click();
   const input=page.locator('#home-problem');
@@ -52,15 +54,18 @@ try {
     return {assistant,caseId:cases[0].id,history};
   }
   const first=await send('Это синтетическая проверка интерфейса, без реальных участников. Хочу подготовить претензию: дал в долг 100000 тенге по расписке, должник не вернул деньги. Помогите уточнить данные.');
+  console.log('Live OpenAI first clarification received');
   assert(first.assistant.ai.missingFields.length>0);
   assert.equal(first.assistant.ai.readyForDraft,false);
   const summary=await send('Для этого синтетического проекта: заявитель Тестовый Заявитель, адрес Алматы, улица Тестовая 1, e-mail claimant@example.invalid. Получатель Тестовый Должник, адрес Алматы, улица Тестовая 2, e-mail debtor@example.invalid. Заём 100000 тенге передан 12 января 2026 года, возврат по расписке был предусмотрен 12 февраля 2026 года, денег не вернули. Требую вернуть только основной долг 100000 тенге, без процентов и неустойки. Доказательство: подписанная расписка, приложу её вручную. Срок добровольного исполнения выбираю до 1 ноября 2026 года, прошу ответить на e-mail заявителя. Покажите резюме всех реквизитов и требований для подтверждения.');
+  console.log('Live OpenAI facts summary received');
   assert.deepEqual(summary.assistant.ai.missingFields,[],'The actual model must retain all supplied facts');
   assert.equal(summary.assistant.ai.readyForDraft,false);
   const final=await send('Подтверждаю. Все реквизиты, даты и требования в резюме верны. Подготовьте полный проект досудебной претензии по действующим нормам Республики Казахстан с проверенными официальными источниками.');
+  console.log('Live OpenAI confirmed draft response received');
   assert.equal(final.assistant.ai.readyForDraft,true,'Must produce an actual source-backed draft, not a stub');
   assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz)\//.test(source.url)));
-  assert(final.assistant.ai.draftBody.includes('100000')||final.assistant.ai.draftBody.includes('100 000'));
+  assert(final.assistant.ai.draftBody.replace(/\s/g,'').includes('100000'));
   await page.reload();
   await page.getByRole('button',{name:'Сохранить претензию как документ',exact:true}).click();
   await page.locator('.aizanInlineDraft textarea').waitFor();
