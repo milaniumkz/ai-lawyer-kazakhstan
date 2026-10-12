@@ -1286,6 +1286,10 @@ export default function WebHome() {
       }
       setMessages((items) => remoteHistory ?? [...items, { role: "user", text: outgoing }, { role: "assistant", text: reply }]);
       setHomeInput("");
+      setAudioUrl("");
+      audioBlobRef.current = null;
+      audioChunksRef.current = [];
+      setSpeechStatus("");
       setSyncState("Ответ получен");
     } catch (error) {
       setSyncState(error instanceof Error ? `Не удалось отправить. Текст сохранён, повторите попытку: ${error.message}` : "Не удалось отправить. Текст сохранён, повторите попытку.");
@@ -2083,8 +2087,8 @@ export default function WebHome() {
         const blob = new Blob(audioChunksRef.current, {
           type: recorder.mimeType || "audio/webm",
         });
-        audioBlobRef.current = blob;
-        setAudioUrl(URL.createObjectURL(blob));
+        audioBlobRef.current = blob.size > 0 ? blob : null;
+        setAudioUrl(blob.size > 0 ? URL.createObjectURL(blob) : "");
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       };
@@ -4543,7 +4547,7 @@ export default function WebHome() {
           <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
             {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
             <label htmlFor="home-problem">{aiConversationEnabled ? "Ответьте помощнику или задайте вопрос" : classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
-            <textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение или нажмите микрофон…" rows={3} />
+            <div className="aizanChatInput"><textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}><DesignIcon name="microphone" /></button></div>
             {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}
             {(recording || audioUrl || voiceBusy) && <small role="status">{speechStatus}</small>}

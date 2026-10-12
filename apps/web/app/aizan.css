@@ -430,3 +430,11 @@ html { scroll-padding-bottom: 140px; }
   .appShell[data-design="aizan"][data-theme] .claimBuildHero .authMark { width: 96px; height: 96px; }
   .appShell[data-design="aizan"][data-theme] .claimBuildHero h1 { font-size: 26px; }
 }
+
+/* Keep voice input next to the message, including during long conversations. */
+.aizanChatInput { position: relative; }
+.aizanHomeComposer .aizanChatInput textarea { padding-right: 64px; }
+.aizanComposerMicrophone { position: absolute; right: 10px; bottom: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--gold); background: #241708; }
+.aizanComposerMicrophone svg { width: 24px; height: 24px; }
+.aizanComposerMicrophone.active { background: #744818; box-shadow: 0 0 0 3px #d9a53533; }
+.voicePlayback { color-scheme: dark; }

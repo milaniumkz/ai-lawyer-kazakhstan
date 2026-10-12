@@ -49,6 +49,13 @@ describe('OpenAI conversation', () => {
     expect(payload.tool_choice).toBe('none');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+  it('asks the next question without a premature unknown-fields summary', async () => {
+    mock({answer:'Вопрос 1: За какие месяцы не выплатили зарплату?\n\nКраткое резюме того, что есть сейчас:\n— Заявитель: неизвестно',facts:{...facts,claimantName:''},draftBody:null,citations:[]});
+    const result=await generateOpenAiConversation('Работодатель не платит зарплату',[]);
+    expect(result.text).toBe('За какие месяцы не выплатили зарплату?');
+    expect(result.ai.missingFields).toContain('claimantName');
+    expect(result.ai.readyForDraft).toBe(false);
+  });
   it('rejects invented sources and a negated confirmation', async () => {
     mock({answer:'Проект',facts,draftBody,citations:[citation]},[]);
     expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);

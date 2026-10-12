@@ -50,3 +50,9 @@ Docker Compose, PostgreSQL с перезапуском, настоящий ру�
 Проверка источников может не разрешить подготовку, если официальный текст недоступен или цитата не подтверждается. В таком случае факты сохраняются, можно повторить поиск; непроверенные ссылки не выдаются за подтверждённые. Это ограничение отличается от доступности самой нейросети.
 
 Финальная версия `e79b840` дополнительно требует реальный вызов поиска, когда нужны правовые основания. Она подтверждена успешным [полным прогоном 38225676250](https://github.com/milaniumkz/ai-lawyer-kazakhstan/actions/runs/38225676250), включая настоящий OpenAI, сохранение после дополнительного сообщения и PDF. Независимая серверная проверка reader получила полный текст «Әділет» (709067 нормализованных символов) и нашла положения о займе и возврате денег.
+
+### Sequential clarifications and inline voice input
+
+The assistant now explicitly asks one short clarification at a time, retains already supplied facts and omits premature summaries of unknown fields. A regression check covers the screenshot's numbered question followed by an unknown-fields summary. The complete facts summary still appears before confirmation and claim composition.
+
+The home composer includes an accessible microphone beside the text field, with a recording state and stop action. Empty recording blobs do not create playback URLs; successful message submission clears the previous recording. Local Chromium checks passed at widths 320, 390, 768 and 1920: microphone visibility, no overflow, denied microphone access preserves the reply, no empty player, conversation stays on home. Full check passed (113 API, 54 Flutter, 7 AI tests); build and Docker configuration passed. Real microphone hardware is not available in the cloud browser.
