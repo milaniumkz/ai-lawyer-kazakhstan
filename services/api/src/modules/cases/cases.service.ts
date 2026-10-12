@@ -320,7 +320,7 @@ export class CasesService {
     const procedural = /что дальше|следующ|документ.*нуж|какие.*документ/i.test(input.text)
       ? `По делу «${legalCase.title}» сохраните подтверждающие документы, проверьте факты и подготовьте проект претензии. В разделе документа можно исправить текст и скачать PDF. Сроки задавайте после проверки.\n` : '';
     const fallback: MessageRecord = {id:stableId('assistant'),caseId,role:'assistant',text:procedural+(answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.'),createdAt:new Date().toISOString()};
-    if (conversation) { fallback.text = conversation.text; fallback.ai = conversation.ai; }
+    if (conversation) { fallback.text = conversation.text; fallback.ai = conversation.ai; if(fallback.ai.readyForDraft && !fallback.ai.draftMessageId) fallback.ai.draftMessageId=fallback.id; }
     if(this.repository?.saveTurn) {
       await this.repository.saveTurn([message,fallback]);
       const saved=await this.repository.findMessage!(message.id);

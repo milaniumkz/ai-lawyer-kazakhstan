@@ -67,6 +67,10 @@ try {
   assert.equal(final.assistant.ai.readyForDraft,true,'Must produce an actual source-backed draft, not a stub');
   assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz)\//.test(source.url)));
   assert(final.assistant.ai.draftBody.replace(/\s/g,'').includes('100000'));
+  const friendly=await send('Спасибо! Как сохранить этот проект и скачать PDF?');
+  assert.equal(friendly.assistant.ai.readyForDraft,true);
+  assert.equal(friendly.assistant.ai.draftMessageId,final.assistant.ai.draftMessageId);
+  assert.equal(friendly.assistant.ai.draftBody,final.assistant.ai.draftBody);
   await page.reload();
   await page.getByRole('button',{name:'Сохранить претензию как документ',exact:true}).click();
   await page.locator('.aizanInlineDraft textarea').waitFor();

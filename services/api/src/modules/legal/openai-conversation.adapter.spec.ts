@@ -79,8 +79,49 @@ describe('OpenAI conversation', () => {
     expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);
     expect(fetchMock.mock.calls.some(call=>String(call[0]).includes('example.com'))).toBe(false);
   });
+  it('reads the publisher-provided official legacy viewer when the new site serves a JS shell', async () => {
+    const modern='https://adilet.zan.kz/rus/docs/K990000409_';
+    const legacy='https://old.adilet.zan.kz/rus/docs/K990000409_';
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options) => {
+      if(String(url).endsWith('/responses')) {
+        const payload=JSON.parse(options?.body as string);
+        return new Response(JSON.stringify(payload.text.format.name==='aizan_verified_claim'
+          ? {output_text:JSON.stringify({body:draftBody,citedUrls:[legacy]})}
+          : {output_text:JSON.stringify({answer:'Проект',facts,draftBody:draftBody+modern,citations:[{...citation,url:modern}]}),output:[{action:{sources:[{url:legacy}]}}]}));
+      }
+      return new Response(String(url)===modern ? '<html>Для работы с текстами актов включите JavaScript.</html>' : `<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+    });
+    const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(result.ai.readyForDraft).toBe(true);
+    expect(result.ai.citations[0].url).toBe(legacy);
+    expect(result.ai.citations[0].checkedAt).toBeDefined();
+  });
   it('reports provider failure instead of a fabricated assistant answer', async () => {
     jest.spyOn(global,'fetch').mockResolvedValue(new Response('{}',{status:503}));
     await expect(generateOpenAiConversation('Долг',turn('Кто получатель?'))).rejects.toMatchObject({response:{code:'OPENAI_TEMPORARILY_UNAVAILABLE'}});
+  });
+  it('retains the prepared draft and its original verification after a PDF follow-up', async () => {
+    const checkedAt='2026-10-01T10:00:00.000Z';
+    const history=turn('Спасибо, как скачать PDF?');
+    history[0].ai={...previous,factsConfirmed:true,readyForDraft:true,draftBody,draftMessageId:'prepared-id',citations:[{...citation,checkedAt}]};
+    const fetchMock=mock({answer:'Нажмите Скачать PDF',facts,draftBody:null,citations:[]});
+    const result=await generateOpenAiConversation('Долг',history);
+    expect(result.ai.readyForDraft).toBe(true);
+    expect(result.ai.draftMessageId).toBe('prepared-id');
+    expect(result.ai.citations[0].checkedAt).toBe(checkedAt);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  it('preserves confirmed facts after a source outage but invalidates them after an amount change', async () => {
+    mock({answer:'Проект',facts,draftBody,citations:[citation]},[]);
+    const blocked=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(blocked.ai.factsConfirmed).toBe(true);
+    expect(blocked.ai.readyForDraft).toBe(false);
+    jest.restoreAllMocks();
+    mock({answer:'Уточните новую сумму',facts:{...facts,demands:'Вернуть 200000 тенге'},draftBody:null,citations:[]});
+    const history=turn('Измените сумму требования на 200000 тенге');
+    history[0].ai=blocked.ai;
+    const changed=await generateOpenAiConversation('Долг',history);
+    expect(changed.ai.factsConfirmed).toBe(false);
+    expect(changed.ai.readyForDraft).toBe(false);
   });
 });

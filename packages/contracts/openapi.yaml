@@ -2556,6 +2556,11 @@ components:
                 type: string
             readyForDraft:
               type: boolean
+            factsConfirmed:
+              type: boolean
+            draftMessageId:
+              type: string
+              format: uuid
             draftBody:
               type: string
             citations:

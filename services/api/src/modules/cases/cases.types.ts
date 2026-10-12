@@ -45,6 +45,8 @@ export interface AiConversation {
   missingFields: string[];
   citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string }>;
   readyForDraft: boolean;
+  factsConfirmed?: boolean;
+  draftMessageId?: string;
   draftBody?: string;
 }
 

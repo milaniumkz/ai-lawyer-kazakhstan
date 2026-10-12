@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { CasesService } from '../cases/cases.service';
 import { GeneratedDocument, TemplateRecord } from './templates.types';
 import { TEMPLATES_REPOSITORY } from './repositories/templates-repository.provider';
@@ -55,7 +56,8 @@ export class TemplatesService {
       if (!this.cases || !ownerUserId) throw new BadRequestException('CHAT_DRAFT_NOT_AVAILABLE');
       const messages = await this.cases.listMessages(input.caseId, ownerUserId);
       const latestAssistant = messages.filter(message => message.role === 'assistant').at(-1);
-      if (latestAssistant?.id !== input.fields.chatDraftMessageId || !latestAssistant.ai?.readyForDraft || !latestAssistant.ai.draftBody || latestAssistant.ai.missingFields.length || !latestAssistant.ai.citations.length) throw new BadRequestException('CHAT_DRAFT_REQUIRES_CLARIFICATION');
+      const preparedMessage = messages.find(message=>message.id===input.fields.chatDraftMessageId && message.role==='assistant');
+      if ((latestAssistant?.ai?.draftMessageId || latestAssistant?.id) !== input.fields.chatDraftMessageId || !latestAssistant?.ai?.readyForDraft || !preparedMessage?.ai?.readyForDraft || !latestAssistant.ai.draftBody || latestAssistant.ai.missingFields.length || !latestAssistant.ai.citations.length || !isDeepStrictEqual(preparedMessage.ai.facts,latestAssistant.ai.facts)) throw new BadRequestException('CHAT_DRAFT_REQUIRES_CLARIFICATION');
       return {
         id: randomUUID(), templateId: template.id, caseId: input.caseId,
         status: 'draft_requires_user_confirmation' as const, title: template.title,

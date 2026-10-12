@@ -569,7 +569,8 @@ class HttpWorkflowApi implements WorkflowApiPort {
       final latest = messages.lastOrNull;
       final ai = latest?['ai'];
       if (ai is Map && ai['readyForDraft'] == true) {
-        chatDraftMessageId = latest?['id'] as String?;
+        chatDraftMessageId =
+            ai['draftMessageId'] as String? ?? latest?['id'] as String?;
       }
     }
     final input = {

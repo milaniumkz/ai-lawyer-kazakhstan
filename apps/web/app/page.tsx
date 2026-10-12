@@ -39,7 +39,7 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
+type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
 type DocumentItem = {
   id?: string;
   name: string;
@@ -1721,7 +1721,7 @@ export default function WebHome() {
       const input = {
           templateId: template.id,
           caseId: remoteCaseId,
-          fields: aiConversationEnabled && chatDraft?.id ? {chatDraftMessageId: chatDraft.id} : {
+          fields: aiConversationEnabled && chatDraft?.id ? {chatDraftMessageId: chatDraft.ai?.draftMessageId ?? chatDraft.id} : {
             claimantName: profileName,
             respondentName: String(classification?.result.facts?.debtor_identity ?? classification?.result.facts?.employer ?? "Ответчик уточняется пользователем"),
             claimAmount: String(classification?.result.facts?.amount ?? classification?.result.facts?.paid_amount ?? "Сумма уточняется пользователем"),
