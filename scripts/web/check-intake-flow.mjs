@@ -150,7 +150,7 @@ try {
   assert(exported.data.drafts.some(item=>item.id===generated[0].id && item.body===edited));
   assert(exported.data.supportTickets.some(item=>item.payload.id===ticket.id));
   const replayKey=crypto.randomUUID();
-  const replayBody={role:'user',text:'Проверка повторного запроса'};
+  const replayBody={role:'user',text:'Проверка повторного запроса',mode:'manual'};
   const replayUrl=`${api}/api/v1/cases/${cases[0].id}/messages`;
   for(let n=0;n<2;n++) assert((await context.request.post(replayUrl,{data:replayBody,headers:{'idempotency-key':replayKey}})).ok());
   assert.equal((await request(`/cases/${cases[0].id}/messages`)).filter(item=>item.text===replayBody.text).length,1);

@@ -38,7 +38,10 @@ try {
     await input.fill(text);
     await page.getByRole('button',{name:'Отправить',exact:true}).click();
     const response=await completed;
-    assert(response.ok(),`Real OpenAI chat request: ${response.status()}`);
+    if (!response.ok()) {
+      const error = await response.json();
+      throw new Error(`Real OpenAI chat request: ${response.status()} ${error.error?.code || error.code || 'UNKNOWN_ERROR'}`);
+    }
     await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='',{timeout:180000});
     assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
     const cases=await request('/cases');

@@ -2,6 +2,11 @@ name: Deploy Web
 
 on:
   workflow_dispatch:
+    inputs:
+      repair_ai_schema:
+        description: Apply the additive AI conversation migration without reinstalling the app
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -11,7 +16,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  repair-ai-schema:
+    if: inputs.repair_ai_schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Back up and apply additive AI schema migration
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/ai-lawyer-kz
+          chmod 600 ~/.ssh/ai-lawyer-kz
+          ssh-keyscan -p "${SERVER_SSH_PORT:-22}" "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'bash /opt/ai-lawyer-kz/app/scripts/deploy/server-backup-postgres.sh'
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'sudo -u postgres psql -d ai_lawyer_kz -v ON_ERROR_STOP=1' < infra/db/migrations/0013_ai_conversation.sql
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/ai-lawyer-kz
+
   deploy:
+    if: '!inputs.repair_ai_schema'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
