@@ -1,0 +1,57 @@
+import {existsSync,readdirSync,writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {asc} from './app-store-connect-client.mjs';
+
+if(process.platform!=='darwin') throw new Error('Run this command on the Mac with Xcode, signing identities and the existing App Store Connect key.');
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+const mobile=resolve(root,'apps/mobile');
+const appId=process.env.ASC_APP_ID || '6810983647';
+const keyId=process.env.ASC_KEY_ID || 'G8J9YL2DH3';
+const issuer=process.env.ASC_ISSUER_ID || '69a6de93-c892-47e3-e053-5b8c7c11a4d1';
+const keyPath=process.env.ASC_PRIVATE_KEY_PATH || `${process.env.HOME}/.appstoreconnect/private_keys/AuthKey_${keyId}.p8`;
+if(!existsSync(keyPath)) throw new Error('The existing App Store Connect key was not found on this Mac. Do not paste it into chat.');
+const signing=execFileSync('security',['find-identity','-v','-p','codesigning'],{encoding:'utf8'});
+if(!signing.match(/[1-9]\d* valid identities found/)) throw new Error('No valid iOS signing identity is available in the Mac keychain.');
+const app=(await asc(`/apps/${appId}`)).data;
+if(app.attributes.bundleId!=='kz.milanium.lawyer') throw new Error('App Store bundle ID does not match the project.');
+const versions=(await asc(`/apps/${appId}/appStoreVersions?filter[platform]=IOS&limit=50`)).data;
+const editable=versions.find(version=>['PREPARE_FOR_SUBMISSION','DEVELOPER_REJECTED','REJECTED','METADATA_REJECTED'].includes(version.attributes.appStoreState));
+if(versions.some(version=>['WAITING_FOR_REVIEW','IN_REVIEW','PENDING_DEVELOPER_RELEASE','PENDING_APPLE_RELEASE'].includes(version.attributes.appStoreState))) throw new Error('An App Store version is already in review/release. Inspect it before replacing the selected build; this script does not cancel submissions.');
+const builds=(await asc(`/apps/${appId}/builds?sort=-uploadedDate&limit=200&fields[builds]=version,processingState`)).data;
+const numbers=builds.map(build=>Number(build.attributes.version)).filter(Number.isSafeInteger);
+if(!numbers.length) throw new Error('Cannot safely determine the next build number from App Store Connect.');
+const buildNumber=Math.max(...numbers)+1;
+const released=versions.filter(version=>/^\d+\.\d+(?:\.\d+)?$/.test(version.attributes.versionString)).sort((a,b)=>b.attributes.versionString.localeCompare(a.attributes.versionString,undefined,{numeric:true}))[0];
+const parts=(released?.attributes.versionString || '1.0.1').split('.').map(Number);
+const versionString=editable?.attributes.versionString || `${parts[0]}.${parts[1]}.${(parts[2] || 0)+1}`;
+console.log(JSON.stringify({app:app.attributes.name,bundleId:app.attributes.bundleId,version:versionString,buildNumber,action:process.argv.includes('--upload')?'build signed IPA, upload and select an editable review draft':'build signed IPA locally',submitForReview:false},null,2));
+const flutter=process.env.FLUTTER_BIN || (existsSync('/Volumes/PD1000/job/flutter/bin/flutter')?'/Volumes/PD1000/job/flutter/bin/flutter':'flutter');
+const run=(command,args,extra={})=>execFileSync(command,args,{cwd:mobile,stdio:'inherit',...extra});
+run(flutter,['pub','get']);
+run(flutter,['build','ipa','--release','--export-method=app-store',`--build-name=${versionString}`,`--build-number=${buildNumber}`,'--dart-define=API_BASE_URL=https://89-207-250-217.sslip.io']);
+const ipaDir=resolve(mobile,'build/ios/ipa');
+const ipaName=readdirSync(ipaDir).find(file=>file.endsWith('.ipa'));
+if(!ipaName) throw new Error('The signed IPA was not produced.');
+const ipa=resolve(ipaDir,ipaName);
+if(!process.argv.includes('--upload')) {console.log('Signed candidate ready: '+ipa);process.exit(0);}
+run('xcrun',['altool','--upload-app','--type','ios','--file',ipa,'--apiKey',keyId,'--apiIssuer',issuer],{env:{...process.env,API_PRIVATE_KEYS_DIR:dirname(keyPath)}});
+let uploaded;
+for(let attempt=0;attempt<80;attempt++) {
+ const matches=(await asc(`/apps/${appId}/builds?filter[version]=${buildNumber}&include=preReleaseVersion&limit=50`));
+ uploaded=matches.data.find(build=>matches.included?.some(version=>version.type==='preReleaseVersions' && version.id===build.relationships.preReleaseVersion.data.id && version.attributes.version===versionString));
+ const state=uploaded?.attributes.processingState;
+ console.log('Apple processing: '+(state || 'not listed yet'));
+ if(state==='VALID')break;
+ if(state==='FAILED'||state==='INVALID')throw new Error('Apple rejected processing of the uploaded binary.');
+ await new Promise(resolve=>setTimeout(resolve,15000));
+}
+if(uploaded?.attributes.processingState!=='VALID')throw new Error('Upload completed, but Apple processing has not finished. Check App Store Connect before selecting a build.');
+let draft=editable;
+if(!draft)draft=(await asc('/appStoreVersions',{method:'POST',body:JSON.stringify({data:{type:'appStoreVersions',attributes:{platform:'IOS',versionString,releaseType:'MANUAL'},relationships:{app:{data:{type:'apps',id:appId}}}}})})).data;
+await asc(`/appStoreVersions/${draft.id}/relationships/build`,{method:'PATCH',body:JSON.stringify({data:{type:'builds',id:uploaded.id}})});
+const report={appId,version:versionString,buildNumber,appStoreVersionId:draft.id,buildId:uploaded.id,processingState:'VALID',selectedInDraft:true,submittedForReview:false};
+writeFileSync(resolve(mobile,'build/ios/app-store-candidate.json'),JSON.stringify(report,null,2));
+console.log(JSON.stringify(report,null,2));
+console.log('New icon and native design are in the selected build. App Store review and release remain a separate step.');

@@ -5,19 +5,23 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const flutter = process.env.FLUTTER_BIN ?? '/Volumes/PD1000/job/flutter/bin/flutter';
-const udid = process.env.IOS_SIMULATOR_UDID ?? '3D5FB3C3-6125-4972-A95F-EF7FD060FEDB';
-const outDir = resolve(root, 'docs/project/app-store-screenshots/ios-simulator-native-full');
+const devices = JSON.parse(execFileSync('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], {encoding:'utf8'}));
+const available = Object.values(devices.devices).flat().find(device=>device.name.includes('iPhone') && device.isAvailable);
+const udid = process.env.IOS_SIMULATOR_UDID ?? available?.udid;
+if(!udid) throw new Error('No available iPhone simulator');
+const outDir = process.env.IOS_SCREENSHOT_DIR ?? resolve(root, 'docs/project/app-store-screenshots/ios-simulator-native-full');
 const appPath = resolve(root, 'apps/mobile/build/ios/iphonesimulator/Runner.app');
 
 const screens = [
-  ['01-login-native.png', '/login'],
-  ['02-home-native.png', '/'],
-  ['03-new-case-native.png', '/case/new'],
-  ['04-category-native.png', '/case/category'],
-  ['05-chat-native.png', '/case/chat'],
-  ['06-documents-native.png', '/documents'],
-  ['07-legal-native.png', '/legal'],
-  ['08-subscription-native.png', '/subscription'],
+  ['01-onboarding.png','/onboarding'],['02-login.png','/login'],['03-register.png','/register'],
+  ['04-otp.png','/otp'],['05-biometric.png','/biometric'],['06-home.png','/'],
+  ['07-profile.png','/profile'],['08-settings.png','/settings'],['09-help.png','/help'],
+  ['10-cases.png','/cases'],['11-case.png','/case/details'],['12-new-case.png','/case/new'],
+  ['13-category.png','/case/category'],['14-chat.png','/case/chat'],['15-documents.png','/documents'],
+  ['16-document-upload.png','/documents/add'],['17-analysis.png','/documents/analysis'],
+  ['18-deadlines.png','/deadlines'],['19-legal.png','/legal'],
+  ['20-claim.png','/workflow/pretrial-claim'],['21-claim-draft.png','/workflow/pretrial-claim/draft'],
+  ['22-claim-send.png','/workflow/pretrial-claim/send'],['23-subscription.png','/subscription'],
 ];
 
 function run(command, args, options = {}) {

@@ -152,6 +152,8 @@ async function main() {
           waitUntil: "domcontentloaded",
         });
         await page.locator(".appShell").waitFor({ state: "visible", timeout: 10000 });
+        await page.waitForFunction(view => document.querySelector(".appShell")?.getAttribute("data-view") === view, view, {timeout:15000});
+        await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(150);
         const result = await page.evaluate(() => {
           const app = document.querySelector(".appShell")?.getBoundingClientRect();

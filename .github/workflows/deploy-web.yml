@@ -11,6 +11,10 @@ on:
         description: Verify the existing deployed site without reinstalling it
         type: boolean
         default: false
+      ios_build_only:
+        description: Build an unsigned iOS candidate and native iPhone previews for review
+        type: boolean
+        default: false
       visual_only:
         description: Verify manual workflows and all responsive pages for a visual-only release; skip unrelated live OpenAI checks
         type: boolean
@@ -24,10 +28,56 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ inputs.inspect_sources && 'ai-lawyer-source-inspection' || 'ai-lawyer-server-deploy' }}
+  group: ${{ inputs.ios_build_only && 'ai-lawyer-ios-build' || inputs.inspect_sources && 'ai-lawyer-source-inspection' || 'ai-lawyer-server-deploy' }}
   cancel-in-progress: false
 
 jobs:
+  ios-candidate:
+    if: inputs.ios_build_only
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.6"
+          channel: stable
+          cache: true
+      - name: Check configured Apple access without exposing credentials
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node -e 'console.log(JSON.stringify({appStorePrivateKeyConfigured:Boolean(process.env.ASC_PRIVATE_KEY),keyIdConfigured:Boolean(process.env.ASC_KEY_ID),issuerConfigured:Boolean(process.env.ASC_ISSUER_ID)}))'
+      - name: Build unsigned release candidate with the new AIZAN icon
+        working-directory: apps/mobile
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter build ios --release --no-codesign --build-name=1.0.2 --build-number=8 --dart-define=API_BASE_URL=https://89-207-250-217.sslip.io
+          ditto -c -k --keepParent build/ios/iphoneos/Runner.app "$RUNNER_TEMP/aizan-ios-unsigned.app.zip"
+          /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' build/ios/iphoneos/Runner.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' build/ios/iphoneos/Runner.app/Info.plist
+          sips -g pixelWidth -g pixelHeight ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+      - name: Capture all native screens in the iPhone simulator
+        env:
+          IOS_SCREENSHOT_DIR: ${{ runner.temp }}/aizan-native-previews
+        run: |
+          export FLUTTER_BIN="$(command -v flutter)"
+          node scripts/mobile/capture-ios-simulator-screenshots.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aizan-ios-candidate-and-previews
+          path: |
+            ${{ runner.temp }}/aizan-ios-unsigned.app.zip
+            ${{ runner.temp }}/aizan-native-previews
+          if-no-files-found: warn
+          retention-days: 14
+
   inspect-official-sources:
     if: inputs.inspect_sources
     runs-on: ubuntu-latest
@@ -121,7 +171,7 @@ jobs:
         run: rm -f ~/.ssh/ai-lawyer-kz
 
   deploy:
-    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only && !inputs.inspect_sources }}
+    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only && !inputs.inspect_sources && !inputs.ios_build_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
