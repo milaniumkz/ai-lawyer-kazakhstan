@@ -46,6 +46,7 @@ export interface AiConversation {
   citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string }>;
   readyForDraft: boolean;
   factsConfirmed?: boolean;
+  requiresDocument?: boolean;
   draftMessageId?: string;
   draftBody?: string;
 }

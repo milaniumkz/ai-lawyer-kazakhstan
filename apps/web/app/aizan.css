@@ -438,3 +438,6 @@ html { scroll-padding-bottom: 140px; }
 .aizanComposerMicrophone svg { width: 24px; height: 24px; }
 .aizanComposerMicrophone.active { background: #744818; box-shadow: 0 0 0 3px #d9a53533; }
 .voicePlayback { color-scheme: dark; }
+
+.aizanRecordingStop { width: 15px; height: 15px; border-radius: 3px; background: currentColor; }
+.aizanRecordingTimer { position: absolute; right: 64px; bottom: 24px; font-size: 12px; color: var(--gold); }

@@ -100,7 +100,13 @@ try {
   assert.equal(await page.locator('.appShell').getAttribute('data-view'), 'home');
   // Exercise real bytes through the browser and authenticated API; no upload success is mocked.
   const pdf = Buffer.from('%PDF-1.4\n% AIZAN synthetic QA file ' + crypto.randomUUID() + '\n%%EOF');
-  await page.locator('.aizanHomeActions input[type=file]').setInputFiles({ name: 'synthetic-qa.pdf', mimeType: 'application/pdf', buffer: pdf });
+  assert.equal(await page.locator('.aizanHomeActions input[type=file]').count(), 0);
+  await page.evaluate(() => { location.hash = 'documentUpload'; });
+  await page.locator('.appShell[data-view="documentUpload"]').waitFor();
+  await page.locator('input[type=file]').first().setInputFiles({ name: 'synthetic-qa.pdf', mimeType: 'application/pdf', buffer: pdf });
+  await page.locator('.appShell[data-view="documentCheck"]').waitFor();
+  await page.evaluate(() => { location.hash = 'home'; });
+  await page.locator('.appShell[data-view="home"]').waitFor();
   await page.getByText('synthetic-qa.pdf: Файл сохранён · требуется проверка', { exact: true }).waitFor();
   const files = await request(`/cases/${cases[0].id}/documents`);
   assert.equal(files.length, 1);

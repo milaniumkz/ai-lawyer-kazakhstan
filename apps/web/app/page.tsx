@@ -39,8 +39,9 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
+type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
 type DocumentItem = {
+  uploadRequestId?: string;
   id?: string;
   name: string;
   status: string;
@@ -1407,6 +1408,7 @@ export default function WebHome() {
     if (documents.some(item => item.sha256 === sha256 && item.id)) { setSyncState("Этот файл уже сохранён в деле"); return; }
     const localDoc: DocumentItem = {
       name: file.name,
+      uploadRequestId: messages.filter(message => message.role === "assistant").at(-1)?.id || `turn-${messages.length}`,
       status: "Загрузка в API...",
       sizeBytes: file.size,
       source,
@@ -2044,8 +2046,10 @@ export default function WebHome() {
           setSpeechStatus("Речь распознана браузером");
         }
       };
-      recognition.onerror = () =>
+      recognition.onerror = () => {
         setSpeechStatus("Live распознавание недоступно, аудио сохранено");
+        if (view === "home") setSyncState("Не удалось распознать речь. Попробуйте ещё раз или напишите ответ.");
+      };
       recognition.start();
       speechRecognitionRef.current = recognition;
       setSpeechStatus("Live распознавание включено");
@@ -2201,6 +2205,7 @@ export default function WebHome() {
           : `Transcript job готов: ${job.id.slice(0, 8)}`,
       );
       if (view !== "home") go("category");
+      else if (!job.transcript && !recognizedText) setSyncState("Не удалось распознать речь. Попробуйте ещё раз или напишите ответ.");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -4504,6 +4509,10 @@ export default function WebHome() {
       );
     }
 
+    const latestAssistant = messages.filter(message => message.role === "assistant").at(-1);
+    const documentRequestId = latestAssistant?.id || `turn-${messages.length}`;
+    const documentRequested = aiConversationEnabled ? latestAssistant?.ai?.requiresDocument === true : /(?:прикрепите|загрузите|приложите)\s+(?:[^.!?\n]{0,60})(?:документ|договор|расписк|файл|переписк|чек)/i.test(latestAssistant?.text || "");
+    const showDocumentUpload = documentRequested && !classificationBusy && !documents.some(document => document.id && document.uploadRequestId === documentRequestId);
     return (
       <section className={`homeScreen aizanHome ${homeConversationOpen ? "aizanHomeConversing" : ""}`}>
         <button className="aizanMicrophone" disabled={voiceBusy || classificationBusy} aria-label="Рассказать проблему" onClick={() => {
@@ -4521,7 +4530,7 @@ export default function WebHome() {
             {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article.replace(/^статья\s*/i,'')} ↗</a>)}</div>)}
           </div>
           {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
-            <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
+            {showDocumentUpload && <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>}
             {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : "Сохранить претензию как документ"}</button>}
           </div>}
           {aiConversationEnabled && generatedClaimId && generatedClaimBody && <section className="aizanInlineDraft">
@@ -4540,17 +4549,15 @@ export default function WebHome() {
             </>}
             {documents.length > 0 && <div aria-label="Прикреплённые документы">{documents.map((document) => <p key={document.id ?? document.sha256 ?? document.name}>{document.name}: {document.status}</p>)}<p>Файлы сохраняются на сервере. Автоматический OCR пока недоступен — проверьте поля вручную.</p></div>}
             {remoteCaseId && <div className="aizanHomeActions">
-              <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
+              {showDocumentUpload && <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>}
               <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
             </div>}
           </div>}
           <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
             {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
             <label htmlFor="home-problem">{aiConversationEnabled ? "Ответьте помощнику или задайте вопрос" : classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
-            <div className="aizanChatInput"><textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}><DesignIcon name="microphone" /></button></div>
-            {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
-            {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}
-            {(recording || audioUrl || voiceBusy) && <small role="status">{speechStatus}</small>}
+            <div className="aizanChatInput"><textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}>{recording ? <span className="aizanRecordingStop" aria-hidden="true" /> : <DesignIcon name="microphone" />}</button>{recording && <span className="aizanRecordingTimer" role="status">{formatDuration(recordingSeconds)}</span>}</div>
+            {voiceBusy && <small role="status">Распознаю голос…</small>}
             <button type="submit" className="primary wide" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || !homeInput.trim()}>{!aiConfigLoaded ? "Подключаю помощника…" : classificationBusy ? "Анализирую…" : "Отправить"}</button>
           </form>
         </div>}

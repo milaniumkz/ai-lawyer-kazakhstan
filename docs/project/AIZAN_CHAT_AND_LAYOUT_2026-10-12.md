@@ -56,3 +56,9 @@ Docker Compose, PostgreSQL с перезапуском, настоящий ру�
 The assistant now explicitly asks one short clarification at a time, retains already supplied facts and omits premature summaries of unknown fields. A regression check covers the screenshot's numbered question followed by an unknown-fields summary. The complete facts summary still appears before confirmation and claim composition.
 
 The home composer includes an accessible microphone beside the text field, with a recording state and stop action. Empty recording blobs do not create playback URLs; successful message submission clears the previous recording. Local Chromium checks passed at widths 320, 390, 768 and 1920: microphone visibility, no overflow, denied microphone access preserves the reply, no empty player, conversation stays on home. Full check passed (113 API, 54 Flutter, 7 AI tests); build and Docker configuration passed. Real microphone hardware is not available in the cloud browser.
+
+### Contextual attachments and compact dictation
+
+The conversation response now includes `requiresDocument`, enabled only when the assistant asks for a specific document. The home upload control follows that request and disappears once the requested file is saved or the assistant moves to another question. Ordinary intake does not show a permanent attachment button. Dedicated document screens remain available for managing files.
+
+Home dictation uses the inline microphone and square stop control, with elapsed time inside the input. The lower recording controls and audio player are removed from home; recognized speech remains editable text. Recognition failures provide a retry/type message. Chromium UI fixtures verified ordinary/requested/completed attachment states and real MediaRecorder start/stop with synthetic audio, without a home audio player. Full check, build and Docker configuration passed. The deployed intake test now exercises the dedicated document screen for an unsolicited upload.
