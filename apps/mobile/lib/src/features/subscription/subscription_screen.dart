@@ -8,6 +8,7 @@ import '../../api/session_http.dart' as http;
 import '../../api/api_contract.dart';
 import '../auth/auth_screens.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/aizan_design.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key, this.billingApi});
@@ -78,7 +79,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Подписка')),
+      appBar: const AizanHeader(compact: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -93,7 +94,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             const SizedBox(height: 16),
             _CurrentPlanCard(plan: plan),
             const SizedBox(height: 18),
-            Text('Использование в августе',
+            Text('Использование',
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge

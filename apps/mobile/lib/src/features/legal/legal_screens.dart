@@ -10,6 +10,7 @@ import '../../api/session_http.dart' as http;
 import '../../api/api_contract.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/aizan_design.dart';
 
 class LegalSourcesScreen extends StatefulWidget {
   const LegalSourcesScreen({super.key, this.legalApi});
@@ -111,7 +112,7 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Нормы права')),
+      appBar: const AizanHeader(compact: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -322,7 +323,7 @@ class _DeadlinesScreenState extends State<DeadlinesScreen>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Сроки')),
+      appBar: const AizanHeader(compact: true),
       bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
       body: SafeArea(
           child: ListView(padding: const EdgeInsets.all(24), children: [
