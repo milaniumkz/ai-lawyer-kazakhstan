@@ -11,6 +11,10 @@ on:
         description: Verify the existing deployed site without reinstalling it
         type: boolean
         default: false
+      visual_only:
+        description: Verify manual workflows and all responsive pages for a visual-only release; skip unrelated live OpenAI checks
+        type: boolean
+        default: false
       inspect_sources:
         description: Read-only diagnosis of official text retrieval on the server
         type: boolean
@@ -80,7 +84,13 @@ jobs:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
           WEB_TEST_SECURE_AUTH: "1"
         run: npm run test:web-intake
+      - name: Verify deployed responsive pages
+        if: inputs.visual_only
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: npm run test:web-responsive
       - name: Verify live OpenAI conversation and source-backed claim
+        if: ${{ !inputs.visual_only }}
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
         run: node scripts/web/check-openai-conversation.mjs
@@ -204,7 +214,13 @@ jobs:
           npx playwright install --with-deps chromium
           npm run test:web-intake
 
+      - name: Verify deployed responsive pages
+        if: inputs.visual_only
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: npm run test:web-responsive
       - name: Verify live OpenAI conversation and source-backed claim
+        if: ${{ !inputs.visual_only }}
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
         run: node scripts/web/check-openai-conversation.mjs

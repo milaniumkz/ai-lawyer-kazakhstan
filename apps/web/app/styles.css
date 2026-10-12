@@ -4495,6 +4495,10 @@ progress {
   text-align: left;
 }
 
+.profileCards button:not(:has(> span)) {
+  grid-template-columns: minmax(0, 1fr) 24px;
+}
+
 .profileCards button > span,
 .helpGrid span {
   display: grid;

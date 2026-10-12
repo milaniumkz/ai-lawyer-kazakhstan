@@ -466,3 +466,49 @@ html { scroll-padding-bottom: 140px; }
 .aizanComposerAttach { position: absolute; left: 10px; bottom: 10px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--gold); }
 .aizanComposerAttach svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .aizanSrOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Menu text occupies the flexible column, regardless of whether a row has an icon. */
+.appShell[data-design="aizan"][data-view] .profileCards button { grid-template-columns: 44px minmax(0, 1fr) auto; min-height: 76px; gap: 12px; padding: 14px 16px; border-radius: 16px; }
+.appShell[data-design="aizan"][data-view] .profileDataCards button { grid-template-columns: minmax(0, 1fr) 24px; }
+.appShell[data-design="aizan"][data-view] .profileCards p { min-width: 0; gap: 5px; text-align: left; }
+.appShell[data-design="aizan"][data-view] .profileCards b { font-size: 16px; line-height: 1.4; color: var(--text); overflow-wrap: normal; word-break: normal; }
+.appShell[data-design="aizan"][data-view] .profileCards small { font-size: 13px; line-height: 1.45; overflow-wrap: normal; word-break: normal; }
+.appShell[data-design="aizan"][data-view] .profileCards em { font-size: 16px; justify-self: end; font-style: normal; }
+.appShell[data-design="aizan"][data-view] .profileCards button > span { width: 40px; height: 40px; font-size: 14px; }
+.appShell[data-design="aizan"][data-view="profile"] .goldSection { font-family: AizanSans, sans-serif; font-size: 20px; line-height: 1.4; margin: 24px 0 12px; }
+@media (max-width: 360px) { .appShell[data-design="aizan"][data-view] .profileCards button { padding: 12px; gap: 8px; } .appShell[data-design="aizan"][data-view] .profileCards b { font-size: 15px; } }
+
+.appShell[data-design="aizan"][data-view] .profileCards button:not(:has(> span)) { grid-template-columns: minmax(0, 1fr) 24px; }
+.appShell[data-design="aizan"][data-view="profile"] .profileHero h2 { font-family: AizanSans, sans-serif; font-size: 20px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view="profile"] .profileHero p { font-size: 13px; line-height: 1.5; }
+.appShell[data-design="aizan"][data-view="profile"] .claimProgress { padding: 14px; border-radius: 14px; }
+.appShell[data-design="aizan"][data-view="profile"] .claimProgress :is(span, b) { font-size: 13px; line-height: 1.5; }
+.appShell[data-design="aizan"] progress { appearance: none; height: 7px; border: 0; border-radius: 8px; overflow: hidden; background: #715a3433; accent-color: #e5b658; }
+.appShell[data-design="aizan"] progress::-webkit-progress-bar { background: #715a3433; border-radius: 8px; }
+.appShell[data-design="aizan"] progress::-webkit-progress-value { background: #e5b658; border-radius: 8px; }
+.appShell[data-design="aizan"] progress::-moz-progress-bar { background: #e5b658; border-radius: 8px; }
+
+.appShell[data-design="aizan"][data-view] .contentPanel small { font-size: 12px; line-height: 1.45; }
+.appShell[data-design="aizan"][data-view="analysis"] .docHint { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 16px; height: auto; }
+.appShell[data-design="aizan"][data-view="analysis"] .docHint p { font-size: 14px; line-height: 1.5; min-width: 0; }
+.appShell[data-design="aizan"][data-view="analysis"] .docHint b { grid-column: 2; font-size: 15px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view] .settingsGroup :is(button, label) { min-height: 56px; padding: 14px; font-size: 14px; line-height: 1.45; }
+.appShell[data-design="aizan"][data-view] .settingsGroup :is(span, em) { font-size: 14px; line-height: 1.45; }
+.appShell[data-design="aizan"][data-view] .settingsGroup em { text-align: right; }
+.appShell[data-design="aizan"][data-view] .usageBars > div { min-height: 70px; padding: 14px; border-radius: 14px; }
+.appShell[data-design="aizan"][data-view] .usageBars :is(span, b, em) { font-size: 13px; line-height: 1.5; }
+.appShell[data-design="aizan"][data-view] .planCards button { min-height: 140px; height: auto; padding: 16px; border-radius: 16px; }
+.appShell[data-design="aizan"][data-view] .planCards :is(b, strong) { font-size: 16px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view] .planCards :is(li, small) { font-size: 13px; line-height: 1.55; }
+.appShell[data-design="aizan"][data-view] .helpGrid button { min-height: 100px; height: auto; padding: 12px; grid-template-columns: 28px minmax(0, 1fr); align-items: start; }
+.appShell[data-design="aizan"][data-view] .helpGrid b { font-size: 14px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view] .helpGrid small { font-size: 12px; line-height: 1.45; }
+.appShell[data-design="aizan"][data-view] .supportOnline { min-height: 120px; height: auto; padding: 14px; gap: 10px; }
+.appShell[data-design="aizan"][data-view] .supportOnline strong { font-size: 16px; line-height: 1.4; }
+.appShell[data-design="aizan"][data-view] .supportOnline :is(span, p) { font-size: 13px; line-height: 1.5; }
+.appShell[data-design="aizan"][data-view] .supportOnline button { min-height: 44px; font-size: 14px; }
+.appShell[data-design="aizan"][data-view] .normCard :is(p, li) { font-size: 13px; line-height: 1.5; }
+
+.appShell[data-design="aizan"][data-view] .legalSearch { min-height: 52px; height: auto; grid-template-columns: 24px minmax(0, 1fr) 36px; gap: 8px; padding: 4px 10px; }
+.appShell[data-design="aizan"][data-view] .legalSearch input { min-height: 40px; font-size: 14px; }
+.appShell[data-design="aizan"][data-view] .legalSearch button { display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px; padding: 0; font-size: 22px; line-height: 1; }

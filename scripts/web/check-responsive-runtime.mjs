@@ -1,4 +1,8 @@
+import {mkdirSync} from 'node:fs';
+import {join} from 'node:path';
 const baseUrl = process.env.WEB_BASE_URL;
+const captureDir=process.env.WEB_LAYOUT_CAPTURE_DIR;
+if(captureDir)mkdirSync(captureDir,{recursive:true});
 
 if (!baseUrl) {
   console.log("web responsive runtime skipped: WEB_BASE_URL is not set");
@@ -164,15 +168,18 @@ async function main() {
             deviceWidth: device?.width ?? 0,
             panelWidth: panel?.width ?? 0,
             bottomNavDisplay: bottomNav ? getComputedStyle(bottomNav).display : "missing",
+            narrowText: Array.from(document.querySelectorAll('.profileCards button p, .docHint p')).filter(element=>{const width=element.getBoundingClientRect().width;return width>0 && width<100 && (element.textContent || '').length>20;}).map(element=>element.textContent?.trim()),
             brokenButtons: Array.from(document.querySelectorAll('.appShell button')).filter(button => {
               const style = getComputedStyle(button);
               const bounds = button.getBoundingClientRect();
               return bounds.width > 0 && bounds.height > 0 && style.visibility !== 'hidden' &&
                 Number(style.opacity) > 0 &&
-                (style.backgroundColor === 'rgb(239, 239, 239)' || button.scrollWidth > button.clientWidth + 5);
+                (style.backgroundColor === 'rgb(239, 239, 239)' || button.scrollWidth > button.clientWidth + 5 || (!button.closest('.bottomNav') && button.scrollHeight > button.clientHeight + 5));
             }).map(button => button.textContent?.trim().slice(0, 80)),
           };
         });
+        if(captureDir && [390,1920].includes(viewport.width)) await page.screenshot({path:join(captureDir,`${viewport.width}-${view}.png`),fullPage:true});
+        if(result.narrowText.length)fail(`${viewport.name}/${view}: compressed text columns: ${result.narrowText.join(', ')}`);
         const maxScroll = Math.max(result.bodyScrollWidth, result.docScrollWidth);
         if (result.view !== view) fail(`${viewport.name}/${view}: rendered ${result.view} instead of the requested screen`);
         if (maxScroll > viewport.width + 2) {
