@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ai-lawyer-server-deploy
+  group: ${{ inputs.inspect_sources && 'ai-lawyer-source-inspection' || 'ai-lawyer-server-deploy' }}
   cancel-in-progress: false
 
 jobs:
