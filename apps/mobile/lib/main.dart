@@ -31,7 +31,6 @@ Future<void> main() async {
     defaultValue: '/login',
   );
   final launchRoute = nativePreviewRoute(initialRoute);
-  if (nativePreviewEnabled) debugPrint('AIZAN_PREVIEW_ROUTE=$launchRoute');
   runApp(ProviderScope(
       child: AiLawyerApp(
           initialLocation: saved == null
@@ -39,6 +38,11 @@ Future<void> main() async {
               : AuthRuntime.profileComplete
                   ? '/'
                   : '/profile')));
+  if (nativePreviewEnabled) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      confirmNativePreviewRoute(launchRoute);
+    });
+  }
 }
 
 GoRouter _buildRouter(String initialLocation) => GoRouter(

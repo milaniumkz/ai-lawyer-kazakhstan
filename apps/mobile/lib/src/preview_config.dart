@@ -8,3 +8,10 @@ const nativePreviewEnabled =
 String nativePreviewRoute(String fallback) => nativePreviewEnabled && !kIsWeb
     ? Platform.environment['AIZAN_PREVIEW_ROUTE'] ?? fallback
     : fallback;
+
+Future<void> confirmNativePreviewRoute(String route) async {
+  if (!nativePreviewEnabled || kIsWeb) return;
+  final path = Platform.environment['AIZAN_PREVIEW_CONFIRMATION_PATH'];
+  if (path == null) throw StateError('Native preview confirmation path missing');
+  await File(path).writeAsString(route, flush: true);
+}

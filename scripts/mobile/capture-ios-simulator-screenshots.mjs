@@ -1,5 +1,5 @@
-import { execFileSync, spawn } from 'node:child_process';
-import { mkdirSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
 
@@ -58,27 +58,24 @@ tryRun('xcrun', ['simctl', 'terminate', udid, 'kz.milanium.lawyer']);
 tryRun('xcrun', ['simctl', 'uninstall', udid, 'kz.milanium.lawyer']);
 run('xcrun', ['simctl', 'install', udid, appPath]);
 
+const dataContainer = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'kz.milanium.lawyer', 'data'], {encoding:'utf8'}).trim();
+const confirmationPath = join(dataContainer, 'tmp', 'aizan-preview-route.txt');
 for (const [fileName, route] of screens) {
-  const launched = spawn('xcrun', ['simctl', 'launch', '--console-pty', udid, 'kz.milanium.lawyer'], {
-    cwd: root,
-    env: {...process.env, SIMCTL_CHILD_AIZAN_PREVIEW_ROUTE: route},
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  rmSync(confirmationPath, {force:true});
   try {
-    await new Promise((resolve, reject) => {
-      let output = '';
-      const timeout = setTimeout(() => reject(new Error(`Native route did not confirm: ${route}`)), 30000);
-      const inspect = chunk => {
-        output = (output + chunk.toString()).slice(-16000);
-        if (output.includes(`AIZAN_PREVIEW_ROUTE=${route}\n`) || output.includes(`AIZAN_PREVIEW_ROUTE=${route}\r`)) {
-          clearTimeout(timeout); resolve();
-        }
-      };
-      launched.stdout.on('data', inspect);
-      launched.stderr.on('data', inspect);
-      launched.once('error', error => {clearTimeout(timeout);reject(error);});
-      launched.once('exit', code => {clearTimeout(timeout);reject(new Error(`Simulator launch ended before route confirmation (${code})`));});
+    run('xcrun', ['simctl', 'launch', udid, 'kz.milanium.lawyer'], {
+      env: {...process.env, SIMCTL_CHILD_AIZAN_PREVIEW_ROUTE: route,
+        SIMCTL_CHILD_AIZAN_PREVIEW_CONFIRMATION_PATH: confirmationPath},
     });
+    const deadline = Date.now() + 30000;
+    let confirmed = false;
+    while (Date.now() < deadline) {
+      if (existsSync(confirmationPath) && readFileSync(confirmationPath, 'utf8') === route) {
+        confirmed = true; break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    if (!confirmed) throw new Error(`Native route did not confirm after its first frame: ${route}`);
     await new Promise(resolve => setTimeout(resolve, 5000));
     const outPath = join(outDir, fileName);
     rmSync(outPath, { force: true });
@@ -86,7 +83,6 @@ for (const [fileName, route] of screens) {
     console.log(`Verified native route ${route}`);
   } finally {
     tryRun('xcrun', ['simctl', 'terminate', udid, 'kz.milanium.lawyer']);
-    launched.kill();
   }
 }
 
