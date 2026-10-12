@@ -17,6 +17,9 @@ async function open(){const context=await NestFactory.createApplicationContext(A
   await db.query("INSERT INTO users (id,email,roles,consent_version) VALUES ($1,$2,ARRAY['user'],'qa')",[owner,`durability-${owner}@example.invalid`]);
   const legalCase=await app.get(CasesService).createCase({ownerUserId:owner,problemText:'Синтетическая проверка восстановления документа'});
   const aiMessageId=randomUUID();
+  const photoMessageId=randomUUID();
+  const photoAttachments=[{id:randomUUID(),fileName:"synthetic-photo.png",mimeType:"image/png",sizeBytes:1234}];
+  await db.query("INSERT INTO messages (id,case_id,role,text,attachments) VALUES ($1,$2,$3,$4,$5::jsonb)",[photoMessageId,legalCase.id,"user","Synthetic attachment persistence fixture",JSON.stringify(photoAttachments)]);
   const aiContext={provider:'openai',model:'synthetic-persistence-fixture',facts:{respondentName:'QA recipient'},missingFields:[],readyForDraft:true,draftBody:'Синтетический сохранённый проект из чата',citations:[{title:'QA fixture only',article:'1',url:'https://adilet.zan.kz/rus/docs/test',effectiveDate:'2026-01-01'}]};
   await db.query('INSERT INTO messages (id,case_id,role,text,ai_context) VALUES ($1,$2,$3,$4,$5::jsonb)',[aiMessageId,legalCase.id,'assistant','Synthetic persistence fixture, no provider call',JSON.stringify(aiContext)]);
   const input={templateId:'tpl-pretrial-claim-ru-v2',caseId:legalCase.id,fields:{claimantName:'QA',respondentName:'QA recipient',claimAmount:'1000',claimReason:'Synthetic test only',deadlineDate:'To be confirmed'}};
@@ -28,6 +31,7 @@ async function open(){const context=await NestFactory.createApplicationContext(A
   await app.close();app=await open();jobs=app.get(GenerationJobsService);db=app.get(DatabaseService);
   const restoredMessages=await app.get(CasesService).listMessages(legalCase.id,owner);
   assert.deepEqual(restoredMessages.find(message=>message.id===aiMessageId).ai,aiContext);
+  assert.deepEqual(restoredMessages.find(message=>message.id===photoMessageId).attachments,photoAttachments);
   const chatDoc=await app.get(TemplatesService).buildDocument({templateId:'tpl-pretrial-claim-ru-v2',caseId:legalCase.id,fields:{chatDraftMessageId:aiMessageId}},owner);
   assert(chatDoc.body.includes(aiContext.draftBody));
   await jobs.processNext();const restored=await jobs.get(queued.id,owner);assert.equal(restored.status,'completed');assert.equal(restored.document.id,queued.id);

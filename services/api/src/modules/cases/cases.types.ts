@@ -36,6 +36,7 @@ export interface MessageRecord {
   text: string;
   createdAt: string;
   ai?: AiConversation;
+  attachments?: Array<{id:string;fileName:string;mimeType:string;sizeBytes:number}>;
 }
 
 export interface AiConversation {

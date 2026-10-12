@@ -441,3 +441,28 @@ html { scroll-padding-bottom: 140px; }
 
 .aizanRecordingStop { width: 15px; height: 15px; border-radius: 3px; background: currentColor; }
 .aizanRecordingTimer { position: absolute; right: 64px; bottom: 24px; font-size: 12px; color: var(--gold); }
+
+.aizanHomeComposer .aizanChatInput { border: 1px solid var(--line); border-radius: 20px; background: #160e06; padding-bottom: 54px; }
+.aizanHomeComposer .aizanChatInput textarea { display: block; border: 0; background: transparent; padding: 14px; min-height: 68px; resize: none; outline-offset: -3px; }
+.aizanComposerMicrophone { right: 62px; bottom: 10px; }
+.aizanRecordingTimer { right: 114px; bottom: 25px; }
+.aizanComposerSend { position: absolute; right: 10px; bottom: 10px; width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: #e8bc63; color: #160e06; }
+.aizanComposerSend svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.aizanComposerSend:disabled { opacity: .4; }
+.aizanAttachmentList { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 10px 0; }
+.aizanPendingAttachment { position: relative; max-width: 100%; padding: 8px 32px 8px 8px; border: 1px solid var(--line); border-radius: 12px; text-align: left; }
+.aizanPendingAttachment > button { position: absolute; right: 4px; top: 4px; border: 0; background: transparent; padding: 4px; color: var(--gold); }
+.aizanChatAttachment { display: flex; gap: 10px; align-items: center; max-width: 100%; text-align: left; margin: 6px 0; }
+.aizanChatAttachment > span:last-child { min-width: 0; }
+.aizanChatAttachment strong { display: block; overflow-wrap: anywhere; font-size: 13px; }
+.aizanChatAttachment small { display: block; color: var(--muted); font-size: 12px; }
+.aizanAttachmentPreview { width: 56px; height: 56px; flex-shrink: 0; border-radius: 8px; background-size: cover; background-position: center; }
+.aizanAttachmentFileIcon { font-size: 28px; color: var(--gold); }
+.aizanTyping { display: flex; flex-direction: column; gap: 8px; }
+.aizanTypingDots { display: inline-block; animation: aizanTypingPulse 1.2s ease-in-out infinite; }
+@keyframes aizanTypingPulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .aizanTypingDots { animation: none; } }
+
+.aizanComposerAttach { position: absolute; left: 10px; bottom: 10px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--gold); }
+.aizanComposerAttach svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.aizanSrOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

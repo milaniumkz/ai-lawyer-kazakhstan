@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { DatabaseService } from '../../common/database/database.service';
 import { ChatProgressStatus, LegalCaseRecord, MessageRecord, TranscriptJob } from './cases.types';
@@ -8,6 +8,10 @@ import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyByTaxonomy, getLegalCategory, 
 import { CASES_REPOSITORY } from './repositories/cases-repository.provider';
 import { CasesRepository } from './repositories/cases.repository';
 import { classifyWithProvider } from './structured-classifier.adapter';
+import { DOCUMENTS_REPOSITORY } from '../documents/repositories/documents-repository.provider';
+import type { DocumentsRepository } from '../documents/repositories/documents.repository';
+import { documentStorageRoot } from '../documents/document-storage';
+import type { ConversationAttachment } from '../legal/openai-conversation.adapter';
 import { LegalService } from '../legal/legal.service';
 
 const PROGRESS: ChatProgressStatus[] = ['transcribing', 'classifying', 'retrieving_sources', 'validating', 'generating', 'ready'];
@@ -28,6 +32,7 @@ export class CasesService {
     @Optional() @Inject(CASES_REPOSITORY) private readonly repository?: CasesRepository,
     private readonly db?: DatabaseService,
     @Optional() private readonly legal?: LegalService,
+    @Optional() @Inject(DOCUMENTS_REPOSITORY) private readonly documentsRepository?: DocumentsRepository,
   ) {}
 
   async createCase(input: { ownerUserId: string; profileId?: string; problemText: string; classificationId?: string }, idempotencyKey?: string) {
@@ -296,10 +301,13 @@ export class CasesService {
     return record;
   }
 
-  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string; mode?: 'ai' | 'manual' }, ownerUserId?: string, key?: string) {
+  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string; mode?: 'ai' | 'manual'; attachmentIds?: string[] }, ownerUserId?: string, key?: string) {
     const legalCase = await this.getCase(caseId, ownerUserId);
     if (input.role !== 'user') throw new BadRequestException('USER_MESSAGE_REQUIRED');
     if (typeof input.text !== 'string' || !input.text.trim() || input.text.length>20000) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
+    const attachmentIds = input.attachmentIds ?? [];
+    if (!Array.isArray(attachmentIds) || attachmentIds.length > 5 || attachmentIds.some(id => typeof id !== 'string' || !/^[a-f0-9-]{36}$/i.test(id)) || new Set(attachmentIds).size !== attachmentIds.length) throw new BadRequestException('MESSAGE_ATTACHMENTS_INVALID');
+    if (attachmentIds.length && input.mode === 'manual') throw new BadRequestException('ATTACHMENTS_REQUIRE_AI_CHAT');
     if(key && key.length>160) throw new BadRequestException('IDEMPOTENCY_KEY_INVALID');
     const stableId = (suffix:string) => {
       if(!key) return randomUUID();
@@ -309,13 +317,29 @@ export class CasesService {
     const message: MessageRecord = { id: stableId('user'), caseId, role: 'user', text: input.text.trim(), createdAt: new Date().toISOString() };
     const existing = this.repository?.findMessage ? await this.repository.findMessage(message.id) : (this.messages.get(caseId)??[]).find(item=>item.id===message.id);
     if(existing) {
-      if(existing.text!==message.text) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
+      if(existing.text!==message.text || JSON.stringify((existing.attachments || []).map(file=>file.id)) !== JSON.stringify(attachmentIds)) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
       return existing;
     }
     // Resolve before saving: a failed provider must not leave a half-written turn.
     const history = this.repository ? await this.repository.listMessages(caseId) : this.messages.get(caseId) ?? [];
     if (input.mode !== undefined && input.mode !== 'ai' && input.mode !== 'manual') throw new BadRequestException('CHAT_MODE_INVALID');
-    const conversation = input.mode === 'manual' ? undefined : await this.legal?.conversation?.(legalCase.problemText, [...history, message]);
+    const attachments: ConversationAttachment[] = [];
+    let attachmentBytes = 0;
+    for (const id of attachmentIds) {
+      const document = await this.documentsRepository?.findDocumentById(id);
+      if (!document || document.caseId !== caseId) throw new ForbiddenException('ATTACHMENT_ACCESS_DENIED');
+      if (!['image/jpeg','image/png','image/webp'].includes(document.mimeType)) throw new BadRequestException('ATTACHMENT_FORMAT_UNSUPPORTED');
+      if (!['ready','ocr_review_required'].includes(document.status) || !/^[a-f0-9]{64}$/.test(document.sha256)) throw new BadRequestException('ATTACHMENT_NOT_READY');
+      attachmentBytes += document.sizeBytes;
+      if (attachmentBytes > 25 * 1024 * 1024) throw new BadRequestException('MESSAGE_ATTACHMENTS_TOO_LARGE');
+      let bytes: Buffer;
+      try { bytes=await readFile(join(documentStorageRoot(caseId),document.sha256)); } catch { throw new NotFoundException('ATTACHMENT_CONTENT_NOT_FOUND'); }
+      if (bytes.length !== document.sizeBytes || createHash('sha256').update(bytes).digest('hex') !== document.sha256) throw new BadRequestException('ATTACHMENT_CONTENT_INVALID');
+      attachments.push({id:document.id,fileName:document.fileName,mimeType:document.mimeType,sizeBytes:document.sizeBytes,dataUrl:`data:${document.mimeType};base64,${bytes.toString('base64')}`});
+    }
+    if (attachments.length) message.attachments=attachments.map(({id,fileName,mimeType,sizeBytes})=>({id,fileName,mimeType,sizeBytes}));
+    const conversation = input.mode === 'manual' ? undefined : await this.legal?.conversation?.(legalCase.problemText, [...history, message], attachments);
+    if (attachments.length && !conversation) throw new BadRequestException('ATTACHMENTS_REQUIRE_AI_CHAT');
     const answer = !conversation && this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
     const procedural = /что дальше|следующ|документ.*нуж|какие.*документ/i.test(input.text)
       ? `По делу «${legalCase.title}» сохраните подтверждающие документы, проверьте факты и подготовьте проект претензии. В разделе документа можно исправить текст и скачать PDF. Сроки задавайте после проверки.\n` : '';
@@ -324,7 +348,7 @@ export class CasesService {
     if(this.repository?.saveTurn) {
       await this.repository.saveTurn([message,fallback]);
       const saved=await this.repository.findMessage!(message.id);
-      if(saved?.text!==message.text) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
+      if(saved?.text!==message.text || JSON.stringify((saved?.attachments || []).map(file=>file.id)) !== JSON.stringify(attachmentIds)) throw new BadRequestException('IDEMPOTENCY_INPUT_MISMATCH');
       return saved;
     }
     if(this.repository) {await this.repository.createMessage(message);await this.repository.createMessage(fallback);}

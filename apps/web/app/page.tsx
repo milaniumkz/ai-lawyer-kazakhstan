@@ -1,5 +1,7 @@
 "use client";
 
+import { ChatAttachment } from "./chat-attachment";
+
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AizanArt } from "./aizan-art";
 import { DesignIcon } from "./design-icon";
@@ -39,9 +41,11 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
+type Message = { id?: string; role: "user" | "assistant"; text: string; attachments?: {id:string;fileName:string;mimeType:string;sizeBytes:number}[]; ai?: { requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
 type DocumentItem = {
   uploadRequestId?: string;
+  sentWithMessage?: boolean;
+  mimeType?: string;
   id?: string;
   name: string;
   status: string;
@@ -68,6 +72,7 @@ type ApiLegalCase = {
   createdAt: string;
 };
 type ApiDocument = {
+  mimeType?: string;
   id: string;
   fileName: string;
   status: string;
@@ -1090,7 +1095,7 @@ export default function WebHome() {
       setHomeInput("");
       setClassification(restoredClassification);
       setSelectedCategory(restoredClassification?.result.subcategory_label ?? CASE_CATEGORY_LABELS[record.category] ?? record.category);
-      setDocuments(restoredDocuments.map((document) => ({ id: document.id, name: document.fileName, status: document.status === "ready" ? "Поля подтверждены вручную" : "Метаданные сохранены · требуется проверка" })));
+      setDocuments(restoredDocuments.map((document) => ({ id: document.id, name: document.fileName, mimeType: document.mimeType, sentWithMessage: true, status: document.status === "ready" ? "Поля подтверждены вручную" : "Метаданные сохранены · требуется проверка" })));
       setSelectedDocument("");
       setRemoteDocumentId("");
       setOcrConfirmed(false);
@@ -1246,7 +1251,9 @@ export default function WebHome() {
   }
 
   async function submitHomeMessage() {
-    const outgoing = homeInput.trim();
+    const attachedFiles = aiConversationEnabled ? documents.filter(document => document.id && document.sentWithMessage === false) : [];
+    if (attachedFiles.some(file=>!/^image\/(jpeg|png|webp)$/.test(file.mimeType || ""))) {setSyncState("Не удалось отправить файл. Для анализа прикрепите фото в формате JPG или PNG. Передача PDF и других документов в нейросеть пока отключена.");return;}
+    const outgoing = homeInput.trim() || (attachedFiles.length ? "Посмотрите прикреплённые файлы и помогите разобраться с ситуацией." : "");
     if (!outgoing || !aiConfigLoaded || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
     if (!classification && !remoteCaseId && outgoing.length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
     intakeBusyRef.current = true;
@@ -1265,7 +1272,7 @@ export default function WebHome() {
         setCases(items => [next, ...items.filter(item => item.id !== next.id)]); setActiveCaseId(next.id);
       }
       if (aiConversationEnabled || (conversationCaseId && remoteCaseDraftId === draftCaseId)) {
-        await apiJson(`/cases/${conversationCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing, mode: aiConversationEnabled ? "ai" : "manual" }) });
+        await apiJson(`/cases/${conversationCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing, mode: aiConversationEnabled ? "ai" : "manual", ...(attachedFiles.length ? {attachmentIds: attachedFiles.map(file=>file.id)} : {}) }) });
         const history = await apiJson(`/cases/${conversationCaseId}/messages`, { headers: { "x-user-id": userId } }) as Message[];
         remoteHistory = aiConversationEnabled ? history : null;
         reply = history.filter((message) => message.role === "assistant").at(-1)?.text ?? "Сообщение сохранено. Ответ пока недоступен, повторите запрос позже.";
@@ -1287,6 +1294,7 @@ export default function WebHome() {
       }
       setMessages((items) => remoteHistory ?? [...items, { role: "user", text: outgoing }, { role: "assistant", text: reply }]);
       setHomeInput("");
+      setDocuments(items=>items.map(item=>attachedFiles.some(file=>file.id===item.id)?{...item,sentWithMessage:true}:item));
       setAudioUrl("");
       audioBlobRef.current = null;
       audioChunksRef.current = [];
@@ -1408,6 +1416,8 @@ export default function WebHome() {
     if (documents.some(item => item.sha256 === sha256 && item.id)) { setSyncState("Этот файл уже сохранён в деле"); return; }
     const localDoc: DocumentItem = {
       name: file.name,
+      mimeType: file.type || mimeTypeFor(file.name),
+      sentWithMessage: false,
       uploadRequestId: messages.filter(message => message.role === "assistant").at(-1)?.id || `turn-${messages.length}`,
       status: "Загрузка в API...",
       sizeBytes: file.size,
@@ -1449,7 +1459,7 @@ export default function WebHome() {
         ),
       );
       setOcrConfirmed(false);
-      setSyncState(`Файл сохранён: ${document.fileName}. Проверьте реквизиты вручную — автоматический OCR пока недоступен.`);
+      setSyncState(view === "home" && aiConversationEnabled && /^image\/(jpeg|png|webp)$/.test(file.type) ? `Фото прикреплено: ${document.fileName}. Нажмите стрелку отправки, чтобы помощник его прочитал.` : `Файл сохранён: ${document.fileName}. Проверьте реквизиты вручную — автоматический OCR пока недоступен.`);
       updateActiveCase("Документ сохранён", 76);
       if (view !== "home") go("documentCheck");
     } catch (error) {
@@ -1517,7 +1527,7 @@ export default function WebHome() {
     if (!response.ok) {
       const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
-        typeof message === "string" ? message : JSON.stringify(message),
+        typeof message === "string" ? ({ATTACHMENT_FORMAT_UNSUPPORTED:"Для анализа отправьте фото JPG или PNG; этот формат пока не поддерживается.",ATTACHMENT_ACCESS_DENIED:"Файл недоступен в этом деле. Прикрепите его заново.",ATTACHMENT_CONTENT_NOT_FOUND:"Файл не найден. Загрузите его ещё раз.",MESSAGE_ATTACHMENTS_TOO_LARGE:"Вложения слишком большие: отправьте не более 25 МБ за одно сообщение.",ATTACHMENTS_REQUIRE_AI_CHAT:"Включите OpenAI для анализа фото.",ATTACHMENT_CONTENT_INVALID:"Содержимое файла не прошло проверку. Прикрепите его заново."} as Record<string,string>)[message] || message : JSON.stringify(message),
       );
     }
     if(path.endsWith('/messages')&&(!init?.method||init.method==='GET')) localStorage.removeItem(`aizan-pending:${authUserId}:${path}`);
@@ -1545,7 +1555,7 @@ export default function WebHome() {
     if (!response.ok) {
       const message = body.message ?? body.error?.message ?? body.error ?? `${path} failed`;
       throw new Error(
-        typeof message === "string" ? message : JSON.stringify(message),
+        typeof message === "string" ? ({ATTACHMENT_FORMAT_UNSUPPORTED:"Для анализа отправьте фото JPG или PNG; этот формат пока не поддерживается.",ATTACHMENT_ACCESS_DENIED:"Файл недоступен в этом деле. Прикрепите его заново.",ATTACHMENT_CONTENT_NOT_FOUND:"Файл не найден. Загрузите его ещё раз.",MESSAGE_ATTACHMENTS_TOO_LARGE:"Вложения слишком большие: отправьте не более 25 МБ за одно сообщение.",ATTACHMENTS_REQUIRE_AI_CHAT:"Включите OpenAI для анализа фото.",ATTACHMENT_CONTENT_INVALID:"Содержимое файла не прошло проверку. Прикрепите его заново."} as Record<string,string>)[message] || message : JSON.stringify(message),
       );
     }
     return body;
@@ -4527,10 +4537,10 @@ export default function WebHome() {
         {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Пошаговый режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Пошаговое заполнение" : "Включить OpenAI"}</button></div>}
         {homeConversationOpen && <div className="aizanHomeConversation">
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
-            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article.replace(/^статья\s*/i,'')} ↗</a>)}</div>)}
+            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.attachments?.map(file=><ChatAttachment key={file.id} file={file} ownerUserId={authUserId} />)}{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article.replace(/^статья\s*/i,'')} ↗</a>)}</div>)}
+            {classificationBusy && <><div className="aizanHomeMessage user"><small>Вы</small><p>{homeInput.trim() || "Посмотрите прикреплённые файлы"}</p>{documents.filter(file=>file.id && file.sentWithMessage===false).map(file=><ChatAttachment key={file.id} file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} />)}</div><div className="aizanHomeMessage assistant aizanTyping" role="status"><small>AIZAN</small><span>Помощник печатает<span className="aizanTypingDots" aria-hidden="true">…</span></span></div></>}
           </div>
           {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
-            {showDocumentUpload && <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>}
             {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : "Сохранить претензию как документ"}</button>}
           </div>}
           {aiConversationEnabled && generatedClaimId && generatedClaimBody && <section className="aizanInlineDraft">
@@ -4549,16 +4559,17 @@ export default function WebHome() {
             </>}
             {documents.length > 0 && <div aria-label="Прикреплённые документы">{documents.map((document) => <p key={document.id ?? document.sha256 ?? document.name}>{document.name}: {document.status}</p>)}<p>Файлы сохраняются на сервере. Автоматический OCR пока недоступен — проверьте поля вручную.</p></div>}
             {remoteCaseId && <div className="aizanHomeActions">
-              {showDocumentUpload && <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>}
-              <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
+                <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
             </div>}
           </div>}
           <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
             {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
             <label htmlFor="home-problem">{aiConversationEnabled ? "Ответьте помощнику или задайте вопрос" : classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
-            <div className="aizanChatInput"><textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}>{recording ? <span className="aizanRecordingStop" aria-hidden="true" /> : <DesignIcon name="microphone" />}</button>{recording && <span className="aizanRecordingTimer" role="status">{formatDuration(recordingSeconds)}</span>}</div>
+            <div className="aizanChatInput">
+              {aiConversationEnabled && !classificationBusy && documents.some(document=>document.sentWithMessage===false) && <div className="aizanAttachmentList">{documents.filter(document=>document.sentWithMessage===false).map((file,index)=><div className="aizanPendingAttachment" key={file.id || index}><ChatAttachment file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} /><small>{file.id ? "Готов к отправке" : file.status}</small><button type="button" aria-label={`Убрать ${file.name} из сообщения`} disabled={classificationBusy} onClick={()=>setDocuments(items=>items.map(item=>item===file?{...item,sentWithMessage:true}:item))}>×</button></div>)}</div>}
+              <textarea id="home-problem" value={classificationBusy ? "" : homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} onKeyDown={event=>{if(event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing){event.preventDefault();void submitHomeMessage();}}} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}>{recording ? <span className="aizanRecordingStop" aria-hidden="true" /> : <DesignIcon name="microphone" />}</button>{recording && <span className="aizanRecordingTimer" role="status">{formatDuration(recordingSeconds)}</span>}{showDocumentUpload && remoteCaseId && <UploadControl source="file" className="aizanComposerAttach"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13l7-7a3 3 0 0 1 4 4l-9 9a5 5 0 0 1-7-7l9-9M6 15l8-8" /></svg><span className="aizanSrOnly">Прикрепить документ</span></UploadControl>}<button type="submit" className="aizanComposerSend" aria-label="Отправить" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || (!homeInput.trim() && !documents.some(file=>file.id && file.sentWithMessage===false))}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button></div>
             {voiceBusy && <small role="status">Распознаю голос…</small>}
-            <button type="submit" className="primary wide" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || !homeInput.trim()}>{!aiConfigLoaded ? "Подключаю помощника…" : classificationBusy ? "Анализирую…" : "Отправить"}</button>
+            {!aiConfigLoaded && <small role="status">Подключаю помощника…</small>}
           </form>
         </div>}
 

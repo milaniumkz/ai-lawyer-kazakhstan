@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import sharp from 'sharp';
 import { chromium } from 'playwright';
 
 const base = process.env.WEB_BASE_URL?.replace(/\/$/, '');
@@ -35,16 +36,22 @@ try {
   await page.getByRole('button',{name:'Пошаговое заполнение',exact:true}).waitFor();
   await page.getByRole('button',{name:'Ввести текст',exact:true}).click();
   const input=page.locator('#home-problem');
-  async function send(text) {
+  async function send(text, attempt=0) {
     const completed=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:180000});
     await input.fill(text);
     await page.getByRole('button',{name:'Отправить',exact:true}).click();
     const response=await completed;
     if (!response.ok()) {
       const error = await response.json();
+      if (response.status()===503 && (error.error?.code || error.code)==='OPENAI_TIMEOUT' && attempt===0) {
+        await page.waitForFunction(()=>!document.querySelector('.aizanComposerSend')?.disabled);
+        assert.equal(await input.inputValue(),text,'Failed request must retain the original text');
+        console.log('Transient OpenAI timeout: retrying once with the preserved message');
+        return send(text,1);
+      }
       throw new Error(`Real OpenAI chat request: ${response.status()} ${error.error?.code || error.code || 'UNKNOWN_ERROR'}`);
     }
-    await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='',{timeout:180000});
+    await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='' && !document.querySelector('.aizanTyping'),{timeout:180000});
     assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
     const cases=await request('/cases');
     assert.equal(cases.length,1);
@@ -57,6 +64,19 @@ try {
   console.log('Live OpenAI first clarification received');
   assert(first.assistant.ai.missingFields.length>0);
   assert.equal(first.assistant.ai.readyForDraft,false);
+  // A random code appears only in image bytes; no real customer data is used.
+  const imageCode='VQA-'+crypto.randomUUID().slice(0,8).toUpperCase();
+  const image=await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="600"><rect width="100%" height="100%" fill="white"/><text x="60" y="110" font-family="sans-serif" font-size="54" fill="black">SYNTHETIC DOCUMENT TEST</text><text x="60" y="230" font-family="sans-serif" font-size="54" fill="black">Amount: 100000 KZT</text><text x="60" y="380" font-family="sans-serif" font-size="70" fill="black">Visual code: ${imageCode}</text></svg>`)).png().toBuffer();
+  await page.locator('.bottomNav input[type=file]').setInputFiles({name:'photo-qa.png',mimeType:'image/png',buffer:image});
+  await page.getByText('Готов к отправке',{exact:true}).waitFor();
+  await page.locator('.aizanPendingAttachment .aizanAttachmentPreview').waitFor();
+  const photo=await send('Это синтетическая проверка чтения изображения, не новое обстоятельство дела. Прочитайте и напишите точный код после Visual code на прикреплённом фото, а затем продолжим уточнения. Не угадывайте код.');
+  assert(photo.assistant.text.includes(imageCode),'OpenAI must read a random code from the photo, absent from the text prompt');
+  assert.equal(photo.history.filter(message=>message.role==='user').at(-1).attachments[0].fileName,'photo-qa.png');
+  assert.equal(await page.locator('.aizanPendingAttachment').count(),0);
+  await page.reload();await page.getByRole('button',{name:'Пошаговое заполнение',exact:true}).waitFor();
+  assert(await page.locator('.aizanHomeMessages .aizanChatAttachment').count()>=1,'Attachment card survives reload');
+  console.log('Live OpenAI photo reading passed: actual uploaded image, random code absent from prompt, thumbnail, card and reload.');
   const summary=await send('Для этого синтетического проекта: заявитель Тестовый Заявитель, адрес Алматы, улица Тестовая 1, e-mail claimant@example.invalid. Получатель Тестовый Должник, адрес Алматы, улица Тестовая 2, e-mail debtor@example.invalid. Заём 100000 тенге передан 12 января 2026 года, возврат по расписке был предусмотрен 12 февраля 2026 года, денег не вернули. Требую вернуть только основной долг 100000 тенге, без процентов и неустойки. Доказательство: подписанная расписка, приложу её вручную. Срок добровольного исполнения выбираю до 1 ноября 2026 года, прошу ответить на e-mail заявителя. Претензию направлю самостоятельно заказным письмом по почте на указанный адрес должника. Покажите резюме всех реквизитов и требований для подтверждения.');
   console.log('Live OpenAI facts summary received');
   assert.deepEqual(summary.assistant.ai.missingFields,[],'The actual model must retain all supplied facts');

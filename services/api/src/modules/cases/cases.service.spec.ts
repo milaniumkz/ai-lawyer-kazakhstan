@@ -1,5 +1,9 @@
+import { createHash } from 'node:crypto';
+import { documentStorageRoot } from '../documents/document-storage';
+import type { DocumentsRepository } from '../documents/repositories/documents.repository';
+import type { LegalService } from '../legal/legal.service';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { CASE_TAXONOMY, LEGAL_CATEGORIES, classifyStructuredDispute } from './case-taxonomy';
@@ -148,6 +152,35 @@ describe('CasesService', () => {
     await expect(service.addMessage(legalCase.id,{role:'assistant',text:'Forged reply'},'u1')).rejects.toThrow('USER_MESSAGE_REQUIRED');
   });
 
+  it('reads verified case-owned photos, persists metadata and detects retry changes', async () => {
+    const storage=await mkdtemp(join(tmpdir(),'aizan-chat-files-'));
+    const oldStorage=process.env.DOCUMENT_UPLOAD_DIR;process.env.DOCUMENT_UPLOAD_DIR=storage;
+    try {
+      const conversation=jest.fn().mockResolvedValue({text:'Вижу фото',ai:{provider:'openai',model:'test',facts:{},missingFields:['claimantName'],citations:[],readyForDraft:false}});
+      const document: Record<string,unknown> = {};
+      const documentsRepository={findDocumentById:jest.fn(async()=>document)} as unknown as DocumentsRepository;
+      const service=new CasesService(undefined,undefined,{conversation} as unknown as LegalService,documentsRepository);
+      const legalCase=await service.createCase({ownerUserId:'u1',problemText:'Нужно проверить фото расписки'});
+      const bytes=Buffer.from('test owned image');const sha256=createHash('sha256').update(bytes).digest('hex');
+      const id='12345678-1234-4234-a234-123456789012';
+      Object.assign(document,{id,caseId:legalCase.id,fileName:'photo.png',mimeType:'image/png',sizeBytes:bytes.length,sha256,status:'ocr_review_required'});
+      await mkdir(documentStorageRoot(legalCase.id),{recursive:true});await writeFile(join(documentStorageRoot(legalCase.id),sha256),bytes);
+      const input={role:'user' as const,text:'Посмотрите фото',attachmentIds:[id]};
+      const first=await service.addMessage(legalCase.id,input,'u1','photo-turn');
+      expect(first?.attachments?.[0].id).toBe(id);
+      expect(conversation.mock.calls[0][2][0].dataUrl).toBe('data:image/png;base64,'+bytes.toString('base64'));
+      expect(JSON.stringify(await service.listMessages(legalCase.id,'u1'))).not.toContain('base64');
+      await service.addMessage(legalCase.id,input,'u1','photo-turn');expect(conversation).toHaveBeenCalledTimes(1);
+      await expect(service.addMessage(legalCase.id,{...input,attachmentIds:[]},'u1','photo-turn')).rejects.toThrow('IDEMPOTENCY_INPUT_MISMATCH');
+      document.caseId='foreign-case';
+      await expect(service.addMessage(legalCase.id,input,'u1','foreign')).rejects.toThrow('ATTACHMENT_ACCESS_DENIED');
+      document.caseId=legalCase.id;document.mimeType='application/pdf';
+      await expect(service.addMessage(legalCase.id,input,'u1','pdf')).rejects.toThrow('ATTACHMENT_FORMAT_UNSUPPORTED');
+      document.mimeType='image/png';await writeFile(join(documentStorageRoot(legalCase.id),sha256),Buffer.from('corrupt'));
+      await expect(service.addMessage(legalCase.id,input,'u1','corrupt')).rejects.toThrow('ATTACHMENT_CONTENT_INVALID');
+      expect(conversation).toHaveBeenCalledTimes(1);
+    } finally {if(oldStorage===undefined)delete process.env.DOCUMENT_UPLOAD_DIR;else process.env.DOCUMENT_UPLOAD_DIR=oldStorage;await rm(storage,{recursive:true,force:true});}
+  });
   it('rejects case access for another owner', async () => {
     const service = new CasesService();
     const legalCase = await service.createCase({ ownerUserId: 'u1', problemText: 'Нужно взыскать долг по расписке' });

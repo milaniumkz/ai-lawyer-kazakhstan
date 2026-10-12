@@ -2537,6 +2537,16 @@ components:
         createdAt:
           type: string
           format: date-time
+        attachments:
+          type: array
+          items:
+            type: object
+            required: [id, fileName, mimeType, sizeBytes]
+            properties:
+              id: {type: string, format: uuid}
+              fileName: {type: string}
+              mimeType: {type: string}
+              sizeBytes: {type: integer}
         ai:
           type: object
           description: Server-generated OpenAI intake state; absent for manual workflows.
@@ -2591,6 +2601,12 @@ components:
           enum: [user]
         text:
           type: string
+        attachmentIds:
+          type: array
+          maxItems: 5
+          uniqueItems: true
+          items: {type: string, format: uuid}
+          description: Uploaded photos belonging to this case, read by OpenAI with the message.
         mode:
           type: string
           enum: [ai, manual]

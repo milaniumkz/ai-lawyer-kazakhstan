@@ -93,7 +93,7 @@ try {
   // Short follow-up messages must reach the legal answer path, not restart classification.
   await input.fill('Что дальше?');
   await page.getByRole('button', { name: 'Отправить', exact: true }).click();
-  await page.waitForFunction(() => document.querySelectorAll('.aizanHomeMessage.user').length === 4);
+  await page.waitForFunction(() => document.querySelectorAll('.aizanHomeMessage.user').length === 4 && !document.querySelector('.aizanTyping'));
   assert.equal(classifications, 1);
   const messages = await request(`/cases/${cases[0].id}/messages`);
   assert(messages.some(message => message.role === 'assistant' && /источник|юридич|подтвержд/i.test(message.text)));

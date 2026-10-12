@@ -56,6 +56,13 @@ describe('OpenAI conversation', () => {
     expect(result.ai.missingFields).toContain('claimantName');
     expect(result.ai.readyForDraft).toBe(false);
   });
+  it('sends the attached photo as actual multimodal input', async () => {
+    const fetchMock=mock({answer:'На фото виден договор. Кто заявитель?',facts:{...facts,claimantName:''},draftBody:null,citations:[]});
+    const image={id:'image',fileName:'photo.png',mimeType:'image/png',sizeBytes:4,dataUrl:'data:image/png;base64,dGVzdA=='};
+    await generateOpenAiConversation('Договор',[{id:'user',caseId:'case',role:'user',text:'Посмотрите фото',createdAt:''}],[image]);
+    const payload=JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(payload.input.at(-1).content).toContainEqual({type:'input_image',image_url:image.dataUrl,detail:'auto'});
+  });
   it('rejects invented sources and a negated confirmation', async () => {
     mock({answer:'Проект',facts,draftBody,citations:[citation]},[]);
     expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);

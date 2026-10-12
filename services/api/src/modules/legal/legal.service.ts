@@ -81,9 +81,9 @@ export class LegalService {
     };
   }
 
-  async conversation(problemText: string, messages: MessageRecord[]) {
+  async conversation(problemText: string, messages: MessageRecord[], attachments: import('./openai-conversation.adapter').ConversationAttachment[] = []) {
     if (!isOpenAiLegalEnabled()) return undefined;
-    return generateOpenAiConversation(problemText, messages);
+    return generateOpenAiConversation(problemText, messages, attachments);
   }
 }
 

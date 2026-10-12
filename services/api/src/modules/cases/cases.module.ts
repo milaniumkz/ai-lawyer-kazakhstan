@@ -1,3 +1,4 @@
+import { documentsRepositoryProvider } from '../documents/repositories/documents-repository.provider';
 import { Module } from '@nestjs/common';
 import { DatabaseService } from '../../common/database/database.service';
 import { CasesController } from './cases.controller';
@@ -9,7 +10,7 @@ import { LegalModule } from '../legal/legal.module';
 @Module({
   imports: [LegalModule],
   controllers: [CasesController],
-  providers: [CasesService, DatabaseService, PostgresCasesRepository, casesRepositoryProvider],
+  providers: [CasesService, DatabaseService, PostgresCasesRepository, casesRepositoryProvider, documentsRepositoryProvider],
   exports: [CasesService],
 })
 export class CasesModule {}
