@@ -1,4 +1,5 @@
 import 'src/api/draft_store.dart';
+import 'src/preview_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,10 +30,12 @@ Future<void> main() async {
     'AI_LAWYER_INITIAL_ROUTE',
     defaultValue: '/login',
   );
+  final launchRoute = nativePreviewRoute(initialRoute);
+  if (nativePreviewEnabled) debugPrint('AIZAN_PREVIEW_ROUTE=$launchRoute');
   runApp(ProviderScope(
       child: AiLawyerApp(
           initialLocation: saved == null
-              ? initialRoute
+              ? launchRoute
               : AuthRuntime.profileComplete
                   ? '/'
                   : '/profile')));

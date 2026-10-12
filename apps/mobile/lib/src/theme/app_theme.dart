@@ -29,8 +29,22 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
           primary: AppColors.gold,
           onPrimary: Color(0xFF1C1103),
+          primaryContainer: Color(0xFF503812),
+          onPrimaryContainer: AppColors.goldDark,
+          secondary: AppColors.gold,
+          onSecondary: Color(0xFF1C1103),
+          secondaryContainer: Color(0xFF503812),
+          onSecondaryContainer: AppColors.goldDark,
+          tertiary: AppColors.goldDark,
+          onTertiary: Color(0xFF1C1103),
           surface: AppColors.paper,
           onSurface: AppColors.graphite),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: AppColors.gold, linearTrackColor: AppColors.paper),
+      textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: AppColors.gold,
+          selectionColor: Color(0x66503812),
+          selectionHandleColor: AppColors.gold),
       scaffoldBackgroundColor: Colors.transparent,
       canvasColor: AppColors.navy,
       textTheme: base.textTheme.copyWith(

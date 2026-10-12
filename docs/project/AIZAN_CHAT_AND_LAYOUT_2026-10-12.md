@@ -92,3 +92,21 @@ The first deployed responsive run measured the SSR login page before remote hydr
 The Apple API client now refreshes its signed JWT before expiry during long builds/Apple processing. A local synthetic EC-key/transport check verified refresh without any external request or credential output; the complete quality check and Docker configuration passed. The Mac helper builds against live App Store version/build metadata instead of blindly reusing the old documented build number.
 
 The hydrated deployed run reached all pages and found one genuine 320px legal-search tab clipping issue (`Разъяснения`). Legal tabs now use readable 44px touch targets, wrapping flexible rows on larger screens and a two-column mobile layout, with the final odd tab spanning the row. Focused Chromium checks passed for both legal views at all eight widths; full quality check/build/Docker configuration passed. A final visual release repeats the deployed 200-layout check.
+
+### Native review and Mac-only signing
+
+The final web deployment at `f612f59` passed the real manual workflow and all 200 responsive layouts in run 38247576011. The unsigned iOS release compiled in run 38245690077; its per-screen rebuild capture reached the 45-minute limit after 16 native screenshots, so that run is cancelled rather than a successful full review. Those actual screenshots exposed a help tile overflow, inherited teal selections/progress and duplicated auth/profile/settings/help titles. Fixed tile spacing, allowed two-line captions, supplied gold secondary/progress/selection colors and used the existing AIZAN logo header. Four changed visual regression references were inspected before updating.
+
+Native capture now compiles once. A debug-only, explicitly enabled preview flag reads a simulator child environment route and confirms the actual selected route in its console. Each screen launches the same application and is captured only after that confirmation; a missing confirmation fails the run. Signed release builds do not enable the flag. New-case autofocus is suppressed only in this preview mode to avoid the simulator keyboard onboarding covering the page.
+
+Apple signing and API access are only on the user's Mac. No signed upload, App Store review/release or installation on the user's iPhone has occurred from this cloud environment. From the project repository on that Mac, this sequence preserves the existing working tree and runs the latest release helper:
+
+```sh
+git fetch origin deploy/aizan-server
+AIZAN_RELEASE_DIR=$(mktemp -d /tmp/aizan-release.XXXXXX)
+git archive FETCH_HEAD | tar -x -C "$AIZAN_RELEASE_DIR"
+cd "$AIZAN_RELEASE_DIR"
+node scripts/release/build-ios-on-mac.mjs --upload
+```
+
+The helper uses the existing local key/keychain, determines the next build from live Apple metadata, uploads the signed binary and selects it in an editable App Store draft. It deliberately does not submit for review or publish. App Store icon changes require Apple approval/release; installed iPhone icon/design changes require installing that updated binary. The helper's execution on the Mac remains unverified until Mac access or its result is available.

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
@@ -50,22 +50,44 @@ mkdirSync(outDir, { recursive: true });
 tryRun('xcrun', ['simctl', 'boot', udid]);
 run('xcrun', ['simctl', 'bootstatus', udid, '-b']);
 
+run(flutter, [
+  'build', 'ios', '--simulator', '--debug',
+  '--dart-define=AI_LAWYER_PREVIEW_MODE=true',
+], { cwd: resolve(root, 'apps/mobile') });
+tryRun('xcrun', ['simctl', 'terminate', udid, 'kz.milanium.lawyer']);
+tryRun('xcrun', ['simctl', 'uninstall', udid, 'kz.milanium.lawyer']);
+run('xcrun', ['simctl', 'install', udid, appPath]);
+
 for (const [fileName, route] of screens) {
-  run(flutter, [
-    'build',
-    'ios',
-    '--simulator',
-    '--debug',
-    `--dart-define=AI_LAWYER_INITIAL_ROUTE=${route}`,
-  ], { cwd: resolve(root, 'apps/mobile') });
-  tryRun('xcrun', ['simctl', 'terminate', udid, 'kz.milanium.lawyer']);
-  tryRun('xcrun', ['simctl', 'uninstall', udid, 'kz.milanium.lawyer']);
-  run('xcrun', ['simctl', 'install', udid, appPath]);
-  run('xcrun', ['simctl', 'launch', udid, 'kz.milanium.lawyer']);
-  execFileSync('sleep', ['5']);
-  const outPath = join(outDir, fileName);
-  rmSync(outPath, { force: true });
-  run('xcrun', ['simctl', 'io', udid, 'screenshot', outPath]);
+  const launched = spawn('xcrun', ['simctl', 'launch', '--console-pty', udid, 'kz.milanium.lawyer'], {
+    cwd: root,
+    env: {...process.env, SIMCTL_CHILD_AIZAN_PREVIEW_ROUTE: route},
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  try {
+    await new Promise((resolve, reject) => {
+      let output = '';
+      const timeout = setTimeout(() => reject(new Error(`Native route did not confirm: ${route}`)), 30000);
+      const inspect = chunk => {
+        output = (output + chunk.toString()).slice(-16000);
+        if (output.includes(`AIZAN_PREVIEW_ROUTE=${route}\n`) || output.includes(`AIZAN_PREVIEW_ROUTE=${route}\r`)) {
+          clearTimeout(timeout); resolve();
+        }
+      };
+      launched.stdout.on('data', inspect);
+      launched.stderr.on('data', inspect);
+      launched.once('error', error => {clearTimeout(timeout);reject(error);});
+      launched.once('exit', code => {clearTimeout(timeout);reject(new Error(`Simulator launch ended before route confirmation (${code})`));});
+    });
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    const outPath = join(outDir, fileName);
+    rmSync(outPath, { force: true });
+    run('xcrun', ['simctl', 'io', udid, 'screenshot', outPath]);
+    console.log(`Verified native route ${route}`);
+  } finally {
+    tryRun('xcrun', ['simctl', 'terminate', udid, 'kz.milanium.lawyer']);
+    launched.kill();
+  }
 }
 
 console.log(`Captured ${screens.length} native screenshots in ${outDir}`);

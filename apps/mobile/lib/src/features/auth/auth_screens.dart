@@ -1325,7 +1325,7 @@ class _HelpQuickGrid extends StatelessWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.6,
+      mainAxisExtent: 148,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       children: [
@@ -1353,9 +1353,9 @@ class _HelpQuickGrid extends StatelessWidget {
                           style: const TextStyle(color: AppColors.gold)),
                     ),
                     const SizedBox(height: 8),
-                    Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(item.$2, maxLines: 2, overflow: TextOverflow.ellipsis),
                     Text(item.$3,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall),
                   ],
@@ -1653,7 +1653,7 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: const AizanHeader(compact: true),
       bottomNavigationBar: bottomNavigationBar,
       body: SafeArea(
         child: ListView(

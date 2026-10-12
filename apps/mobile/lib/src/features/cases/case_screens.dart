@@ -1,4 +1,5 @@
 import '../documents/document_screens.dart';
+import '../../preview_config.dart';
 import 'package:flutter/services.dart';
 import '../workflows/workflow_screens.dart';
 import '../../widgets/mounted_state.dart';
@@ -891,7 +892,8 @@ class _NewCaseScreenState extends State<NewCaseScreen>
                       controller: transcriptController,
                       minLines: 3,
                       maxLines: 6,
-                      autofocus: !MobileCaseRuntime.preferVoiceInput,
+                      autofocus: !nativePreviewEnabled &&
+                          !MobileCaseRuntime.preferVoiceInput,
                       decoration: const InputDecoration(
                           labelText: 'Проверьте описание проблемы',
                           alignLabelWithHint: true)),
