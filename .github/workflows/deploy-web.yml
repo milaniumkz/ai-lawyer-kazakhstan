@@ -82,6 +82,7 @@ jobs:
             fi
             exit 1
           fi
+          python3 /opt/ai-lawyer-kz/app/scripts/deploy/server-ai-status.py
           REMOTE
 
       - name: Public health check

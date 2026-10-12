@@ -12,6 +12,8 @@ const viewports = [
   { name: "mobile-large", width: 430, height: 932 },
   { name: "tablet", width: 768, height: 1024 },
   { name: "desktop", width: 1024, height: 900 },
+  { name: "desktop-wide", width: 1440, height: 900 },
+  { name: "desktop-full-hd", width: 1920, height: 1080 },
 ];
 
 const screens = [
@@ -160,11 +162,21 @@ async function main() {
             deviceWidth: device?.width ?? 0,
             panelWidth: panel?.width ?? 0,
             bottomNavDisplay: bottomNav ? getComputedStyle(bottomNav).display : "missing",
+            brokenButtons: Array.from(document.querySelectorAll('.appShell button')).filter(button => {
+              const style = getComputedStyle(button);
+              const bounds = button.getBoundingClientRect();
+              return bounds.width > 0 && bounds.height > 0 && style.visibility !== 'hidden' &&
+                Number(style.opacity) > 0 &&
+                (style.backgroundColor === 'rgb(239, 239, 239)' || button.scrollWidth > button.clientWidth + 5);
+            }).map(button => button.textContent?.trim().slice(0, 80)),
           };
         });
         const maxScroll = Math.max(result.bodyScrollWidth, result.docScrollWidth);
         if (maxScroll > viewport.width + 2) {
           fail(`${viewport.name}/${view}: horizontal overflow ${maxScroll}px > ${viewport.width}px`);
+        }
+        if (result.brokenButtons.length) {
+          fail(`${viewport.name}/${view}: unreadable or overflowing controls: ${result.brokenButtons.join(', ')}`);
         }
         if (viewport.width <= 980 && result.deviceWidth < (result.design === "aizan" ? Math.min(viewport.width, 480) : viewport.width) - 2) {
           fail(`${viewport.name}/${view}: device width ${result.deviceWidth}px < viewport ${viewport.width}px`);
