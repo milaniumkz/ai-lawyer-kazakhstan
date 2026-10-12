@@ -54,6 +54,25 @@ describe('OpenAI conversation', () => {
     expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);
     expect((await generateOpenAiConversation('Долг',turn('Не подтверждаю'))).ai.draftBody).toBeUndefined();
   });
+  it('recomposes the document from verified norms instead of retaining an invented reference', async () => {
+    const unsafeUrl='https://example.com/unsupported-law';
+    const fetchMock=jest.spyOn(global,'fetch').mockImplementation(async (url,options) => {
+      if(String(url).endsWith('/responses')) {
+        const payload=JSON.parse(options?.body as string);
+        if(payload.text.format.name==='aizan_verified_claim') {
+          expect(payload.input[1].content).not.toContain(unsafeUrl);
+          return new Response(JSON.stringify({output_text:JSON.stringify({body:draftBody,citedUrls:[citation.url]})}));
+        }
+        return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Проект',facts,draftBody:draftBody+unsafeUrl,citations:[citation,{...citation,url:unsafeUrl}]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+      }
+      return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+    });
+    const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(result.ai.readyForDraft).toBe(true);
+    expect(result.ai.draftBody).not.toContain(unsafeUrl);
+    expect(result.ai.citations).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
   it('does not approve an absent quote or a redirect to an unrelated host', async () => {
     const fetchMock=mock({answer:'Проект',facts,draftBody,citations:[citation]});
     fetchMock.mockImplementation(async url => String(url).endsWith('/responses') ? new Response(JSON.stringify({output_text:JSON.stringify({answer:'Проект',facts,draftBody,citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]})) : new Response(null,{status:302,headers:{location:'https://example.com/fake'}}));

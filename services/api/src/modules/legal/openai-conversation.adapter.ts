@@ -10,8 +10,8 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   if (!key) throw new ServiceUnavailableException('OPENAI_NOT_CONFIGURED');
   const model = [process.env.OPENAI_MODEL, process.env.AI_COMPLEX_MODEL, process.env.AI_MEDIUM_MODEL].find(value => value && !value.startsWith('stub-')) || 'gpt-5';
   const controller = new AbortController();
-  const configuredTimeout = Number(process.env.AI_CONVERSATION_TIMEOUT_MS || 90000);
-  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout >= 15000 ? Math.min(configuredTimeout, 120000) : 90000;
+  const configuredTimeout = Number(process.env.AI_CONVERSATION_TIMEOUT_MS || 120000);
+  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout >= 15000 ? Math.min(configuredTimeout, 150000) : 120000;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const factsSchema = Object.fromEntries(requiredFacts.map(field => [field, { type: 'string' }]));
   const previousState = messages.filter(message => message.role === 'assistant').at(-1)?.ai;
@@ -77,22 +77,29 @@ export async function generateOpenAiConversation(problemText: string, messages: 
     const previous = messages.filter(message => message.role === 'assistant').at(-1)?.ai;
     const confirmed = /^(подтверждаю|всё верно|все верно|согласен|согласна|растаймын|confirm(?:ed)?)(?:[.!\s]|$)/i.test(latestUser.trim()) && !/не подтвержда|не соглас|неверно|ошиб/i.test(latestUser) && previous?.missingFields.length === 0 && isDeepStrictEqual(previous.facts, facts);
     if (result.draftBody && confirmed && !missingFields.length) {
-      const checked = await Promise.all(citations.map(async citation => await verifyOfficialQuote(citation.url, citation.quote) ? citation : undefined));
+      const sourceCache = new Map<string, Promise<string | undefined>>();
+      const checked = await Promise.all(citations.map(async citation => await verifyOfficialQuote(citation.url, citation.quote, sourceCache) ? citation : undefined));
       citations = checked.filter((citation): citation is NonNullable<typeof citation> => Boolean(citation));
     }
     const draftUrls = typeof result.draftBody === 'string' ? result.draftBody.match(/https?:\/\/[^\s<>"\])]+/g) || [] : [];
     const sourceUrls = new Set(citations.map(citation => canonicalUrl(citation.url)));
-    const draftBody = confirmed && !missingFields.length && citations.length && citations.length === result.citations.length && draftUrls.every(url => sourceUrls.has(canonicalUrl(url.replace(/[.,;]+$/, '')))) && typeof result.draftBody === 'string' && result.draftBody.trim().length >= 300 && result.draftBody.length <= 100000 ? result.draftBody.trim() : undefined;
+    let draftBody = confirmed && !missingFields.length && citations.length && citations.length === result.citations.length && draftUrls.every(url => sourceUrls.has(canonicalUrl(url.replace(/[.,;]+$/, '')))) && typeof result.draftBody === 'string' && result.draftBody.trim().length >= 300 && result.draftBody.length <= 100000 ? result.draftBody.trim() : undefined;
+    if (!draftBody && confirmed && !missingFields.length && citations.length && typeof result.draftBody === 'string' && result.draftBody.trim().length >= 300) {
+      // Recompose using the verified subset instead of accepting unverified references
+      // or asking the user to confirm the same facts again.
+      draftBody = await composeVerifiedClaim({key,model,facts,citations,signal:controller.signal,languageContext:latestUser});
+      result.answer = 'Подготовил проект претензии по подтверждённым данным и проверенным официальным источникам РК.';
+    }
     const checkedAt = new Date().toISOString();
     const ai: AiConversation = { provider: 'openai', model, facts, missingFields, citations: citations.map(citation => draftBody ? {...citation, checkedAt} : citation), readyForDraft: Boolean(draftBody), ...(draftBody ? { draftBody } : {}) };
     let text = result.answer.trim();
     if (draftBody) text += `\n\n${draftBody}\n\nПроект готов для вашей проверки. Можно сохранить его как документ и скачать PDF.`;
-    else if (result.draftBody) text = missingFields.length ? 'Для полного проекта ещё нужны уточнения. ' + text : !confirmed ? 'Проверьте реквизиты и требования выше и напишите «Подтверждаю», если всё верно.' : 'Не удалось подтвердить официальные источники и редакцию для готового проекта. Продолжим уточнение и проверку оснований.';
-    if (!missingFields.length && !draftBody) {
+    else if (result.draftBody) text = missingFields.length ? 'Для полного проекта ещё нужны уточнения. ' + text : !confirmed ? 'Проверьте реквизиты и требования выше и напишите «Подтверждаю», если всё верно.' : 'Реквизиты подтверждены. Сейчас не удалось проверить официальные основания для проекта. Можно повторить поиск источников, не заполняя сведения заново; неподтверждённые нормы в документ не включаю.';
+    if (!missingFields.length && !draftBody && !confirmed) {
       const labels = ['Заявитель', 'Контакты заявителя', 'Получатель', 'Контакты получателя', 'Обстоятельства', 'Дата события', 'Требования', 'Доказательства', 'Срок добровольного исполнения'];
       text += '\n\nПроверьте данные для претензии:\n' + requiredFacts.map((field,index)=>`${labels[index]}: ${facts[field]}`).join('\n') + '\n\nЕсли всё верно, напишите «Подтверждаю». Если нужна правка — укажите её в чате.';
     }
-    if (citations.length) text += '\n\nОфициальные источники РК:\n' + citations.map(source => `${source.title}, статья ${source.article}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n');
+    if (citations.length) text += '\n\nОфициальные источники РК:\n' + citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n');
     return { text, ai };
   } catch (error) {
     if (error instanceof ServiceUnavailableException) throw error;
@@ -109,19 +116,47 @@ function canonicalUrl(value: string) {
   try { const url = new URL(value); url.hash = ''; return url.href; } catch { return ''; }
 }
 
-async function verifyOfficialQuote(url: string, quote: string): Promise<boolean> {
+async function composeVerifiedClaim(input: {key: string; model: string; facts: Record<string,string>; citations: AiConversation['citations']; signal: AbortSignal; languageContext: string}) {
+  const urls = [...new Set(input.citations.map(source=>source.url))];
+  const response = await fetch(`${(process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/,'')}/responses`,{
+    method:'POST',signal:input.signal,headers:{Authorization:`Bearer ${input.key}`,'Content-Type':'application/json'},
+    body:JSON.stringify({model:input.model,store:false,max_output_tokens:10000,...(input.model.startsWith('gpt-5')?{reasoning:{effort:'low'}}:{}),
+      input:[{role:'developer',content:'Составь полный проект досудебной претензии исключительно по подтверждённым фактам и предоставленным проверенным источникам Республики Казахстан. Используй только перечисленные статьи и их подтверждённые цитаты, не добавляй новые правовые основания и ссылки. Не выдумывай суммы, реквизиты, даты и доказательства. Включи заявителя и адресата с контактами, факты и хронологию, правовые основания, конкретные требования, выбранный срок и способ ответа, приложения и место для даты/подписи. Это проект для проверки пользователем и юристом. Оформи обычным текстом без Markdown, HTML и блоков кода, на языке запроса пользователя. Верни JSON: body — полный документ; citedUrls — только использованные предоставленные официальные URL.'},
+      {role:'user',content:JSON.stringify({request:input.languageContext,confirmedFacts:input.facts,verifiedSources:input.citations})}],
+      text:{format:{type:'json_schema',name:'aizan_verified_claim',strict:true,schema:{type:'object',additionalProperties:false,required:['body','citedUrls'],properties:{body:{type:'string'},citedUrls:{type:'array',items:{type:'string',enum:urls}}}}}},
+    }),
+  });
+  if(!response.ok) throw new ServiceUnavailableException({code:'OPENAI_DRAFT_UNAVAILABLE',message:'Не удалось завершить проект нейросетью. Данные сохранены, повторите попытку.'});
+  const result = await response.json() as {output_text?:string;output?:Array<{content?:Array<{text?:string}>}>};
+  const parsed = JSON.parse(result.output_text || result.output?.flatMap(item=>item.content||[]).map(item=>item.text||'').join('') || '') as {body:string;citedUrls:string[]};
+  const allowed = new Set(urls.map(canonicalUrl));
+  const bodyUrls = typeof parsed.body === 'string' ? parsed.body.match(/https?:\/\/[^\s<>"\])]+/g)||[] : [];
+  if(typeof parsed.body!=='string'||parsed.body.trim().length<300||parsed.body.length>100000||!Array.isArray(parsed.citedUrls)||!parsed.citedUrls.length||!parsed.citedUrls.every(url=>allowed.has(canonicalUrl(url)))||!bodyUrls.every(url=>allowed.has(canonicalUrl(url.replace(/[.,;]+$/,''))))) throw new ServiceUnavailableException({code:'OPENAI_DRAFT_SOURCE_MISMATCH',message:'Проект требует повторной проверки источников. Подтверждённые данные сохранены.'});
+  return parsed.body.trim();
+}
+
+function normalizeQuote(value: string) { return value.toLocaleLowerCase().replace(/[«»"“”]/g,'').replace(/[–—]/g,'-').replace(/\s+/g,' ').trim(); }
+
+async function verifyOfficialQuote(url: string, quote: string, cache: Map<string,Promise<string|undefined>>): Promise<boolean> {
+  const key = canonicalUrl(url);
+  if(!cache.has(key)) cache.set(key,readOfficialText(key));
+  const text = await cache.get(key);
+  return Boolean(text?.includes(normalizeQuote(quote)));
+}
+
+async function readOfficialText(url: string): Promise<string|undefined> {
   try {
     let currentUrl = url;
     for (let redirects = 0; redirects < 3; redirects++) {
-      if (!isOfficialUrl(currentUrl)) return false;
+      if (!isOfficialUrl(currentUrl)) return undefined;
       const response = await fetch(currentUrl, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location');
-        if (!location) return false;
+        if (!location) return undefined;
         currentUrl = new URL(location, currentUrl).href;
         continue;
       }
-      if (!response.ok || !response.body || !/text\/(html|plain)/i.test(response.headers.get('content-type') || '')) return false;
+      if (!response.ok || !response.body || !/text\/(html|plain)/i.test(response.headers.get('content-type') || '')) return undefined;
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
       let size = 0;
@@ -129,14 +164,13 @@ async function verifyOfficialQuote(url: string, quote: string): Promise<boolean>
         const chunk = await reader.read();
         if (chunk.done) break;
         size += chunk.value.length;
-        if (size > 2 * 1024 * 1024) { await reader.cancel(); return false; }
+        if (size > 2 * 1024 * 1024) { await reader.cancel(); return undefined; }
         chunks.push(chunk.value);
       }
       const html = Buffer.concat(chunks).toString('utf8');
-      const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|amp|quot|#160);/g, ' ');
-      const normalize = (value: string) => value.toLocaleLowerCase().replace(/[«»"“”]/g, '').replace(/\s+/g, ' ').trim();
-      return normalize(text).includes(normalize(quote));
+      const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/&(?:quot|laquo|raquo);/g,'"').replace(/&ndash;/g,'-').replace(/&mdash;/g,'-');
+      return normalizeQuote(text);
     }
-    return false;
-  } catch { return false; }
+    return undefined;
+  } catch { return undefined; }
 }

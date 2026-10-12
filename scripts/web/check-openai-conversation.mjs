@@ -57,12 +57,13 @@ try {
   console.log('Live OpenAI first clarification received');
   assert(first.assistant.ai.missingFields.length>0);
   assert.equal(first.assistant.ai.readyForDraft,false);
-  const summary=await send('Для этого синтетического проекта: заявитель Тестовый Заявитель, адрес Алматы, улица Тестовая 1, e-mail claimant@example.invalid. Получатель Тестовый Должник, адрес Алматы, улица Тестовая 2, e-mail debtor@example.invalid. Заём 100000 тенге передан 12 января 2026 года, возврат по расписке был предусмотрен 12 февраля 2026 года, денег не вернули. Требую вернуть только основной долг 100000 тенге, без процентов и неустойки. Доказательство: подписанная расписка, приложу её вручную. Срок добровольного исполнения выбираю до 1 ноября 2026 года, прошу ответить на e-mail заявителя. Покажите резюме всех реквизитов и требований для подтверждения.');
+  const summary=await send('Для этого синтетического проекта: заявитель Тестовый Заявитель, адрес Алматы, улица Тестовая 1, e-mail claimant@example.invalid. Получатель Тестовый Должник, адрес Алматы, улица Тестовая 2, e-mail debtor@example.invalid. Заём 100000 тенге передан 12 января 2026 года, возврат по расписке был предусмотрен 12 февраля 2026 года, денег не вернули. Требую вернуть только основной долг 100000 тенге, без процентов и неустойки. Доказательство: подписанная расписка, приложу её вручную. Срок добровольного исполнения выбираю до 1 ноября 2026 года, прошу ответить на e-mail заявителя. Претензию направлю самостоятельно заказным письмом по почте на указанный адрес должника. Покажите резюме всех реквизитов и требований для подтверждения.');
   console.log('Live OpenAI facts summary received');
   assert.deepEqual(summary.assistant.ai.missingFields,[],'The actual model must retain all supplied facts');
   assert.equal(summary.assistant.ai.readyForDraft,false);
   const final=await send('Подтверждаю. Все реквизиты, даты и требования в резюме верны. Подготовьте полный проект досудебной претензии по действующим нормам Республики Казахстан с проверенными официальными источниками.');
   console.log('Live OpenAI confirmed draft response received');
+  if (!final.assistant.ai.readyForDraft) console.log(JSON.stringify({missingFields:final.assistant.ai.missingFields,sourceCount:final.assistant.ai.citations.length,answer:final.assistant.text.slice(0,500)}));
   assert.equal(final.assistant.ai.readyForDraft,true,'Must produce an actual source-backed draft, not a stub');
   assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz)\//.test(source.url)));
   assert(final.assistant.ai.draftBody.replace(/\s/g,'').includes('100000'));

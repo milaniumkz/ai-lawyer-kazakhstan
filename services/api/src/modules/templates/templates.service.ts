@@ -59,7 +59,7 @@ export class TemplatesService {
       return {
         id: randomUUID(), templateId: template.id, caseId: input.caseId,
         status: 'draft_requires_user_confirmation' as const, title: template.title,
-        body: latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n'),
+        body: latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n'),
         expertReviewRequired: true, createdAt: new Date().toISOString(),
       };
     }

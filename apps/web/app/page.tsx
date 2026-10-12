@@ -4514,7 +4514,7 @@ export default function WebHome() {
         {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Пошаговый режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Пошаговое заполнение" : "Включить OpenAI"}</button></div>}
         {homeConversationOpen && <div className="aizanHomeConversation">
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
-            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article} ↗</a>)}</div>)}
+            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article.replace(/^статья\s*/i,'')} ↗</a>)}</div>)}
           </div>
           {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
             <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
