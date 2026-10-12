@@ -51,6 +51,18 @@ export class TemplatesService {
     const template = this.repository ? await this.repository.findTemplateById(input.templateId) : this.templates.get(input.templateId);
     if (!template) throw new NotFoundException('TEMPLATE_NOT_FOUND');
     if (!input.fields || typeof input.fields !== 'object' || Object.values(input.fields).some(value => typeof value !== 'string' || value.length > 20000)) throw new BadRequestException('DOCUMENT_FIELDS_INVALID');
+    if (input.fields.chatDraftMessageId) {
+      if (!this.cases || !ownerUserId) throw new BadRequestException('CHAT_DRAFT_NOT_AVAILABLE');
+      const messages = await this.cases.listMessages(input.caseId, ownerUserId);
+      const latestAssistant = messages.filter(message => message.role === 'assistant').at(-1);
+      if (latestAssistant?.id !== input.fields.chatDraftMessageId || !latestAssistant.ai?.readyForDraft || !latestAssistant.ai.draftBody || latestAssistant.ai.missingFields.length || !latestAssistant.ai.citations.length) throw new BadRequestException('CHAT_DRAFT_REQUIRES_CLARIFICATION');
+      return {
+        id: randomUUID(), templateId: template.id, caseId: input.caseId,
+        status: 'draft_requires_user_confirmation' as const, title: template.title,
+        body: latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n'),
+        expertReviewRequired: true, createdAt: new Date().toISOString(),
+      };
+    }
     const missing = template.requiredFields.filter((field) => !input.fields[field]);
     if (missing.length) throw new BadRequestException({ code: 'REQUIRED_FIELDS_MISSING', missing });
     const absent = template.requiredFields.filter((field) => !template.body.includes(`{{${field}}}`));

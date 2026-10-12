@@ -142,6 +142,8 @@ async function main() {
           },
           { state: seededState(view) },
         );
+        // Layout fixtures run offline. Functional/API checks use separate real sessions.
+        await page.route('**/api/v1/**', route => route.abort('failed'));
         await page.goto(`${baseUrl.replace(/\/$/, "")}#${view}`, {
           waitUntil: "domcontentloaded",
         });
@@ -172,6 +174,7 @@ async function main() {
           };
         });
         const maxScroll = Math.max(result.bodyScrollWidth, result.docScrollWidth);
+        if (result.view !== view) fail(`${viewport.name}/${view}: rendered ${result.view} instead of the requested screen`);
         if (maxScroll > viewport.width + 2) {
           fail(`${viewport.name}/${view}: horizontal overflow ${maxScroll}px > ${viewport.width}px`);
         }

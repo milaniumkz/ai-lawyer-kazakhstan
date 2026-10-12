@@ -141,6 +141,8 @@ server {
 
     location /api/v1/ {
         proxy_pass http://127.0.0.1:3001/api/v1/;
+        proxy_read_timeout 180s;
+        proxy_send_timeout 180s;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -189,6 +191,8 @@ server {
 
     location /api/v1/ {
         proxy_pass http://127.0.0.1:3001/api/v1/;
+        proxy_read_timeout 180s;
+        proxy_send_timeout 180s;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;

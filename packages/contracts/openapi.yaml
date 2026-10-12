@@ -2010,6 +2010,9 @@ components:
         jurisdiction:
           type: string
           enum: [KZ]
+        aiConversationEnabled:
+          type: boolean
+          description: OpenAI conversation configuration is present; provider connectivity is checked by real requests.
     RegisterRequest:
       type: object
       required: [channel, consentVersion]
@@ -2534,6 +2537,46 @@ components:
         createdAt:
           type: string
           format: date-time
+        ai:
+          type: object
+          description: Server-generated OpenAI intake state; absent for manual workflows.
+          properties:
+            provider:
+              type: string
+              enum: [openai]
+            model:
+              type: string
+            facts:
+              type: object
+              additionalProperties:
+                type: string
+            missingFields:
+              type: array
+              items:
+                type: string
+            readyForDraft:
+              type: boolean
+            draftBody:
+              type: string
+            citations:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  title:
+                    type: string
+                  article:
+                    type: string
+                  quote:
+                    type: string
+                  effectiveDate:
+                    type: string
+                  checkedAt:
+                    type: string
+                    format: date-time
     CreateMessageRequest:
       type: object
       required: [role, text]
@@ -2543,6 +2586,10 @@ components:
           enum: [user]
         text:
           type: string
+        mode:
+          type: string
+          enum: [ai, manual]
+          description: Optional explicit manual workflow; AI conversation is the default when configured.
     CreateTranscriptRequest:
       type: object
       properties:

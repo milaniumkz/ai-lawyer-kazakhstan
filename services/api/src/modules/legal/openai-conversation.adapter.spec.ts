@@ -1,0 +1,59 @@
+import { generateOpenAiConversation } from './openai-conversation.adapter';
+import type { MessageRecord, AiConversation } from '../cases/cases.types';
+
+const facts = {
+  claimantName: 'Тестовый заявитель', claimantContact: 'Алматы, qa@example.invalid',
+  respondentName: 'Тестовый должник', respondentContact: 'Алматы, debtor@example.invalid',
+  circumstances: 'Долг 100000 тенге по расписке, не возвращён', eventDate: '2026-01-12',
+  demands: 'Вернуть 100000 тенге', evidence: 'Расписка', deadline: 'До 2026-11-01',
+};
+const citation = {url: 'https://adilet.zan.kz/rus/docs/test', title: 'Гражданский кодекс РК', article: '272', quote: 'Обязательство должно исполняться надлежащим образом в соответствии с условиями обязательства.', effectiveDate: '2026-01-01'};
+const draftBody = ('Полная претензия тестового заявителя к тестовому должнику. Требуется вернуть 100000 тенге на основании расписки. ').repeat(5);
+const previous: AiConversation = { provider: 'openai', model: 'gpt-test', facts, missingFields: [], citations: [], readyForDraft: false };
+const turn = (text: string): MessageRecord[] => [
+  {id: 'summary', caseId: 'case', role: 'assistant', text: 'Проверьте сведения и подтвердите', createdAt: '', ai: previous},
+  {id: 'user', caseId: 'case', role: 'user', text, createdAt: ''},
+];
+describe('OpenAI conversation', () => {
+  const originalEnv = process.env;
+  beforeEach(() => { process.env = {...originalEnv, AI_API_KEY: 'test-key', OPENAI_MODEL: 'gpt-test'}; jest.restoreAllMocks(); });
+  afterAll(() => { process.env = originalEnv; });
+  function mock(answer: Record<string, unknown>, sources = [citation.url]) {
+    return jest.spyOn(global, 'fetch').mockImplementation(async url => {
+      if (String(url).endsWith('/responses')) return new Response(JSON.stringify({output_text: JSON.stringify(answer), output: [{type:'web_search_call', action:{sources:sources.map(url=>({url}))}}]}),{status:200});
+      return new Response(`<html><body>${citation.quote}</body></html>`,{status:200,headers:{'content-type':'text/html'}});
+    });
+  }
+  it('sends conversation history and asks about missing recipient without producing a draft', async () => {
+    const fetchMock = mock({answer: 'Кому направляем претензию?', facts: {...facts, respondentName:'', respondentContact:''}, draftBody:null, citations:[]});
+    const result = await generateOpenAiConversation('Проблема с долгом',turn('Хочу подготовить претензию'));
+    expect(result.ai.missingFields).toEqual(['respondentName','respondentContact']);
+    expect(result.ai.readyForDraft).toBe(false);
+    const payload=JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(payload.input.at(-1).content).toBe('Хочу подготовить претензию');
+    expect(payload.tools[0].filters.allowed_domains).toContain('adilet.zan.kz');
+    expect(payload.store).toBe(false);
+  });
+  it('produces a draft only after confirmation and an actual official quote match', async () => {
+    mock({answer:'Проект подготовлен', facts, draftBody, citations:[citation]});
+    const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(result.ai.readyForDraft).toBe(true);
+    expect(result.ai.draftBody).toBe(draftBody.trim());
+    expect(result.ai.citations[0].checkedAt).toBeDefined();
+  });
+  it('rejects invented sources and a negated confirmation', async () => {
+    mock({answer:'Проект',facts,draftBody,citations:[citation]},[]);
+    expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);
+    expect((await generateOpenAiConversation('Долг',turn('Не подтверждаю'))).ai.draftBody).toBeUndefined();
+  });
+  it('does not approve an absent quote or a redirect to an unrelated host', async () => {
+    const fetchMock=mock({answer:'Проект',facts,draftBody,citations:[citation]});
+    fetchMock.mockImplementation(async url => String(url).endsWith('/responses') ? new Response(JSON.stringify({output_text:JSON.stringify({answer:'Проект',facts,draftBody,citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]})) : new Response(null,{status:302,headers:{location:'https://example.com/fake'}}));
+    expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai.readyForDraft).toBe(false);
+    expect(fetchMock.mock.calls.some(call=>String(call[0]).includes('example.com'))).toBe(false);
+  });
+  it('reports provider failure instead of a fabricated assistant answer', async () => {
+    jest.spyOn(global,'fetch').mockResolvedValue(new Response('{}',{status:503}));
+    await expect(generateOpenAiConversation('Долг',turn('Кто получатель?'))).rejects.toMatchObject({response:{code:'OPENAI_TEMPORARILY_UNAVAILABLE'}});
+  });
+});

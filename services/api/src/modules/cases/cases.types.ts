@@ -35,6 +35,17 @@ export interface MessageRecord {
   role: 'user' | 'assistant' | 'system';
   text: string;
   createdAt: string;
+  ai?: AiConversation;
+}
+
+export interface AiConversation {
+  provider: 'openai';
+  model: string;
+  facts: Record<string, string>;
+  missingFields: string[];
+  citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string }>;
+  readyForDraft: boolean;
+  draftBody?: string;
 }
 
 export interface TranscriptJob {

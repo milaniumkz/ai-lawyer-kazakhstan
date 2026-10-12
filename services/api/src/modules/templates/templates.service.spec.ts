@@ -4,6 +4,20 @@ import { TemplatesService } from './templates.service';
 import { TemplatesRepository } from './repositories/templates.repository';
 
 describe('TemplatesService', () => {
+  it('saves only the latest confirmed AI draft and rejects an outdated message', async () => {
+    const message = { id:'ai-draft', role:'assistant', ai:{readyForDraft:true,draftBody:'Полный проект претензии из переписки',missingFields:[],citations:[{title:'ГК РК',article:'272',url:'https://adilet.zan.kz/rus/docs/test',effectiveDate:'2026-01-01'}]} };
+    const cases = {getCase:jest.fn().mockResolvedValue({id:'case-1'}),listMessages:jest.fn().mockResolvedValue([message])} as unknown as CasesService;
+    const service = new TemplatesService(undefined,cases);
+    const [template]=await service.listTemplates();
+    const input={templateId:template.id,caseId:'case-1',fields:{chatDraftMessageId:'ai-draft'}};
+    const doc=await service.generate(input,'owner-1');
+    expect(doc.body).toContain(message.ai.draftBody);
+    expect(doc.body).toContain(message.ai.citations[0].url);
+    expect(doc.expertReviewRequired).toBe(true);
+    await expect(service.generate({...input,fields:{chatDraftMessageId:'outdated'}},'owner-1')).rejects.toThrow('CHAT_DRAFT_REQUIRES_CLARIFICATION');
+    message.ai.readyForDraft=false;
+    await expect(service.generate(input,'owner-1')).rejects.toThrow('CHAT_DRAFT_REQUIRES_CLARIFICATION');
+  });
   it('generates pretrial claim draft requiring confirmation and expert review', async () => {
     const service = new TemplatesService();
     const [template] = await service.listTemplates();

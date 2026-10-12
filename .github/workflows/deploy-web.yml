@@ -104,6 +104,11 @@ jobs:
           npx playwright install --with-deps chromium
           npm run test:web-intake
 
+      - name: Verify live OpenAI conversation and source-backed claim
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: node scripts/web/check-openai-conversation.mjs
+
       - name: Remove SSH key
         if: always()
         run: rm -f ~/.ssh/ai-lawyer-kz

@@ -11,7 +11,7 @@ const context = await browser.newContext({ viewport: { width: 390, height: 845 }
 let userId;
 let page;
 async function request(path, data, method = data ? 'POST' : 'GET') {
-  const response = await context.request.fetch(`${api}/api/v1${path}`, { method, data, headers: userId ? { 'x-user-id': userId } : {}, timeout: 30000 });
+  const response = await context.request.fetch(`${api}/api/v1${path}`, { method, data: data && path.endsWith('/messages') ? {...data,mode:'manual'} : data, headers: userId ? { 'x-user-id': userId } : {}, timeout: 180000 });
   assert(response.ok(), `${method} ${path}: ${response.status()} ${await response.text()}`);
   return response.json();
 }
@@ -49,6 +49,9 @@ try {
   await page.evaluate(()=>{window.location.hash='home';});
   await page.locator('.aizanFeedback').filter({hasText:'Сначала опишите ситуацию и подтвердите создание дела'}).waitFor();
   assert.equal((await request('/cases')).length,0);
+  await page.waitForTimeout(1000);
+  const manualMode = page.getByRole('button', {name: 'Работать без OpenAI', exact: true});
+  if (await manualMode.isVisible()) await manualMode.click();
   const input = page.locator('#home-problem');
   await input.fill('Работодатель не выплатил зарплату');
   // Two submits in one event turn must issue exactly one request.

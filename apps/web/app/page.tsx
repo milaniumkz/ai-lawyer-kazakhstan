@@ -39,7 +39,7 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { role: "user" | "assistant"; text: string };
+type Message = { id?: string; role: "user" | "assistant"; text: string; ai?: { readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
 type DocumentItem = {
   id?: string;
   name: string;
@@ -536,6 +536,16 @@ export default function WebHome() {
   const [legalNorms, setLegalNorms] = useState<LegalNorm[]>([]);
   const [selectedNorm, setSelectedNorm] = useState<LegalNorm | null>(null);
   const [chatInput, setChatInput] = useState("");
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [aiConversationEnabled, setAiConversationEnabled] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/v1/health', {signal: AbortSignal.timeout(10000)})
+      .then(response => response.ok ? response.json() : null)
+      .then(body => { if (active) { setAiAvailable(body?.aiConversationEnabled === true); setAiConversationEnabled(body?.aiConversationEnabled === true && localStorage.getItem('aizan-chat-mode') !== 'manual'); } })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -1060,7 +1070,7 @@ export default function WebHome() {
       ]);
       const restoredClassification = results[0].status === "fulfilled" ? results[0].value as ApiClassification : null;
       const restoredDocuments = results[1].status === "fulfilled" ? results[1].value as ApiDocument[] : [];
-      const restoredMessages = results[2].status === "fulfilled" ? results[2].value as { role: string; text: string }[] : [];
+      const restoredMessages = results[2].status === "fulfilled" ? results[2].value as Message[] : [];
       const drafts = results[3].status === "fulfilled" ? results[3].value as ApiGeneratedDocument[] : [];
       const currentDraft = drafts[0];
       setGeneratedClaimId(currentDraft?.id ?? "");
@@ -1083,7 +1093,7 @@ export default function WebHome() {
       setGeneratedClaimBody(currentDraft?.body ?? "");
       setClaimReady(Boolean(currentDraft && currentDraft.body.trim() !== LEGACY_EMPTY_CLAIM));
       setSent(false);
-      setMessages(restoredMessages.filter((message) => message.role === "assistant" || message.role === "user").map((message) => ({ role: message.role as "assistant" | "user", text: message.text })));
+      setMessages(restoredMessages.filter((message) => message.role === "assistant" || message.role === "user").map((message) => ({ ...message, role: message.role as "assistant" | "user" })));
       setHomeConversationOpen(true);
       setSyncState(results.slice(1).some((result) => result.status === "rejected") ? "Дело загружено, часть данных недоступна. Повторите открытие." : "Дело и его данные загружены из API");
       go("case");
@@ -1240,9 +1250,19 @@ export default function WebHome() {
     try {
       const userId = await ensureUser();
       let reply: string;
-      if (remoteCaseId && remoteCaseDraftId === draftCaseId) {
-        await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
-        const history = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as Message[];
+      let remoteHistory: Message[] | null = null;
+      let conversationCaseId = remoteCaseId;
+      if (aiConversationEnabled && (!remoteCaseId || remoteCaseDraftId !== draftCaseId)) {
+        const record = await apiJson("/cases", {method: "POST", headers: {"x-user-id": userId, "idempotency-key": `ai-chat-${userId}-${draftCaseId}`}, body: JSON.stringify({ownerUserId: userId, problemText: outgoing})}) as ApiLegalCase;
+        conversationCaseId = record.id;
+        setRemoteCaseId(record.id); setRemoteCaseDraftId(draftCaseId); setCaseText(outgoing);
+        const next = mapCase(record);
+        setCases(items => [next, ...items.filter(item => item.id !== next.id)]); setActiveCaseId(next.id);
+      }
+      if (aiConversationEnabled || (conversationCaseId && remoteCaseDraftId === draftCaseId)) {
+        await apiJson(`/cases/${conversationCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing, mode: aiConversationEnabled ? "ai" : "manual" }) });
+        const history = await apiJson(`/cases/${conversationCaseId}/messages`, { headers: { "x-user-id": userId } }) as Message[];
+        remoteHistory = aiConversationEnabled ? history : null;
         reply = history.filter((message) => message.role === "assistant").at(-1)?.text ?? "Сообщение сохранено. Ответ пока недоступен, повторите запрос позже.";
       } else if (classification && pendingQuestion(classification)) {
         const question = pendingQuestion(classification)!;
@@ -1260,7 +1280,7 @@ export default function WebHome() {
         setCaseText(outgoing);
         reply = intakeReply(result, true);
       }
-      setMessages((items) => [...items, { role: "user", text: outgoing }, { role: "assistant", text: reply }]);
+      setMessages((items) => remoteHistory ?? [...items, { role: "user", text: outgoing }, { role: "assistant", text: reply }]);
       setHomeInput("");
       setSyncState("Ответ получен");
     } catch (error) {
@@ -1306,9 +1326,9 @@ export default function WebHome() {
     setClassificationBusy(true);
     try {
       const userId = await ensureUser();
-      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing }) });
-      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as { role: "system" | "user" | "assistant"; text: string }[];
-      setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ role: item.role as "user" | "assistant", text: item.text })));
+      await apiJson(`/cases/${remoteCaseId}/messages`, { method: "POST", headers: { "x-user-id": userId }, body: JSON.stringify({ role: "user", text: outgoing, mode: aiConversationEnabled ? "ai" : "manual" }) });
+      const serverMessages = await apiJson(`/cases/${remoteCaseId}/messages`, { headers: { "x-user-id": userId } }) as (Omit<Message, "role"> & {role: "system" | "user" | "assistant"})[];
+      setMessages(serverMessages.filter((item) => item.role !== "system").map((item) => ({ ...item, role: item.role as "user" | "assistant" })));
       setChatInput("");
       setSyncState("Чат сохранён в API");
     } catch (error) { setSyncState(error instanceof Error ? `Не удалось отправить. Текст сохранён: ${error.message}` : "Не удалось отправить. Текст сохранён."); }
@@ -1468,7 +1488,7 @@ export default function WebHome() {
       localStorage.setItem(messageKey,JSON.stringify({body:init?.body,key}));
     }
     const response = await fetch(`/api/v1${path}`, {
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(messageKey ? 180000 : 30000),
       ...init,
       headers: {
         ...(init?.body !== undefined ? { "content-type": "application/json" } : {}),
@@ -1673,12 +1693,18 @@ export default function WebHome() {
       setSyncState("Сначала создайте дело в API");
       return;
     }
-    if (!profileName.trim()) {
+    if (!aiConversationEnabled && !profileName.trim()) {
       setSyncState("Заполните профиль перед формированием претензии");
       go("profile");
       return;
     }
-    if (claimReady && generatedClaimBody && generatedClaimBody.trim() !== LEGACY_EMPTY_CLAIM) { go("claimDraft"); return; }
+    const chatDraft = messages.filter(message => message.role === "assistant").at(-1);
+    if (aiConversationEnabled && !chatDraft?.ai?.readyForDraft) {
+      setHomeConversationOpen(true); go("home");
+      setSyncState("Уточните данные в чате и подтвердите резюме перед подготовкой претензии.");
+      return;
+    }
+    if (!aiConversationEnabled && claimReady && generatedClaimBody && generatedClaimBody.trim() !== LEGACY_EMPTY_CLAIM) { if (aiConversationEnabled) { setHomeConversationOpen(true); go("home"); } else go("claimDraft"); return; }
     if (claimBusyRef.current) return;
     claimBusyRef.current = true;
     setClaimBusy(true);
@@ -1691,7 +1717,7 @@ export default function WebHome() {
       const input = {
           templateId: template.id,
           caseId: remoteCaseId,
-          fields: {
+          fields: aiConversationEnabled && chatDraft?.id ? {chatDraftMessageId: chatDraft.id} : {
             claimantName: profileName,
             respondentName: String(classification?.result.facts?.debtor_identity ?? classification?.result.facts?.employer ?? "Ответчик уточняется пользователем"),
             claimAmount: String(classification?.result.facts?.amount ?? classification?.result.facts?.paid_amount ?? "Сумма уточняется пользователем"),
@@ -1704,7 +1730,7 @@ export default function WebHome() {
       const key = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,"0")).join("");
       const job = await apiJson("/documents/generation-jobs", {method:"POST", headers:{"x-user-id":userId,"idempotency-key":key},body:JSON.stringify(input)}) as {id:string};
       setGenerationJobId(job.id);
-      go("claim");
+      if (!aiConversationEnabled) go("claim");
     } catch (error) {
       setSyncState(
         error instanceof Error
@@ -1724,7 +1750,7 @@ export default function WebHome() {
         if (!active) return;
         if (job.status === "completed" && job.document) {
           setGeneratedClaimBody(job.document.body); setGeneratedClaimId(job.document.id); setClaimReady(true);
-          setGenerationJobId(""); setClaimBusy(false); setSyncState("Проект сохранён на сервере"); go("claimDraft");
+          setGenerationJobId(""); setClaimBusy(false); setSyncState("Проект сохранён на сервере"); if (aiConversationEnabled) { setHomeConversationOpen(true); go("home"); } else go("claimDraft");
         } else if (job.status === "cancelled" || job.status === "failed") {
           setGenerationJobId(""); setClaimBusy(false); setSyncState(job.status === "cancelled" ? "Подготовка отменена" : "Не удалось подготовить документ. Повторите попытку.");
         } else {
@@ -1737,7 +1763,7 @@ export default function WebHome() {
     void poll();
     return () => { active=false; clearTimeout(timer); };
     // State setters are stable; polling restarts only when the selected job/session changes.
-  }, [generationJobId,authUserId]);
+  }, [generationJobId,authUserId,aiConversationEnabled]);
 
   async function cancelGeneration() {
     if (!generationJobId) return;
@@ -4480,11 +4506,21 @@ export default function WebHome() {
         <button className="aizanTextEntry" onClick={() => { setHomeConversationOpen(true); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".aizanHomeComposer textarea")?.focus(), 0); }}>
           <span className="keyboardIcon"><DesignIcon name="keyboard" /></span><span>Ввести текст</span>
         </button>
+        {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Ручной режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Работать без OpenAI" : "Включить OpenAI"}</button></div>}
         {homeConversationOpen && <div className="aizanHomeConversation">
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
-            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p></div>)}
+            {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article} ↗</a>)}</div>)}
           </div>
-          {classification && <div className="aizanIntakeSteps">
+          {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
+            <UploadControl source="file" className="outlineGold">Прикрепить документ</UploadControl>
+            {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : "Сохранить претензию как документ"}</button>}
+          </div>}
+          {aiConversationEnabled && generatedClaimId && generatedClaimBody && <section className="aizanInlineDraft">
+            <h2>Проект претензии</h2><p>Проверьте реквизиты, факты и требования перед использованием.</p>
+            <textarea aria-label="Текст претензии" value={generatedClaimBody} onChange={event => setGeneratedClaimBody(event.target.value)} rows={14} />
+            <div className="aizanHomeActions"><button className="outlineGold" onClick={() => void saveClaimDraft()}>Сохранить правки</button><button className="primary" onClick={() => void downloadClaimPdf()}>Скачать PDF</button></div>
+          </section>}
+          {classification && !aiConversationEnabled && <div className="aizanIntakeSteps">
             <p>{classification.result.subcategory_label} · Уверенность: {Math.round(classification.result.confidence * 100)}%</p>
             {classification.result.required_human_review && <p role="note">Высокий риск: требуется проверка юристом.</p>}
             <p>{classification.result.missing_facts.length ? `Осталось уточнений: ${classification.result.missing_facts.length}` : "Уточнения заполнены"}</p>
@@ -4501,7 +4537,7 @@ export default function WebHome() {
           </div>}
           <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
             {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
-            <label htmlFor="home-problem">{classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
+            <label htmlFor="home-problem">{aiConversationEnabled ? "Ответьте помощнику или задайте вопрос" : classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
             <textarea id="home-problem" value={homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} placeholder="Напишите сообщение или нажмите микрофон…" rows={3} />
             {recording && <div className="aizanRecordingControls"><span>{formatDuration(recordingSeconds)}</span><button type="button" onClick={pauseRecording}>{paused ? "Продолжить запись" : "Пауза"}</button><button type="button" onClick={finishRecording}>Завершить запись</button></div>}
             {audioUrl && <audio className="voicePlayback" controls src={audioUrl} />}

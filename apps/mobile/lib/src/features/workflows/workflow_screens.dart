@@ -558,16 +558,33 @@ class HttpWorkflowApi implements WorkflowApiPort {
       throw const HttpException('Нет доступного шаблона претензии');
     }
     final templateId = template['id'] as String;
+    String? chatDraftMessageId;
+    final chatResponse = await http.get(
+        Uri.parse('$baseUrl${ApiContract.basePath}/cases/$caseId/messages'));
+    if (chatResponse.statusCode == 200) {
+      final messages = (jsonDecode(chatResponse.body) as List)
+          .cast<Map<String, dynamic>>()
+          .where((message) => message['role'] == 'assistant')
+          .toList();
+      final latest = messages.lastOrNull;
+      final ai = latest?['ai'];
+      if (ai is Map && ai['readyForDraft'] == true) {
+        chatDraftMessageId = latest?['id'] as String?;
+      }
+    }
     final input = {
       'templateId': templateId,
       'caseId': caseId,
-      'fields': {
-        'claimantName': claimantName,
-        'respondentName': respondentName,
-        'claimAmount': claimAmount,
-        'claimReason': claimReason,
-        'deadlineDate': 'Срок требует проверки и подтверждения пользователем',
-      },
+      'fields': chatDraftMessageId != null
+          ? {'chatDraftMessageId': chatDraftMessageId}
+          : {
+              'claimantName': claimantName,
+              'respondentName': respondentName,
+              'claimAmount': claimAmount,
+              'claimReason': claimReason,
+              'deadlineDate':
+                  'Срок требует проверки и подтверждения пользователем',
+            },
       'confirmedCitationIds': <String>[],
     };
     if (WorkflowRuntime.generationJobId.isEmpty) {

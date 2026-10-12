@@ -6,6 +6,7 @@ describe('HealthController', () => {
       status: 'ok',
       service: 'api',
       jurisdiction: 'KZ',
+      aiConversationEnabled: expect.any(Boolean),
     });
   });
 });

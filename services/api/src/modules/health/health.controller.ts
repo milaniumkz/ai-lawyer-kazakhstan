@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { isOpenAiLegalEnabled } from '../legal/openai-legal.adapter';
 
 @Controller('health')
 export class HealthController {
@@ -8,6 +9,7 @@ export class HealthController {
       status: 'ok',
       service: 'api',
       jurisdiction: 'KZ',
+      aiConversationEnabled: isOpenAiLegalEnabled(),
     };
   }
 }

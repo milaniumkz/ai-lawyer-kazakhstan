@@ -296,7 +296,7 @@ export class CasesService {
     return record;
   }
 
-  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string }, ownerUserId?: string, key?: string) {
+  async addMessage(caseId: string, input: { role: 'user' | 'assistant'; text: string; mode?: 'ai' | 'manual' }, ownerUserId?: string, key?: string) {
     const legalCase = await this.getCase(caseId, ownerUserId);
     if (input.role !== 'user') throw new BadRequestException('USER_MESSAGE_REQUIRED');
     if (typeof input.text !== 'string' || !input.text.trim() || input.text.length>20000) throw new BadRequestException('MESSAGE_TEXT_REQUIRED');
@@ -313,10 +313,14 @@ export class CasesService {
       return existing;
     }
     // Resolve before saving: a failed provider must not leave a half-written turn.
-    const answer = this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
+    const history = this.repository ? await this.repository.listMessages(caseId) : this.messages.get(caseId) ?? [];
+    if (input.mode !== undefined && input.mode !== 'ai' && input.mode !== 'manual') throw new BadRequestException('CHAT_MODE_INVALID');
+    const conversation = input.mode === 'manual' ? undefined : await this.legal?.conversation?.(legalCase.problemText, [...history, message]);
+    const answer = !conversation && this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
     const procedural = /что дальше|следующ|документ.*нуж|какие.*документ/i.test(input.text)
       ? `По делу «${legalCase.title}» сохраните подтверждающие документы, проверьте факты и подготовьте проект претензии. В разделе документа можно исправить текст и скачать PDF. Сроки задавайте после проверки.\n` : '';
     const fallback: MessageRecord = {id:stableId('assistant'),caseId,role:'assistant',text:procedural+(answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.'),createdAt:new Date().toISOString()};
+    if (conversation) { fallback.text = conversation.text; fallback.ai = conversation.ai; }
     if(this.repository?.saveTurn) {
       await this.repository.saveTurn([message,fallback]);
       const saved=await this.repository.findMessage!(message.id);

@@ -4,6 +4,8 @@ import { CitationValidationResult, LegalSourceFragment } from './legal.types';
 import { generateOpenAiLegalAnswer, isOpenAiLegalEnabled } from './openai-legal.adapter';
 import { LEGAL_REPOSITORY } from './repositories/legal-repository.provider';
 import { LegalRepository } from './repositories/legal.repository';
+import { generateOpenAiConversation } from './openai-conversation.adapter';
+import type { MessageRecord } from '../cases/cases.types';
 
 const OFFICIAL_HOSTS = ['zan.gov.kz', 'adilet.zan.kz', 'sud.gov.kz', 'gov.kz'];
 
@@ -77,6 +79,11 @@ export class LegalService {
       message: 'Найден подтвержденный официальный источник. Итоговый вывод требует проверки применимости к фактам.',
       fragment: matches[0],
     };
+  }
+
+  async conversation(problemText: string, messages: MessageRecord[]) {
+    if (!isOpenAiLegalEnabled()) return undefined;
+    return generateOpenAiConversation(problemText, messages);
   }
 }
 

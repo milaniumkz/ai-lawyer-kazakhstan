@@ -61,8 +61,8 @@ export class PostgresCasesRepository implements CasesRepository {
 
   async createMessage(input: Omit<MessageRecord, 'id' | 'createdAt'>) {
     const result = await this.db.query<MessageRow>(
-      'INSERT INTO messages (case_id, role, text) VALUES ($1, $2, $3) RETURNING *',
-      [input.caseId, input.role, input.text],
+      'INSERT INTO messages (case_id, role, text, ai_context) VALUES ($1, $2, $3, $4::jsonb) RETURNING *',
+      [input.caseId, input.role, input.text, input.ai ? JSON.stringify(input.ai) : null],
     );
     return mapMessage(result.rows[0]!);
   }
@@ -72,7 +72,7 @@ export class PostgresCasesRepository implements CasesRepository {
     return result.rows[0] ? mapMessage(result.rows[0]) : undefined;
   }
   async saveTurn(messages: MessageRecord[]) {
-    await this.db.query(`INSERT INTO messages (id,case_id,role,text,created_at) VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10) ON CONFLICT(id) DO NOTHING`, messages.flatMap(message=>[message.id,message.caseId,message.role,message.text,message.createdAt]));
+    await this.db.query(`INSERT INTO messages (id,case_id,role,text,created_at,ai_context) VALUES ($1,$2,$3,$4,$5,$6::jsonb),($7,$8,$9,$10,$11,$12::jsonb) ON CONFLICT(id) DO NOTHING`, messages.flatMap(message=>[message.id,message.caseId,message.role,message.text,message.createdAt,message.ai ? JSON.stringify(message.ai) : null]));
   }
 
   async listMessages(caseId: string) {
@@ -129,6 +129,7 @@ interface MessageRow {
   role: MessageRecord['role'];
   text: string;
   created_at: Date;
+  ai_context?: MessageRecord['ai'] | null;
 }
 
 interface TranscriptRow {
@@ -170,6 +171,7 @@ export function mapMessage(row: MessageRow): MessageRecord {
     role: row.role,
     text: row.text,
     createdAt: row.created_at.toISOString(),
+    ...(row.ai_context ? { ai: row.ai_context } : {}),
   };
 }
 

@@ -407,6 +407,13 @@ html { scroll-padding-bottom: 140px; }
 .appShell[data-design="aizan"][data-theme] .authExactPanel .biometricMark { width: 80px; height: 80px; margin: 0 auto 20px; }
 .appShell[data-design="aizan"][data-theme] .deadlineFilters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .appShell[data-design="aizan"][data-theme] .deadlineFilters button { white-space: normal; font-size: 13px; min-height: 40px; }
+.aizanChatMode { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin: 16px 0; font-size: 13px; color: var(--muted); }
+.aizanChatMode button { padding: 8px 14px; }
+.aizanCitation { display: block; margin-top: 10px; color: #ffdf83; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.aizanInlineDraft { margin: 20px 0; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #201205; text-align: left; }
+.aizanInlineDraft h2 { font-size: 22px; }
+.aizanInlineDraft p { font-size: 13px; line-height: 1.5; color: var(--muted); }
+.aizanInlineDraft textarea { width: 100%; padding: 16px; font: 15px/1.6 AizanSans, sans-serif; border: 1px solid var(--line); border-radius: 12px; resize: vertical; }
 @media (min-width: 1024px) {
   .appShell[data-design="aizan"][data-theme] .deviceFrame { max-width: 960px; }
   .appShell[data-design="aizan"][data-theme] .contentPanel {
