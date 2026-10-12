@@ -7,6 +7,10 @@ on:
         description: Apply the additive AI conversation migration without reinstalling the app
         type: boolean
         default: false
+      verify_only:
+        description: Verify the existing deployed site without reinstalling it
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -16,6 +20,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-deployed:
+    if: inputs.verify_only
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify deployed manual document workflow
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+          WEB_TEST_SECURE_AUTH: "1"
+        run: npm run test:web-intake
+      - name: Verify live OpenAI conversation and source-backed claim
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: node scripts/web/check-openai-conversation.mjs
+
   repair-ai-schema:
     if: inputs.repair_ai_schema
     runs-on: ubuntu-latest
@@ -42,7 +68,7 @@ jobs:
         run: rm -f ~/.ssh/ai-lawyer-kz
 
   deploy:
-    if: '!inputs.repair_ai_schema'
+    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
