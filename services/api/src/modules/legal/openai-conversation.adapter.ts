@@ -33,7 +33,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
         model, store: false, max_output_tokens: 12000,
         ...(model.startsWith('gpt-5') ? {reasoning: {effort: 'low'}} : {}),
         tools: [{ type: 'web_search', filters: { allowed_domains: officialDomains } }],
-        tool_choice: searchNeeded ? 'auto' : 'none',
+        tool_choice: searchNeeded ? 'required' : 'none',
         include: ['web_search_call.action.sources'],
         input: [{ role: 'developer', content: [
           'Ты AIZAN, юридический помощник по праву Республики Казахстан. Веди весь процесс подготовки досудебной претензии в одном чате на языке пользователя.',

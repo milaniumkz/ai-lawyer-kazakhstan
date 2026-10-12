@@ -33,7 +33,7 @@ describe('OpenAI conversation', () => {
     expect(payload.input.at(-1).content).toBe('Хочу подготовить претензию');
     expect(payload.tools[0].filters.allowed_domains).toContain('adilet.zan.kz');
     expect(payload.store).toBe(false);
-    expect(payload.tool_choice).toBe('auto');
+    expect(payload.tool_choice).toBe('required');
   });
   it('produces a draft only after confirmation and an actual official quote match', async () => {
     mock({answer:'Проект подготовлен', facts, draftBody, citations:[citation]});
