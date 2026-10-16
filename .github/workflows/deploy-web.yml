@@ -141,6 +141,12 @@ jobs:
               console.log('OFFICIAL_VIEWER_SCRIPT '+JSON.stringify({path:new URL(url).pathname,status:response.status,characters:text.length,paths}));
               if(new URL(url).pathname.endsWith('/all.js')) console.log('OFFICIAL_DOCUMENT_API '+JSON.stringify({snippets:[text.match(/var baseUri = '\/api\/documents\/'[\s\S]{0,3500}/)?.[0] || 'not found']}));
             }
+            for(const code of ['104021','104024','50913']){
+              const url=`https://zan.gov.kz/api/documents/${code}/rus?withHtml=true&page=1`;
+              const response=await fetchOfficialPublisher(url,{redirect:'manual',signal:AbortSignal.timeout(10000)});
+              const body=await response.json().catch(()=>({}));
+              console.log('OFFICIAL_DOCUMENT_SHAPE '+JSON.stringify({code,status:response.status,keys:Object.keys(body),title:body.metadata?.title?.rus,pagesCount:body.pagesCount,versionDate:body.versionDate,actualVersion:body.actualVersion,contentType:typeof body.content,contentCharacters:JSON.stringify(body.content || '').length,loanQuote:JSON.stringify(body.content || '').includes('договор займа')}));
+            }
             const {spawnSync}=require('node:child_process');
             for(const host of ['law.gov.kz','zan.gov.kz']) {
               const result=spawnSync('openssl',['s_client','-connect',`${host}:443`,'-servername',host,'-showcerts','-verify_return_error'],{input:'',timeout:10000,encoding:'utf8'});
