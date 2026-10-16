@@ -149,7 +149,26 @@ jobs:
             [[ "$QA_REVOKE_USER_IDS" =~ ^[0-9a-fA-F,-]+$ ]] || exit 1
             ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" "cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/revoke-qa-sessions.mjs '$QA_REVOKE_USER_IDS'"
           fi
-          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/verify-legal-recovery.mjs'
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env --input-type=module -' <<'JS'
+          const actual=globalThis.fetch;
+          globalThis.fetch=async(url,options)=>{
+            const ai=String(url).endsWith('/responses');
+            const schema=ai ? JSON.parse(options?.body || '{}').text?.format?.name : undefined;
+            const host=new URL(url).hostname;
+            const start=Date.now();
+            let response;
+            try {response=await actual(url,options);}
+            catch(error){console.log('LEGAL_PROBE_TRANSPORT '+JSON.stringify({host,schema,elapsedMs:Date.now()-start,error:error.name}));throw error;}
+            if(ai){
+              const body=await response.clone().json().catch(()=>({}));
+              let citations=[];
+              try {citations=JSON.parse(body.output_text || body.output?.flatMap(item=>item.content || []).map(item=>item.text || '').join('') || '{}').citations || [];}catch{}
+              console.log('LEGAL_PROBE_PROVIDER '+JSON.stringify({schema,status:response.status,elapsedMs:Date.now()-start,completion:body.status,incompleteReason:body.incomplete_details?.reason,outputTokens:body.usage?.output_tokens,candidates:citations.map(source=>({host:(()=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}})(),article:source.article,quoteCharacters:source.quote?.length,date:source.effectiveDate}))}));
+            }else console.log('LEGAL_PROBE_SOURCE '+JSON.stringify({host,status:response.status,type:response.headers.get('content-type'),elapsedMs:Date.now()-start}));
+            return response;
+          };
+          await import('file:///opt/ai-lawyer-kz/app/scripts/release/verify-legal-recovery.mjs');
+          JS
       - name: Remove SSH key
         if: always()
         run: rm -f ~/.ssh/ai-lawyer-kz
