@@ -3,6 +3,7 @@ describe('public official act catalogue',()=>{
   afterEach(()=>jest.restoreAllMocks());
   it('uses anonymous legal-title searches and returns genuine current catalogue IDs, excluding amendments and revoked entries',async()=>{
     const fetch=jest.spyOn(global,'fetch').mockResolvedValue(new Response(JSON.stringify({list:[
+      {code:'95109',status:'new',summary:{rus:'Гражданский процессуальный кодекс Республики Казахстан'}},
       {code:'3582',status:'new',summary:{rus:'О введении в действие Гражданского кодекса'}},
       {code:'3559',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан (особенная часть)'}},
       {code:'999',status:'old',summary:{rus:'Гражданский кодекс'}},
@@ -31,6 +32,10 @@ describe('public official act catalogue',()=>{
     ]})));
     expect(await searchOfficialCatalogue(['Налоговый кодекс Республики Казахстан'],new AbortController().signal)).toEqual(['https://zan.gov.kz/client/#!/doc/555/rus']);
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string).search).toBe('Налоговый кодекс');
+  });
+  it('does not substitute a different code just because both titles contain the word code',async()=>{
+    jest.spyOn(global,'fetch').mockResolvedValue(new Response(JSON.stringify({list:[{code:'879',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан'}}]})));
+    expect(await searchOfficialCatalogue(['Налоговый кодекс'],new AbortController().signal)).toEqual([]);
   });
   it('does not turn a publisher failure into invented source identifiers',async()=>{
     jest.spyOn(global,'fetch').mockResolvedValue(new Response('',{status:503}));

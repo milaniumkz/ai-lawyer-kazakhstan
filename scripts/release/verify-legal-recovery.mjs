@@ -29,6 +29,7 @@ try {
   assert.equal(pretrial.ai.sourceSearch,'web_fallback');
   assert.equal(pretrial.ai.readyForDraft,true,'Independent live web search must produce a verified pretrial draft');
   assert(pretrial.ai.citations.every(source=>source.checkedAt));
+  assert(pretrial.ai.citations.some(source=>/гражданск\S*\s+кодекс/i.test(source.title) && !/процесс/i.test(source.title)),'A loan pretrial requires substantive Civil Code grounds, not procedural articles alone');
   console.log(JSON.stringify({phase,provider:pretrial.ai.provider,model:pretrial.ai.model,citations:pretrial.ai.citations.length,characters:pretrial.ai.draftBody.length,verificationMethods:pretrial.ai.citations.map(source=>source.verificationMethod || 'official_text'),editionReviewRequired:pretrial.ai.citations.some(source=>source.editionVerified===false),faultInjected}));
   globalThis.fetch=actualFetch;
   phase='court-intake';
@@ -43,6 +44,8 @@ try {
   assert.equal(court.ai.documentKind,'court_claim');
   assert.equal(court.ai.readyForDraft,true,'Live court document must be composed after confirmation');
   assert(court.ai.citations.length && court.ai.citations.every(source=>source.checkedAt));
+  assert(court.ai.citations.some(source=>/гражданск\S*\s+кодекс/i.test(source.title) && !/процесс/i.test(source.title)),'Court loan claim needs substantive grounds');
+  assert(court.ai.citations.some(source=>/процессуальн/i.test(source.title)),'Court claim must also verify procedural sources');
   assert(/иск|суд/i.test(court.ai.draftBody));
   const pdf=await createDocumentPdf(court.ai.draftBody);
   assert.equal(Buffer.from(pdf).subarray(0,5).toString(),'%PDF-');

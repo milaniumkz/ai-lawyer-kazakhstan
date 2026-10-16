@@ -125,6 +125,13 @@ describe('independent official source recovery',()=>{
     expect((await recoverOfficialSources(options))[0]).toMatchObject({url:source.url,verificationMethod:'official_text',editionVerified:true});
     expect(requests).toBe(2);
   });
+  it('shows the actual publisher title and edition date when the model leaves the date unknown',async()=>{
+    const source={...citation,url:'https://zan.gov.kz/client/#!/doc/123/rus',title:'Сокращённый заголовок модели',effectiveDate:''};
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[source]}),output:[{action:{sources:[{url:source.url}]}}]}))
+      : new Response(JSON.stringify({code:'123',language:'rus',pagesCount:1,versionDate:'2026-01-01',actualVersion:true,metadata:{title:{rus:'Официальное название акта'}},content:source.quote}),{headers:{'content-type':'application/json'}}));
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({title:'Официальное название акта',effectiveDate:'2026-01-01',editionVerified:false});
+  });
   it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
       ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))

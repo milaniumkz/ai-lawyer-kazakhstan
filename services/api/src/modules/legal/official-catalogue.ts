@@ -16,11 +16,18 @@ export async function searchOfficialCatalogue(titles:unknown,signal:AbortSignal)
       const reader=response.body.getReader();const chunks:Uint8Array[]=[];let size=0;
       for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>1024*1024){await reader.cancel();return [];}chunks.push(part.value);}
       const body=JSON.parse(Buffer.concat(chunks).toString('utf8')) as {list?:Array<{code?:string;status?:string;summary?:{rus?:string}}>};
-      const words=search.toLocaleLowerCase().match(/[а-яәғқңөұүһі]{4,}/g) || [];
+      const normalize=(text:string)=>text.toLocaleLowerCase().replace(/ё/g,'е').replace(/республики\s+казахстан/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+      const phrase=normalize(search);
+      const words=phrase.match(/[а-яәғқңөұүһі]{4,}/g) || [];
       return (Array.isArray(body.list)?body.list:[])
         .filter(row=>/^\d{1,12}$/.test(String(row.code)) && row.status==='new' && typeof row.summary?.rus==='string')
-        .map(row=>({url:`https://zan.gov.kz/client/#!/doc/${row.code}/rus`,score:words.reduce((n,word)=>n+(row.summary!.rus!.toLocaleLowerCase().includes(word)?1:0),0)-( /^о\s+(?:введении|ратификации)/i.test(row.summary!.rus!) && !/^о\s+(?:введении|ратификации)/i.test(search)?10:0)}))
-        .filter(row=>row.score>0).sort((a,b)=>b.score-a.score).slice(0,1).map(row=>row.url);
+        .map(row=>{
+          const title=normalize(row.summary!.rus!);
+          const matched=words.filter(word=>title.includes(word)).length;
+          return {url:`https://zan.gov.kz/client/#!/doc/${row.code}/rus`,matched,
+            score:(title===phrase ? 1000 : title.includes(phrase) ? 500 : 0)+matched-( /^о\s+(?:введении|ратификации)/i.test(row.summary!.rus!) && !/^о\s+(?:введении|ратификации)/i.test(search)?10:0)};
+        })
+        .filter(row=>row.score>0 && row.matched>=Math.max(1,Math.ceil(words.length*0.75))).sort((a,b)=>b.score-a.score).slice(0,1).map(row=>row.url);
     }catch{return [];}
   }));
   return [...new Set(results.flat())].slice(0,3);
