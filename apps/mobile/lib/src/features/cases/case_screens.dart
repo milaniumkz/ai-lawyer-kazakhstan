@@ -1860,7 +1860,13 @@ class _CategoryScreenState extends State<CategoryScreen>
             for (final message in homeMessages)
               _MessageBubble(text: message.text, assistant: message.assistant),
             Text(status),
+            if (isBusy)
+              const _MessageBubble(
+                  text:
+                      'Помощник обрабатывает запрос. Проверка правовых оснований может занять несколько минут.',
+                  assistant: true),
             TextField(
+                enabled: !isBusy,
                 controller: answerController,
                 minLines: 2,
                 maxLines: 6,
@@ -2096,6 +2102,7 @@ class _CaseChatScreenState extends State<CaseChatScreen>
           ),
           const SizedBox(height: 12),
           TextField(
+            enabled: !sending,
             controller: controller,
             minLines: 2,
             maxLines: 4,

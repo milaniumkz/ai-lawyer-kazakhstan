@@ -100,7 +100,7 @@ jobs:
   inspect-official-sources:
     if: inputs.inspect_sources || inputs.verify_legal_recovery
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - name: Inspect official text reader without accessing credentials or customer data
         env:
@@ -163,7 +163,7 @@ jobs:
               const body=await response.clone().json().catch(()=>({}));
               let citations=[];
               try {citations=JSON.parse(body.output_text || body.output?.flatMap(item=>item.content || []).map(item=>item.text || '').join('') || '{}').citations || [];}catch{}
-              console.log('LEGAL_PROBE_PROVIDER '+JSON.stringify({schema,status:response.status,elapsedMs:Date.now()-start,completion:body.status,incompleteReason:body.incomplete_details?.reason,outputTokens:body.usage?.output_tokens,webActions:body.output?.filter(item=>item.type==='web_search_call').map(item=>({type:item.action?.type,status:item.status,sourceHosts:[...new Set((item.action?.sources || []).map(source=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}}))]})),candidates:citations.map(source=>({host:(()=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}})(),article:source.article,quoteCharacters:source.quote?.length,date:source.effectiveDate}))}));
+              console.log('LEGAL_PROBE_PROVIDER '+JSON.stringify({schema,status:response.status,elapsedMs:Date.now()-start,completion:body.status,providerCode:body.error?.code,providerParam:body.error?.param,incompleteReason:body.incomplete_details?.reason,outputTokens:body.usage?.output_tokens,webActions:body.output?.filter(item=>item.type==='web_search_call').map(item=>({type:item.action?.type,status:item.status,sourceHosts:[...new Set((item.action?.sources || []).map(source=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}}))]})),candidates:citations.map(source=>({host:(()=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}})(),article:source.article,quoteCharacters:source.quote?.length,date:source.effectiveDate}))}));
             }else console.log('LEGAL_PROBE_SOURCE '+JSON.stringify({host,status:response.status,type:response.headers.get('content-type'),elapsedMs:Date.now()-start}));
             return response;
           };

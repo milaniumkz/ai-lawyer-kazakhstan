@@ -9,7 +9,7 @@ const proxy = /^https?:\/\/(?!localhost|127\.0\.0\.1)/.test(base) ? process.env.
 const context = await browser.newContext({viewport:{width:390,height:844}, ...(proxy ? {proxy:{server:proxy,bypass:'localhost,127.0.0.1'}} : {})});
 let userId;
 async function request(path, data, method=data ? 'POST' : 'GET') {
-  const response = await context.request.fetch(`${base}/api/v1${path}`,{method,data,timeout:180000});
+  const response = await context.request.fetch(`${base}/api/v1${path}`,{method,data,timeout:360000});
   assert(response.ok(),`${path}: ${response.status()}`);
   return response.json();
 }
@@ -22,7 +22,7 @@ try {
   userId=auth.user.id;
   await request('/profiles',{userId,type:'person',displayName:'Синтетический тест AIZAN'});
   const page=await context.newPage();
-  page.setDefaultTimeout(180000);
+  page.setDefaultTimeout(360000);
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(id=>{
@@ -37,7 +37,7 @@ try {
   await page.getByRole('button',{name:'Ввести текст',exact:true}).click();
   const input=page.locator('#home-problem');
   async function send(text, attempt=0) {
-    const completed=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:180000});
+    const completed=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:360000});
     await input.fill(text);
     await page.getByRole('button',{name:'Отправить',exact:true}).click();
     const response=await completed;
@@ -51,7 +51,7 @@ try {
       }
       throw new Error(`Real OpenAI chat request: ${response.status()} ${error.error?.code || error.code || 'UNKNOWN_ERROR'}`);
     }
-    await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='' && !document.querySelector('.aizanTyping'),{timeout:180000});
+    await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='' && !document.querySelector('.aizanTyping'),{timeout:360000});
     assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
     const cases=await request('/cases');
     assert.equal(cases.length,1);
@@ -107,7 +107,7 @@ try {
   const pdf=await context.request.get(`${base}/api/v1/generated-documents/${docs[0].id}/pdf`);
   assert(pdf.ok());
   assert.equal((await pdf.body()).subarray(0,4).toString(),'%PDF');
-  const courtResponse=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:180000});
+  const courtResponse=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:360000});
   await page.getByRole('button',{name:'Перейти к подготовке иска в суд',exact:true}).click();
   assert((await courtResponse).ok(),'Court intake request must succeed');
   const courtHistory=await request(`/cases/${final.caseId}/messages`);

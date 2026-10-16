@@ -13,9 +13,6 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   if (!key) throw new ServiceUnavailableException('OPENAI_NOT_CONFIGURED');
   const model = [process.env.OPENAI_MODEL, process.env.AI_COMPLEX_MODEL, process.env.AI_MEDIUM_MODEL].find(value => value && !value.startsWith('stub-')) || 'gpt-5';
   const controller = new AbortController();
-  const configuredTimeout = Number(process.env.AI_CONVERSATION_TIMEOUT_MS || 150000);
-  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout >= 15000 ? Math.min(configuredTimeout, 150000) : 150000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const previousState = messages.filter(message => message.role === 'assistant').at(-1)?.ai;
   const previousMessage = messages.filter(message => message.role === 'assistant').at(-1);
   const lastUserText = messages.filter(message => message.role === 'user').at(-1)?.text || '';
@@ -31,6 +28,9 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   if (documentKind === 'court_claim') factsSchema.pretrialStatus = {type:'string', enum:['','not_sent','waiting','fulfilled','unresolved','not_required']};
   const preparedDocumentHelp = Boolean(!stageChanged && previousState?.readyForDraft && /спасиб|pdf|скач|сохран|download|thanks/i.test(lastUserText) && !/измен|исправ|замен|ошиб|неверн|друг|редакци|отмен|недейств|стать|закон|норм/i.test(lastUserText));
   const searchNeeded = !preparedDocumentHelp && ((!stageChanged && previousState?.missingFields.length === 0) || (documentKind === 'court_claim' && Boolean(previousState?.facts.respondentAddress) && (!previousState?.facts.courtName || !previousState?.facts.stateDuty)) || /стать|норм.*прав|закон|кодекс|правов.*основан/i.test(lastUserText));
+  const configuredTimeout = Number((searchNeeded ? process.env.AI_RESEARCH_TIMEOUT_MS : process.env.AI_CONVERSATION_TIMEOUT_MS) || (searchNeeded ? 300000 : 150000));
+  const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout >= 15000 ? Math.min(configuredTimeout, 300000) : 300000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const history: MessageRecord[] = [];
   let historyLength = 0;
   for (const message of messages.slice(-60).reverse()) {
@@ -40,7 +40,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   const recoverPrimaryFailure = !stageChanged && !attachments.length && previousState?.missingFields.length === 0 && /^(подтверждаю|всё верно|все верно|согласен|согласна|растаймын|confirm(?:ed)?)(?:[.!\s]|$)/i.test(lastUserText.trim()) && !/\d|измен|исправ|замен|вместо|кроме|ошиб|неверн|(?:^|[\s,.!?])но(?:[\s,.!?]|$)/i.test(lastUserText);
   try {
     const response = await fetch(`${(process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '')}/responses`, {
-      method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(searchNeeded ? 45000 : 90000)]),
+      method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(searchNeeded ? 60000 : 90000)]),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model, store: false, max_output_tokens: 12000,

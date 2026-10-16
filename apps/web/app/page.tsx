@@ -504,6 +504,13 @@ export default function WebHome() {
   const [selectedCategory, setSelectedCategory] = useState("Семейные споры");
   const [classification, setClassification] = useState<ApiClassification | null>(null);
   const [classificationBusy, setClassificationBusy] = useState(false);
+  const [replyWaitingSeconds, setReplyWaitingSeconds] = useState(0);
+  useEffect(() => {
+    if (!classificationBusy) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => setReplyWaitingSeconds(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [classificationBusy]);
   const [aiInterviewInput, setAiInterviewInput] = useState("");
   const [authUserId, setAuthUserId] = useState("");
   const [otpId, setOtpId] = useState("");
@@ -1060,6 +1067,7 @@ export default function WebHome() {
     if(uploadBusyRef.current) {setSyncState("Дождитесь завершения загрузки файла");return;}
     if (classificationBusy || intakeBusyRef.current || recording || voiceBusy) return;
     intakeBusyRef.current = true;
+    setReplyWaitingSeconds(0);
     setClassificationBusy(true);
     try {
       const userId = await ensureUser();
@@ -1259,6 +1267,7 @@ export default function WebHome() {
     if (!outgoing || !aiConfigLoaded || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
     if (!classification && !remoteCaseId && outgoing.length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
     intakeBusyRef.current = true;
+    setReplyWaitingSeconds(0);
     setClassificationBusy(true);
     setSyncState("Обрабатываю сообщение…");
     try {
@@ -1510,7 +1519,7 @@ export default function WebHome() {
       localStorage.setItem(messageKey,JSON.stringify({body:init?.body,key}));
     }
     const response = await fetch(`/api/v1${path}`, {
-      signal: AbortSignal.timeout(messageKey ? 180000 : 30000),
+      signal: AbortSignal.timeout(messageKey || path === "/rag/answer" ? 360000 : 30000),
       ...init,
       headers: {
         ...(init?.body !== undefined ? { "content-type": "application/json" } : {}),
@@ -4540,7 +4549,7 @@ export default function WebHome() {
         {homeConversationOpen && <div className="aizanHomeConversation">
           <div className="aizanHomeMessages" aria-label="Переписка с AI" aria-live="polite">
             {messages.map((message, index) => <div key={index} className={`aizanHomeMessage ${message.role}`}><small>{message.role === "user" ? "Вы" : "AIZAN"}</small><p>{message.text}</p>{message.attachments?.map(file=><ChatAttachment key={file.id} file={file} ownerUserId={authUserId} />)}{message.ai?.citations?.map(source => <a className="aizanCitation" key={source.url + source.article} href={source.url} target="_blank" rel="noopener noreferrer">{source.title} · статья {source.article.replace(/^статья\s*/i,'')} ↗</a>)}</div>)}
-            {classificationBusy && <><div className="aizanHomeMessage user"><small>Вы</small><p>{homeInput.trim() || "Посмотрите прикреплённые файлы"}</p>{documents.filter(file=>file.id && file.sentWithMessage===false).map(file=><ChatAttachment key={file.id} file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} />)}</div><div className="aizanHomeMessage assistant aizanTyping" role="status"><small>AIZAN</small><span>Помощник печатает<span className="aizanTypingDots" aria-hidden="true">…</span></span></div></>}
+            {classificationBusy && <><div className="aizanHomeMessage user"><small>Вы</small><p>{homeInput.trim() || "Посмотрите прикреплённые файлы"}</p>{documents.filter(file=>file.id && file.sentWithMessage===false).map(file=><ChatAttachment key={file.id} file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} />)}</div><div className="aizanHomeMessage assistant aizanTyping" role="status"><small>AIZAN</small><span>{replyWaitingSeconds >= 60 ? "Продолжаю проверку. Подготовка ответа может занять несколько минут" : replyWaitingSeconds >= 15 && latestAssistant?.ai?.missingFields.length === 0 ? "Проверяю сведения и готовлю ответ" : "Помощник печатает"}<span className="aizanTypingDots" aria-hidden="true">…</span></span></div></>}
           </div>
           {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
             {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : latestAssistant?.ai?.documentKind === "court_claim" ? "Сохранить иск как документ" : "Сохранить претензию как документ"}</button>}

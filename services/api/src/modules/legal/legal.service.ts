@@ -60,7 +60,7 @@ export class LegalService {
     if (!matches.length) {
       if (!isOpenAiLegalEnabled() || options.allowWebRecovery === false) return insufficient();
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60000);
+      const timeout = setTimeout(() => controller.abort(), 240000);
       try {
         const model = [process.env.OPENAI_MODEL,process.env.AI_COMPLEX_MODEL,process.env.AI_MEDIUM_MODEL].find(value=>value && !value.startsWith('stub-')) || 'gpt-5';
         const citations = await recoverOfficialSources({key:process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '',model,signal:controller.signal,query});
