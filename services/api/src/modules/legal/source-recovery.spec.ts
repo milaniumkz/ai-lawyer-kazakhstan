@@ -66,6 +66,18 @@ describe('independent official source recovery',()=>{
     expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search',checkedAt:expect.any(String)});
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+  it('opens discovered official sources in a bounded separate reading step when search returned snippets only',async()=>{
+    let requests=0;
+    const fetch=jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if (!String(url).endsWith('/responses')) return new Response('',{status:503});
+      requests++;
+      if (requests===2) expect(JSON.parse(options?.body as string).input[1].content).toContain('officialUrlsToRead');
+      return new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:requests===1 ? [{action:{sources:[{url:citation.url}]}}] : [{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}));
+    });
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search'});
+    expect(requests).toBe(2);
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
   it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
       ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))
