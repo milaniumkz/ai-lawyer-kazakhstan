@@ -294,6 +294,7 @@ jobs:
           test -f /etc/ai-lawyer-api.env
           previous_app_inode=$(stat -c %i /opt/ai-lawyer-kz/app)
           bash /opt/ai-lawyer-kz/app/scripts/deploy/server-backup-postgres.sh
+          if ! command -v pdftotext >/dev/null; then apt-get update && apt-get install -y poppler-utils; fi
           if ! bash /opt/ai-lawyer-kz/app/scripts/deploy/server-install.sh /opt/ai-lawyer-kz.tar.gz; then
             current_app_inode=$(stat -c %i /opt/ai-lawyer-kz/app 2>/dev/null || true)
             if [ "$current_app_inode" != "$previous_app_inode" ] && [ -d /opt/ai-lawyer-kz/app.prev ]; then
