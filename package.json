@@ -51,7 +51,8 @@
     "release:blockers:report": "node scripts/release/write-release-blockers-report.mjs",
     "test:web-aizan": "node scripts/web/check-aizan-behavior.mjs",
     "test:web-intake": "node scripts/web/check-intake-flow.mjs",
-    "test:audit:runtime": "npm audit --omit=dev --audit-level=moderate"
+    "test:audit:runtime": "npm audit --omit=dev --audit-level=moderate",
+    "test:web-keyboard": "node scripts/web/check-chat-keyboard.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -1,0 +1,9 @@
+# Message composer and mobile keyboards
+
+Flutter home intake, home conversation, clarification and case chat now reserve a composer outside scrollable history. The scaffold resizes above the keyboard, temporarily hides the bottom navigation, and uses a compact header while typing. The arrow and microphone are part of the field. The keyboard Send/Enter action invokes the same guarded send function. Existing controllers retain unsent text and normal error/retry behavior.
+
+Web home/case chat listens to visual-viewport resize/scroll events. When the keyboard covers the layout viewport (Safari), its measured offset positions the composer above it; when the viewport itself resizes, the offset is zero. The navigation and large header give way while typing. A 16px message font prevents Safari's small-input auto-zoom. Enter sends once; Shift+Enter inserts a newline. The normal closed-keyboard page layout remains available.
+
+Validation: full project check passed (151 API tests, 60 Flutter tests, seven AI tests), web production build and Docker configuration passed. Added Flutter regressions exercise keyboard insets from 260 to 410px, a 320×568 screen and the actual IME Send action against the case API fixture. Chromium and WebKit layout/key-event checks use simulated visual viewports at 320×568 and 390×844, with long history, changing keyboard heights and viewport offsets. They check field/arrow bounds, navigation restoration, Enter/arrow exactly-once delivery and Shift+Enter. These are layout fixtures, separate from live OpenAI/source/document verification. CI runs both browser engines against the deployed site.
+
+No physical iPhone or signed App Store build was tested/uploaded in this cloud environment. The native change needs a new signed build on the user's Mac. A website deployment does not update an installed native binary.

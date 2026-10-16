@@ -845,6 +845,35 @@ class _NewCaseScreenState extends State<NewCaseScreen>
     }
     final timer =
         '${(elapsedSeconds ~/ 60).toString().padLeft(2, '0')}:${(elapsedSeconds % 60).toString().padLeft(2, '0')}';
+    if (widget.homeMode) {
+      return _CaseScaffold(
+        title: 'Новое дело',
+        showTitle: false,
+        homeMode: true,
+        onReset: widget.onReset,
+        composer: _CaseMessageComposer(
+            controller: transcriptController,
+            label: 'Описание ситуации',
+            autofocus:
+                !nativePreviewEnabled && !MobileCaseRuntime.preferVoiceInput,
+            busy: isBusy,
+            recording: isRecording,
+            onSend: isBusy || isRecording ? null : submitCase,
+            onVoice: isBusy ? null : toggleRecording),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (MediaQuery.viewInsetsOf(context).bottom == 0)
+            Center(
+                child: AizanRecordingPulse(
+                    active: isRecording && !isPaused,
+                    child:
+                        const AizanArt(AizanArtwork.microphone, width: 160))),
+          if (isRecording) Text('Запись $timer', textAlign: TextAlign.center),
+          if (speechStatus != 'Распознавание не запущено')
+            Text(speechStatus, style: const TextStyle(color: AppColors.muted)),
+        ]),
+      );
+    }
     return _CaseScaffold(
       title: 'Новое дело',
       showTitle: false,
@@ -1853,6 +1882,16 @@ class _CategoryScreenState extends State<CategoryScreen>
           showTitle: false,
           homeMode: true,
           onReset: widget.onReset,
+          composer: _CaseMessageComposer(
+              controller: answerController,
+              busy: isBusy,
+              onSend: isBusy ? null : sendHomeMessage,
+              onVoice: isBusy
+                  ? null
+                  : () {
+                      MobileCaseRuntime.preferVoiceInput = true;
+                      updateState(() => voiceReply = true);
+                    }),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(MobileCaseRuntime.activeCaseTitle),
@@ -1865,24 +1904,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                   text:
                       'Помощник обрабатывает запрос. Проверка правовых оснований может занять несколько минут.',
                   assistant: true),
-            TextField(
-                enabled: !isBusy,
-                controller: answerController,
-                minLines: 2,
-                maxLines: 6,
-                decoration: const InputDecoration(labelText: 'Ваше сообщение')),
-            FilledButton(
-                onPressed: isBusy ? null : sendHomeMessage,
-                child: Text(isBusy ? 'Отправляю…' : 'Отправить')),
-            OutlinedButton.icon(
-                onPressed: isBusy
-                    ? null
-                    : () {
-                        MobileCaseRuntime.preferVoiceInput = true;
-                        updateState(() => voiceReply = true);
-                      },
-                icon: const Icon(Icons.mic),
-                label: const Text('Говорить')),
             TextButton(
                 onPressed: () => context.go('/documents/add'),
                 child: const Text('Добавить документ')),
@@ -1931,6 +1952,13 @@ class _CategoryScreenState extends State<CategoryScreen>
     final result = classification;
     return _CaseScaffold(
       title: 'Категория определена',
+      composer: result?.missingFacts.isNotEmpty == true
+          ? _CaseMessageComposer(
+              controller: answerController,
+              label: 'Ответьте AI',
+              busy: isBusy,
+              onSend: isBusy ? null : appendAnswer)
+          : null,
       homeMode: widget.homeMode,
       onReset: widget.onReset,
       child: Column(
@@ -1960,24 +1988,6 @@ class _CategoryScreenState extends State<CategoryScreen>
           const SizedBox(height: 18),
           Text(status),
           if (result?.missingFacts.isNotEmpty == true) Text(nextAiQuestion()),
-          if (result?.missingFacts.isNotEmpty == true) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: answerController,
-              minLines: 2,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Ответьте AI',
-                hintText: 'Дата, сумма, участники, документ...',
-              ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: appendAnswer,
-              icon: const Icon(Icons.reply_outlined),
-              label: const Text('Добавить ответ'),
-            ),
-          ],
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: isBusy || classification == null
@@ -2087,6 +2097,11 @@ class _CaseChatScreenState extends State<CaseChatScreen>
   Widget build(BuildContext context) {
     return _CaseScaffold(
       title: 'Чат по делу',
+      composer: _CaseMessageComposer(
+          controller: controller,
+          busy: sending,
+          label: 'Сообщение',
+          onSend: sending ? null : sendMessage),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2101,20 +2116,6 @@ class _CaseChatScreenState extends State<CaseChatScreen>
             label: const Text('Сформировать документ'),
           ),
           const SizedBox(height: 12),
-          TextField(
-            enabled: !sending,
-            controller: controller,
-            minLines: 2,
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: 'Сообщение',
-              suffixIcon: IconButton(
-                tooltip: 'Отправить',
-                onPressed: sending ? null : sendMessage,
-                icon: const Icon(Icons.send_outlined),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -2231,8 +2232,10 @@ class _CaseScaffold extends StatelessWidget {
       required this.child,
       this.showTitle = true,
       this.homeMode = false,
-      this.onReset});
+      this.onReset,
+      this.composer});
 
+  final Widget? composer;
   final VoidCallback? onReset;
   final String title;
   final Widget child;
@@ -2241,27 +2244,98 @@ class _CaseScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
-      appBar:
-          AizanHeader(home: homeMode, newCase: homeMode, onNewCase: onReset),
-      bottomNavigationBar: homeMode || title == 'Новое дело'
+      appBar: keyboardOpen && composer != null
+          ? AppBar(
+              toolbarHeight: 48,
+              title: const Text('Айзан'),
+              backgroundColor: const Color(0xFF0B0501),
+              foregroundColor: AizanDesign.gold,
+              actions: [
+                  if (onReset != null)
+                    IconButton(
+                        tooltip: 'Новое обращение',
+                        onPressed: onReset,
+                        icon: const Icon(Icons.add_comment_outlined))
+                ])
+          : AizanHeader(home: homeMode, newCase: homeMode, onNewCase: onReset),
+      resizeToAvoidBottomInset: true,
+      bottomNavigationBar: (homeMode || title == 'Новое дело') &&
+              MediaQuery.viewInsetsOf(context).bottom == 0
           ? const AppBottomNav(selectedIndex: 0)
           : null,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (showTitle)
-              Text(title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(color: AppColors.goldDark)),
-            if (showTitle) const SizedBox(height: 24),
-            child,
-          ],
-        ),
+        top: false,
+        child: Column(children: [
+          Expanded(
+              child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(24),
+            children: [
+              if (showTitle)
+                Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium
+                        ?.copyWith(color: AppColors.goldDark)),
+              if (showTitle) const SizedBox(height: 24),
+              child,
+            ],
+          )),
+          if (composer != null)
+            Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: composer),
+        ]),
       ),
     );
   }
+}
+
+class _CaseMessageComposer extends StatelessWidget {
+  const _CaseMessageComposer(
+      {required this.controller,
+      this.onSend,
+      this.onVoice,
+      this.busy = false,
+      this.recording = false,
+      this.label = 'Ваше сообщение',
+      this.autofocus = false});
+  final TextEditingController controller;
+  final VoidCallback? onSend, onVoice;
+  final bool busy, recording;
+  final bool autofocus;
+  final String label;
+  @override
+  Widget build(BuildContext context) => TextField(
+        key: const ValueKey('chat-message-input'),
+        controller: controller,
+        autofocus: autofocus,
+        enabled: !busy,
+        minLines: 1,
+        maxLines: 4,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.send,
+        onEditingComplete: () {},
+        onSubmitted: (_) => onSend?.call(),
+        scrollPadding: EdgeInsets.zero,
+        decoration: InputDecoration(
+            labelText: label,
+            hintText: 'Напишите сообщение…',
+            suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (onVoice != null)
+                IconButton(
+                    tooltip: recording ? 'Завершить запись' : 'Говорить',
+                    onPressed: onVoice,
+                    icon: Icon(recording
+                        ? Icons.stop_circle_outlined
+                        : Icons.mic_none)),
+              IconButton(
+                  key: const ValueKey('chat-send'),
+                  tooltip: 'Отправить',
+                  onPressed: onSend,
+                  icon: const Icon(Icons.arrow_upward)),
+            ])),
+      );
 }

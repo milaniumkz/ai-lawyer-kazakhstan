@@ -1,5 +1,7 @@
 "use client";
 
+import {useChatKeyboard} from "./use-chat-keyboard";
+
 import { ChatAttachment } from "./chat-attachment";
 
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -572,6 +574,7 @@ export default function WebHome() {
   const [phone, setPhone] = useState("");
   const [homeConversationOpen, setHomeConversationOpen] = useState(false);
   const [homeInput, setHomeInput] = useState("");
+  const chatKeyboardOpen=useChatKeyboard((view === "home" && homeConversationOpen) || view === "chat", view);
   const [categoryOptions, setCategoryOptions] = useState<{ code: string; nameRu: string; parentId?: string }[]>([]);
   const [otp, setOtp] = useState("");
   const [consent, setConsent] = useState(true);
@@ -3313,13 +3316,14 @@ export default function WebHome() {
           <button className="primary wide heroCta" onClick={() => go("claim")}>
             ✧ Сформировать документ
           </button>
-          <div className="composer">
+          <div className="composer" data-chat-composer>
             <input
               value={chatInput}
               onChange={(event) => setChatInput(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") sendMessage();
               }}
+              enterKeyHint="send"
               placeholder="Сообщение юристу AI"
             />
             <button className="primary" onClick={sendMessage}>
@@ -4574,12 +4578,12 @@ export default function WebHome() {
                 <button type="button" className="outlineGold" onClick={() => go("claim")}>Подготовить претензию</button>
             </div>}
           </div>}
-          <form className="aizanHomeComposer" onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
+          <form className="aizanHomeComposer" data-chat-composer onSubmit={(event) => { event.preventDefault(); void submitHomeMessage(); }}>
             {/ошиб|не удалось|недоступ|сначала|укажите|разреш|микрофон|некоррект|введите/i.test(syncState) && <aside className="aizanFeedback" role="status"><span>{syncState}</span><button type="button" aria-label="Закрыть сообщение" onClick={() => setSyncState("")}>×</button></aside>}
             <label htmlFor="home-problem">{aiConversationEnabled ? "Ответьте помощнику или задайте вопрос" : classification && pendingQuestion(classification) ? pendingQuestion(classification)?.questionRu : "Расскажите о вашей ситуации"}</label>
             <div className="aizanChatInput">
               {aiConversationEnabled && !classificationBusy && documents.some(document=>document.sentWithMessage===false) && <div className="aizanAttachmentList">{documents.filter(document=>document.sentWithMessage===false).map((file,index)=><div className="aizanPendingAttachment" key={file.id || index}><ChatAttachment file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} /><small>{file.id ? "Готов к отправке" : file.status}</small><button type="button" aria-label={`Убрать ${file.name} из сообщения`} disabled={classificationBusy} onClick={()=>setDocuments(items=>items.map(item=>item===file?{...item,sentWithMessage:true}:item))}>×</button></div>)}</div>}
-              <textarea id="home-problem" value={classificationBusy ? "" : homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} onKeyDown={event=>{if(event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing){event.preventDefault();void submitHomeMessage();}}} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}>{recording ? <span className="aizanRecordingStop" aria-hidden="true" /> : <DesignIcon name="microphone" />}</button>{recording && <span className="aizanRecordingTimer" role="status">{formatDuration(recordingSeconds)}</span>}{showDocumentUpload && remoteCaseId && <UploadControl source="file" className="aizanComposerAttach"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13l7-7a3 3 0 0 1 4 4l-9 9a5 5 0 0 1-7-7l9-9M6 15l8-8" /></svg><span className="aizanSrOnly">Прикрепить документ</span></UploadControl>}<button type="submit" className="aizanComposerSend" aria-label="Отправить" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || (!homeInput.trim() && !documents.some(file=>file.id && file.sentWithMessage===false))}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button></div>
+              <textarea id="home-problem" enterKeyHint="send" value={classificationBusy ? "" : homeInput} disabled={classificationBusy || voiceBusy} onChange={(event) => setHomeInput(event.target.value)} onKeyDown={event=>{if(event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing){event.preventDefault();void submitHomeMessage();}}} placeholder="Напишите сообщение…" rows={3} /><button type="button" className={`aizanComposerMicrophone ${recording ? "active" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить голосовой ответ" : "Ответить голосом"} aria-pressed={recording} onClick={() => { if (recording) void finishRecording(); else void startRecording(); }}>{recording ? <span className="aizanRecordingStop" aria-hidden="true" /> : <DesignIcon name="microphone" />}</button>{recording && <span className="aizanRecordingTimer" role="status">{formatDuration(recordingSeconds)}</span>}{showDocumentUpload && remoteCaseId && <UploadControl source="file" className="aizanComposerAttach"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13l7-7a3 3 0 0 1 4 4l-9 9a5 5 0 0 1-7-7l9-9M6 15l8-8" /></svg><span className="aizanSrOnly">Прикрепить документ</span></UploadControl>}<button type="submit" className="aizanComposerSend" onMouseDown={event=>event.preventDefault()} aria-label="Отправить" disabled={!aiConfigLoaded || classificationBusy || recording || voiceBusy || (!homeInput.trim() && !documents.some(file=>file.id && file.sentWithMessage===false))}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button></div>
             {voiceBusy && <small role="status">Распознаю голос…</small>}
             {!aiConfigLoaded && <small role="status">Подключаю помощника…</small>}
           </form>
@@ -4593,6 +4597,7 @@ export default function WebHome() {
     <main
       className="appShell"
       data-design="aizan"
+      data-keyboard-open={chatKeyboardOpen}
       data-theme={theme}
       data-view={view}
       data-design-screen-count={screens.length}

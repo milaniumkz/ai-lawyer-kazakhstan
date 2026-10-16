@@ -66,6 +66,62 @@ void main() {
     expect(find.byType(AppBottomNav), findsOneWidget);
   });
 
+  testWidgets(
+      'home composer and send arrow remain above the iPhone keyboard without scrolling',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetViewInsets();
+    });
+    await tester
+        .pumpWidget(const MaterialApp(home: NewCaseScreen(homeMode: true)));
+    await tester.pumpAndSettle();
+    for (final height in [260.0, 340.0, 410.0]) {
+      tester.view.viewInsets = FakeViewPadding(bottom: height);
+      await tester.pumpAndSettle();
+      expect(find.byType(AppBottomNav), findsNothing);
+      expect(tester.getRect(find.byKey(const ValueKey('chat-send'))).bottom,
+          lessThanOrEqualTo(844 - height));
+      expect(
+          tester.getRect(find.byKey(const ValueKey('chat-message-input'))).top,
+          greaterThanOrEqualTo(48));
+      expect(tester.takeException(), isNull);
+    }
+    await tester.enterText(find.byType(TextField), 'Коротко');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('минимум 12'), findsOneWidget);
+    expect(find.byType(NewCaseScreen), findsOneWidget);
+  });
+
+  testWidgets('Enter sends the case message once with the keyboard open',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetViewInsets();
+    });
+    MobileCaseRuntime.activeCaseId = 'case-keyboard-test';
+    final api = _FakeCaseApi();
+    await tester.pumpWidget(MaterialApp(home: CaseChatScreen(caseApi: api)));
+    await tester.pumpAndSettle();
+    final input = find.byKey(const ValueKey('chat-message-input'));
+    await tester.enterText(input, 'Сообщение с открытой клавиатурой');
+    expect(tester.getRect(find.byKey(const ValueKey('chat-send'))).bottom,
+        lessThanOrEqualTo(268));
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    expect(api.sentText, 'Сообщение с открытой клавиатурой');
+    expect(tester.widget<TextField>(input).controller!.text, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('profile navigation opens profile', (tester) async {
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
@@ -198,9 +254,9 @@ void main() {
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.tap(find.byKey(const ValueKey('home-text')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Подтвердить текст'));
+    await tester.ensureVisible(find.byTooltip('Отправить'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Подтвердить текст'));
+    await tester.tap(find.byTooltip('Отправить'));
     await tester.pumpAndSettle();
     expect(find.textContaining('минимум 12'), findsOneWidget);
     expect(find.byType(NewCaseScreen), findsOneWidget);
@@ -605,13 +661,13 @@ void main() {
     await tester.tap(find.text('Продолжить'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Какие документы нужны?');
-    await tester.ensureVisible(find.text('Отправить'));
-    await tester.tap(find.text('Отправить'));
+    await tester.ensureVisible(find.byTooltip('Отправить'));
+    await tester.tap(find.byTooltip('Отправить'));
     await tester.pumpAndSettle();
     expect(cases.sentText, 'Какие документы нужны?');
     expect(find.text('Ответ из API'), findsOneWidget);
     expect(find.text('Ваше сообщение'), findsOneWidget);
-    expect(find.text('Говорить'), findsOneWidget);
+    expect(find.byTooltip('Говорить'), findsOneWidget);
     expect(find.text('Подготовить документ'), findsOneWidget);
   });
 

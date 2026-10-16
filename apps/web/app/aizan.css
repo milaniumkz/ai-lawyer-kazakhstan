@@ -527,3 +527,23 @@ html { scroll-padding-bottom: 140px; }
   .appShell[data-design="aizan"][data-view] .legalTabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .appShell[data-design="aizan"][data-view] .legalTabs .chip:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
+
+/* The message and send arrow follow the visible viewport above the keyboard. */
+.appShell[data-design="aizan"] [data-chat-composer] textarea { font-size: 16px; }
+.appShell[data-design="aizan"][data-keyboard-open="true"] .bottomNav { display: none; }
+.appShell[data-design="aizan"][data-keyboard-open="true"] [data-chat-composer] {
+  position: fixed; z-index: 50; left: 50%; transform: translateX(-50%);
+  bottom: var(--chat-keyboard-offset, 0px); width: calc(100% - 24px); max-width: 456px;
+  margin: 0; padding: 8px 0 12px; background: #0b0501;
+}
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHomeConversation { padding-bottom: calc(var(--chat-composer-height, 160px) + 12px); }
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHomeComposer textarea { min-height: 44px; height: 66px; max-height: 104px; }
+@media (min-width: 1024px) {
+  .appShell[data-design="aizan"][data-keyboard-open="true"] [data-chat-composer] { max-width: 880px; }
+}
+
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHeader { height: 58px; padding-top: 4px; }
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHeader .aizanArt { width: 48px; height: 48px; }
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanIdentity p,
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanMicrophone { display: none; }
+.appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHeaderAction { top: 7px; }

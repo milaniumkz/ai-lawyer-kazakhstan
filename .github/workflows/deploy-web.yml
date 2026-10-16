@@ -189,12 +189,16 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Verify deployed manual document workflow
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
           WEB_TEST_SECURE_AUTH: "1"
         run: npm run test:web-intake
+      - name: Verify composer above mobile keyboards
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: node scripts/web/check-chat-keyboard.mjs
       - name: Verify deployed responsive pages
         if: inputs.visual_only
         env:
@@ -326,9 +330,13 @@ jobs:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
           WEB_TEST_SECURE_AUTH: "1"
         run: |
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
           npm run test:web-intake
 
+      - name: Verify composer above mobile keyboards
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: node scripts/web/check-chat-keyboard.mjs
       - name: Verify deployed responsive pages
         if: inputs.visual_only
         env:

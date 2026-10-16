@@ -10,7 +10,7 @@ const issuer = new X509Certificate(Buffer.from('MIIGzTCCBLWgAwIBAgIUXK4k10myZIDS
 
 export function publisherTrust(url:string) {
   const parsed = new URL(url);
-  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || !['law.gov.kz','zan.gov.kz'].includes(parsed.hostname) || (parsed.port && parsed.port !== '443')) return undefined;
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || !['law.gov.kz','zan.gov.kz','senate.parlam.kz','mazhilis.parlam.kz'].includes(parsed.hostname) || (parsed.port && parsed.port !== '443')) return undefined;
   const valid = [root,issuer].every(cert=>cert.ca && Date.parse(cert.validFrom)<=Date.now() && Date.parse(cert.validTo)>Date.now());
   if (!valid || root.fingerprint256 !== '9B:A0:63:54:B6:26:64:17:15:18:2E:4D:07:C9:DB:AA:17:77:72:0F:A7:95:D0:31:74:FF:C6:88:76:53:5D:CD' || issuer.fingerprint256 !== '84:FB:79:9A:66:14:09:50:81:8C:05:6A:5D:97:30:AC:C2:A7:62:2C:DD:4E:F0:D4:71:13:B1:32:FB:89:29:05' || !root.verify(root.publicKey) || !issuer.checkIssued(root) || !issuer.verify(root.publicKey)) return undefined;
   return {ca:[root.toString(),issuer.toString()],rejectUnauthorized:true as const};
