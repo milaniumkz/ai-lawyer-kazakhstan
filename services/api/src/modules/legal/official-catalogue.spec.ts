@@ -37,6 +37,14 @@ describe('public official act catalogue',()=>{
     jest.spyOn(global,'fetch').mockResolvedValue(new Response(JSON.stringify({list:[{code:'879',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан'}}]})));
     expect(await searchOfficialCatalogue(['Налоговый кодекс'],new AbortController().signal)).toEqual([]);
   });
+  it('searches the base code title while selecting its requested special part',async()=>{
+    const fetch=jest.spyOn(global,'fetch').mockResolvedValue(new Response(JSON.stringify({list:[
+      {code:'879',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан (Общая часть)'}},
+      {code:'3559',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан (Особенная часть)'}},
+    ]})));
+    expect(await searchOfficialCatalogue(['Гражданский кодекс Республики Казахстан (Особенная часть)'],new AbortController().signal)).toEqual(['https://zan.gov.kz/client/#!/doc/3559/rus']);
+    expect(JSON.parse(fetch.mock.calls[0][1]?.body as string).search).toBe('Гражданский кодекс');
+  });
   it('does not turn a publisher failure into invented source identifiers',async()=>{
     jest.spyOn(global,'fetch').mockResolvedValue(new Response('',{status:503}));
     expect(await searchOfficialCatalogue(['Гражданский кодекс'],new AbortController().signal)).toEqual([]);

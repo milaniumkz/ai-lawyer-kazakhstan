@@ -10,7 +10,9 @@ export async function searchOfficialCatalogue(titles:unknown,signal:AbortSignal)
       const response=await fetchOfficialPublisher('https://zan.gov.kz/api/documents/search',{
         method:'POST',headers:{'Content-Type':'application/json'},redirect:'manual',
         signal:AbortSignal.any([signal,AbortSignal.timeout(12000)]),
-        body:JSON.stringify({search,searchExclude:/внесени/i.test(search) ? '' : 'внесении',language:'rus',page:1,limit:10}),
+        // Keep parenthetical part qualifiers out of the catalogue query; rank
+        // the returned acts against the complete requested title below.
+        body:JSON.stringify({search:search.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim(),searchExclude:/внесени/i.test(search) ? '' : 'внесении',language:'rus',page:1,limit:10}),
       });
       if(!response.ok || !response.body)return [];
       const reader=response.body.getReader();const chunks:Uint8Array[]=[];let size=0;
