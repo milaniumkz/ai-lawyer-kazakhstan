@@ -129,6 +129,17 @@ jobs:
               const page=await diagnostic.exports.inspectOfficialText(url);
               console.log('OFFICIAL_READER '+JSON.stringify({host,elapsedMs:Date.now()-started,resolvedHost:page?new URL(page.url).hostname:null,characters:page?.text.length||0,loanQuotePresent:page?.text.includes('договор займа считается заключенным')||false,returnQuotePresent:page?.text.includes('заемщик обязан возвратить предмет займа')||false}));
             }
+            const {fetchOfficialPublisher}=require('/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/publisher-trust.js');
+            const viewer='https://zan.gov.kz/client/';
+            const viewerHtml=await (await fetchOfficialPublisher(viewer,{redirect:'manual',signal:AbortSignal.timeout(10000)})).text();
+            const scriptUrls=[...new Set([...viewerHtml.matchAll(/<script[^>]+src=["']([^"']+)/gi)].map(match=>new URL(match[1],viewer).href))].filter(url=>new URL(url).hostname==='zan.gov.kz').slice(-4);
+            console.log('OFFICIAL_VIEWER '+JSON.stringify({scriptPaths:scriptUrls.map(url=>new URL(url).pathname)}));
+            for(const url of scriptUrls){
+              const response=await fetchOfficialPublisher(url,{redirect:'manual',signal:AbortSignal.timeout(10000)});
+              const text=(await response.text()).slice(0,4000000);
+              const paths=[...new Set([...text.matchAll(/["']((?:https:\/\/|\/)[^"'\s]{1,180})["']/g)].map(match=>match[1]).filter(path=>/api|rest|doc|text|search|resource|ws\//i.test(path)).map(path=>{try{const parsed=new URL(path,viewer);return parsed.hostname==='zan.gov.kz' ? parsed.pathname : parsed.hostname+parsed.pathname;}catch{return ''}}))].slice(0,60);
+              console.log('OFFICIAL_VIEWER_SCRIPT '+JSON.stringify({path:new URL(url).pathname,status:response.status,characters:text.length,paths}));
+            }
             const {spawnSync}=require('node:child_process');
             for(const host of ['law.gov.kz','zan.gov.kz']) {
               const result=spawnSync('openssl',['s_client','-connect',`${host}:443`,'-servername',host,'-showcerts','-verify_return_error'],{input:'',timeout:10000,encoding:'utf8'});
