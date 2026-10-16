@@ -8,6 +8,8 @@ Validation: full project check passed (151 API tests, 60 Flutter tests, seven AI
 
 No physical iPhone or signed App Store build was tested/uploaded in this cloud environment. The native change needs a new signed build on the user's Mac. A website deployment does not update an installed native binary.
 
+Latest scope: the user requested web only; no Mac action or iOS upload was performed. Release 2092f21 was installed by workflow 38911850010 and passed its public health check. A separate Chromium/WebKit run against the actual public site passed all simulated keyboard/Enter/arrow/Shift+Enter checks (`/tmp/aizan-web-only-keyboard-proof.log`). This proves the deployed web layout with simulated viewport changes, not a physical iPhone keyboard. Final local checks passed 160 API tests, 60 Flutter tests and seven AI tests.
+
 On the Mac, run the following from the existing repository. The isolated checkout preserves local work and uses the existing signing identity and App Store Connect key from the Mac (or its configured environment variables). It builds, uploads and selects an editable App Store draft; it does not submit for review or publish. After installing the new build, check a long conversation with the keyboard open, the send arrow, the keyboard Send action and dictation on the physical iPhone.
 
 ```bash
