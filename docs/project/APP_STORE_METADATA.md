@@ -2,7 +2,7 @@
 
 ## Build
 
-- App name: `AI Юрист`
+- Target app name: `Айзан` (native display names and PWA metadata updated in source; the App Store listing name must also be applied from the Mac with Apple access).
 - Bundle ID: `kz.milanium.lawyer`
 - SKU/application domain: Kazakhstan legal assistant
 - Uploaded build: `1.0.1 (7)`

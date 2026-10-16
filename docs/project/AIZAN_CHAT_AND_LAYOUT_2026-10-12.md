@@ -118,3 +118,7 @@ Once the home chat opens, the web hides the redundant top “Ввести тек
 ### Transparent in-app artwork and recording pulse
 
 Replaced the screenshot crops for the in-app logo and round microphone with isolated alpha-transparent PNG assets shared by web and Flutter. The app launcher/App Store icon is a separate asset. The large microphone pulses in scale and gold glow only while recording, stops on pause/stop, and respects reduced-motion settings. Chromium verified rendering, moving animation frames and reduced-motion behavior locally; this does not test physical microphone hardware. Flutter golden capture now waits for actual image decoding so the initial screen cannot pass with missing artwork. Recording lifecycle tests advance frames while the intentional repeating animation runs, and still verify completion/transcription/upload afterward.
+
+### Launcher icon and display name
+
+Changed native iOS/Android display names, Flutter application/onboarding title and installed web-app metadata to `Айзан`. The launcher icon now contains only a larger gold monogram, with the separate AIZAN wordmark removed. All iOS catalog sizes, Android density variants, web/PWA/touch icons and favicon are generated from the opaque 1024px master using `node scripts/mobile/build-launcher-icons.mjs`. Small-size preview inspected at 60px and 96px. The transparent in-app logo remains a separate asset. Source changes do not rename an existing App Store listing or update installed iPhone binaries; those still require the Mac/Apple release process.

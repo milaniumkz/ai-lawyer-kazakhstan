@@ -110,7 +110,7 @@ class AiLawyerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'AI Юрист',
+      title: 'Айзан',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

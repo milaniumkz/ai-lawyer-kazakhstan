@@ -4,7 +4,9 @@ import './styles.css';
 import './aizan.css';
 
 export const metadata: Metadata = {
-  title: 'AI Юрист Казахстан',
+  title: 'Айзан',
+  applicationName: 'Айзан',
+  appleWebApp: { title: 'Айзан' },
   description: 'Адаптивная веб-версия AI-Юрист Казахстан для ПК и телефона',
 };
 

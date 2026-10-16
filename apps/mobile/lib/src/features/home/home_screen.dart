@@ -23,7 +23,7 @@ class OnboardingScreen extends StatelessWidget {
               const _OnboardingEmblem(),
               const SizedBox(height: 28),
               Text(
-                'AI Юрист Казахстан',
+                'Айзан',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: AppColors.goldDark,

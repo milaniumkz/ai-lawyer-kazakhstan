@@ -77,7 +77,7 @@ void main() {
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/onboarding'));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI Юрист Казахстан'), findsOneWidget);
+    expect(find.text('Айзан'), findsOneWidget);
     await tester.tap(find.text('Начать работу'));
     await tester.pumpAndSettle();
     expect(find.text('Войти по номеру телефона'), findsWidgets);
@@ -154,7 +154,7 @@ void main() {
     await setLargeViewport(tester);
     const routes = [
       ['/', 'Ввести текст'],
-      ['/onboarding', 'AI Юрист Казахстан'],
+      ['/onboarding', 'Айзан'],
       ['/login', 'Войти по номеру телефона'],
       ['/register', 'Регистрация пользователя'],
       ['/otp', 'Подтверждение SMS'],
