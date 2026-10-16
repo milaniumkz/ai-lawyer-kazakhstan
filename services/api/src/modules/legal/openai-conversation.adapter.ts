@@ -114,7 +114,8 @@ export async function generateOpenAiConversation(problemText: string, messages: 
     if (confirmed && !missingFields.length && !preparedDocumentHelp) {
       const checked = await Promise.all(citations.map(async citation => {
         const verifiedUrl = await verifyOfficialQuote(citation.url, citation.quote, sourceCache);
-        return verifiedUrl ? {...citation,url:verifiedUrl,checkedAt:new Date().toISOString()} : undefined;
+        const page=await sourceCache.get(canonicalUrl(citation.url));
+        return verifiedUrl ? {...citation,url:verifiedUrl,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:!page?.editionDate || citation.effectiveDate===page.editionDate} : undefined;
       }));
       citations = checked.filter((citation): citation is NonNullable<typeof citation> => Boolean(citation));
     }

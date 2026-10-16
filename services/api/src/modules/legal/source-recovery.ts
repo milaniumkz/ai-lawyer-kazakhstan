@@ -1,5 +1,5 @@
 import type {AiConversation} from '../cases/cases.types';
-import {isOfficialUrl, canonicalUrl, officialSourceIdentity, officialDomains, verifyOfficialQuote, type OfficialPage} from './official-sources';
+import {isOfficialUrl, canonicalUrl, officialSourceIdentity, officialDomains, verifyOfficialQuote, type OfficialPage, readOfficialText} from './official-sources';
 
 // An independent web search, rather than asking the user to restart intake when
 // the local index, publisher endpoint or first search did not produce evidence.
@@ -7,7 +7,7 @@ export async function recoverOfficialSources(input: {
   key: string; model: string; signal: AbortSignal;
   query: string; documentKind?: 'pretrial_claim' | 'court_claim';
   failedUrls?: string[];
-  officialExcerpts?: Array<{url:string;text:string}>;
+  officialExcerpts?: Array<{url:string;text:string;editionDate?:string}>;
   /** Internal bounded follow-up: read discovered official pages, never accept snippets. */
   readUrls?: string[];
 }): Promise<AiConversation['citations']> {
@@ -53,7 +53,7 @@ export async function recoverOfficialSources(input: {
   const checked = await Promise.all(candidates.map(async source=>{
     if (input.signal.aborted) return undefined;
     const url = await verifyOfficialQuote(source.url,source.quote,cache);
-    if (url) return {...source,url,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate)};
+    if (url) {const page=await cache.get(canonicalUrl(source.url));return {...source,url,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate) && (!page?.editionDate || source.effectiveDate===page.editionDate)};}
     const unavailable = await cache.get(canonicalUrl(source.url));
     if (unavailable?.unavailable && opened.has(canonicalUrl(source.url))) return {...source,checkedAt:new Date().toISOString(),verificationMethod:'openai_web_search' as const,editionVerified:Boolean(source.effectiveDate)};
     return undefined;
@@ -74,9 +74,26 @@ export async function recoverOfficialSources(input: {
       unread.push(...unique.slice(0,3));
     }
     if (unread.length) {
-      try { return await recoverOfficialSources({...input,readUrls:unread.slice(0,3)}); }
+      try {
+        const excerpts=new Map((input.officialExcerpts || []).map(page=>[canonicalUrl(page.url),page]));
+        await Promise.all(unread.slice(0,3).map(async url=>{
+          const key=canonicalUrl(url);if(!cache.has(key))cache.set(key,readOfficialText(url));
+          const page=await cache.get(key);
+          if(page?.text && !page.unavailable)excerpts.set(key,{url:page.url,text:selectRelevantOfficialText(page.text,input.query),...(page.editionDate ? {editionDate:page.editionDate} : {})});
+        }));
+        return await recoverOfficialSources({...input,readUrls:unread.slice(0,3),officialExcerpts:[...excerpts.values()].slice(-3)});
+      }
       catch { return []; }
     }
   }
   return verified;
+}
+
+// Select real article blocks from a long retrieved act; never manufacture text.
+export function selectRelevantOfficialText(text:string,query:string) {
+  if(text.length<=60000)return text;
+  const terms=[...new Set((query.toLocaleLowerCase().replace(/ё/g,'е').match(/[а-яәғқңөұүһі]{4,}/g) || []).map(term=>term.slice(0,4)))].slice(0,40);
+  const blocks=text.split(/(?=статья\s+\d+)/).map((value,index)=>({value,index,score:terms.reduce((score,term)=>score+Math.min(20,value.split(term).length-1),0)}));
+  const selected=blocks.filter(block=>block.score>0).sort((a,b)=>b.score-a.score).slice(0,8).sort((a,b)=>a.index-b.index);
+  return [text.slice(0,1500),...selected.map(block=>block.value.slice(0,8000))].join('\n').slice(0,60000);
 }

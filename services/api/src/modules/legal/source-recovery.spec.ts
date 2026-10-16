@@ -1,4 +1,4 @@
-import {recoverOfficialSources} from './source-recovery';
+import {recoverOfficialSources,selectRelevantOfficialText} from './source-recovery';
 import {canonicalUrl,officialSourceIdentity} from './official-sources';
 import {LegalService} from './legal.service';
 import type {LegalRepository} from './repositories/legal.repository';
@@ -92,6 +92,19 @@ describe('independent official source recovery',()=>{
   it('keeps separate official SPA document routes distinct while removing ordinary anchors',()=>{
     expect(officialSourceIdentity('https://law.gov.kz/client/#!/doc/1/rus')).not.toBe(officialSourceIdentity('https://law.gov.kz/client/#!/doc/2/rus'));
     expect(canonicalUrl('https://gov.kz/legal#article-1')).toBe('https://gov.kz/legal');
+  });
+  it('includes a relevant late article when a retrieved official act exceeds the excerpt budget',()=>{
+    const article='статья 716. заемщик возвращает заем по расписке. ';
+    const text='статья 1. '+ 'Общие положения официального акта. '.repeat(2500)+article;
+    const excerpt=selectRelevantOfficialText(text,'Заём по расписке не возвращён');
+    expect(excerpt).toContain(article);expect(excerpt.length).toBeLessThanOrEqual(60000);
+  });
+  it('requires edition review when a model date differs from the official publisher version',async()=>{
+    const source={...citation,url:'https://zan.gov.kz/client/#!/doc/123/rus',effectiveDate:'2025-01-01'};
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[source]}),output:[{action:{sources:[{url:source.url}]}}]}))
+      : new Response(JSON.stringify({id:123,code:123,language:'rus',pagesCount:1,versionDate:'2026-01-01',actualVersion:true,content:source.quote}),{headers:{'content-type':'application/json'}}));
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'official_text',editionVerified:false});
   });
   it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')

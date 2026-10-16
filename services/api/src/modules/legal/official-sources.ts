@@ -1,3 +1,4 @@
+import {readOfficialViewer} from './official-viewer';
 import {fetchOfficialPublisher} from './publisher-trust';
 export const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz', 'egov.kz', 'akorda.kz', 'parlam.kz'];
 
@@ -23,7 +24,7 @@ export function officialSourceIdentity(value:string) {
 
 function normalizeQuote(value: string) { return value.toLocaleLowerCase().replace(/ё/g,'е').replace(/[«»"“”]/g,'').replace(/[–—]/g,'-').replace(/\s+/g,' ').trim(); }
 
-export type OfficialPage = {text:string;url:string;unavailable?:'transport'|'pdf'};
+export type OfficialPage = {text:string;url:string;unavailable?:'transport'|'pdf';editionDate?:string};
 
 export async function verifyOfficialQuote(url: string, quote: string, cache: Map<string,Promise<OfficialPage|undefined>>): Promise<string|undefined> {
   const candidates = [canonicalUrl(url)];
@@ -41,8 +42,11 @@ export async function verifyOfficialQuote(url: string, quote: string, cache: Map
   return undefined;
 }
 
-async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
+export async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
   try {
+    if (!isOfficialUrl(url)) return undefined;
+    const viewer = await readOfficialViewer(url,normalizeHtml);
+    if (viewer) return viewer;
     let currentUrl = url;
     for (let redirects = 0; redirects < 3; redirects++) {
       if (!isOfficialUrl(currentUrl)) return undefined;
@@ -70,8 +74,7 @@ async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
         chunks.push(chunk.value);
       }
       const html = Buffer.concat(chunks).toString('utf8');
-      const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<\/?(?:p|div|h[1-6]|li|tr|td|section|article|br)\b[^>]*>/gi,' ').replace(/<[^>]+>/g, '').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/&(?:quot|laquo|raquo);/g,'"').replace(/&ndash;/g,'-').replace(/&mdash;/g,'-').replace(/&shy;|\u00ad/g,'');
-      const normalized = normalizeQuote(text);
+      const normalized = normalizeHtml(html);
       const parsedUrl = new URL(currentUrl);
       // The publisher's new viewer is a JS shell. Its own public client exposes
       // old.adilet.zan.kz as the official legacy viewer for the same registered act.
@@ -84,4 +87,9 @@ async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
     }
     return undefined;
   } catch { return {text:'',url,unavailable:'transport'}; }
+}
+
+function normalizeHtml(html:string) {
+  const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<\/?(?:p|div|h[1-6]|li|tr|td|section|article|br)\b[^>]*>/gi,' ').replace(/<[^>]+>/g, '').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/&(?:quot|laquo|raquo);/g,'"').replace(/&ndash;/g,'-').replace(/&mdash;/g,'-').replace(/&shy;|\u00ad/g,'');
+  return normalizeQuote(text);
 }
