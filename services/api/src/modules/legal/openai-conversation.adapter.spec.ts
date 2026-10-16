@@ -138,4 +138,77 @@ describe('OpenAI conversation', () => {
     expect(changed.ai.factsConfirmed).toBe(false);
     expect(changed.ai.readyForDraft).toBe(false);
   });
+  it('automatically recovers missing sources and completes the claim without another user message', async () => {
+    const names:string[]=[];
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      const payload=JSON.parse(options?.body as string); names.push(payload.text.format.name);
+      if(payload.text.format.name==='aizan_source_recovery') {
+        expect(payload.input[1].content).not.toContain(facts.claimantContact);
+        return new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+      }
+      if(payload.text.format.name==='aizan_verified_claim') return new Response(JSON.stringify({output_text:JSON.stringify({body:draftBody,citedUrls:[citation.url]})}));
+      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Не удалось найти нормы',facts,draftBody:null,citations:[]})}));
+    });
+    const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(result.ai).toMatchObject({readyForDraft:true,factsConfirmed:true,sourceSearch:'web_fallback',facts});
+    expect(names).toEqual(['aizan_conversation','aizan_source_recovery','aizan_verified_claim']);
+  });
+  it('recovers a primary search provider error on confirmation without changing confirmed facts',async()=>{
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      const payload=JSON.parse(options?.body as string);
+      if(payload.text.format.name==='aizan_conversation') return new Response('',{status:503});
+      if(payload.text.format.name==='aizan_source_recovery') return new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+      return new Response(JSON.stringify({output_text:JSON.stringify({body:draftBody,citedUrls:[citation.url]})}));
+    });
+    expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai).toMatchObject({readyForDraft:true,sourceSearch:'web_fallback',facts});
+  });
+  it('preserves confirmation when composition fails instead of asking to restart intake',async()=>{
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      const payload=JSON.parse(options?.body as string);
+      return payload.text.format.name==='aizan_verified_claim' ? new Response('',{status:503}) : new Response(JSON.stringify({output_text:JSON.stringify({answer:'Готовлю документ',facts,draftBody:null,citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+    });
+    const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
+    expect(result.ai).toMatchObject({readyForDraft:false,factsConfirmed:true,facts});
+    expect(result.text).toContain('не смогла завершить');
+  });
+  const courtFacts={...facts,courtName:'Тестовый суд',courtAddress:'Тестовый адрес суда',claimantAddress:'Тестовый адрес истца',claimantIdentifier:'Уточнено пользователем',respondentAddress:'Тестовый адрес ответчика',respondentIdentifier:'Не известен пользователю; требуется проверка',claimValue:'100000 тенге',stateDuty:'Подлежит проверке по нормам',pretrialDispatch:'Направлена 01.09.2026, получена 03.09.2026, имеется подтверждение получения',pretrialOutcome:'После применимого срока требования не исполнены, спор сохраняется',pretrialStatus:'unresolved'};
+  it('switches to court intake only after pretrial preparation and asks for a new confirmation',async()=>{
+    mock({answer:'Проверьте судебные реквизиты',facts:courtFacts,draftBody:null,citations:[]});
+    const messages=turn('Хочу перейти к подготовке искового заявления в суд');
+    messages[0].ai={...previous,readyForDraft:true,factsConfirmed:true,draftBody,citations:[{...citation,checkedAt:'2026-01-01T00:00:00Z'}]};
+    const result=await generateOpenAiConversation('Долг',messages);
+    expect(result.ai).toMatchObject({documentKind:'court_claim',factsConfirmed:false,readyForDraft:false,missingFields:[]});
+    expect(result.text).toContain('Проверьте данные для искового заявления в суд');
+  });
+  it.each(['not_sent','waiting','fulfilled'])('does not prepare a court claim when pretrial status is %s',async status=>{
+    const current={...courtFacts,pretrialStatus:status};
+    mock({answer:'Подготовлю иск',facts:current,draftBody,citations:[citation]});
+    const messages=turn('Подтверждаю');
+    messages[0].ai={...previous,documentKind:'court_claim',facts:current,factsConfirmed:true};
+    const result=await generateOpenAiConversation('Долг',messages);
+    expect(result.ai.readyForDraft).toBe(false);
+    expect(result.ai.missingFields).toContain('pretrialStatus');
+    expect(result.ai.draftBody).toBeUndefined();
+  });
+  it('composes a separate court document from confirmed court facts and verified norms',async()=>{
+    const courtBody=('Исковое заявление в суд. Истец просит взыскать задолженность. ').repeat(8);
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      const payload=JSON.parse(options?.body as string);
+      if(payload.text.format.name==='aizan_verified_claim') {
+        expect(payload.input[0].content).toContain('Составь исковое заявление в суд');
+        return new Response(JSON.stringify({output_text:JSON.stringify({body:courtBody,citedUrls:[citation.url]})}));
+      }
+      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Готовлю иск',facts:courtFacts,draftBody:null,citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+    });
+    const messages=turn('Подтверждаю');
+    messages[0].ai={...previous,documentKind:'court_claim',facts:courtFacts};
+    const result=await generateOpenAiConversation('Долг',messages);
+    expect(result.ai).toMatchObject({documentKind:'court_claim',readyForDraft:true,draftBody:courtBody.trim()});
+    expect(result.text).toContain('не подаёт иск автоматически');
+  });
+
 });

@@ -6,6 +6,7 @@ import { LEGAL_REPOSITORY } from './repositories/legal-repository.provider';
 import { LegalRepository } from './repositories/legal.repository';
 import { generateOpenAiConversation } from './openai-conversation.adapter';
 import type { MessageRecord } from '../cases/cases.types';
+import { recoverOfficialSources } from './source-recovery';
 
 const OFFICIAL_HOSTS = ['zan.gov.kz', 'adilet.zan.kz', 'sud.gov.kz', 'gov.kz'];
 
@@ -52,8 +53,23 @@ export class LegalService {
   }
 
   async answer(query: string) {
-    const matches = await this.search(query);
-    if (!matches.length) return insufficient();
+    let matches: LegalSourceFragment[];
+    try { matches = await this.search(query); }
+    catch (error) { if (!isOpenAiLegalEnabled()) throw error; matches = []; }
+    if (!matches.length) {
+      if (!isOpenAiLegalEnabled()) return insufficient();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+      try {
+        const model = [process.env.OPENAI_MODEL,process.env.AI_COMPLEX_MODEL,process.env.AI_MEDIUM_MODEL].find(value=>value && !value.startsWith('stub-')) || 'gpt-5';
+        const citations = await recoverOfficialSources({key:process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '',model,signal:controller.signal,query});
+        if (!citations.length) return {...insufficient(),message:'Основной источник недоступен или не дал результата. Резервный поиск в интернете выполнен, но подтверждённых норм пока недостаточно.'};
+        return {status:'confirmed' as const,aiProvider:'openai',modelId:model,sourceSearch:'web_fallback',citations,
+          message:'Нормы найдены резервным поиском и сверены с официальными текстами РК. Применимость к обстоятельствам требует проверки.\n' + citations.map(source=>`${source.title}, статья ${source.article}: ${source.quote}\n${source.url} (редакция ${source.effectiveDate})`).join('\n'),requiredAction:'clarify_or_human_review' as const};
+      } catch {
+        return {...insufficient(),message:'Основной и резервный поиск временно недоступны. Сведения сохранены; поиск можно повторить.'};
+      } finally { clearTimeout(timeout); }
+    }
     if (isOpenAiLegalEnabled()) {
       try {
         const generated = await generateOpenAiLegalAnswer({ query, fragment: matches[0] });

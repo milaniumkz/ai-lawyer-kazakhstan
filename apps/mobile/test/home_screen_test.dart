@@ -612,7 +612,7 @@ void main() {
     expect(find.text('Ответ из API'), findsOneWidget);
     expect(find.text('Ваше сообщение'), findsOneWidget);
     expect(find.text('Говорить'), findsOneWidget);
-    expect(find.text('Подготовить претензию'), findsOneWidget);
+    expect(find.text('Подготовить документ'), findsOneWidget);
   });
 
   testWidgets('home restores an unsent message for its own draft only',

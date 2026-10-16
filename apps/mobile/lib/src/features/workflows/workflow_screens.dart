@@ -410,8 +410,8 @@ class _ClaimDraftScreenState extends State<ClaimDraftScreen>
                       const Icon(Icons.balance_outlined,
                           color: Color(0xFF9C6F21), size: 44),
                       const SizedBox(height: 14),
-                      const Text('Досудебная претензия',
-                          style: TextStyle(
+                      Text(WorkflowRuntime.documentTitle,
+                          style: const TextStyle(
                               fontFamily: 'AizanSerif',
                               fontSize: 24,
                               color: Color(0xFF3C2A0F))),
@@ -499,21 +499,27 @@ abstract class WorkflowApiPort {
 }
 
 abstract final class WorkflowRuntime {
+  static String documentTitle = 'Досудебная претензия';
   static String generatedBody = '';
   static String generatedId = '';
   static String generationJobId = '';
+  static String generationJobInputKey = '';
   static Future<void> persist() => DraftStore.put('workflow', {
+        'documentTitle': documentTitle,
         'generatedBody': generatedBody,
         'generatedId': generatedId,
+        'generationJobInputKey': generationJobInputKey,
         'generationJobId': generationJobId
       });
   static void restore() {
     final raw = DraftStore.values['workflow'];
     final data = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
+    documentTitle = data['documentTitle'] as String? ?? 'Досудебная претензия';
     generatedBody =
         data['generatedBody'] is String ? data['generatedBody'] as String : '';
     generatedId =
         data['generatedId'] is String ? data['generatedId'] as String : '';
+    generationJobInputKey = data['generationJobInputKey'] as String? ?? '';
     generationJobId = data['generationJobId'] is String
         ? data['generationJobId'] as String
         : '';
@@ -568,6 +574,10 @@ class HttpWorkflowApi implements WorkflowApiPort {
           .toList();
       final latest = messages.lastOrNull;
       final ai = latest?['ai'];
+      if (ai is Map && ai['readyForDraft'] != true) {
+        throw const HttpException(
+            'Сначала уточните данные в чате и подтвердите резюме документа.');
+      }
       if (ai is Map && ai['readyForDraft'] == true) {
         chatDraftMessageId =
             ai['draftMessageId'] as String? ?? latest?['id'] as String?;
@@ -588,6 +598,11 @@ class HttpWorkflowApi implements WorkflowApiPort {
             },
       'confirmedCitationIds': <String>[],
     };
+    final inputKey = sha256.convert(utf8.encode(jsonEncode(input))).toString();
+    if (WorkflowRuntime.generationJobId.isNotEmpty &&
+        WorkflowRuntime.generationJobInputKey != inputKey) {
+      WorkflowRuntime.generationJobId = '';
+    }
     if (WorkflowRuntime.generationJobId.isEmpty) {
       final response = await http.post(
           Uri.parse(
@@ -604,6 +619,7 @@ class HttpWorkflowApi implements WorkflowApiPort {
             '${job['message'] ?? 'Не удалось начать подготовку'}');
       }
       WorkflowRuntime.generationJobId = job['id'] as String;
+      WorkflowRuntime.generationJobInputKey = inputKey;
       await WorkflowRuntime.persist();
     }
     return resumeJob();
@@ -624,6 +640,8 @@ class HttpWorkflowApi implements WorkflowApiPort {
         final document = job['document'] as Map<String, dynamic>;
         WorkflowRuntime.generatedId = document['id'] as String;
         WorkflowRuntime.generatedBody = document['body'] as String;
+        WorkflowRuntime.documentTitle =
+            document['title'] as String? ?? 'Досудебная претензия';
         WorkflowRuntime.generationJobId = '';
         await WorkflowRuntime.persist();
         return GeneratedClaimDraft(

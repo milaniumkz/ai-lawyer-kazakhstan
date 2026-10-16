@@ -97,16 +97,20 @@ describe('LegalService', () => {
     );
   });
 
-  it('does not call OpenAI without an official source', async () => {
+  it('tries independent web search when the local index has no source', async () => {
     process.env.AI_PROVIDER = 'openai';
     process.env.AI_API_KEY = 'test-key';
-    const fetchMock = jest.spyOn(global, 'fetch');
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({output_text:JSON.stringify({citations:[]})})));
     const service = new LegalService();
 
     const result = await service.answer('нет источника');
 
     expect(result.status).toBe('insufficient_authoritative_sources');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(payload.text.format.name).toBe('aizan_source_recovery');
+    expect(payload.tool_choice).toBe('required');
+    expect(result.message).toContain('Резервный поиск');
   });
 });
 

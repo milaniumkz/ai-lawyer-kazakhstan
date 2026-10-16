@@ -41,7 +41,7 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { id?: string; role: "user" | "assistant"; text: string; attachments?: {id:string;fileName:string;mimeType:string;sizeBytes:number}[]; ai?: { requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
+type Message = { id?: string; role: "user" | "assistant"; text: string; attachments?: {id:string;fileName:string;mimeType:string;sizeBytes:number}[]; ai?: { documentKind?: "pretrial_claim" | "court_claim"; sourceSearch?: "primary" | "web_fallback"; requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
 type DocumentItem = {
   uploadRequestId?: string;
   sentWithMessage?: boolean;
@@ -1250,10 +1250,12 @@ export default function WebHome() {
     }) as ApiClassification;
   }
 
-  async function submitHomeMessage() {
+  async function submitHomeMessage(preset?: string) {
+    if (preset && homeInput.trim()) {setSyncState("Сначала отправьте или очистите набранное сообщение.");return;}
+    if (preset) setHomeInput(preset);
     const attachedFiles = aiConversationEnabled ? documents.filter(document => document.id && document.sentWithMessage === false) : [];
     if (attachedFiles.some(file=>!/^image\/(jpeg|png|webp)$/.test(file.mimeType || ""))) {setSyncState("Не удалось отправить файл. Для анализа прикрепите фото в формате JPG или PNG. Передача PDF и других документов в нейросеть пока отключена.");return;}
-    const outgoing = homeInput.trim() || (attachedFiles.length ? "Посмотрите прикреплённые файлы и помогите разобраться с ситуацией." : "");
+    const outgoing = preset || homeInput.trim() || (attachedFiles.length ? "Посмотрите прикреплённые файлы и помогите разобраться с ситуацией." : "");
     if (!outgoing || !aiConfigLoaded || intakeBusyRef.current || classificationBusy || recording || voiceBusy) return;
     if (!classification && !remoteCaseId && outgoing.length < 12) { setSyncState("Опишите ситуацию подробнее"); return; }
     intakeBusyRef.current = true;
@@ -4541,12 +4543,13 @@ export default function WebHome() {
             {classificationBusy && <><div className="aizanHomeMessage user"><small>Вы</small><p>{homeInput.trim() || "Посмотрите прикреплённые файлы"}</p>{documents.filter(file=>file.id && file.sentWithMessage===false).map(file=><ChatAttachment key={file.id} file={{id:file.id,fileName:file.name,mimeType:file.mimeType || "",sizeBytes:file.sizeBytes || 0}} ownerUserId={authUserId} />)}</div><div className="aizanHomeMessage assistant aizanTyping" role="status"><small>AIZAN</small><span>Помощник печатает<span className="aizanTypingDots" aria-hidden="true">…</span></span></div></>}
           </div>
           {aiConversationEnabled && remoteCaseId && <div className="aizanHomeActions">
-            {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : "Сохранить претензию как документ"}</button>}
+            {messages.filter(message => message.role === "assistant").at(-1)?.ai?.readyForDraft && <button className="primary" disabled={claimBusy} onClick={() => void generateClaim()}>{claimBusy ? "Сохраняю проект…" : latestAssistant?.ai?.documentKind === "court_claim" ? "Сохранить иск как документ" : "Сохранить претензию как документ"}</button>}
           </div>}
+          {aiConversationEnabled && messages.some(message=>message.role === "assistant" && message.ai?.readyForDraft && message.ai.documentKind !== "court_claim") && latestAssistant?.ai?.documentKind !== "court_claim" && <div className="aizanHomeActions"><button className="outlineGold" disabled={classificationBusy || claimBusy || recording || voiceBusy} onClick={() => void submitHomeMessage("Хочу перейти к подготовке искового заявления в суд. Уточните результат досудебной претензии и необходимые данные.")}>Перейти к подготовке иска в суд</button></div>}
           {aiConversationEnabled && generatedClaimId && generatedClaimBody && <section className="aizanInlineDraft">
-            <h2>Проект претензии</h2><p>Проверьте реквизиты, факты и требования перед использованием.</p>
-            <textarea aria-label="Текст претензии" value={generatedClaimBody} onChange={event => setGeneratedClaimBody(event.target.value)} rows={14} />
-            <div className="aizanHomeActions"><button className="outlineGold" onClick={() => void saveClaimDraft()}>Сохранить правки</button><button className="primary" onClick={() => void downloadClaimPdf()}>Скачать PDF</button></div>
+            <h2>Проект документа</h2><p>Проверьте реквизиты, факты и требования перед использованием.</p>
+            <textarea aria-label="Текст документа" value={generatedClaimBody} onChange={event => setGeneratedClaimBody(event.target.value)} rows={14} />
+            <div className="aizanHomeActions"><button className="outlineGold" onClick={() => void saveClaimDraft()}>Сохранить правки</button><button className="primary" onClick={() => void downloadClaimPdf()}>Скачать PDF</button>{latestAssistant?.ai?.documentKind !== "court_claim" && <button className="outlineGold" onClick={() => go("claimSend")}>Подготовить отправку претензии</button>}</div>
           </section>}
           {classification && !aiConversationEnabled && <div className="aizanIntakeSteps">
             <p>{classification.result.subcategory_label} · Уверенность: {Math.round(classification.result.confidence * 100)}%</p>

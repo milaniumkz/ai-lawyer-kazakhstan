@@ -60,7 +60,7 @@ export class TemplatesService {
       if ((latestAssistant?.ai?.draftMessageId || latestAssistant?.id) !== input.fields.chatDraftMessageId || !latestAssistant?.ai?.readyForDraft || !preparedMessage?.ai?.readyForDraft || !latestAssistant.ai.draftBody || latestAssistant.ai.missingFields.length || !latestAssistant.ai.citations.length || !isDeepStrictEqual(preparedMessage.ai.facts,latestAssistant.ai.facts)) throw new BadRequestException('CHAT_DRAFT_REQUIRES_CLARIFICATION');
       return {
         id: randomUUID(), templateId: template.id, caseId: input.caseId,
-        status: 'draft_requires_user_confirmation' as const, title: template.title,
+        status: 'draft_requires_user_confirmation' as const, title: latestAssistant.ai.documentKind === 'court_claim' ? 'Исковое заявление в суд' : template.title,
         body: latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n'),
         expertReviewRequired: true, createdAt: new Date().toISOString(),
       };

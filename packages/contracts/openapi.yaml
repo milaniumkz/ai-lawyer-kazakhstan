@@ -2551,6 +2551,12 @@ components:
           type: object
           description: Server-generated OpenAI intake state; absent for manual workflows.
           properties:
+            documentKind:
+              type: string
+              enum: [pretrial_claim, court_claim]
+            sourceSearch:
+              type: string
+              enum: [primary, web_fallback]
             provider:
               type: string
               enum: [openai]

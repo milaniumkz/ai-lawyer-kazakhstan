@@ -31,12 +31,16 @@ on:
         description: Read-only diagnosis of official text retrieval on the server
         type: boolean
         default: false
+      verify_legal_recovery:
+        description: Verify real OpenAI web recovery and court drafts using synthetic in-memory data
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ inputs.ios_build_only && 'ai-lawyer-ios-build' || inputs.inspect_sources && 'ai-lawyer-source-inspection' || 'ai-lawyer-server-deploy' }}
+  group: ${{ inputs.ios_build_only && 'ai-lawyer-ios-build' || (inputs.inspect_sources || inputs.verify_legal_recovery) && 'ai-lawyer-source-inspection' || 'ai-lawyer-server-deploy' }}
   cancel-in-progress: false
 
 jobs:
@@ -90,9 +94,9 @@ jobs:
           retention-days: 14
 
   inspect-official-sources:
-    if: inputs.inspect_sources
+    if: inputs.inspect_sources || inputs.verify_legal_recovery
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - name: Inspect official text reader without accessing credentials or customer data
         env:
@@ -109,7 +113,7 @@ jobs:
           ssh-keyscan -p "${SERVER_SSH_PORT:-22}" "$SERVER_HOST" >> ~/.ssh/known_hosts
           ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'node -' <<'JS'
           const fs=require('node:fs');const path=require('node:path');const Module=require('node:module');
-          const filename='/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/openai-conversation.adapter.js';
+          const filename='/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/official-sources.js';
           const diagnostic=new Module(filename,module);diagnostic.filename=filename;diagnostic.paths=Module._nodeModulePaths(path.dirname(filename));
           diagnostic._compile(fs.readFileSync(filename,'utf8')+'\nexports.inspectOfficialText=readOfficialText;',filename);
           (async()=>{
@@ -124,6 +128,14 @@ jobs:
             console.log('OFFICIAL_HTTP '+JSON.stringify({status:response.status,type:response.headers.get('content-type'),characters:text.length,closedHtml:/<\/html>/i.test(text),article717Present:/717/.test(text),tail:text.replace(/<[^>]+>/g,' ').slice(-160)}));
           })().catch(error=>{console.error(error.name);process.exitCode=1;});
           JS
+      - name: Verify actual OpenAI source recovery and court draft
+        if: inputs.verify_legal_recovery
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+        run: |
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/verify-legal-recovery.mjs'
       - name: Remove SSH key
         if: always()
         run: rm -f ~/.ssh/ai-lawyer-kz
@@ -182,7 +194,7 @@ jobs:
         run: rm -f ~/.ssh/ai-lawyer-kz
 
   deploy:
-    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only && !inputs.inspect_sources && !inputs.ios_build_only }}
+    if: ${{ !inputs.repair_ai_schema && !inputs.verify_only && !inputs.inspect_sources && !inputs.verify_legal_recovery && !inputs.ios_build_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

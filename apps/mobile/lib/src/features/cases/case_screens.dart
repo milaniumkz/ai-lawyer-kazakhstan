@@ -1202,6 +1202,7 @@ abstract final class MobileCaseRuntime {
     confirmedClassificationId = '';
     draftClassification = null;
     preferVoiceInput = false;
+    WorkflowRuntime.documentTitle = 'Досудебная претензия';
     WorkflowRuntime.generatedBody = '';
     WorkflowRuntime.generatedId = '';
     WorkflowRuntime.generationJobId = '';
@@ -1219,6 +1220,7 @@ abstract final class MobileCaseRuntime {
     confirmedText = item.problemText.isNotEmpty ? item.problemText : item.title;
     draftCaseId = 'selected-${item.id}';
     createdDraftCaseId = draftCaseId;
+    WorkflowRuntime.documentTitle = 'Досудебная претензия';
     WorkflowRuntime.generatedBody = '';
     WorkflowRuntime.generatedId = '';
     WorkflowRuntime.generationJobId = '';
@@ -1271,10 +1273,16 @@ class CaseClassificationResult {
 }
 
 class ChatMessageItem {
-  const ChatMessageItem({required this.text, required this.assistant});
+  const ChatMessageItem(
+      {required this.text,
+      required this.assistant,
+      this.documentKind,
+      this.readyForDraft = false});
 
   final String text;
   final bool assistant;
+  final String? documentKind;
+  final bool readyForDraft;
 }
 
 abstract class CaseClarificationPort {
@@ -1462,6 +1470,8 @@ class HttpCaseApi implements CaseApiPort, CaseClarificationPort {
           ChatMessageItem(
             text: item['text'] as String,
             assistant: item['role'] == 'assistant',
+            documentKind: (item['ai'] as Map?)?['documentKind'] as String?,
+            readyForDraft: (item['ai'] as Map?)?['readyForDraft'] == true,
           ),
     ];
   }
@@ -1591,7 +1601,11 @@ class _CategoryScreenState extends State<CategoryScreen>
                   message['role'] == 'user' || message['role'] == 'assistant')
               .map((message) => ChatMessageItem(
                   text: message['text'] as String,
-                  assistant: message['role'] == 'assistant')));
+                  assistant: message['role'] == 'assistant',
+                  documentKind:
+                      (message['ai'] as Map?)?['documentKind'] as String?,
+                  readyForDraft:
+                      (message['ai'] as Map?)?['readyForDraft'] == true)));
         status = 'Дело открыто';
       });
     } catch (error) {
@@ -1745,6 +1759,33 @@ class _CategoryScreenState extends State<CategoryScreen>
     }
   }
 
+  Future<void> saveChatDocument() async {
+    if (isBusy) return;
+    updateState(() => isBusy = true);
+    try {
+      final origin = caseApi is HttpCaseApi
+          ? (caseApi as HttpCaseApi).baseUrl
+          : const String.fromEnvironment('API_BASE_URL',
+              defaultValue: 'https://89-207-250-217.sslip.io');
+      final draft = await HttpWorkflowApi(baseUrl: origin).generateClaim(
+          caseId: MobileCaseRuntime.activeCaseId,
+          claimantName: '',
+          respondentName: '',
+          claimAmount: '',
+          claimReason: '');
+      WorkflowRuntime.generatedId = draft.id;
+      WorkflowRuntime.generatedBody = draft.body;
+      if (mounted) context.go('/workflow/pretrial-claim/draft');
+    } catch (_) {
+      if (mounted) {
+        updateState(() => status =
+            'Не удалось сохранить документ. Проверьте готовность проекта в чате и повторите.');
+      }
+    } finally {
+      if (mounted) updateState(() => isBusy = false);
+    }
+  }
+
   Future<void> sendHomeMessage() async {
     final text = answerController.text.trim();
     if (isBusy || text.isEmpty) return;
@@ -1840,8 +1881,45 @@ class _CategoryScreenState extends State<CategoryScreen>
                 onPressed: () => context.go('/documents/add'),
                 child: const Text('Добавить документ')),
             TextButton(
-                onPressed: () => context.go('/workflow/pretrial-claim'),
-                child: const Text('Подготовить претензию')),
+                onPressed: isBusy
+                    ? null
+                    : homeMessages
+                                .where((message) => message.assistant)
+                                .lastOrNull
+                                ?.readyForDraft ==
+                            true
+                        ? saveChatDocument
+                        : () => context.go('/workflow/pretrial-claim'),
+                child: Text(homeMessages
+                            .where((message) => message.assistant)
+                            .lastOrNull
+                            ?.readyForDraft ==
+                        true
+                    ? 'Сохранить документ из чата'
+                    : 'Подготовить документ')),
+            if (homeMessages.any((message) =>
+                    message.assistant &&
+                    message.readyForDraft &&
+                    message.documentKind != 'court_claim') &&
+                homeMessages
+                        .where((message) => message.assistant)
+                        .lastOrNull
+                        ?.documentKind !=
+                    'court_claim')
+              OutlinedButton(
+                  onPressed: isBusy
+                      ? null
+                      : () {
+                          if (answerController.text.trim().isNotEmpty) {
+                            _showAction(context,
+                                'Сначала отправьте или очистите набранное сообщение.');
+                            return;
+                          }
+                          answerController.text =
+                              'Хочу перейти к подготовке искового заявления в суд. Уточните результат досудебной претензии и необходимые данные.';
+                          sendHomeMessage();
+                        },
+                  child: const Text('Перейти к подготовке иска в суд')),
           ]));
     }
     final result = classification;

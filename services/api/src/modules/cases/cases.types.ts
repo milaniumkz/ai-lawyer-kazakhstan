@@ -42,6 +42,8 @@ export interface MessageRecord {
 export interface AiConversation {
   provider: 'openai';
   model: string;
+  documentKind?: 'pretrial_claim' | 'court_claim';
+  sourceSearch?: 'primary' | 'web_fallback';
   facts: Record<string, string>;
   missingFields: string[];
   citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string }>;
