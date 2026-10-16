@@ -122,3 +122,7 @@ Replaced the screenshot crops for the in-app logo and round microphone with isol
 ### Launcher icon and display name
 
 Changed native iOS/Android display names, Flutter application/onboarding title and installed web-app metadata to `Айзан`. The launcher icon now contains only a larger gold monogram, with the separate AIZAN wordmark removed. All iOS catalog sizes, Android density variants, web/PWA/touch icons and favicon are generated from the opaque 1024px master using `node scripts/mobile/build-launcher-icons.mjs`. Small-size preview inspected at 60px and 96px. The transparent in-app logo remains a separate asset. Source changes do not rename an existing App Store listing or update installed iPhone binaries; those still require the Mac/Apple release process.
+
+### Opaque native navigation transitions
+
+Each GoRouter page now paints its own opaque AIZAN gradient. Previously transparent Scaffolds relied on a single background outside Navigator, causing underlying page content to show through during iOS transitions. Kept the platform's native transitions and back navigation rather than adding overlapping content fades. A regression test exercises iOS push/pop and verifies full-screen opaque page backgrounds at intermediate animation frames. Full quality check and Docker configuration passed; installation on a physical iPhone still requires a new signed build.

@@ -45,51 +45,70 @@ Future<void> main() async {
   }
 }
 
+// Each route owns its background. A shared background outside Navigator leaves
+// transparent Scaffolds showing the previous route during iOS push/pop slides.
+GoRoute _aizanRoute(
+        {required String path,
+        required Widget Function(BuildContext, GoRouterState) builder}) =>
+    GoRoute(
+        path: path,
+        builder: (context, state) => DecoratedBox(
+            key: ValueKey('aizan-route:$path'),
+            decoration: AizanDesign.background,
+            child: builder(context, state)));
+
 GoRouter _buildRouter(String initialLocation) => GoRouter(
       initialLocation: initialLocation,
       routes: [
-        GoRoute(
+        _aizanRoute(
             path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-        GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
-        GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-        GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-        GoRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
-        GoRoute(
+        _aizanRoute(path: '/', builder: (_, __) => const HomeScreen()),
+        _aizanRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+        _aizanRoute(
+            path: '/register', builder: (_, __) => const RegisterScreen()),
+        _aizanRoute(path: '/otp', builder: (_, __) => const OtpScreen()),
+        _aizanRoute(
             path: '/biometric', builder: (_, __) => const BiometricScreen()),
-        GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-        GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-        GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
-        GoRoute(path: '/cases', builder: (_, __) => const CasesListScreen()),
-        GoRoute(
+        _aizanRoute(
+            path: '/profile', builder: (_, __) => const ProfileScreen()),
+        _aizanRoute(
+            path: '/settings', builder: (_, __) => const SettingsScreen()),
+        _aizanRoute(path: '/help', builder: (_, __) => const HelpScreen()),
+        _aizanRoute(
+            path: '/cases', builder: (_, __) => const CasesListScreen()),
+        _aizanRoute(
             path: '/case/details',
             builder: (_, __) => const CaseDetailsScreen()),
-        GoRoute(path: '/case/new', builder: (_, __) => const NewCaseScreen()),
-        GoRoute(
+        _aizanRoute(
+            path: '/case/new', builder: (_, __) => const NewCaseScreen()),
+        _aizanRoute(
             path: '/case/category', builder: (_, __) => const CategoryScreen()),
-        GoRoute(path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
-        GoRoute(
+        _aizanRoute(
+            path: '/case/chat', builder: (_, __) => const CaseChatScreen()),
+        _aizanRoute(
             path: '/documents', builder: (_, __) => const DocumentsScreen()),
-        GoRoute(
+        _aizanRoute(
             path: '/documents/add',
             builder: (_, state) => DocumentsScreen(
                 addMode: true,
                 openCamera: state.uri.queryParameters['source'] == 'camera')),
-        GoRoute(
+        _aizanRoute(
             path: '/documents/analysis',
             builder: (_, __) => const DocumentAnalysisScreen()),
-        GoRoute(
+        _aizanRoute(
             path: '/deadlines', builder: (_, __) => const DeadlinesScreen()),
-        GoRoute(path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
-        GoRoute(
+        _aizanRoute(
+            path: '/legal', builder: (_, __) => const LegalSourcesScreen()),
+        _aizanRoute(
             path: '/workflow/pretrial-claim',
             builder: (_, __) => const PretrialClaimScreen()),
-        GoRoute(
+        _aizanRoute(
             path: '/workflow/pretrial-claim/draft',
             builder: (_, __) => const ClaimDraftScreen()),
-        GoRoute(
+        _aizanRoute(
             path: '/workflow/pretrial-claim/send',
             builder: (_, __) => const ClaimSendScreen()),
-        GoRoute(
+        _aizanRoute(
             path: '/subscription',
             builder: (_, __) => const SubscriptionScreen()),
       ],
