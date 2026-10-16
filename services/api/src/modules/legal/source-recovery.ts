@@ -1,5 +1,5 @@
 import type {AiConversation} from '../cases/cases.types';
-import {isOfficialUrl, canonicalUrl, officialSourceIdentity, verifyOfficialQuote, type OfficialPage} from './official-sources';
+import {isOfficialUrl, canonicalUrl, officialSourceIdentity, officialDomains, verifyOfficialQuote, type OfficialPage} from './official-sources';
 
 // An independent web search, rather than asking the user to restart intake when
 // the local index, publisher endpoint or first search did not produce evidence.
@@ -15,7 +15,7 @@ export async function recoverOfficialSources(input: {
     body:JSON.stringify({
       model:input.model,store:false,max_output_tokens:6000,max_tool_calls:6,
       ...(input.model.startsWith('gpt-5') ? {reasoning:{effort:'low'}} : {}),
-      tools:[{type:'web_search'}],tool_choice:'required',include:['web_search_call.action.sources'],
+      tools:[{type:'web_search',filters:{allowed_domains:officialDomains}}],tool_choice:'required',include:['web_search_call.action.sources'],
       input:[{role:'developer',content:[
         'Ты ищешь правовые основания Республики Казахстан в интернете после ошибки основного поиска или недоступности официального текста.',
         `Сегодня ${new Date().toISOString().slice(0,10)}. Учитывай дату события, применимую редакцию и статус нормы. Не используй российское право.`,
@@ -28,7 +28,7 @@ export async function recoverOfficialSources(input: {
       text:{format:{type:'json_schema',name:'aizan_source_recovery',strict:true,schema:{
         type:'object',additionalProperties:false,required:['citations'],properties:{citations:{type:'array',maxItems:4,items:{
           type:'object',additionalProperties:false,required:['url','title','article','quote','effectiveDate'],properties:{
-            url:{type:'string'},title:{type:'string'},article:{type:'string'},quote:{type:'string'},effectiveDate:{type:'string'},
+            url:{type:'string',pattern:'^https://(?:[a-z0-9-]+\\.)*(?:' + officialDomains.map(host=>host.replace(/\./g,'\\.')).join('|') + ')(?:/|$)'},title:{type:'string'},article:{type:'string'},quote:{type:'string'},effectiveDate:{type:'string'},
           },
         }}},
       }}},
