@@ -50,4 +50,42 @@ describe('independent official source recovery',()=>{
       expect(await new LegalService(repository).answer('Долг')).toMatchObject({status:'confirmed',sourceSearch:'web_fallback',citations:[expect.objectContaining({url:citation.url})]});
     } finally {process.env=env;}
   });
+  it('retains a matched official quote without inventing an unknown edition date',async()=>{
+    mock({...citation,effectiveDate:''});
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({effectiveDate:'',editionVerified:false,verificationMethod:'official_text'});
+  });
+  it('requires an actual completed official open_page for a public PDF fallback',async()=>{
+    const source={...citation,url:'https://www.gov.kz/uploads/legal-code.pdf'};
+    const fetch=jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[source]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:source.url}}]}))
+      : new Response('public legal PDF',{headers:{'content-type':'application/pdf'}}));
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search',checkedAt:expect.any(String)});
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))
+      : new Response('Другой официальный текст',{headers:{'content-type':'text/html'}}));
+    expect(await recoverOfficialSources(options)).toEqual([]);
+  });
+  it('uses completed provider page retrieval when the direct publisher endpoint is unavailable',async()=>{
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))
+      : new Response('',{status:503}));
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search'});
+  });
+  it('does not override an unsafe publisher redirect with provider evidence',async()=>{
+    const fetch=jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))
+      : new Response(null,{status:302,headers:{location:'https://example.com/untrusted'}}));
+    expect(await recoverOfficialSources(options)).toEqual([]);
+    expect(fetch.mock.calls.some(call=>String(call[0]).includes('example.com'))).toBe(false);
+  });
+  it('does not accept an unsearched unsupported source without open_page',async()=>{
+    mock({...citation,url:'https://gov.kz/legal.pdf'});
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[{...citation,url:'https://gov.kz/legal.pdf'}]}),output:[{action:{sources:[{url:'https://gov.kz/legal.pdf'}]}}]}))
+      : new Response('PDF',{headers:{'content-type':'application/pdf'}}));
+    expect(await recoverOfficialSources(options)).toEqual([]);
+  });
 });

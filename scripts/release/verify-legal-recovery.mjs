@@ -29,7 +29,7 @@ try {
   assert.equal(pretrial.ai.sourceSearch,'web_fallback');
   assert.equal(pretrial.ai.readyForDraft,true,'Independent live web search must produce a verified pretrial draft');
   assert(pretrial.ai.citations.every(source=>source.checkedAt));
-  console.log(JSON.stringify({phase,provider:pretrial.ai.provider,model:pretrial.ai.model,citations:pretrial.ai.citations.length,characters:pretrial.ai.draftBody.length,faultInjected}));
+  console.log(JSON.stringify({phase,provider:pretrial.ai.provider,model:pretrial.ai.model,citations:pretrial.ai.citations.length,characters:pretrial.ai.draftBody.length,verificationMethods:pretrial.ai.citations.map(source=>source.verificationMethod || 'official_text'),editionReviewRequired:pretrial.ai.citations.some(source=>source.editionVerified===false),faultInjected}));
   globalThis.fetch=actualFetch;
   phase='court-intake';
   const intake=await generateOpenAiConversation('Синтетический спор о долге',[...history(previous).slice(0,1),{id:'pretrial',caseId:'synthetic-memory-only',role:'assistant',text:pretrial.text,createdAt:'',ai:pretrial.ai},{id:'court-request',caseId:'synthetic-memory-only',role:'user',text:'Хочу перейти к подготовке искового заявления в суд. Сначала уточните сведения о направлении претензии и результате.',createdAt:''}]);
@@ -46,7 +46,7 @@ try {
   assert(/иск|суд/i.test(court.ai.draftBody));
   const pdf=await createDocumentPdf(court.ai.draftBody);
   assert.equal(Buffer.from(pdf).subarray(0,5).toString(),'%PDF-');
-  console.log(JSON.stringify({phase,provider:court.ai.provider,citations:court.ai.citations.length,characters:court.ai.draftBody.length,pdfBytes:pdf.length,syntheticDataOnly:true,submitted:false}));
+  console.log(JSON.stringify({phase,provider:court.ai.provider,citations:court.ai.citations.length,characters:court.ai.draftBody.length,verificationMethods:court.ai.citations.map(source=>source.verificationMethod || 'official_text'),editionReviewRequired:court.ai.citations.some(source=>source.editionVerified===false),pdfBytes:pdf.length,syntheticDataOnly:true,submitted:false}));
 } catch(error) {
   console.error(JSON.stringify({phase,passed:false,code:error.response?.code || error.name}));
   process.exitCode=1;

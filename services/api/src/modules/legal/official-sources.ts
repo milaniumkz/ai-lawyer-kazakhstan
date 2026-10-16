@@ -1,4 +1,4 @@
-const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz'];
+export const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz', 'egov.kz', 'akorda.kz', 'parlam.kz'];
 
 export function isOfficialUrl(value: string) {
   try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password && officialDomains.some(host => url.hostname === host || url.hostname.endsWith(`.${host}`)); } catch { return false; }
@@ -22,7 +22,7 @@ export function officialSourceIdentity(value:string) {
 
 function normalizeQuote(value: string) { return value.toLocaleLowerCase().replace(/ё/g,'е').replace(/[«»"“”]/g,'').replace(/[–—]/g,'-').replace(/\s+/g,' ').trim(); }
 
-export type OfficialPage = {text:string;url:string};
+export type OfficialPage = {text:string;url:string;unavailable?:'transport'|'pdf'};
 
 export async function verifyOfficialQuote(url: string, quote: string, cache: Map<string,Promise<OfficialPage|undefined>>): Promise<string|undefined> {
   const candidates = [canonicalUrl(url)];
@@ -52,7 +52,12 @@ async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
         currentUrl = new URL(location, currentUrl).href;
         continue;
       }
-      if (!response.ok || !response.body || !/text\/(html|plain)/i.test(response.headers.get('content-type') || '')) return undefined;
+      if (!response.ok) {
+        if (response.status === 403 || response.status === 429 || response.status >= 500) return {text:'',url:currentUrl,unavailable:'transport'};
+        return undefined;
+      }
+      if (/application\/pdf/i.test(response.headers.get('content-type') || '')) {await response.body?.cancel(); return {text:'',url:currentUrl,unavailable:'pdf'};}
+      if (!response.body || !/text\/(html|plain)/i.test(response.headers.get('content-type') || '')) return undefined;
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
       let size = 0;
@@ -77,5 +82,5 @@ async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
       return {text:normalized,url:currentUrl};
     }
     return undefined;
-  } catch { return undefined; }
+  } catch { return {text:'',url,unavailable:'transport'}; }
 }

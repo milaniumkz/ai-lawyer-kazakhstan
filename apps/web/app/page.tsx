@@ -41,7 +41,7 @@ type CaseItem = {
   date: string;
   progress: number;
 };
-type Message = { id?: string; role: "user" | "assistant"; text: string; attachments?: {id:string;fileName:string;mimeType:string;sizeBytes:number}[]; ai?: { documentKind?: "pretrial_claim" | "court_claim"; sourceSearch?: "primary" | "web_fallback"; requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string }[] } };
+type Message = { id?: string; role: "user" | "assistant"; text: string; attachments?: {id:string;fileName:string;mimeType:string;sizeBytes:number}[]; ai?: { documentKind?: "pretrial_claim" | "court_claim"; sourceSearch?: "primary" | "web_fallback"; requiresDocument?: boolean; draftMessageId?: string; readyForDraft: boolean; missingFields: string[]; draftBody?: string; citations: { url: string; title: string; article: string; effectiveDate: string; verificationMethod?: 'official_text' | 'openai_web_search'; editionVerified?: boolean }[] } };
 type DocumentItem = {
   uploadRequestId?: string;
   sentWithMessage?: boolean;

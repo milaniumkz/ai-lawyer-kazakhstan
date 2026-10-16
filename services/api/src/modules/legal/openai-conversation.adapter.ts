@@ -1,10 +1,9 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import type { AiConversation, MessageRecord } from '../cases/cases.types';
 import { isDeepStrictEqual } from 'node:util';
-import {isOfficialUrl, canonicalUrl, officialSourceIdentity, verifyOfficialQuote, type OfficialPage} from './official-sources';
+import {isOfficialUrl, canonicalUrl, officialSourceIdentity, verifyOfficialQuote, type OfficialPage, officialDomains} from './official-sources';
 import {recoverOfficialSources} from './source-recovery';
 
-const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz'];
 const pretrialFacts = ['claimantName', 'claimantContact', 'respondentName', 'respondentContact', 'circumstances', 'eventDate', 'demands', 'evidence', 'deadline'] as const;
 
 export type ConversationAttachment = {id:string;fileName:string;mimeType:string;sizeBytes:number;dataUrl:string};
@@ -41,7 +40,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   const recoverPrimaryFailure = !stageChanged && !attachments.length && previousState?.missingFields.length === 0 && /^(подтверждаю|всё верно|все верно|согласен|согласна|растаймын|confirm(?:ed)?)(?:[.!\s]|$)/i.test(lastUserText.trim()) && !/\d|измен|исправ|замен|вместо|кроме|ошиб|неверн|(?:^|[\s,.!?])но(?:[\s,.!?]|$)/i.test(lastUserText);
   try {
     const response = await fetch(`${(process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '')}/responses`, {
-      method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(searchNeeded ? 60000 : 90000)]),
+      method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(searchNeeded ? 45000 : 90000)]),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model, store: false, max_output_tokens: 12000,
@@ -124,7 +123,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
       try {
         citations = await recoverOfficialSources({key,model,signal:controller.signal,documentKind,
           query: JSON.stringify({circumstances:facts.circumstances,demands:facts.demands,eventDate:facts.eventDate}),
-          officialExcerpts:(await Promise.all([...sourceCache.values()])).filter((page):page is OfficialPage=>Boolean(page)).slice(0,4).map(page=>{
+          officialExcerpts:(await Promise.all([...sourceCache.values()])).filter((page):page is OfficialPage=>Boolean(page?.text && !page.unavailable)).slice(0,4).map(page=>{
             const source=result.citations.find(citation=>officialSourceIdentity(citation.url)===officialSourceIdentity(page.url));
             const article=source?.article.match(/\d{1,5}/)?.[0];
             const marker=article ? `статья ${article}` : '';
@@ -145,7 +144,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
       // or asking the user to confirm the same facts again.
       try {
         draftBody = await composeVerifiedClaim({key,model,facts,citations,signal:controller.signal,languageContext:latestUser,documentKind});
-        result.answer = `Подготовил проект ${documentLabel} по подтверждённым данным и проверенным официальным источникам РК.`;
+        result.answer = `Подготовил проект ${documentLabel} по подтверждённым данным с официальными источниками РК.`;
       } catch {
         result.answer = 'Данные подтверждены, официальные основания найдены. Нейросеть не смогла завершить текст документа. Сведения сохранены: попросите повторить подготовку в этом чате.';
         result.draftBody = null;
@@ -164,6 +163,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
       text = text.split(/\n\s*(?:Краткое резюме|Резюме|Проверьте данные для претензии|Сведения для претензии)[^\n]*:/i)[0].trim();
       text = text.replace(/Вопрос\s*\d+\s*:\s*/gi, '');
     }
+    if (draftBody && citations.some(source=>source.verificationMethod === 'openai_web_search' || source.editionVerified === false)) text += '\n\nПроект требует дополнительной проверки юристом: для части источников использовано чтение официальной публикации инструментом веб-поиска либо дата применимой редакции не подтверждена. Перед использованием сверьте отмеченные нормы. Это не подтверждение готовности документа к подаче.';
     if (draftBody && !inheritedDraft) text += `\n\n${draftBody}\n\nПроект готов для вашей проверки. Можно сохранить его как документ и скачать PDF.${documentKind === 'pretrial_claim' ? '\nПосле отправки сообщите, когда и как получатель получил претензию и выполнены ли требования. Если спор не решён, можно перейти к подготовке иска в суд.' : '\nПеред подачей проверьте подсудность, госпошлину и комплект приложений. Приложение не подаёт иск автоматически.'}`;
     else if (inheritedDraft) text += '\n\nПодготовленный проект остаётся доступен для сохранения и скачивания PDF.';
     else if (result.draftBody) text = missingFields.length ? 'Для полного проекта ещё нужны уточнения. ' + text : !confirmed ? 'Проверьте реквизиты и требования выше и напишите «Подтверждаю», если всё верно.' : 'Реквизиты подтверждены. Сейчас не удалось проверить официальные основания для проекта. Можно повторить поиск источников, не заполняя сведения заново; неподтверждённые нормы в документ не включаю.';
@@ -172,7 +172,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
       const labels = ['Заявитель', 'Контакты заявителя', 'Получатель', 'Контакты получателя', 'Обстоятельства', 'Дата события', 'Требования', 'Доказательства', 'Срок добровольного исполнения', 'Суд', 'Адрес суда', 'Адрес истца', 'Идентификатор истца', 'Адрес ответчика', 'Идентификатор ответчика', 'Цена иска и расчёт', 'Госпошлина или льгота', 'Отправка и получение претензии', 'Результат досудебного урегулирования', 'Состояние досудебного урегулирования'];
       text += `\n\nПроверьте данные для ${documentLabel}:\n` + requiredFacts.map((field,index)=>`${labels[index]}: ${field === 'pretrialStatus' ? ({not_sent:'не направлена',waiting:'ожидание исполнения',fulfilled:'исполнена',unresolved:'спор не урегулирован',not_required:'проверенное исключение'} as Record<string,string>)[facts[field]] || facts[field] : facts[field]}`).join('\n') + '\n\nЕсли всё верно, напишите «Подтверждаю». Если нужна правка — укажите её в чате.';
     }
-    if (citations.length) text += '\n\nОфициальные источники РК:\n' + citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n');
+    if (citations.length) text += '\n\nОфициальные источники РК:\n' + citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate || 'требует проверки'})`).join('\n');
     return { text, ai };
   } catch (error) {
     if (error instanceof ServiceUnavailableException) throw error;
@@ -186,7 +186,7 @@ async function composeVerifiedClaim(input: {key: string; model: string; facts: R
   const response = await fetch(`${(process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/,'')}/responses`,{
     method:'POST',signal:input.signal,headers:{Authorization:`Bearer ${input.key}`,'Content-Type':'application/json'},
     body:JSON.stringify({model:input.model,store:false,max_output_tokens:10000,...(input.model.startsWith('gpt-5')?{reasoning:{effort:'low'}}:{}),
-      input:[{role:'developer',content:(input.documentKind === 'court_claim' ? 'Составь исковое заявление в суд: суд и подсудность, истец/ответчик с адресами и идентификаторами, цена иска, факты, досудебные действия и их результат, процессуальные и материальные нормы, точные требования к суду, госпошлина/льгота и расчёт, приложения и доказательства направления, дата/подпись. Используй только проверенные сведения ниже. Не называй иск претензией. Не выдумывай суд, сумму пошлины и исполнение досудебного порядка. ' : 'Составь полный проект досудебной претензии. ') + 'Документ составляй исключительно по подтверждённым фактам и предоставленным проверенным источникам Республики Казахстан. Используй только перечисленные статьи и их подтверждённые цитаты, не добавляй новые правовые основания и ссылки. Не выдумывай суммы, реквизиты, даты и доказательства. Включи заявителя и адресата с контактами, факты и хронологию, правовые основания, конкретные требования, выбранный срок и способ ответа, приложения и место для даты/подписи. Это проект для проверки пользователем и юристом. Оформи обычным текстом без Markdown, HTML и блоков кода, на языке запроса пользователя. Верни JSON: body — полный документ; citedUrls — только использованные предоставленные официальные URL.'},
+      input:[{role:'developer',content:(input.documentKind === 'court_claim' ? 'Составь исковое заявление в суд: суд и подсудность, истец/ответчик с адресами и идентификаторами, цена иска, факты, досудебные действия и их результат, процессуальные и материальные нормы, точные требования к суду, госпошлина/льгота и расчёт, приложения и доказательства направления, дата/подпись. Используй только проверенные сведения ниже. Не называй иск претензией. Не выдумывай суд, сумму пошлины и исполнение досудебного порядка. ' : 'Составь полный проект досудебной претензии. ') + 'Документ составляй исключительно по подтверждённым фактам и предоставленным проверенным источникам Республики Казахстан. Используй только перечисленные статьи и их подтверждённые цитаты, не добавляй новые правовые основания и ссылки. Не выдумывай суммы, реквизиты, даты и доказательства. Включи заявителя и адресата с контактами, факты и хронологию, правовые основания, конкретные требования, выбранный срок и способ ответа, приложения и место для даты/подписи. Если editionVerified=false, явно укажи, что применимую редакцию нужно проверить; не выдумывай дату. Если verificationMethod=openai_web_search, не утверждай, что сервер независимо сверил цитату. Это проект для проверки пользователем и юристом. Оформи обычным текстом без Markdown, HTML и блоков кода, на языке запроса пользователя. Верни JSON: body — полный документ; citedUrls — только использованные предоставленные официальные URL.'},
       {role:'user',content:JSON.stringify({request:input.languageContext,confirmedFacts:input.facts,verifiedSources:input.citations})}],
       text:{format:{type:'json_schema',name:'aizan_verified_claim',strict:true,schema:{type:'object',additionalProperties:false,required:['body','citedUrls'],properties:{body:{type:'string'},citedUrls:{type:'array',items:{type:'string',enum:urls}}}}}},
     }),

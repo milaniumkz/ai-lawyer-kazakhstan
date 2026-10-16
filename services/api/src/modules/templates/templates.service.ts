@@ -60,8 +60,8 @@ export class TemplatesService {
       if ((latestAssistant?.ai?.draftMessageId || latestAssistant?.id) !== input.fields.chatDraftMessageId || !latestAssistant?.ai?.readyForDraft || !preparedMessage?.ai?.readyForDraft || !latestAssistant.ai.draftBody || latestAssistant.ai.missingFields.length || !latestAssistant.ai.citations.length || !isDeepStrictEqual(preparedMessage.ai.facts,latestAssistant.ai.facts)) throw new BadRequestException('CHAT_DRAFT_REQUIRES_CLARIFICATION');
       return {
         id: randomUUID(), templateId: template.id, caseId: input.caseId,
-        status: 'draft_requires_user_confirmation' as const, title: latestAssistant.ai.documentKind === 'court_claim' ? 'Исковое заявление в суд' : template.title,
-        body: latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate})`).join('\n'),
+        status: latestAssistant.ai.citations.some(source=>source.verificationMethod==='openai_web_search' || source.editionVerified===false) ? 'review_required' as const : 'draft_requires_user_confirmation' as const, title: latestAssistant.ai.documentKind === 'court_claim' ? 'Исковое заявление в суд' : template.title,
+        body: (latestAssistant.ai.citations.some(source=>source.verificationMethod==='openai_web_search' || source.editionVerified===false) ? 'ПРОЕКТ ДЛЯ ОБЯЗАТЕЛЬНОЙ ПРОВЕРКИ ЮРИСТОМ. Для части источников использовано чтение официальной публикации веб-поиском либо не подтверждена применимая редакция. Перед подачей сверьте отмеченные нормы и цитаты.\n\n' : '') + latestAssistant.ai.draftBody + '\n\nОфициальные источники РК:\n' + latestAssistant.ai.citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate || 'требует проверки'})`).join('\n'),
         expertReviewRequired: true, createdAt: new Date().toISOString(),
       };
     }

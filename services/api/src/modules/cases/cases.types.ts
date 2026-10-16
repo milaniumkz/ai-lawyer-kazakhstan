@@ -46,7 +46,7 @@ export interface AiConversation {
   sourceSearch?: 'primary' | 'web_fallback';
   facts: Record<string, string>;
   missingFields: string[];
-  citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string }>;
+  citations: Array<{ url: string; title: string; article: string; quote: string; effectiveDate: string; checkedAt?: string; verificationMethod?: 'official_text' | 'openai_web_search'; editionVerified?: boolean }>;
   readyForDraft: boolean;
   factsConfirmed?: boolean;
   requiresDocument?: boolean;

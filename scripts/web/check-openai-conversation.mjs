@@ -91,7 +91,7 @@ try {
     assert.deepEqual(final.assistant.ai.facts,confirmedFacts,'A repeated source search must retain the confirmed facts');
   }
   assert.equal(final.assistant.ai.readyForDraft,true,'Must produce an actual source-backed draft, not a stub');
-  assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz)\//.test(source.url)));
+  assert(final.assistant.ai.citations.every(source=>source.checkedAt&&/^https:\/\/(?:[^/]+\.)?(?:adilet\.zan\.kz|zan\.gov\.kz|sud\.gov\.kz|gov\.kz|egov\.kz|akorda\.kz|parlam\.kz)\//.test(source.url)));
   assert(final.assistant.ai.draftBody.replace(/\s/g,'').includes('100000'));
   const friendly=await send('Спасибо! Как сохранить этот проект и скачать PDF?');
   assert.equal(friendly.assistant.ai.readyForDraft,true);

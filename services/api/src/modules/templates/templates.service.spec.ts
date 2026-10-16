@@ -13,6 +13,16 @@ describe('TemplatesService', () => {
     expect(document).toMatchObject({title:'Исковое заявление в суд',expertReviewRequired:true,status:'draft_requires_user_confirmation'});
     expect(document.body).toContain(message.ai.draftBody);
   });
+  it('marks independently unreadable or undated sources for review in the exported document', async () => {
+    const message={id:'review-draft',role:'assistant',ai:{readyForDraft:true,draftBody:'Проект документа для проверки юристом',missingFields:[],facts:{},citations:[{title:'Официальная публикация',article:'1',url:'https://gov.kz/law.pdf',effectiveDate:'',verificationMethod:'openai_web_search',editionVerified:false}]}};
+    const cases={getCase:jest.fn().mockResolvedValue({id:'case-1'}),listMessages:jest.fn().mockResolvedValue([message])} as unknown as CasesService;
+    const service=new TemplatesService(undefined,cases);
+    const [template]=await service.listTemplates();
+    const document=await service.generate({templateId:template.id,caseId:'case-1',fields:{chatDraftMessageId:'review-draft'}},'owner-1');
+    expect(document.status).toBe('review_required');
+    expect(document.body).toContain('ПРОЕКТ ДЛЯ ОБЯЗАТЕЛЬНОЙ ПРОВЕРКИ ЮРИСТОМ');
+    expect(document.body).toContain('редакция: требует проверки');
+  });
   it('saves only the latest confirmed AI draft and rejects an outdated message', async () => {
     const message = { id:'ai-draft', role:'assistant', ai:{readyForDraft:true,draftBody:'Полный проект претензии из переписки',missingFields:[],citations:[{title:'ГК РК',article:'272',url:'https://adilet.zan.kz/rus/docs/test',effectiveDate:'2026-01-01'}]} };
     const cases = {getCase:jest.fn().mockResolvedValue({id:'case-1'}),listMessages:jest.fn().mockResolvedValue([message])} as unknown as CasesService;

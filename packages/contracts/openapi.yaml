@@ -2598,6 +2598,11 @@ components:
                   checkedAt:
                     type: string
                     format: date-time
+                  verificationMethod:
+                    type: string
+                    enum: [official_text, openai_web_search]
+                  editionVerified:
+                    type: boolean
     CreateMessageRequest:
       type: object
       required: [role, text]

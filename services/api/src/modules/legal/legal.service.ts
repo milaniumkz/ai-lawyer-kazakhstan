@@ -7,8 +7,9 @@ import { LegalRepository } from './repositories/legal.repository';
 import { generateOpenAiConversation } from './openai-conversation.adapter';
 import type { MessageRecord } from '../cases/cases.types';
 import { recoverOfficialSources } from './source-recovery';
+import { officialDomains } from './official-sources';
 
-const OFFICIAL_HOSTS = ['zan.gov.kz', 'adilet.zan.kz', 'sud.gov.kz', 'gov.kz'];
+const OFFICIAL_HOSTS = officialDomains;
 
 @Injectable()
 export class LegalService {
@@ -65,7 +66,7 @@ export class LegalService {
         const citations = await recoverOfficialSources({key:process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '',model,signal:controller.signal,query});
         if (!citations.length) return {...insufficient(),message:'Основной источник недоступен или не дал результата. Резервный поиск в интернете выполнен, но подтверждённых норм пока недостаточно.'};
         return {status:'confirmed' as const,aiProvider:'openai',modelId:model,sourceSearch:'web_fallback',citations,
-          message:'Нормы найдены резервным поиском и сверены с официальными текстами РК. Применимость к обстоятельствам требует проверки.\n' + citations.map(source=>`${source.title}, статья ${source.article}: ${source.quote}\n${source.url} (редакция ${source.effectiveDate})`).join('\n'),requiredAction:'clarify_or_human_review' as const};
+          message:(citations.some(source=>source.verificationMethod==='openai_web_search' || source.editionVerified===false) ? 'Нормы найдены в официальных публикациях через веб-поиск. Требуется проверка цитат и применимой редакции юристом.\n' : 'Нормы найдены резервным поиском и сверены с официальными текстами РК. Применимость к обстоятельствам требует проверки.\n') + citations.map(source=>`${source.title}, статья ${source.article}: ${source.quote}\n${source.url} (редакция ${source.effectiveDate || 'требует проверки'})`).join('\n'),requiredAction:'clarify_or_human_review' as const};
       } catch {
         return {...insufficient(),message:'Основной и резервный поиск временно недоступны. Сведения сохранены; поиск можно повторить.'};
       } finally { clearTimeout(timeout); }
