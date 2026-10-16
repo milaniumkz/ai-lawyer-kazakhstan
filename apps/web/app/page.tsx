@@ -4525,7 +4525,7 @@ export default function WebHome() {
     const showDocumentUpload = documentRequested && !classificationBusy && !documents.some(document => document.id && document.uploadRequestId === documentRequestId);
     return (
       <section className={`homeScreen aizanHome ${homeConversationOpen ? "aizanHomeConversing" : ""}`}>
-        <button className="aizanMicrophone" disabled={voiceBusy || classificationBusy} aria-label="Рассказать проблему" onClick={() => {
+        <button className={`aizanMicrophone ${recording && !paused ? "isRecording" : ""}`} disabled={voiceBusy || classificationBusy} aria-label={recording ? "Завершить запись" : "Рассказать проблему"} aria-pressed={recording} onClick={() => {
           setHomeConversationOpen(true);
           if (recording) finishRecording(); else void startRecording();
         }}><AizanArt name="microphone" /></button>

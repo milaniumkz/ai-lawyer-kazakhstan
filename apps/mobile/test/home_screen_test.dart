@@ -415,12 +415,12 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Завершить запись'), findsOneWidget);
     expect(find.text('Распознанный текст из микрофона'), findsOneWidget);
 
     await tester.ensureVisible(find.byIcon(Icons.stop));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     expect(find.text('Начать запись'), findsOneWidget);
@@ -454,9 +454,9 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byIcon(Icons.stop));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Подтвердить текст'));
@@ -496,9 +496,9 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byIcon(Icons.stop));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Подтвердить текст'));
@@ -536,9 +536,9 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byIcon(Icons.stop));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byIcon(Icons.stop));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Подтвердить текст'));

@@ -34,6 +34,14 @@
 .aizanHeaderHome .aizanHeaderAction { top: 25px; }
 .appShell[data-design="aizan"][data-theme] .homeScreen { min-height: 0; padding: 0 20px 125px; }
 .aizanMicrophone { display: block; width: 200px; aspect-ratio: 495 / 475; margin: 37px auto 22px; background: none; border: 0; padding: 0; cursor: pointer; }
+.aizanMicrophone.isRecording { animation: aizanRecordingPulse 1.1s ease-in-out infinite alternate; }
+@keyframes aizanRecordingPulse {
+  from { transform: scale(1); filter: drop-shadow(0 0 4px #e9b95255); }
+  to { transform: scale(1.045); filter: drop-shadow(0 0 15px #e9b952aa); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aizanMicrophone.isRecording { animation: none; filter: drop-shadow(0 0 10px #e9b952aa); }
+}
 .appShell[data-design="aizan"] .aizanHome h1 { font-family: AizanSans, sans-serif; text-align: center; color: var(--text); font-size: 18px; line-height: 1.3; margin: 0; }
 .aizanTextEntry { display: flex; align-items: center; justify-content: center; gap: 13px; min-height: 48px; width: 184px; margin: 25px auto 0; padding: 8px 12px; border: 1px solid #f3c966; border-radius: 999px; background: linear-gradient(110deg, #b8811f12, #140801); color: #ffdf83; font-size: 15px; box-shadow: 0 0 14px #ffb52515; }
 .keyboardIcon { border-right: 1px solid #c69a45; padding-right: 13px; font-size: 26px; line-height: 1; }
@@ -164,7 +172,7 @@
 @media (prefers-reduced-motion: reduce) { .appShell[data-design="aizan"] * { animation: none !important; transition: none !important; } }
 
 .aizanArt { mask-image: radial-gradient(ellipse, #000 58%, transparent 74%); }
-.aizanArt-microphone { mask-image: radial-gradient(ellipse, #000 53%, transparent 71%); }
+.aizanArt-brand, .aizanArt-microphone { mask-image: none; }
 .aizanArt-authBrand { mask-image: linear-gradient(transparent, #000 8%, #000 88%, transparent); }
 .aizanHeaderAction { display: grid; place-items: center; }
 .aizanHeaderAction .designIcon { width: 29px; height: 29px; }

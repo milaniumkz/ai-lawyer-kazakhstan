@@ -1,8 +1,8 @@
 /** Only decorative regions are drawn: the reference's controls and body text
  * are outside these viewBoxes. All application text and actions remain native. */
 const regions = {
-  brand: { source: "home", box: "350 130 245 250", width: 941, height: 1672 },
-  microphone: { source: "home", box: "225 535 495 475", width: 941, height: 1672 },
+  brand: { source: "brand-transparent", box: "0 0 1240 1268", width: 1240, height: 1268 },
+  microphone: { source: "microphone-transparent", box: "0 0 1278 1230", width: 1278, height: 1230 },
   voice: { source: "voice", box: "68 398 720 470", width: 852, height: 1846 },
   analysis: { source: "analysis", box: "200 220 445 295", width: 852, height: 1846 },
   upload: { source: "upload", box: "215 327 430 355", width: 852, height: 1846 },

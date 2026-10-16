@@ -114,3 +114,7 @@ The helper uses the existing local key/keychain, determines the next build from 
 ### Chat entry captions
 
 Once the home chat opens, the web hides the redundant top “Ввести текст” button and idle microphone caption. Flutter home-chat entry also hides the introductory problem heading and idle voice hint. Recording status remains visible. Existing installed iOS binaries require a new signed build to receive this change.
+
+### Transparent in-app artwork and recording pulse
+
+Replaced the screenshot crops for the in-app logo and round microphone with isolated alpha-transparent PNG assets shared by web and Flutter. The app launcher/App Store icon is a separate asset. The large microphone pulses in scale and gold glow only while recording, stops on pause/stop, and respects reduced-motion settings. Chromium verified rendering, moving animation frames and reduced-motion behavior locally; this does not test physical microphone hardware. Flutter golden capture now waits for actual image decoding so the initial screen cannot pass with missing artwork. Recording lifecycle tests advance frames while the intentional repeating animation runs, and still verify completion/transcription/upload afterward.

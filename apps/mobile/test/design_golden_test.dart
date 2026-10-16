@@ -23,7 +23,7 @@ void main() {
       initialLocation: '/',
     ));
     await tester.pumpAndSettle();
-
+    await waitForArtwork(tester);
     await expectLater(
         find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_light.png'));
   }, tags: ['golden']);
@@ -36,7 +36,7 @@ void main() {
       initialLocation: '/',
     ));
     await tester.pumpAndSettle();
-
+    await waitForArtwork(tester);
     await expectLater(
         find.byType(AiLawyerApp), matchesGoldenFile('goldens/home_dark.png'));
   }, tags: ['golden']);
@@ -67,6 +67,7 @@ void main() {
       await tester.pumpWidget(
           AiLawyerApp(themeMode: ThemeMode.dark, initialLocation: entry.value));
       await tester.pumpAndSettle();
+      await waitForArtwork(tester);
       expect(tester.takeException(), isNull);
       await expectLater(find.byType(AiLawyerApp),
           matchesGoldenFile('goldens/aizan_${entry.key}.png'));
@@ -106,6 +107,14 @@ void main() {
       }
     }
   });
+}
+
+Future<void> waitForArtwork(WidgetTester tester) async {
+  final context = tester.element(find.byType(AiLawyerApp));
+  final images = tester.widgetList<Image>(find.byType(Image)).toList();
+  await tester.runAsync(() =>
+      Future.wait(images.map((image) => precacheImage(image.image, context))));
+  await tester.pumpAndSettle();
 }
 
 Future<void> setReferenceViewport(WidgetTester tester) async {

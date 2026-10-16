@@ -23,6 +23,68 @@ abstract final class AizanDesign {
 
 enum AizanArtwork { brand, microphone, voice, analysis, upload, authBrand }
 
+class AizanRecordingPulse extends StatefulWidget {
+  const AizanRecordingPulse(
+      {required this.active, required this.child, super.key});
+  final bool active;
+  final Widget child;
+
+  @override
+  State<AizanRecordingPulse> createState() => _AizanRecordingPulseState();
+}
+
+class _AizanRecordingPulseState extends State<AizanRecordingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController controller = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1100));
+
+  void syncAnimation() {
+    if (widget.active && !MediaQuery.disableAnimationsOf(context)) {
+      controller.repeat(reverse: true);
+    } else {
+      controller.stop();
+      controller.value = 0;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    syncAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant AizanRecordingPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) syncAnimation();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+      animation: controller,
+      child: widget.child,
+      builder: (context, child) => Transform.scale(
+          scale: 1 + .045 * Curves.easeInOut.transform(controller.value),
+          child: DecoratedBox(
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: widget.active
+                      ? [
+                          BoxShadow(
+                              color: AizanDesign.gold.withValues(
+                                  alpha: .15 + .12 * controller.value),
+                              blurRadius: 12 + 12 * controller.value)
+                        ]
+                      : const []),
+              child: child)));
+}
+
 /// Clip decorative artwork only. Text, fields and buttons are Flutter widgets;
 /// no reference screenshot is used as an application screen or hitbox layer.
 class AizanArt extends StatelessWidget {
@@ -32,6 +94,17 @@ class AizanArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (artwork == AizanArtwork.brand || artwork == AizanArtwork.microphone) {
+      final brand = artwork == AizanArtwork.brand;
+      return ExcludeSemantics(
+          child: SizedBox(
+              width: width,
+              child: AspectRatio(
+                  aspectRatio: brand ? 245 / 250 : 495 / 475,
+                  child: Image.asset(
+                      'assets/aizan/${brand ? 'brand' : 'microphone'}-transparent.png',
+                      fit: BoxFit.contain))));
+    }
     final (source, size, crop) = switch (artwork) {
       AizanArtwork.brand => (
           'home',

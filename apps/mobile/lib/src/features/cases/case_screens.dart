@@ -857,11 +857,13 @@ class _NewCaseScreenState extends State<NewCaseScreen>
                 label: isRecording ? 'Остановить запись' : 'Записать голос',
                 child: InkWell(
                     onTap: isBusy ? null : toggleRecording,
-                    child: AizanArt(
-                        widget.homeMode
-                            ? AizanArtwork.microphone
-                            : AizanArtwork.voice,
-                        width: widget.homeMode ? 200 : 330)))),
+                    child: AizanRecordingPulse(
+                        active: isRecording && !isPaused,
+                        child: AizanArt(
+                            widget.homeMode
+                                ? AizanArtwork.microphone
+                                : AizanArtwork.voice,
+                            width: widget.homeMode ? 200 : 330))))),
         if (!widget.homeMode) ...[
           const SizedBox(height: 18),
           const Text('Опишите проблему',
