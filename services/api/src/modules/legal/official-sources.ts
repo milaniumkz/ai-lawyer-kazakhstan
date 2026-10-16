@@ -25,7 +25,7 @@ export function officialSourceIdentity(value:string) {
 
 function normalizeQuote(value: string) { return value.toLocaleLowerCase().replace(/ё/g,'е').replace(/[«»"“”]/g,'').replace(/[–—]/g,'-').replace(/\s+/g,' ').trim(); }
 
-export type OfficialPage = {text:string;url:string;unavailable?:'transport'|'pdf';editionDate?:string};
+export type OfficialPage = {text:string;url:string;unavailable?:'transport'|'pdf';editionDate?:string;title?:string};
 
 export async function verifyOfficialQuote(url: string, quote: string, cache: Map<string,Promise<OfficialPage|undefined>>): Promise<string|undefined> {
   const candidates = [canonicalUrl(url)];

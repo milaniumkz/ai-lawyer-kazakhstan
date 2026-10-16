@@ -16,20 +16,20 @@ export function publisherTrust(url:string) {
   return {ca:[root.toString(),issuer.toString()],rejectUnauthorized:true as const};
 }
 
-export async function fetchOfficialPublisher(url:string,options:{redirect:'manual';signal:AbortSignal}):Promise<Response> {
+export async function fetchOfficialPublisher(url:string,options:{redirect:'manual';signal:AbortSignal;method?:'GET'|'POST';headers?:Record<string,string>;body?:string}):Promise<Response> {
   try {return await fetch(url,options);}
   catch(error) {
     const code=(error as {cause?:{code?:string}})?.cause?.code;
     const trust=publisherTrust(url);
     if (!trust || !['UNABLE_TO_VERIFY_LEAF_SIGNATURE','UNABLE_TO_GET_ISSUER_CERT_LOCALLY','SELF_SIGNED_CERT_IN_CHAIN'].includes(code || '')) throw error;
     return new Promise((resolve,reject)=>{
-      const req=request(url,{...trust,signal:options.signal,method:'GET'},response=>{
+      const req=request(url,{...trust,signal:options.signal,method:options.method || 'GET',headers:options.headers},response=>{
         const headers=new Headers();
         for(const [key,value] of Object.entries(response.headers)) if(value!==undefined) headers.set(key,Array.isArray(value) ? value.join(', ') : value);
         const status=response.statusCode || 502;
         resolve(new Response([204,205,304].includes(status) ? null : Readable.toWeb(response) as ReadableStream<Uint8Array>,{status,headers}));
       });
-      req.on('error',reject);req.end();
+      req.on('error',reject);req.end(options.body);
     });
   }
 }

@@ -129,22 +129,6 @@ jobs:
               const page=await diagnostic.exports.inspectOfficialText(url);
               console.log('OFFICIAL_READER '+JSON.stringify({host,elapsedMs:Date.now()-started,resolvedHost:page?new URL(page.url).hostname:null,characters:page?.text.length||0,loanQuotePresent:page?.text.includes('договор займа считается заключенным')||false,returnQuotePresent:page?.text.includes('заемщик обязан возвратить предмет займа')||false}));
             }
-            const {fetchOfficialPublisher}=require('/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/publisher-trust.js');
-            const js=await (await fetchOfficialPublisher('https://zan.gov.kz/client/all.js',{redirect:'manual',signal:AbortSignal.timeout(10000)})).text();
-            const pos=js.indexOf("jsonQuery('/api/documents/search'");
-            const server=js.slice(js.indexOf('eecb.server = function'));
-            console.log('OFFICIAL_SEARCH_API '+JSON.stringify({search:js.slice(pos-900,pos+400),query:server.match(/function jsonQuery\([\s\S]{0,1600}/)?.[0],names:[...new Set([...js.matchAll(/eecb\.server\.[A-Za-z]*[Ss]earch[A-Za-z]*/g)].map(match=>match[0]))]}));
-            const {publisherTrust}=require('/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/publisher-trust.js');
-            const landing=await fetchOfficialPublisher('https://zan.gov.kz/client/',{redirect:'manual',signal:AbortSignal.timeout(10000)});
-            const cookie=landing.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ');
-            const html=await landing.text();const csrf=html.match(/document\.saved\s*=\s*["']([^"']+)["']/)?.[1];
-            const {request}=require('node:https');
-            const result=await new Promise((resolve,reject)=>{
-              const req=request('https://zan.gov.kz/api/documents/search',{...publisherTrust('https://zan.gov.kz/'),method:'POST',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json',...(csrf ? {'X-CSRF-Token':csrf} : {}),...(cookie ? {Cookie:cookie} : {})}},response=>{
-                const chunks=[];response.on('data',part=>chunks.push(part));response.on('end',()=>{try{resolve({status:response.statusCode,body:JSON.parse(Buffer.concat(chunks).toString())})}catch{resolve({status:response.statusCode,body:{}})}});
-              });req.on('error',reject);req.end(JSON.stringify({search:'Гражданский кодекс',searchExclude:'внесении',language:'rus',page:1,limit:5}));
-            });
-            console.log('OFFICIAL_SEARCH_RESULT '+JSON.stringify({status:result.status,csrfPresent:Boolean(csrf),anonymousCookies:landing.headers.getSetCookie().length,keys:Object.keys(result.body),count:result.body.list?.length,first:result.body.list?.slice(0,3),error:result.body.error}));
             await Promise.all(['https://law.gov.kz/','https://zan.gov.kz/','https://www.gov.kz/'].map(async url=>{
               try {const response=await fetch(url,{signal:AbortSignal.timeout(10000)});console.log('OFFICIAL_CONNECTIVITY '+JSON.stringify({host:new URL(url).hostname,status:response.status}));await response.body?.cancel();}
               catch(error){console.log('OFFICIAL_CONNECTIVITY '+JSON.stringify({host:new URL(url).hostname,error:error.name,cause:error.cause?.code}));}

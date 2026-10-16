@@ -106,6 +106,25 @@ describe('independent official source recovery',()=>{
       : new Response(JSON.stringify({id:123,code:123,language:'rus',pagesCount:1,versionDate:'2026-01-01',actualVersion:true,content:source.quote}),{headers:{'content-type':'application/json'}}));
     expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'official_text',editionVerified:false});
   });
+  it('recovers current official text from the public catalogue when web discovery has no usable act URL',async()=>{
+    let requests=0;
+    const source={...citation,url:'https://zan.gov.kz/client/#!/doc/3559/rus'};
+    jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
+      if(String(url).endsWith('/responses')){
+        requests++;
+        if(requests===2){
+          const evidence=JSON.parse(JSON.parse(options?.body as string).input[1].content).officialExcerpts[0];
+          expect(evidence).toMatchObject({url:source.url,editionDate:'2026-01-01',title:'Гражданский кодекс'});
+          expect(evidence.text).toContain(citation.quote.toLocaleLowerCase());
+        }
+        return new Response(JSON.stringify({output_text:JSON.stringify({citations:requests===1 ? [] : [source],actSearchQueries:requests===1 ? ['Гражданский кодекс'] : []}),output:[]}));
+      }
+      if(String(url).endsWith('/search'))return new Response(JSON.stringify({list:[{code:'3559',status:'new',summary:{rus:'Гражданский кодекс'}}]}));
+      return new Response(JSON.stringify({code:'3559',language:'rus',pagesCount:1,versionDate:'2026-01-01',actualVersion:true,metadata:{title:{rus:'Гражданский кодекс'}},content:source.quote}),{headers:{'content-type':'application/json'}});
+    });
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({url:source.url,verificationMethod:'official_text',editionVerified:true});
+    expect(requests).toBe(2);
+  });
   it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
       ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}))
