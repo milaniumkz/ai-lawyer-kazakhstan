@@ -4,7 +4,7 @@ import {fetchOfficialPublisher} from './publisher-trust';
 // no party names, contacts, account cookies or OpenAI credentials are forwarded.
 export async function searchOfficialCatalogue(titles:unknown,signal:AbortSignal):Promise<string[]> {
   if(!Array.isArray(titles))return [];
-  const queries=[...new Set(titles.filter((title):title is string=>typeof title==='string' && title.length>=5 && title.length<=180 && (/кодекс|закон|конституци|нормативн.*постановлен|постановлен.*суд|правил|бұйрық|заң|қаулы/i.test(title) || /^об?\s+/i.test(title)) && (title.match(/\d/g) || []).length<7 && /^[\p{L}\p{N}\s()«»",.—-]+$/u.test(title)).map(title=>title.trim().replace(/^(?:Закон|Кодекс)\s+(?:Республики\s+Казахстан|РК)\s*/i,'').replace(/^[«"]|[»"]$/g,'').trim()).filter(title=>title.length>=5))].slice(0,3);
+  const queries=[...new Set(titles.filter((title):title is string=>typeof title==='string' && title.length>=5 && title.length<=180 && (/кодекс|закон|конституци|нормативн.*постановлен|постановлен.*суд|правил|бұйрық|заң|қаулы/i.test(title) || /^об?\s+/i.test(title)) && (title.match(/\d/g) || []).length<7 && /^[\p{L}\p{N}\s()«»",.—-]+$/u.test(title)).map(title=>title.trim().replace(/^(?:Закон|Кодекс)\s+(?:Республики\s+Казахстан|РК)\s*/i,'').replace(/Республики\s+Казахстан/gi,'').replace(/(?:^|\s)РК(?=\s|$)/gi,' ').replace(/^(?:Закон|Кодекс)\s+/i,'').replace(/^[«"]|[»"]$/g,'').replace(/\s+/g,' ').trim()).filter(title=>title.length>=5))].slice(0,3);
   const results=await Promise.all(queries.map(async search=>{
     try {
       const response=await fetchOfficialPublisher('https://zan.gov.kz/api/documents/search',{

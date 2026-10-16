@@ -24,6 +24,14 @@ describe('public official act catalogue',()=>{
     expect(await searchOfficialCatalogue(['Закон Республики Казахстан «О защите прав потребителей»'],new AbortController().signal)).toEqual(['https://zan.gov.kz/client/#!/doc/321/rus']);
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string).search).toBe('О защите прав потребителей');
   });
+  it('matches a code title without letting generic jurisdiction words outrank the requested tax code',async()=>{
+    const fetch=jest.spyOn(global,'fetch').mockResolvedValue(new Response(JSON.stringify({list:[
+      {code:'879',status:'new',summary:{rus:'Гражданский кодекс Республики Казахстан'}},
+      {code:'555',status:'new',summary:{rus:'О налогах и других обязательных платежах в бюджет (Налоговый кодекс)'}},
+    ]})));
+    expect(await searchOfficialCatalogue(['Налоговый кодекс Республики Казахстан'],new AbortController().signal)).toEqual(['https://zan.gov.kz/client/#!/doc/555/rus']);
+    expect(JSON.parse(fetch.mock.calls[0][1]?.body as string).search).toBe('Налоговый кодекс');
+  });
   it('does not turn a publisher failure into invented source identifiers',async()=>{
     jest.spyOn(global,'fetch').mockResolvedValue(new Response('',{status:503}));
     expect(await searchOfficialCatalogue(['Гражданский кодекс'],new AbortController().signal)).toEqual([]);
