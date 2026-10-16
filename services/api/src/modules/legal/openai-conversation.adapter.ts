@@ -31,14 +31,14 @@ export async function generateOpenAiConversation(problemText: string, messages: 
   const documentLabel = documentKind === 'court_claim' ? 'искового заявления в суд' : 'досудебной претензии';
   if (documentKind === 'court_claim') factsSchema.pretrialStatus = {type:'string', enum:['','not_sent','waiting','fulfilled','unresolved','not_required']};
   const preparedDocumentHelp = Boolean(!stageChanged && previousState?.readyForDraft && /спасиб|pdf|скач|сохран|download|thanks/i.test(lastUserText) && !/измен|исправ|замен|ошиб|неверн|друг|редакци|отмен|недейств|стать|закон|норм/i.test(lastUserText));
-  const searchNeeded = !preparedDocumentHelp && (previousState?.missingFields.length === 0 || (documentKind === 'court_claim' && Boolean(previousState?.facts.respondentAddress) && (!previousState?.facts.courtName || !previousState?.facts.stateDuty)) || /стать|норм.*прав|закон|кодекс|правов.*основан/i.test(lastUserText));
+  const searchNeeded = !preparedDocumentHelp && ((!stageChanged && previousState?.missingFields.length === 0) || (documentKind === 'court_claim' && Boolean(previousState?.facts.respondentAddress) && (!previousState?.facts.courtName || !previousState?.facts.stateDuty)) || /стать|норм.*прав|закон|кодекс|правов.*основан/i.test(lastUserText));
   const history: MessageRecord[] = [];
   let historyLength = 0;
   for (const message of messages.slice(-60).reverse()) {
     if (historyLength + message.text.length > 100000) break;
     history.unshift(message); historyLength += message.text.length;
   }
-  const recoverPrimaryFailure = !stageChanged && !attachments.length && previousState?.missingFields.length === 0 && /^(подтверждаю|всё верно|все верно|согласен|согласна|растаймын|confirm(?:ed)?)[.!\s]*$/i.test(lastUserText.trim());
+  const recoverPrimaryFailure = !stageChanged && !attachments.length && previousState?.missingFields.length === 0 && /^(подтверждаю|всё верно|все верно|согласен|согласна|растаймын|confirm(?:ed)?)(?:[.!\s]|$)/i.test(lastUserText.trim()) && !/\d|измен|исправ|замен|вместо|кроме|ошиб|неверн|(?:^|[\s,.!?])но(?:[\s,.!?]|$)/i.test(lastUserText);
   try {
     const response = await fetch(`${(process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '')}/responses`, {
       method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(searchNeeded ? 60000 : 90000)]),
@@ -176,7 +176,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
     return { text, ai };
   } catch (error) {
     if (error instanceof ServiceUnavailableException) throw error;
-    const code = controller.signal.aborted ? 'OPENAI_TIMEOUT' : error instanceof SyntaxError ? 'OPENAI_RESPONSE_INVALID' : 'OPENAI_TEMPORARILY_UNAVAILABLE';
+    const code = controller.signal.aborted || (error instanceof Error && ['AbortError','TimeoutError'].includes(error.name)) ? 'OPENAI_TIMEOUT' : error instanceof SyntaxError ? 'OPENAI_RESPONSE_INVALID' : 'OPENAI_TEMPORARILY_UNAVAILABLE';
     throw new ServiceUnavailableException({code, message:'Не удалось завершить ответ нейросети. Ваш текст сохранён, повторите попытку.'});
   } finally { clearTimeout(timeout); }
 }

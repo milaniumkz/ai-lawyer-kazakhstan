@@ -162,7 +162,7 @@ describe('OpenAI conversation', () => {
       if(payload.text.format.name==='aizan_source_recovery') return new Response(JSON.stringify({output_text:JSON.stringify({citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
       return new Response(JSON.stringify({output_text:JSON.stringify({body:draftBody,citedUrls:[citation.url]})}));
     });
-    expect((await generateOpenAiConversation('Долг',turn('Подтверждаю'))).ai).toMatchObject({readyForDraft:true,sourceSearch:'web_fallback',facts});
+    expect((await generateOpenAiConversation('Долг',turn('Подтверждаю. Все реквизиты верны. Подготовьте полный проект по действующим нормам Республики Казахстан.'))).ai).toMatchObject({readyForDraft:true,sourceSearch:'web_fallback',facts});
   });
   it('preserves confirmation when composition fails instead of asking to restart intake',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
@@ -173,6 +173,11 @@ describe('OpenAI conversation', () => {
     const result=await generateOpenAiConversation('Долг',turn('Подтверждаю'));
     expect(result.ai).toMatchObject({readyForDraft:false,factsConfirmed:true,facts});
     expect(result.text).toContain('не смогла завершить');
+  });
+  it('does not reuse old confirmed facts after a primary error when the user changes the amount',async()=>{
+    const fetch=jest.spyOn(global,'fetch').mockResolvedValue(new Response('',{status:503}));
+    await expect(generateOpenAiConversation('Долг',turn('Подтверждаю, но измените сумму на 200000 тенге'))).rejects.toMatchObject({response:{code:'OPENAI_TEMPORARILY_UNAVAILABLE'}});
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
   const courtFacts={...facts,courtName:'Тестовый суд',courtAddress:'Тестовый адрес суда',claimantAddress:'Тестовый адрес истца',claimantIdentifier:'Уточнено пользователем',respondentAddress:'Тестовый адрес ответчика',respondentIdentifier:'Не известен пользователю; требуется проверка',claimValue:'100000 тенге',stateDuty:'Подлежит проверке по нормам',pretrialDispatch:'Направлена 01.09.2026, получена 03.09.2026, имеется подтверждение получения',pretrialOutcome:'После применимого срока требования не исполнены, спор сохраняется',pretrialStatus:'unresolved'};
   it('switches to court intake only after pretrial preparation and asks for a new confirmation',async()=>{

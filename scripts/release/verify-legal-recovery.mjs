@@ -12,7 +12,7 @@ process.chdir(fileURLToPath(new URL('services/api/',root)));
 assert(process.env.AI_API_KEY || process.env.OPENAI_API_KEY,'Existing OpenAI configuration required');
 const facts={claimantName:'Синтетический истец QA',claimantContact:'Алматы, claimant@example.invalid',respondentName:'Синтетический ответчик QA',respondentContact:'Алматы, respondent@example.invalid',circumstances:'Заём 100000 тенге по расписке передан 12 января 2026, срок возврата 12 февраля 2026, основной долг не возвращён',eventDate:'2026-01-12',demands:'Вернуть основной долг 100000 тенге без процентов и неустойки',evidence:'Синтетическая расписка; копия претензии, подтверждение получения 2 сентября 2026',deadline:'До 30 сентября 2026'};
 const previous={provider:'openai',model:'synthetic-fixture',facts,missingFields:[],citations:[],readyForDraft:false};
-const history=state=>[{id:'summary',caseId:'synthetic-memory-only',role:'assistant',text:'Синтетические сведения для проверки, пользователь подтверждает резюме.',createdAt:'',ai:state},{id:'confirmation',caseId:'synthetic-memory-only',role:'user',text:'Подтверждаю',createdAt:''}];
+const history=state=>[{id:'summary',caseId:'synthetic-memory-only',role:'assistant',text:'Синтетические сведения для проверки, пользователь подтверждает резюме.',createdAt:'',ai:state},{id:'confirmation',caseId:'synthetic-memory-only',role:'user',text:'Подтверждаю. Все реквизиты верны. Подготовьте полный проект по действующим нормам Республики Казахстан.',createdAt:''}];
 const actualFetch=globalThis.fetch;
 let faultInjected=false;
 globalThis.fetch=async(url,options)=>{

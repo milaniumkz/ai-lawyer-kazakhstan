@@ -107,7 +107,18 @@ try {
   const pdf=await context.request.get(`${base}/api/v1/generated-documents/${docs[0].id}/pdf`);
   assert(pdf.ok());
   assert.equal((await pdf.body()).subarray(0,4).toString(),'%PDF');
+  const courtResponse=page.waitForResponse(response=>response.url().includes('/messages')&&response.request().method()==='POST',{timeout:180000});
+  await page.getByRole('button',{name:'Перейти к подготовке иска в суд',exact:true}).click();
+  assert((await courtResponse).ok(),'Court intake request must succeed');
+  const courtHistory=await request(`/cases/${final.caseId}/messages`);
+  const courtAssistant=courtHistory.filter(message=>message.role==='assistant').at(-1);
+  assert.equal(courtAssistant.ai.documentKind,'court_claim');
+  assert.equal(courtAssistant.ai.readyForDraft,false,'Court facts and a new confirmation are required');
+  assert.equal(courtAssistant.ai.factsConfirmed,false);
+  assert(courtAssistant.ai.missingFields.includes('pretrialStatus'),'Do not infer non-execution from a court-stage button');
+  assert.equal(await page.locator('.appShell').getAttribute('data-view'),'home');
   assert.deepEqual(errors,[]);
+  console.log('Live OpenAI court intake passed: explicit choice, no invented non-execution, fresh facts/confirmation and same home surface.');
   console.log('Live OpenAI E2E passed: real clarification, retained facts, confirmed official-source draft, reload, inline document and real PDF.');
 } finally {
   try { if(userId) await request('/account',undefined,'DELETE'); }
