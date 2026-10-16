@@ -862,16 +862,19 @@ class _NewCaseScreenState extends State<NewCaseScreen>
                             ? AizanArtwork.microphone
                             : AizanArtwork.voice,
                         width: widget.homeMode ? 200 : 330)))),
-        const SizedBox(height: 18),
-        const Text('Опишите проблему',
-            textAlign: TextAlign.center, style: TextStyle(fontSize: 23)),
-        const SizedBox(height: 6),
-        Text(
-            isRecording
-                ? (isPaused ? 'Запись на паузе' : 'Нажмите и говорите')
-                : 'Нажмите микрофон или введите текст',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 14)),
+        if (!widget.homeMode) ...[
+          const SizedBox(height: 18),
+          const Text('Опишите проблему',
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 23)),
+          const SizedBox(height: 6),
+        ],
+        if (!widget.homeMode || isRecording)
+          Text(
+              isRecording
+                  ? (isPaused ? 'Запись на паузе' : 'Нажмите и говорите')
+                  : 'Нажмите микрофон или введите текст',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.muted, fontSize: 14)),
         const SizedBox(height: 22),
         Card(
             child: Padding(

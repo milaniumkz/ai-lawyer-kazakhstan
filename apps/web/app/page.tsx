@@ -4529,10 +4529,10 @@ export default function WebHome() {
           setHomeConversationOpen(true);
           if (recording) finishRecording(); else void startRecording();
         }}><AizanArt name="microphone" /></button>
-        <h1>{recording ? paused ? "Запись на паузе" : "Слушаю вас…" : "Нажмите, чтобы говорить"}</h1>
-        <button className="aizanTextEntry" onClick={() => { setHomeConversationOpen(true); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".aizanHomeComposer textarea")?.focus(), 0); }}>
+        {(!homeConversationOpen || recording) && <h1>{recording ? paused ? "Запись на паузе" : "Слушаю вас…" : "Нажмите, чтобы говорить"}</h1>}
+        {!homeConversationOpen && <button className="aizanTextEntry" onClick={() => { setHomeConversationOpen(true); window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".aizanHomeComposer textarea")?.focus(), 0); }}>
           <span className="keyboardIcon"><DesignIcon name="keyboard" /></span><span>Ввести текст</span>
-        </button>
+        </button>}
         {aiConfigError && <div className="aizanChatMode" role="status"><span>Не удалось подключиться к помощнику. Ваш текст сохранён.</span><button className="outlineGold" onClick={() => setAiConfigAttempt(attempt => attempt + 1)}>Повторить подключение</button></div>}
         {aiAvailable && <div className="aizanChatMode"><span>{aiConversationEnabled ? "Помощник OpenAI" : "Пошаговый режим"}</span><button className="outlineGold" onClick={() => { const enabled = !aiConversationEnabled; setAiConversationEnabled(enabled); localStorage.setItem('aizan-chat-mode', enabled ? 'ai' : 'manual'); }}>{aiConversationEnabled ? "Пошаговое заполнение" : "Включить OpenAI"}</button></div>}
         {homeConversationOpen && <div className="aizanHomeConversation">

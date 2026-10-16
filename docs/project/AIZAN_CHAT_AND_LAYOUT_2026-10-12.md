@@ -110,3 +110,7 @@ node scripts/release/build-ios-on-mac.mjs --upload
 ```
 
 The helper uses the existing local key/keychain, determines the next build from live Apple metadata, uploads the signed binary and selects it in an editable App Store draft. It deliberately does not submit for review or publish. App Store icon changes require Apple approval/release; installed iPhone icon/design changes require installing that updated binary. The helper's execution on the Mac remains unverified until Mac access or its result is available.
+
+### Chat entry captions
+
+Once the home chat opens, the web hides the redundant top “Ввести текст” button and idle microphone caption. Flutter home-chat entry also hides the introductory problem heading and idle voice hint. Recording status remains visible. Existing installed iOS binaries require a new signed build to receive this change.
