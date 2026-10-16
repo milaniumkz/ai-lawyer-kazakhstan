@@ -123,8 +123,8 @@ jobs:
           const diagnostic=new Module(filename,module);diagnostic.filename=filename;diagnostic.paths=Module._nodeModulePaths(path.dirname(filename));
           diagnostic._compile(fs.readFileSync(filename,'utf8')+'\nexports.inspectOfficialText=readOfficialText;',filename);
           (async()=>{
-            for(const host of ['adilet.zan.kz','old.adilet.zan.kz']){
-              const url=`https://${host}/rus/docs/K990000409_`;
+            for(const host of ['adilet.zan.kz','old.adilet.zan.kz','law.gov.kz','zan.gov.kz']){
+              const url=['law.gov.kz','zan.gov.kz'].includes(host) ? `https://${host}/client/` : `https://${host}/rus/docs/K990000409_`;
               const started=Date.now();
               const page=await diagnostic.exports.inspectOfficialText(url);
               console.log('OFFICIAL_READER '+JSON.stringify({host,elapsedMs:Date.now()-started,resolvedHost:page?new URL(page.url).hostname:null,characters:page?.text.length||0,loanQuotePresent:page?.text.includes('договор займа считается заключенным')||false,returnQuotePresent:page?.text.includes('заемщик обязан возвратить предмет займа')||false}));

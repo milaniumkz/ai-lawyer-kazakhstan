@@ -1,3 +1,4 @@
+import {fetchOfficialPublisher} from './publisher-trust';
 export const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz', 'egov.kz', 'akorda.kz', 'parlam.kz'];
 
 export function isOfficialUrl(value: string) {
@@ -45,7 +46,7 @@ async function readOfficialText(url: string): Promise<OfficialPage|undefined> {
     let currentUrl = url;
     for (let redirects = 0; redirects < 3; redirects++) {
       if (!isOfficialUrl(currentUrl)) return undefined;
-      const response = await fetch(currentUrl, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
+      const response = await fetchOfficialPublisher(currentUrl, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location');
         if (!location) return undefined;
