@@ -139,7 +139,7 @@ jobs:
               const text=(await response.text()).slice(0,4000000);
               const paths=[...new Set([...text.matchAll(/["']((?:https:\/\/|\/)[^"'\s]{1,180})["']/g)].map(match=>match[1]).filter(path=>/api|rest|doc|text|search|resource|ws\//i.test(path)).map(path=>{try{const parsed=new URL(path,viewer);return parsed.hostname==='zan.gov.kz' ? parsed.pathname : parsed.hostname+parsed.pathname;}catch{return ''}}))].slice(0,60);
               console.log('OFFICIAL_VIEWER_SCRIPT '+JSON.stringify({path:new URL(url).pathname,status:response.status,characters:text.length,paths}));
-              if(new URL(url).pathname.endsWith('/all.js')) console.log('OFFICIAL_DOCUMENT_API '+JSON.stringify({snippets:[...text.matchAll(/.{0,160}\/api\/documents\/.{0,500}/g)].slice(0,5).map(match=>match[0])}));
+              if(new URL(url).pathname.endsWith('/all.js')) console.log('OFFICIAL_DOCUMENT_API '+JSON.stringify({snippets:[text.match(/var baseUri = '\/api\/documents\/'[\s\S]{0,3500}/)?.[0] || 'not found']}));
             }
             const {spawnSync}=require('node:child_process');
             for(const host of ['law.gov.kz','zan.gov.kz']) {
