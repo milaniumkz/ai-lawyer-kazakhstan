@@ -20,3 +20,5 @@ Default theme: светлая premium Kazakhstan theme. Темная тема п
 ## Текущее состояние
 
 Проект создан из пустого репозитория. См. `docs/project/IMPLEMENTATION_STATUS.md` и `docs/project/CODEX_HANDOFF.md`.
+
+Для извлечения текста публичных правовых PDF backend использует `pdftotext`: Ubuntu/Debian — `sudo apt-get install poppler-utils`, macOS — `brew install poppler`. Установщик сервера и CI устанавливают зависимость автоматически. Этот путь читает только публикации доверенных государственных сайтов, не пользовательские вложения.

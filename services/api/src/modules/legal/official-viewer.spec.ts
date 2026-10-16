@@ -16,6 +16,10 @@ describe('official viewer document API',()=>{
     expect(String(fetch.mock.calls[1][0])).toBe('https://zan.gov.kz/api/documents/123/rus?withHtml=true&page=2');
     expect(await readOfficialText(url)).toMatchObject({editionDate:'2026-01-01'});
   });
+  it('reads a direct public document API URL using the same full-document verification',async()=>{
+    mock();
+    expect(await verifyOfficialQuote('https://zan.gov.kz/api/documents/123/rus',quote,new Map())).toBe('https://zan.gov.kz/api/documents/123/rus');
+  });
   it('rejects a different document, language, excessive page count or unconfirmed current edition',async()=>{
     for(const overrides of [{code:456},{language:'kaz'},{pagesCount:201},{actualVersion:false}]) {
       mock(overrides);

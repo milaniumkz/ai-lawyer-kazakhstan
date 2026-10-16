@@ -53,9 +53,9 @@ export async function recoverOfficialSources(input: {
   const checked = await Promise.all(candidates.map(async source=>{
     if (input.signal.aborted) return undefined;
     const url = await verifyOfficialQuote(source.url,source.quote,cache);
-    if (url) {const page=await cache.get(canonicalUrl(source.url));return {...source,url,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate) && (!page?.editionDate || source.effectiveDate===page.editionDate)};}
+    if (url) {const page=await cache.get(canonicalUrl(source.url));return {...source,url,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate && page?.editionDate && source.effectiveDate===page.editionDate)};}
     const unavailable = await cache.get(canonicalUrl(source.url));
-    if (unavailable?.unavailable && opened.has(canonicalUrl(source.url))) return {...source,checkedAt:new Date().toISOString(),verificationMethod:'openai_web_search' as const,editionVerified:Boolean(source.effectiveDate)};
+    if (unavailable?.unavailable && opened.has(canonicalUrl(source.url))) return {...source,checkedAt:new Date().toISOString(),verificationMethod:'openai_web_search' as const,editionVerified:false};
     return undefined;
   }));
   const verified = checked.filter((source):source is NonNullable<typeof source>=>Boolean(source));

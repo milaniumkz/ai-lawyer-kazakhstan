@@ -1,3 +1,4 @@
+import {extractPublicLawPdf} from './public-law-pdf';
 import {readOfficialViewer} from './official-viewer';
 import {fetchOfficialPublisher} from './publisher-trust';
 export const officialDomains = ['adilet.zan.kz', 'zan.gov.kz', 'sud.gov.kz', 'gov.kz', 'egov.kz', 'akorda.kz', 'parlam.kz'];
@@ -61,8 +62,8 @@ export async function readOfficialText(url: string): Promise<OfficialPage|undefi
         if (response.status === 403 || response.status === 429 || response.status >= 500) return {text:'',url:currentUrl,unavailable:'transport'};
         return undefined;
       }
-      if (/application\/pdf/i.test(response.headers.get('content-type') || '')) {await response.body?.cancel(); return {text:'',url:currentUrl,unavailable:'pdf'};}
-      if (!response.body || !/text\/(html|plain)/i.test(response.headers.get('content-type') || '')) return undefined;
+      const isPdf=/application\/pdf/i.test(response.headers.get('content-type') || '');
+      if (!response.body || (!isPdf && !/text\/(html|plain)/i.test(response.headers.get('content-type') || ''))) return undefined;
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
       let size = 0;
@@ -73,7 +74,9 @@ export async function readOfficialText(url: string): Promise<OfficialPage|undefi
         if (size > 8 * 1024 * 1024) { await reader.cancel(); return undefined; }
         chunks.push(chunk.value);
       }
-      const html = Buffer.concat(chunks).toString('utf8');
+      const bytes=Buffer.concat(chunks);
+      if(isPdf){const text=await extractPublicLawPdf(bytes);return text ? {text:normalizeQuote(text),url:currentUrl} : {text:'',url:currentUrl,unavailable:'pdf'};}
+      const html = bytes.toString('utf8');
       const normalized = normalizeHtml(html);
       const parsedUrl = new URL(currentUrl);
       // The publisher's new viewer is a JS shell. Its own public client exposes

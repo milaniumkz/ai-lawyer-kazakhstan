@@ -3,8 +3,8 @@ import type {OfficialPage} from './official-sources';
 
 export async function readOfficialViewer(url:string,normalize:(html:string)=>string):Promise<OfficialPage|undefined> {
   const parsed=new URL(url);
-  if (parsed.protocol!=='https:' || parsed.username || parsed.password || (parsed.port && parsed.port!=='443') || !['law.gov.kz','zan.gov.kz'].includes(parsed.hostname) || !/^\/client\/?$/.test(parsed.pathname)) return undefined;
-  const route=parsed.hash.match(/^#!?\/doc\/(\d{1,12})\/(rus|kaz|eng)(?:\/(\d{2}\.\d{2}\.\d{4}))?(?:\/\d+(?:\/\d+)?)?$/);
+  if (parsed.protocol!=='https:' || parsed.username || parsed.password || (parsed.port && parsed.port!=='443') || !['law.gov.kz','zan.gov.kz'].includes(parsed.hostname)) return undefined;
+  const route=/^\/client\/?$/.test(parsed.pathname) ? parsed.hash.match(/^#!?\/doc\/(\d{1,12})\/(rus|kaz|eng)(?:\/(\d{2}\.\d{2}\.\d{4}))?(?:\/\d+(?:\/\d+)?)?$/) : parsed.pathname.match(/^\/api\/documents\/(\d{1,12})\/(rus|kaz|eng)(?:\/(\d{2}\.\d{2}\.\d{4}))?\/?$/);
   if (!route) return undefined;
   const [,code,language,version]=route;
   const signal=AbortSignal.timeout(20000);
