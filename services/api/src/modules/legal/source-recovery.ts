@@ -65,6 +65,14 @@ export async function recoverOfficialSources(input: {
       const page = await cache.get(canonicalUrl(source.url));
       if (page?.unavailable && !opened.has(canonicalUrl(source.url)) && !unread.includes(source.url)) unread.push(source.url);
     }
+    // A search may return real official URLs but no citations until a page is read.
+    // Read the search provenance itself instead of requiring a snippet as input.
+    if (!unread.length) {
+      const discovered = body.output?.flatMap(item=>item.action?.sources || []).flatMap(source=>source.url && isOfficialUrl(source.url) ? [source.url] : []) || [];
+      const unique = [...new Set(discovered)];
+      unique.sort((a,b)=>Number(/\.pdf(?:[?#]|$)|\/(?:docs|doc|client|document)(?:[/?#]|$)/i.test(b))-Number(/\.pdf(?:[?#]|$)|\/(?:docs|doc|client|document)(?:[/?#]|$)/i.test(a)));
+      unread.push(...unique.slice(0,3));
+    }
     if (unread.length) {
       try { return await recoverOfficialSources({...input,readUrls:unread.slice(0,3)}); }
       catch { return []; }

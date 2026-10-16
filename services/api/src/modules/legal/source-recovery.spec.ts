@@ -1,4 +1,5 @@
 import {recoverOfficialSources} from './source-recovery';
+import {canonicalUrl,officialSourceIdentity} from './official-sources';
 import {LegalService} from './legal.service';
 import type {LegalRepository} from './repositories/legal.repository';
 
@@ -77,6 +78,20 @@ describe('independent official source recovery',()=>{
     expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search'});
     expect(requests).toBe(2);
     expect(fetch).toHaveBeenCalledTimes(4);
+  });
+  it('reads official search URLs even when discovery returns no unverified citations',async()=>{
+    let requests=0;
+    jest.spyOn(global,'fetch').mockImplementation(async url=>{
+      if (!String(url).endsWith('/responses')) return new Response('',{status:503});
+      requests++;
+      return new Response(JSON.stringify({output_text:JSON.stringify({citations:requests===1 ? [] : [citation]}),output:requests===1 ? [{action:{sources:[{url:citation.url}]}}] : [{type:'web_search_call',status:'completed',action:{type:'open_page',url:citation.url}}]}));
+    });
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({verificationMethod:'openai_web_search'});
+    expect(requests).toBe(2);
+  });
+  it('keeps separate official SPA document routes distinct while removing ordinary anchors',()=>{
+    expect(officialSourceIdentity('https://law.gov.kz/client/#!/doc/1/rus')).not.toBe(officialSourceIdentity('https://law.gov.kz/client/#!/doc/2/rus'));
+    expect(canonicalUrl('https://gov.kz/legal#article-1')).toBe('https://gov.kz/legal');
   });
   it('does not replace a quote mismatch with provider evidence even after open_page',async()=>{
     jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')

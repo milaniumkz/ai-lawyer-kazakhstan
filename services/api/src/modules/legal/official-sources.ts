@@ -5,7 +5,7 @@ export function isOfficialUrl(value: string) {
 }
 
 export function canonicalUrl(value: string) {
-  try { const url = new URL(value); url.hash = ''; for(const key of [...url.searchParams.keys()]) if(/^utm_/i.test(key)||['gclid','fbclid'].includes(key)) url.searchParams.delete(key); return url.href; } catch { return ''; }
+  try { const url = new URL(value); if (!/^#!?\//.test(url.hash)) url.hash = ''; for(const key of [...url.searchParams.keys()]) if(/^utm_/i.test(key)||['gclid','fbclid'].includes(key)) url.searchParams.delete(key); return url.href; } catch { return ''; }
 }
 
 export function officialSourceIdentity(value:string) {
