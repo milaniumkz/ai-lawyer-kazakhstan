@@ -129,6 +129,12 @@ jobs:
               const page=await diagnostic.exports.inspectOfficialText(url);
               console.log('OFFICIAL_READER '+JSON.stringify({host,elapsedMs:Date.now()-started,resolvedHost:page?new URL(page.url).hostname:null,characters:page?.text.length||0,loanQuotePresent:page?.text.includes('договор займа считается заключенным')||false,returnQuotePresent:page?.text.includes('заемщик обязан возвратить предмет займа')||false}));
             }
+            const {fetchOfficialPublisher}=require('/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/publisher-trust.js');
+            for(const code of ['3559','879','95109']){
+              const response=await fetchOfficialPublisher(`https://zan.gov.kz/api/documents/${code}/rus?withHtml=true&page=1`,{redirect:'manual',signal:AbortSignal.timeout(10000)});
+              const body=await response.json();
+              console.log('OFFICIAL_CURRENT_EDITION '+JSON.stringify({code,status:response.status,title:body.metadata?.title?.rus,version:body.version,versionDate:body.versionDate,versionDateType:typeof body.versionDate,actualVersion:body.actualVersion,pagesCount:body.pagesCount,metadataStatus:body.metadata?.status}));
+            }
             await Promise.all(['https://law.gov.kz/','https://zan.gov.kz/','https://www.gov.kz/'].map(async url=>{
               try {const response=await fetch(url,{signal:AbortSignal.timeout(10000)});console.log('OFFICIAL_CONNECTIVITY '+JSON.stringify({host:new URL(url).hostname,status:response.status}));await response.body?.cancel();}
               catch(error){console.log('OFFICIAL_CONNECTIVITY '+JSON.stringify({host:new URL(url).hostname,error:error.name,cause:error.cause?.code}));}
@@ -166,9 +172,9 @@ jobs:
             catch(error){console.log('LEGAL_PROBE_TRANSPORT '+JSON.stringify({host,path,schema,elapsedMs:Date.now()-start,error:error.name,cause:error.cause?.code}));throw error;}
             if(ai){
               const body=await response.clone().json().catch(()=>({}));
-              let citations=[];
-              try {citations=JSON.parse(body.output_text || body.output?.flatMap(item=>item.content || []).map(item=>item.text || '').join('') || '{}').citations || [];}catch{}
-              console.log('LEGAL_PROBE_PROVIDER '+JSON.stringify({schema,status:response.status,elapsedMs:Date.now()-start,completion:body.status,providerCode:body.error?.code,providerParam:body.error?.param,incompleteReason:body.incomplete_details?.reason,outputTokens:body.usage?.output_tokens,webActions:body.output?.filter(item=>item.type==='web_search_call').map(item=>({type:item.action?.type,status:item.status,sourceHosts:[...new Set((item.action?.sources || []).map(source=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}}))]})),candidates:citations.map(source=>({host:(()=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}})(),path:(()=>{try{const url=new URL(source.url);return url.pathname+(/^#!?\/doc\/\d/.test(url.hash) ? url.hash : '');}catch{return 'invalid';}})(),article:source.article,quoteCharacters:source.quote?.length,date:source.effectiveDate}))}));
+              let citations=[],actQueries=[];
+              try {const result=JSON.parse(body.output_text || body.output?.flatMap(item=>item.content || []).map(item=>item.text || '').join('') || '{}');citations=result.citations || [];actQueries=result.actSearchQueries || [];}catch{}
+              console.log('LEGAL_PROBE_PROVIDER '+JSON.stringify({schema,actQueries,status:response.status,elapsedMs:Date.now()-start,completion:body.status,providerCode:body.error?.code,providerParam:body.error?.param,incompleteReason:body.incomplete_details?.reason,outputTokens:body.usage?.output_tokens,webActions:body.output?.filter(item=>item.type==='web_search_call').map(item=>({type:item.action?.type,status:item.status,sourceHosts:[...new Set((item.action?.sources || []).map(source=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}}))]})),candidates:citations.map(source=>({host:(()=>{try{return new URL(source.url).hostname;}catch{return 'invalid';}})(),path:(()=>{try{const url=new URL(source.url);return url.pathname+(/^#!?\/doc\/\d/.test(url.hash) ? url.hash : '');}catch{return 'invalid';}})(),article:source.article,quoteCharacters:source.quote?.length,date:source.effectiveDate}))}));
             }else console.log('LEGAL_PROBE_SOURCE '+JSON.stringify({host,status:response.status,type:response.headers.get('content-type'),elapsedMs:Date.now()-start}));
             return response;
           };
