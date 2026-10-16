@@ -35,6 +35,10 @@ on:
         description: Verify real OpenAI web recovery and court drafts using synthetic in-memory data
         type: boolean
         default: false
+      qa_revoke_user_ids:
+        description: Optional comma-separated synthetic intake QA user UUIDs to revoke after an interrupted check
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -134,7 +138,12 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          QA_REVOKE_USER_IDS: ${{ inputs.qa_revoke_user_ids }}
         run: |
+          if [ -n "$QA_REVOKE_USER_IDS" ]; then
+            [[ "$QA_REVOKE_USER_IDS" =~ ^[0-9a-fA-F,-]+$ ]] || exit 1
+            ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" "cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/revoke-qa-sessions.mjs '$QA_REVOKE_USER_IDS'"
+          fi
           ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/verify-legal-recovery.mjs'
       - name: Remove SSH key
         if: always()

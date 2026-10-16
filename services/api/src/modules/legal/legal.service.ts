@@ -52,12 +52,12 @@ export class LegalService {
     return { status: 'confirmed', message: 'Норма подтверждена официальным источником РК.', fragment };
   }
 
-  async answer(query: string) {
+  async answer(query: string, options: {allowWebRecovery?:boolean} = {}) {
     let matches: LegalSourceFragment[];
     try { matches = await this.search(query); }
-    catch (error) { if (!isOpenAiLegalEnabled()) throw error; matches = []; }
+    catch (error) { if (!isOpenAiLegalEnabled() || options.allowWebRecovery === false) throw error; matches = []; }
     if (!matches.length) {
-      if (!isOpenAiLegalEnabled()) return insufficient();
+      if (!isOpenAiLegalEnabled() || options.allowWebRecovery === false) return insufficient();
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60000);
       try {

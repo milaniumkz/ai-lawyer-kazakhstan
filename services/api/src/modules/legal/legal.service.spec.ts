@@ -112,6 +112,13 @@ describe('LegalService', () => {
     expect(payload.tool_choice).toBe('required');
     expect(result.message).toContain('Резервный поиск');
   });
+  it('keeps explicit manual mode independent of a live web search', async () => {
+    process.env.AI_PROVIDER='openai';
+    process.env.AI_API_KEY='test-key';
+    const fetch=jest.spyOn(global,'fetch');
+    expect((await new LegalService().answer('Нет локального источника',{allowWebRecovery:false})).status).toBe('insufficient_authoritative_sources');
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
 
 function createRepositoryMock(): jest.Mocked<LegalRepository> {

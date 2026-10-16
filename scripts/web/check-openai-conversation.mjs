@@ -120,7 +120,10 @@ try {
   assert.deepEqual(errors,[]);
   console.log('Live OpenAI court intake passed: explicit choice, no invented non-execution, fresh facts/confirmation and same home surface.');
   console.log('Live OpenAI E2E passed: real clarification, retained facts, confirmed official-source draft, reload, inline document and real PDF.');
+} catch(error) {
+  throw new Error(String(error?.message || error).split('Call log:')[0].slice(0,700));
 } finally {
   try { if(userId) await request('/account',undefined,'DELETE'); }
+  catch { console.error('Synthetic OpenAI account cleanup did not finish'); process.exitCode=1; }
   finally { await context.close(); await browser.close(); }
 }

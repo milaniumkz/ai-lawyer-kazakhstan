@@ -340,7 +340,7 @@ export class CasesService {
     if (attachments.length) message.attachments=attachments.map(({id,fileName,mimeType,sizeBytes})=>({id,fileName,mimeType,sizeBytes}));
     const conversation = input.mode === 'manual' ? undefined : await this.legal?.conversation?.(legalCase.problemText, [...history, message], attachments);
     if (attachments.length && !conversation) throw new BadRequestException('ATTACHMENTS_REQUIRE_AI_CHAT');
-    const answer = !conversation && this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`) : undefined;
+    const answer = !conversation && this.legal ? await this.legal.answer(`${legalCase.problemText}\nВопрос пользователя: ${input.text}`, {allowWebRecovery:input.mode !== 'manual'}) : undefined;
     const procedural = /что дальше|следующ|документ.*нуж|какие.*документ/i.test(input.text)
       ? `По делу «${legalCase.title}» сохраните подтверждающие документы, проверьте факты и подготовьте проект претензии. В разделе документа можно исправить текст и скачать PDF. Сроки задавайте после проверки.\n` : '';
     const fallback: MessageRecord = {id:stableId('assistant'),caseId,role:'assistant',text:procedural+(answer ? `${answer.message}${'fragment' in answer && answer.fragment ? `\nИсточник: ${answer.fragment.sourceUrl}` : '\nДля юридического вывода требуется проверка экспертом. Официальные источники РК не подтверждены.'}` : 'Для юридически точного ответа нужны подтвержденные официальные источники РК или проверка экспертом.'),createdAt:new Date().toISOString()};

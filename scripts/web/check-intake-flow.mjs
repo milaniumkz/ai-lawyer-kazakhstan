@@ -36,8 +36,15 @@ try {
       if (failNext) { failNext = false; return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'Temporary test outage' }) }); }
     }
     // A local test may forward to an isolated real API instance. No successful API response is mocked.
-    const response = await route.fetch({ url: `${api}${path}${new URL(route.request().url()).search}` });
-    return route.fulfill({ response });
+    try {
+      const response = await route.fetch({ url: `${api}${path}${new URL(route.request().url()).search}`, timeout:180000 });
+      return await route.fulfill({ response });
+    } catch {
+      // Playwright's raw transport errors contain Cookie/Authorization headers.
+      // Let the main assertions fail and run account cleanup without logging them.
+      jsErrors.push(`Test API forwarding failed: ${route.request().method()} ${path}`);
+      return route.abort('failed');
+    }
   });
   await page.goto(web);
   await page.waitForFunction(() => localStorage.getItem("ai-lawyer-web-state"));
@@ -190,8 +197,9 @@ try {
     console.error('Intake failure:', await page.locator('.appShell').getAttribute('data-view'), await page.locator('.aizanFeedback').allTextContents());
     await page.screenshot({path:'/tmp/aizan-intake-failure.png',fullPage:true});
   }
-  throw error;
+  throw new Error(String(error?.message || error).split('Call log:')[0].slice(0,700));
 } finally {
-  if (userId) await request('/account', undefined, 'DELETE');
+  try { if (userId) await request('/account', undefined, 'DELETE'); }
+  catch { console.error('Synthetic intake account cleanup did not finish'); process.exitCode=1; }
   await browser.close();
 }
