@@ -16,7 +16,8 @@ describe('independent official source recovery',()=>{
     const sources = await recoverOfficialSources(options);
     expect(sources[0]).toMatchObject({...citation,checkedAt:expect.any(String)});
     const body = JSON.parse(fetch.mock.calls[0][1]?.body as string);
-    expect(body.tools[0]).toMatchObject({type:'web_search',filters:{allowed_domains:expect.arrayContaining(['gov.kz','egov.kz','adilet.zan.kz'])}});
+    expect(body.tools[0]).toMatchObject({type:'web_search',filters:{allowed_domains:expect.arrayContaining(['gov.kz','egov.kz','sud.gov.kz'])}});
+    expect(body.tools[0].filters.allowed_domains).not.toContain('adilet.zan.kz');
     const allowedUrl=new RegExp(body.text.format.schema.properties.citations.items.properties.url.pattern);
     expect(allowedUrl.test('https://adilet.zan.kz/rus/docs/K990000409_')).toBe(true);
     expect(allowedUrl.test('https://adilet.kz/rus/docs/K990000409_')).toBe(false);
