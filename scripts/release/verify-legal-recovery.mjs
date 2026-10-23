@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 
 // Run on the application server with its existing environment, using only
 // synthetic records in memory. No database writes, dispatches or court filings.
-const root = new URL('../../',import.meta.url);
+const root = new URL(process.env.AIZAN_PROBE_APP_ROOT || '../../',import.meta.url);
 const require = createRequire(import.meta.url);
 const {generateOpenAiConversation} = require(fileURLToPath(new URL('services/api/dist/modules/legal/openai-conversation.adapter.js',root)));
 const {createDocumentPdf} = require(fileURLToPath(new URL('services/api/dist/modules/templates/document-pdf.js',root)));
@@ -41,6 +41,7 @@ try {
   phase='court-document';
   const courtFacts={...facts,courtName:'Тестовый суд (синтетическая проверка)',courtAddress:'Тестовый адрес суда (синтетическая проверка)',claimantAddress:'Тестовый адрес истца в Алматы',claimantIdentifier:'Синтетический идентификатор 000000000000',respondentAddress:'Тестовый адрес ответчика в Алматы',respondentIdentifier:'Синтетический идентификатор 000000000000',claimValue:'100000 тенге, только основной долг',stateDuty:'Расчёт заявителя: 1000 тенге, 1% от 100000 тенге; оплата не выполнялась, применимость ставки необходимо сверить по нормам',pretrialDispatch:'Заказное письмо 1 сентября 2026, получено 2 сентября 2026, подтверждение получения имеется',pretrialOutcome:'После 30 сентября 2026 требования не исполнены, спор сохраняется',pretrialStatus:'unresolved'};
   const court=await generateOpenAiConversation('Синтетическая проверка проекта иска, не реальное обращение в суд.',history({...intake.ai,facts:courtFacts,missingFields:[],factsConfirmed:false}));
+  console.log(JSON.stringify({phase:'court-validation',readyForDraft:court.ai.readyForDraft,documentKind:court.ai.documentKind,citations:court.ai.citations.map(source=>({title:source.title,article:source.article,verificationMethod:source.verificationMethod,editionVerified:source.editionVerified}))}));
   assert.equal(court.ai.documentKind,'court_claim');
   assert.equal(court.ai.readyForDraft,true,'Live court document must be composed after confirmation');
   assert(court.ai.citations.length && court.ai.citations.every(source=>source.checkedAt));
@@ -51,6 +52,6 @@ try {
   assert.equal(Buffer.from(pdf).subarray(0,5).toString(),'%PDF-');
   console.log(JSON.stringify({phase,provider:court.ai.provider,citations:court.ai.citations.length,characters:court.ai.draftBody.length,verificationMethods:court.ai.citations.map(source=>source.verificationMethod || 'official_text'),editionReviewRequired:court.ai.citations.some(source=>source.editionVerified===false),pdfBytes:pdf.length,syntheticDataOnly:true,submitted:false}));
 } catch(error) {
-  console.error(JSON.stringify({phase,passed:false,code:error.response?.code || error.name}));
+  console.error(JSON.stringify({phase,passed:false,code:error.response?.code || error.name,...(error.name==='AssertionError'?{reason:String(error.message).slice(0,300)}:{})}));
   process.exitCode=1;
 } finally {globalThis.fetch=actualFetch;}

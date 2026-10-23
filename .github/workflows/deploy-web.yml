@@ -102,6 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4
       - name: Inspect official text reader without accessing credentials or customer data
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -153,7 +154,8 @@ jobs:
             [[ "$QA_REVOKE_USER_IDS" =~ ^[0-9a-fA-F,-]+$ ]] || exit 1
             ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" "cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env scripts/release/revoke-qa-sessions.mjs '$QA_REVOKE_USER_IDS'"
           fi
-          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && node --env-file=/etc/ai-lawyer-api.env --input-type=module -' <<'JS'
+          scp -i ~/.ssh/ai-lawyer-kz -P "${SERVER_SSH_PORT:-22}" scripts/release/verify-legal-recovery.mjs "$SERVER_USER@$SERVER_HOST:/tmp/aizan-legal-probe.mjs"
+          ssh -o BatchMode=yes -i ~/.ssh/ai-lawyer-kz -p "${SERVER_SSH_PORT:-22}" "$SERVER_USER@$SERVER_HOST" 'cd /opt/ai-lawyer-kz/app && AIZAN_PROBE_APP_ROOT=file:///opt/ai-lawyer-kz/app/ node --env-file=/etc/ai-lawyer-api.env --input-type=module -' <<'JS'
           const actual=globalThis.fetch;
           globalThis.fetch=async(url,options)=>{
             const ai=String(url).endsWith('/responses');
@@ -172,7 +174,8 @@ jobs:
             }else console.log('LEGAL_PROBE_SOURCE '+JSON.stringify({host,status:response.status,type:response.headers.get('content-type'),elapsedMs:Date.now()-start}));
             return response;
           };
-          await import('file:///opt/ai-lawyer-kz/app/scripts/release/verify-legal-recovery.mjs');
+          try {await import('file:///tmp/aizan-legal-probe.mjs');}
+          finally {await (await import('node:fs/promises')).unlink('/tmp/aizan-legal-probe.mjs').catch(()=>{});}
           JS
       - name: Remove SSH key
         if: always()
