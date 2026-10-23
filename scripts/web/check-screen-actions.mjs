@@ -78,7 +78,19 @@ try {
   assert((await context.request.get(`${base}/api/v1/profiles`)).ok(),'Cancelling deletion must retain the account');
   assert.deepEqual(errors,[]);
   console.log('Real screen actions passed: email OTP/resend/registration, profile navigation, help search without losing draft, legal/calendar/subscription access, account export and cancelled deletion.');
-} catch(error) {
+ } catch(error) {
+  console.log('UI_DIAGNOSTIC '+JSON.stringify(await page.evaluate(()=>{
+    const shell=document.querySelector('.appShell');
+    const nav=document.querySelector('.bottomNav');
+    const button=Array.from(nav?.querySelectorAll('button') || []).find(node=>node.textContent?.trim()==='Профиль');
+    const rect=button?.getBoundingClientRect();
+    const hit=rect ? document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2) : null;
+    return {view:shell?.getAttribute('data-view'),keyboard:shell?.getAttribute('data-keyboard-open'),
+      viewport:[innerWidth,innerHeight],navDisplay:nav && getComputedStyle(nav).display,
+      buttonRect:rect && {x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+      hit:hit && {tag:hit.tagName,className:hit.getAttribute('class')},activeTag:document.activeElement?.tagName};
+  }).catch(()=>({unavailable:true}))));
+  console.log(String(error?.message || '').split('\n').filter(line=>/intercepts pointer|not visible|not stable|outside of the viewport/.test(line)).slice(-4).join('\n'));
   await page.screenshot({path:'/tmp/aizan-screen-actions-failure.png',fullPage:true}).catch(()=>{});
   throw new Error(`${phase}: ${String(error?.message || error).split('Call log:')[0].slice(0,500)}`);
 } finally {
