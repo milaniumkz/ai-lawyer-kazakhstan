@@ -124,6 +124,13 @@ jobs:
           const diagnostic=new Module(filename,module);diagnostic.filename=filename;diagnostic.paths=Module._nodeModulePaths(path.dirname(filename));
           diagnostic._compile(fs.readFileSync(filename,'utf8')+'\nexports.inspectOfficialText=readOfficialText;',filename);
           (async()=>{
+            const {searchOfficialCatalogue}=require('/opt/ai-lawyer-kz/app/services/api/dist/modules/legal/official-catalogue.js');
+            const urls=await searchOfficialCatalogue(['Гражданский кодекс Республики Казахстан (Особенная часть)'],AbortSignal.timeout(30000));
+            for(const url of urls){
+              const page=await diagnostic.exports.inspectOfficialText(url);
+              console.log('OFFICIAL_CATALOGUE_READER '+JSON.stringify({url,title:page?.title,characters:page?.text.length,edition:page?.editionDate,unavailable:page?.unavailable,
+                loanExcerpt:page?.text.match(/статья 715[\s\S]{0,1400}/i)?.[0],returnExcerpt:page?.text.match(/статья 722[\s\S]{0,1400}/i)?.[0]}));
+            }
             for(const host of ['adilet.zan.kz','old.adilet.zan.kz','law.gov.kz','zan.gov.kz']){
               const url=['law.gov.kz','zan.gov.kz'].includes(host) ? `https://${host}/client/` : `https://${host}/rus/docs/K990000409_`;
               const started=Date.now();
