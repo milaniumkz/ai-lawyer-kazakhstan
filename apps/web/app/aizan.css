@@ -547,3 +547,11 @@ html { scroll-padding-bottom: 140px; }
 .appShell[data-design="aizan"][data-keyboard-open="true"] .aizanIdentity p,
 .appShell[data-design="aizan"][data-keyboard-open="true"] .aizanMicrophone { display: none; }
 .appShell[data-design="aizan"][data-keyboard-open="true"] .aizanHeaderAction { top: 7px; }
+
+/* Restored account actions need the same touch targets as primary controls. */
+.appShell[data-design="aizan"][data-view] :is(.profileTools button, .profileEditor button, .profileLogoutButton),
+.appShell[data-design="aizan"][data-view="settings"] .contentPanel > .wide,
+.appShell[data-design="aizan"][data-view="help"] .contentPanel > .primary {
+  min-height: 48px; padding: 12px 16px; font-size: 14px; line-height: 1.4;
+}
+.appShell[data-design="aizan"][data-view="settings"] .contentPanel > .wide { margin-top: 12px; }

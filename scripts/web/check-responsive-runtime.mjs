@@ -179,11 +179,13 @@ async function main() {
                 Number(style.opacity) > 0 &&
                 (style.backgroundColor === 'rgb(239, 239, 239)' || button.scrollWidth > button.clientWidth + 5 || (!button.closest('.bottomNav') && button.scrollHeight > button.clientHeight + 5));
             }).map(button => button.textContent?.trim().slice(0, 80)),
+            smallActions:Array.from(document.querySelectorAll('.profileTools button, .profileEditor button, .profileLogoutButton, .appShell[data-view="settings"] .contentPanel > .wide, .appShell[data-view="help"] .contentPanel > .primary')).filter(button=>{const rect=button.getBoundingClientRect();return rect.width>0 && rect.height>0 && rect.height<44;}).map(button=>button.textContent?.trim()),
           };
         });
         if(captureDir && [390,1920].includes(viewport.width)) await page.screenshot({path:join(captureDir,`${viewport.width}-${view}.png`),fullPage:true});
         if(captureDir && viewport.width===390)controls.push({view,controls:await page.locator('.appShell button, .appShell input, .appShell textarea, .appShell select').evaluateAll(elements=>elements.map(element=>({tag:element.tagName,type:element.getAttribute('type'),label:element.getAttribute('aria-label') || element.getAttribute('placeholder') || element.textContent?.trim(),disabled:element.disabled===true,visible:element.getClientRects().length>0 && getComputedStyle(element).visibility!=='hidden'})))});
         if(result.narrowText.length)fail(`${viewport.name}/${view}: compressed text columns: ${result.narrowText.join(', ')}`);
+        if(result.smallActions.length)fail(`${viewport.name}/${view}: account actions too small to tap: ${result.smallActions.join(', ')}`);
         const maxScroll = Math.max(result.bodyScrollWidth, result.docScrollWidth);
         if (result.view !== view) fail(`${viewport.name}/${view}: rendered ${result.view} instead of the requested screen`);
         if (maxScroll > viewport.width + 2) {

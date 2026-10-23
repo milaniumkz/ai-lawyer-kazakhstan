@@ -6,16 +6,20 @@ import {chromium} from 'playwright';
 const base=process.env.WEB_BASE_URL;
 if(!base)throw new Error('WEB_BASE_URL_REQUIRED');
 const browser=await chromium.launch();
-const context=await browser.newContext({viewport:{width:390,height:844}});
+const proxyServer=process.env.WEB_TEST_PROXY || (/^https?:\/\/(?!localhost|127\.0\.0\.1)/.test(base) ? process.env.HTTPS_PROXY : undefined);
+const context=await browser.newContext({viewport:{width:390,height:844},...(proxyServer ? {proxy:{server:proxyServer,bypass:'localhost,127.0.0.1'}} : {})});
 const page=await context.newPage();
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 let registered=false;
+let phase='email-login';
+const mark=value=>{phase=value;console.log(`UI_ACTION ${value}`);};
 try {
   await page.goto(`${base}/#login`);
   await page.getByRole('button',{name:/Войти по e-mail/}).click();
   await page.locator('#auth-email').fill(`screen-qa-${crypto.randomUUID()}@example.invalid`);
   await page.getByRole('button',{name:'Получить код',exact:true}).click();
   await page.locator('.appShell[data-view="otp"]').waitFor();
+  mark('resend-code');
   const first=JSON.parse(await page.evaluate(()=>localStorage.getItem('ai-lawyer-web-state')));
   assert(first.otpId);
   await page.getByRole('button',{name:'Запросить код повторно',exact:true}).click();
@@ -24,38 +28,46 @@ try {
   const code=hint.match(/\b\d{6}\b/)?.[0];
   assert(code,'This QA flow requires explicit test OTP mode, never real SMS/email');
   await page.locator('.otpInput').fill(code);
+  mark('confirm-code');
   await page.getByRole('button',{name:/Подтвердить$/}).click();
   await page.locator('.appShell[data-view="register"]').waitFor();registered=true;
+  mark('complete-profile');
   await page.getByPlaceholder('Имя',{exact:true}).fill('Тест');
   await page.getByPlaceholder('Фамилия',{exact:true}).fill('Проверка интерфейса');
   await page.getByPlaceholder('Город',{exact:true}).fill('Алматы');
   await page.locator('.authExactPanel input[type=checkbox]').check();
   await page.getByRole('button',{name:/Создать аккаунт$/}).click();
   await page.locator('.appShell[data-view="home"]').waitFor();
+  mark('open-composer');
   await page.getByRole('button',{name:'Ввести текст',exact:true}).click();
   const draft='Сохранённое описание для проверки переходов';
   await page.locator('#home-problem').fill(draft);
   await page.locator('#home-problem').blur(); // Dismiss typing before using the bottom navigation.
+  mark('profile-and-help');
   await page.locator('.bottomNav').getByRole('button',{name:'Профиль',exact:true}).click();
   await page.getByRole('button',{name:'Помощь и поддержка',exact:true}).click();
   await page.getByPlaceholder('Найдите ответ на вопрос').fill('документы');
   await page.getByRole('status').filter({hasText:'Документы и фото'}).waitFor();
+  mark('support-form');
   await page.getByRole('textbox',{name:'Вопрос поддержке',exact:true}).fill('Синтетический вопрос для проверки экрана поддержки');
   await page.getByRole('button',{name:'Обновить обращения',exact:true}).click();
   assert.equal((await context.request.get(`${base}/api/v1/support/tickets`).then(response=>response.json())).length,0,'Refreshing tickets must not submit the unsent question');
   await page.getByRole('button',{name:'Написать в поддержку',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('textarea[aria-label="Вопрос поддержке"]')?.value==='');
   assert.equal((await context.request.get(`${base}/api/v1/support/tickets`).then(response=>response.json())).length,1);
+  mark('restore-draft');
   await page.locator('.bottomNav').getByRole('button',{name:'Главная',exact:true}).click();
   assert.equal(await page.locator('#home-problem').inputValue(),draft);
   await page.locator('.bottomNav').getByRole('button',{name:'Профиль',exact:true}).click();
   for(const [button,view] of [['Календарь и сроки','deadlines'],['Нормы права','legal'],['Подписка','subscription']]) {
+    mark(`navigate-${view}`);
     await page.getByRole('button',{name:button,exact:true}).click();
     await page.locator(`.appShell[data-view="${view}"]`).waitFor();
     await page.locator('.bottomNav').getByRole('button',{name:'Профиль',exact:true}).click();
   }
   await page.getByRole('button',{name:'Безопасность',exact:false}).click();
   await page.locator('.appShell[data-view="settings"]').waitFor();
+  mark('export-account');
   const [exported]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Экспортировать данные',exact:true}).click()]);
   assert.match(exported.suggestedFilename(),/\.json$/);
   page.once('dialog',dialog=>dialog.dismiss());
@@ -65,8 +77,11 @@ try {
   console.log('Real screen actions passed: email OTP/resend/registration, profile navigation, help search without losing draft, legal/calendar/subscription access, account export and cancelled deletion.');
 } catch(error) {
   await page.screenshot({path:'/tmp/aizan-screen-actions-failure.png',fullPage:true}).catch(()=>{});
-  throw new Error(String(error?.message || error).split('Call log:')[0].slice(0,500));
+  throw new Error(`${phase}: ${String(error?.message || error).split('Call log:')[0].slice(0,500)}`);
 } finally {
-  if(registered){const removed=await context.request.delete(`${base}/api/v1/account`);assert(removed.ok(),'Synthetic account cleanup failed');}
+  if(registered){
+    try {const removed=await context.request.delete(`${base}/api/v1/account`);if(!removed.ok())throw new Error('Cleanup rejected');}
+    catch {console.error('Synthetic screen-actions account cleanup did not finish');process.exitCode=1;}
+  }
   await context.close();await browser.close();
 }
