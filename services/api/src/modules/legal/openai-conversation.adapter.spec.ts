@@ -216,4 +216,33 @@ describe('OpenAI conversation', () => {
     expect(result.text).toContain('не подаёт иск автоматически');
   });
 
+  it.each([true,false])('separately searches substantive grounds and blocks procedure-only court drafts (available=%s)',async available=>{
+    const procedure={...citation,url:'https://adilet.zan.kz/rus/docs/procedure',title:'Гражданский процессуальный кодекс Республики Казахстан',article:'105'};
+    let searched=false,composed=false;
+    jest.spyOn(global,'fetch').mockImplementation(async(url,options)=>{
+      if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      const payload=JSON.parse(options?.body as string);
+      if(payload.text.format.name==='aizan_source_recovery'){
+        searched=true;
+        expect(payload.input[1].content).not.toContain(facts.claimantContact);
+        return new Response(JSON.stringify({output_text:JSON.stringify({citations:[available ? citation : procedure]}),output:[{action:{sources:[{url:(available ? citation : procedure).url}]}}]}));
+      }
+      if(payload.text.format.name==='aizan_verified_claim'){
+        composed=true;
+        const supplied=JSON.parse(payload.input[1].content);
+        expect(JSON.stringify(supplied)).toContain(citation.title);
+        return new Response(JSON.stringify({output_text:JSON.stringify({body:('Исковое заявление в суд. ').repeat(30),citedUrls:[citation.url,procedure.url]})}));
+      }
+      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Готовлю иск',facts:courtFacts,draftBody:null,citations:[procedure]}),output:[{action:{sources:[{url:procedure.url}]}}]}));
+    });
+    const messages=turn('Подтверждаю');
+    messages[0].ai={...previous,documentKind:'court_claim',facts:courtFacts};
+    const result=await generateOpenAiConversation('Долг',messages);
+    expect(searched).toBe(true);
+    expect(composed).toBe(available);
+    expect(result.ai.readyForDraft).toBe(available);
+    expect(result.ai.factsConfirmed).toBe(true);
+    if(!available)expect(result.text).toContain('Иск ещё не готов');
+  });
+
 });

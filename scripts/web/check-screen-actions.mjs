@@ -43,8 +43,11 @@ try {
   const draft='Сохранённое описание для проверки переходов';
   await page.locator('#home-problem').fill(draft);
   await page.locator('#home-problem').blur(); // Dismiss typing before using the bottom navigation.
+  await page.locator('.appShell[data-keyboard-open="false"]').waitFor();
   mark('profile-and-help');
   await page.locator('.bottomNav').getByRole('button',{name:'Профиль',exact:true}).click();
+  await page.locator('.appShell[data-view="profile"]').waitFor();
+  mark('open-help');
   await page.getByRole('button',{name:'Помощь и поддержка',exact:true}).click();
   await page.getByPlaceholder('Найдите ответ на вопрос').fill('документы');
   await page.getByRole('status').filter({hasText:'Документы и фото'}).waitFor();
