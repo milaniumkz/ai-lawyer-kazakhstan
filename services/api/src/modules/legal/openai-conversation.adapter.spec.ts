@@ -242,7 +242,7 @@ describe('OpenAI conversation', () => {
     expect(composed).toBe(available);
     expect(result.ai.readyForDraft).toBe(available);
     expect(result.ai.factsConfirmed).toBe(true);
-    if(!available)expect(result.text).toContain('Иск ещё не готов');
+    if(!available)expect(result.text).toContain('Документ ещё не готов');
   });
 
 });

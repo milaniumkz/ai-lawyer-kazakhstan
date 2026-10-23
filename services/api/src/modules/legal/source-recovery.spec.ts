@@ -175,4 +175,12 @@ describe('independent official source recovery',()=>{
       : new Response('PDF',{headers:{'content-type':'application/pdf'}}));
     expect(await recoverOfficialSources(options)).toEqual([]);
   });
+  it('does not let repetitive unrelated articles crowd out substantive loan rules',()=>{
+    const irrelevant=Array.from({length:30},(_,i)=>`статья ${i+1}. общие положения. ${'срок исполнения обязательств '.repeat(400)}`).join('\n');
+    const loan='статья 715. договор займа. заемщик обязан своевременно возвратить сумму денег.';
+    const repayment='статья 722. возврат предмета займа. заемщик обязан возвратить предмет займа в порядке и сроки договора.';
+    const excerpt=selectRelevantOfficialText(irrelevant+loan+'\n'+repayment,'Заём по расписке. Возврат основного долга. Срок исполнения обязательств');
+    expect(excerpt).toContain(loan);expect(excerpt).toContain(repayment);
+  });
+
 });

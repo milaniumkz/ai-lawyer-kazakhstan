@@ -101,7 +101,13 @@ export async function recoverOfficialSources(input: {
 export function selectRelevantOfficialText(text:string,query:string) {
   if(text.length<=60000)return text;
   const terms=[...new Set((query.toLocaleLowerCase().replace(/ё/g,'е').match(/[а-яәғқңөұүһі]{4,}/g) || []).map(term=>term.slice(0,4)))].slice(0,40);
-  const blocks=text.split(/(?=статья\s+\d+)/).map((value,index)=>({value,index,score:terms.reduce((score,term)=>score+Math.min(20,value.split(term).length-1),0)}));
-  const selected=blocks.filter(block=>block.score>0).sort((a,b)=>b.score-a.score).slice(0,8).sort((a,b)=>a.index-b.index);
-  return [text.slice(0,1500),...selected.map(block=>block.value.slice(0,8000))].join('\n').slice(0,60000);
+  const blocks=text.split(/(?=статья\s+\d+)/).map((value,index)=>({value,index,normalized:value.toLocaleLowerCase().replace(/ё/g,'е')}));
+  // Repetition in a long unrelated article must not outweigh a short relevant
+  // rule. Weight distinct query terms by rarity, and favour article headings.
+  const weights=new Map(terms.map(term=>[term,Math.log(1+blocks.length/(1+blocks.filter(block=>block.normalized.includes(term)).length))]));
+  const ranked=blocks.map(block=>({...block,score:terms.reduce((score,term)=>
+    score+(block.normalized.includes(term) ? weights.get(term)! : 0)+
+      (block.normalized.replace(/^статья\s+\d+[.-]?\s*/, '').split(/[.\n]/,1)[0].includes(term) ? weights.get(term)!*3 : 0),0)}));
+  const selected=ranked.filter(block=>block.score>0).sort((a,b)=>b.score-a.score).slice(0,8).sort((a,b)=>a.index-b.index);
+  return [text.slice(0,1500),...selected.map(block=>block.value.slice(0,7000))].join('\n').slice(0,60000);
 }
