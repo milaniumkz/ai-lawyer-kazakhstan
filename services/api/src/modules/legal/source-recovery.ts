@@ -57,7 +57,7 @@ export async function recoverOfficialSources(input: {
   const checked = await Promise.all(candidates.map(async source=>{
     if (input.signal.aborted) return undefined;
     const url = await verifyOfficialQuote(source.url,source.quote,cache);
-    if (url) {const page=await cache.get(canonicalUrl(source.url));return {...source,url,title:page?.title || source.title,effectiveDate:page?.editionDate || source.effectiveDate,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate && page?.editionDate && source.effectiveDate===page.editionDate)};}
+    if (url) {const page=await cache.get(canonicalUrl(source.url));return {...source,url,title:page?.title && (page.editionDate || /кодекс|закон|нормативн.{0,12}постановлен/i.test(page.title)) ? page.title : source.title,effectiveDate:page?.editionDate || source.effectiveDate,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(source.effectiveDate && page?.editionDate && source.effectiveDate===page.editionDate)};}
     const unavailable = await cache.get(canonicalUrl(source.url));
     if (unavailable?.unavailable && opened.has(canonicalUrl(source.url))) return {...source,checkedAt:new Date().toISOString(),verificationMethod:'openai_web_search' as const,editionVerified:false};
     return undefined;

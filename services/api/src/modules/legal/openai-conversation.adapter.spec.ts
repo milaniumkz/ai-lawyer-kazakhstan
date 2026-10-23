@@ -200,6 +200,7 @@ describe('OpenAI conversation', () => {
   });
   it('composes a separate court document from confirmed court facts and verified norms',async()=>{
     const courtBody=('Исковое заявление в суд. Истец просит взыскать задолженность. ').repeat(8);
+    const procedure={...citation,url:'https://adilet.zan.kz/rus/docs/procedure',title:'Гражданский процессуальный кодекс РК',article:'148'};
     jest.spyOn(global,'fetch').mockImplementation(async (url,options)=>{
       if(!String(url).endsWith('/responses')) return new Response(`<html>${citation.quote}</html>`,{headers:{'content-type':'text/html'}});
       const payload=JSON.parse(options?.body as string);
@@ -207,7 +208,7 @@ describe('OpenAI conversation', () => {
         expect(payload.input[0].content).toContain('Составь исковое заявление в суд');
         return new Response(JSON.stringify({output_text:JSON.stringify({body:courtBody,citedUrls:[citation.url]})}));
       }
-      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Готовлю иск',facts:courtFacts,draftBody:null,citations:[citation]}),output:[{action:{sources:[{url:citation.url}]}}]}));
+      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Готовлю иск',facts:courtFacts,draftBody:null,citations:[citation,procedure]}),output:[{action:{sources:[{url:citation.url},{url:procedure.url}]}}]}));
     });
     const messages=turn('Подтверждаю');
     messages[0].ai={...previous,documentKind:'court_claim',facts:courtFacts};
@@ -243,6 +244,26 @@ describe('OpenAI conversation', () => {
     expect(result.ai.readyForDraft).toBe(available);
     expect(result.ai.factsConfirmed).toBe(true);
     if(!available)expect(result.text).toContain('Документ ещё не готов');
+  });
+
+  it.each([true,false])('rechecks historical substantive sources before carrying them into court (still available=%s)',async available=>{
+    const procedure={...citation,url:'https://adilet.zan.kz/rus/docs/procedure',title:'Гражданский процессуальный кодекс РК',article:'148'};
+    const reads:string[]=[];
+    jest.spyOn(global,'fetch').mockImplementation(async(url,options)=>{
+      if(!String(url).endsWith('/responses')){
+        reads.push(String(url));
+        return new Response(`<html>${String(url)===citation.url && !available ? 'Цитата отсутствует' : citation.quote}</html>`,{headers:{'content-type':'text/html'}});
+      }
+      const payload=JSON.parse(options?.body as string);
+      if(payload.text.format.name==='aizan_verified_claim')return new Response(JSON.stringify({output_text:JSON.stringify({body:('Исковое заявление в суд. ').repeat(30),citedUrls:[citation.url,procedure.url]})}));
+      return new Response(JSON.stringify({output_text:JSON.stringify({answer:'Проверяю',facts:courtFacts,draftBody:null,citations:[procedure]}),output:[{action:{sources:[{url:procedure.url}]}}]}));
+    });
+    const messages=turn('Подтверждаю');messages[0].ai={...previous,documentKind:'court_claim',facts:courtFacts};
+    messages.unshift({id:'earlier',caseId:'case',role:'assistant',text:'Претензия',createdAt:'',ai:{...previous,citations:[{...citation,checkedAt:'2026-10-22T00:00:00Z'}],readyForDraft:true}});
+    const result=await generateOpenAiConversation('Долг',messages);
+    expect(reads).toContain(citation.url);
+    expect(result.ai.readyForDraft).toBe(available);
+    if(!available)expect(result.ai.citations.some(source=>source.url===citation.url)).toBe(false);
   });
 
 });

@@ -112,10 +112,18 @@ export async function generateOpenAiConversation(problemText: string, messages: 
     let sourceSearch: 'primary' | 'web_fallback' = 'primary';
     const sourceCache = new Map<string, Promise<OfficialPage | undefined>>();
     if (confirmed && !missingFields.length && !preparedDocumentHelp) {
+      // Carry the same dispute's already sourced grounds into the court stage.
+      // Re-read every quote below; history never bypasses current verification.
+      if(documentKind==='court_claim'){
+        const earlier=messages.filter(message=>message.role==='assistant' && message.ai &&
+          ['circumstances','demands','eventDate'].every(field=>message.ai!.facts[field]===facts[field]))
+          .flatMap(message=>message.ai!.citations).filter(source=>source.checkedAt && isOfficialUrl(source.url));
+        citations=[...citations,...earlier].filter((source,index,all)=>all.findIndex(other=>officialSourceIdentity(other.url)===officialSourceIdentity(source.url) && other.article===source.article && other.quote===source.quote)===index).slice(0,8);
+      }
       const checked = await Promise.all(citations.map(async citation => {
         const verifiedUrl = await verifyOfficialQuote(citation.url, citation.quote, sourceCache);
         const page=await sourceCache.get(canonicalUrl(citation.url));
-        return verifiedUrl ? {...citation,url:verifiedUrl,title:page?.title || citation.title,effectiveDate:page?.editionDate || citation.effectiveDate,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(page?.editionDate && citation.effectiveDate===page.editionDate)} : undefined;
+        return verifiedUrl ? {...citation,url:verifiedUrl,title:page?.title && (page.editionDate || /кодекс|закон|нормативн.{0,12}постановлен/i.test(page.title)) ? page.title : citation.title,effectiveDate:page?.editionDate || citation.effectiveDate,checkedAt:new Date().toISOString(),verificationMethod:'official_text' as const,editionVerified:Boolean(page?.editionDate && citation.effectiveDate===page.editionDate)} : undefined;
       }));
       citations = checked.filter((citation): citation is NonNullable<typeof citation> => Boolean(citation));
     }
@@ -153,7 +161,18 @@ export async function generateOpenAiConversation(problemText: string, messages: 
           all.findIndex(other=>officialSourceIdentity(other.url)===officialSourceIdentity(source.url) && other.article===source.article && other.quote===source.quote)===index).slice(0,6);
       } catch { /* Keep verified procedure and confirmed facts; never invent grounds. */ }
     }
-    const sufficientGrounds = hasSubstantiveGrounds();
+    const hasProcedure = () => citations.some(source=>/процессуальн/i.test(source.title));
+    if(documentKind==='court_claim' && confirmed && !missingFields.length &&
+        !preparedDocumentHelp && !hasProcedure() && !controller.signal.aborted){
+      sourceSearch='web_fallback';
+      try {
+        const procedure=await recoverOfficialSources({key,model,signal:controller.signal,documentKind,
+          query:JSON.stringify({circumstances:facts.circumstances,demands:facts.demands,eventDate:facts.eventDate,
+            purpose:'Материальные основания проверяются отдельно. Найти применимые статьи Гражданского процессуального кодекса Республики Казахстан о форме искового заявления, подсудности и приложениях.'})});
+        citations=[...citations,...procedure].filter((source,index,all)=>all.findIndex(other=>officialSourceIdentity(other.url)===officialSourceIdentity(source.url) && other.article===source.article && other.quote===source.quote)===index).slice(0,8);
+      }catch { /* Missing procedure blocks a ready court document. */ }
+    }
+    const sufficientGrounds = hasSubstantiveGrounds() && (documentKind!=='court_claim' || hasProcedure());
     const draftUrls = typeof result.draftBody === 'string' ? result.draftBody.match(/https?:\/\/[^\s<>"\])]+/g) || [] : [];
     const sourceUrls = new Set(citations.map(citation => canonicalUrl(citation.url)));
     let draftBody = documentKind === 'pretrial_claim' && sourceSearch === 'primary' && confirmed && !missingFields.length && citations.length && sufficientGrounds && citations.length === result.citations.length && draftUrls.every(url => sourceUrls.has(canonicalUrl(url.replace(/[.,;]+$/, '')))) && typeof result.draftBody === 'string' && result.draftBody.trim().length >= 300 && result.draftBody.length <= 100000 ? result.draftBody.trim() : undefined;
@@ -190,7 +209,7 @@ export async function generateOpenAiConversation(problemText: string, messages: 
       const labels = ['Заявитель', 'Контакты заявителя', 'Получатель', 'Контакты получателя', 'Обстоятельства', 'Дата события', 'Требования', 'Доказательства', 'Срок добровольного исполнения', 'Суд', 'Адрес суда', 'Адрес истца', 'Идентификатор истца', 'Адрес ответчика', 'Идентификатор ответчика', 'Цена иска и расчёт', 'Госпошлина или льгота', 'Отправка и получение претензии', 'Результат досудебного урегулирования', 'Состояние досудебного урегулирования'];
       text += `\n\nПроверьте данные для ${documentLabel}:\n` + requiredFacts.map((field,index)=>`${labels[index]}: ${field === 'pretrialStatus' ? ({not_sent:'не направлена',waiting:'ожидание исполнения',fulfilled:'исполнена',unresolved:'спор не урегулирован',not_required:'проверенное исключение'} as Record<string,string>)[facts[field]] || facts[field] : facts[field]}`).join('\n') + '\n\nЕсли всё верно, напишите «Подтверждаю». Если нужна правка — укажите её в чате.';
     }
-    if (confirmed && !missingFields.length && citations.length && !sufficientGrounds && !draftBody) text = 'Сведения сохранены. Проверены процессуальные нормы, но пока не удалось подтвердить материальные основания требования даже после отдельного резервного поиска. Документ ещё не готов. Повторите поиск в этом чате; реквизиты заново вводить не нужно.';
+    if (confirmed && !missingFields.length && citations.length && !sufficientGrounds && !draftBody) text = 'Сведения сохранены. Пока не удалось подтвердить полный набор материальных и необходимых процессуальных оснований даже после отдельного резервного поиска. Документ ещё не готов. Повторите поиск в этом чате; реквизиты заново вводить не нужно.';
     if (citations.length) text += '\n\nОфициальные источники РК:\n' + citations.map(source => `${source.title}, статья ${source.article.replace(/^статья\s*/i,'')}: ${source.url} (редакция: ${source.effectiveDate || 'требует проверки'})`).join('\n');
     return { text, ai };
   } catch (error) {

@@ -183,4 +183,12 @@ describe('independent official source recovery',()=>{
     expect(excerpt).toContain(loan);expect(excerpt).toContain(repayment);
   });
 
+  it('keeps the act name when its verified quotation is published on an official FAQ page',async()=>{
+    const source={url:'https://www.gov.kz/faq/test',title:'Гражданский кодекс Республики Казахстан',article:'715',quote:'Заемщик обязуется своевременно возвратить займодателю такую же сумму денег.',effectiveDate:''};
+    jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')
+      ? new Response(JSON.stringify({output_text:JSON.stringify({citations:[source]}),output:[{action:{sources:[{url:source.url}]}}]}))
+      : new Response(`<html><title>Вопросы и ответы</title><body>${source.quote}</body></html>`,{headers:{'content-type':'text/html'}}));
+    expect((await recoverOfficialSources(options))[0]).toMatchObject({title:source.title,verificationMethod:'official_text',editionVerified:false});
+  });
+
 });

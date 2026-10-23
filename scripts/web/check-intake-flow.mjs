@@ -11,6 +11,7 @@ const context = await browser.newContext({ viewport: { width: 390, height: 845 }
 let userId;
 let page;
 async function request(path, data, method = data ? 'POST' : 'GET') {
+  console.log('INTAKE_API '+method+' '+path);
   const response = await context.request.fetch(`${api}/api/v1${path}`, { method, data: data && path.endsWith('/messages') ? {...data,mode:'manual'} : data, headers: userId ? { 'x-user-id': userId } : {}, timeout: 180000 });
   assert(response.ok(), `${method} ${path}: ${response.status()} ${await response.text()}`);
   return response.json();
@@ -23,6 +24,7 @@ try {
   userId = auth.user.id;
   await request('/profiles', { userId, type: 'person', displayName: 'Тестовый пользователь AIZAN' });
   page = await context.newPage();
+  page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/api/v1/'))console.log('INTAKE_UI '+request.method()+' '+path);});
   const jsErrors = [];
   page.on('pageerror', error => jsErrors.push(error.message));
   let classifications = 0;

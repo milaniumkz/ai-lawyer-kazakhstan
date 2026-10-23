@@ -199,6 +199,16 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Use the standard Ubuntu archive for browser dependencies
+        run: |
+          sudo python3 - <<'PYTHON'
+          from pathlib import Path
+          for path in [Path('/etc/apt/sources.list'),*Path('/etc/apt/sources.list.d').glob('*')]:
+              if path.is_file() and path.suffix in ('', '.list', '.sources'):
+                  text=path.read_text()
+                  updated=text.replace('http://azure.archive.ubuntu.com/ubuntu','https://archive.ubuntu.com/ubuntu')
+                  if updated!=text:path.write_text(updated)
+          PYTHON
       - run: npx playwright install --with-deps chromium webkit
       - name: Verify deployed manual document workflow
         env:
@@ -339,6 +349,16 @@ jobs:
           curl --fail --silent --show-error "$PUBLIC_SERVER_URL/" -o /tmp/deployed-web.html
           grep -q 'aizanArt-authBrand' /tmp/deployed-web.html
 
+      - name: Use the standard Ubuntu archive for browser dependencies
+        run: |
+          sudo python3 - <<'PYTHON'
+          from pathlib import Path
+          for path in [Path('/etc/apt/sources.list'),*Path('/etc/apt/sources.list.d').glob('*')]:
+              if path.is_file() and path.suffix in ('', '.list', '.sources'):
+                  text=path.read_text()
+                  updated=text.replace('http://azure.archive.ubuntu.com/ubuntu','https://archive.ubuntu.com/ubuntu')
+                  if updated!=text:path.write_text(updated)
+          PYTHON
       - name: Verify deployed intake in browser
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
