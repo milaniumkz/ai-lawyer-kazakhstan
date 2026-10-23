@@ -7,6 +7,17 @@ import { IdentityService, isValidIinBin, maskIinBin } from "./identity.service";
 import { IdentityRepository } from "./repositories/identity.repository";
 
 describe("IdentityService", () => {
+  it('edits an owned profile in place and preserves the identifier when omitted', async () => {
+    const service=new IdentityService();
+    const otp=service.register({channel:'email',email:'profile-edit@example.invalid',consentVersion:'qa'},'test');
+    const auth=await service.verifyOtp({otpId:otp.otpId,code:'111111'},'test');
+    const original=await service.createProfile({userId:auth.user.id,type:'person',displayName:'Before',address:'Old address',iinBin:'000000000000'},'test');
+    const updated=await service.updateProfile(original.id,auth.user.id,{displayName:'After',address:'New address'},'test');
+    expect(updated).toMatchObject({id:original.id,displayName:'After',address:'New address',iinBin:original.iinBin});
+    expect(await service.listProfiles(auth.user.id)).toHaveLength(1);
+    await expect(service.updateProfile(original.id,'another-user',{displayName:'Intruder'},'test')).rejects.toThrow('PROFILE_NOT_FOUND');
+    await expect(service.updateProfile(original.id,auth.user.id,{displayName:' '},'test')).rejects.toThrow('DISPLAY_NAME_REQUIRED');
+  });
   it("rejects refresh after session expiry", async () => {
     const service = new IdentityService();
     const otp = service.register({channel: "phone", phone: "+77011234567", consentVersion: "v1"}, "test");
@@ -271,6 +282,7 @@ function createRepositoryMock(): jest.Mocked<IdentityRepository> {
     revokeAllSessions: jest.fn().mockResolvedValue(undefined),
     listSessions: jest.fn().mockResolvedValue([]),
     createProfile: jest.fn(),
+    updateProfile: jest.fn(),
     listProfiles: jest.fn().mockResolvedValue([]),
     deleteAccount: jest.fn().mockResolvedValue(undefined),
     createAuditEvent: jest.fn().mockResolvedValue({

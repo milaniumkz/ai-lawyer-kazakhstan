@@ -190,6 +190,24 @@ try {
   assert.deepEqual(manualReload.result.missing_facts, ['loan_date','amount','debtor_identity']);
   const forged = await context.request.get(`${api}/api/v1/admin/documents/review-queue`, { headers: { 'x-user-role': 'admin' } });
   if (process.env.WEB_TEST_SECURE_AUTH === '1') assert.equal(forged.status(), 403);
+  await page.evaluate(()=>{window.location.hash='profile';});
+  const name=page.locator('#profile-name');
+  await name.waitFor();
+  await page.waitForFunction(()=>!document.querySelector('#profile-name')?.disabled);
+  assert.equal(await name.inputValue(),'Тестовый пользователь AIZAN');
+  await page.getByRole('button',{name:/Личные данные/}).click();
+  assert.equal(await name.evaluate(element=>element===document.activeElement),true);
+  await name.fill('Проверенный профиль QA');
+  await page.locator('#profile-address').fill('Синтетический адрес QA');
+  await page.getByRole('button',{name:'Сохранить профиль',exact:true}).click();
+  await page.locator('.profileSaveStatus').filter({hasText:'Профиль сохранён'}).waitFor();
+  assert.equal(await page.locator('.appShell').getAttribute('data-view'),'profile');
+  const profiles=await request('/profiles');assert.equal(profiles.length,1);
+  assert.equal(profiles[0].displayName,'Проверенный профиль QA');
+  assert.equal(profiles[0].address,'Синтетический адрес QA');
+  await page.reload();await name.waitFor();
+  await page.waitForFunction(()=>document.querySelector('#profile-name')?.value==='Проверенный профиль QA');
+  assert.equal(await page.locator('#profile-address').inputValue(),'Синтетический адрес QA');
   assert.equal(jsErrors.length, 0, jsErrors.join('\n'));
   console.log('Real API draft edits/PDF/tasks/manual dispatch/support/account export/message replay and intake E2E passed: one initial classification, sequential saved answers, outage/retry without duplicate messages, reload, confirmed case/facts, contextual legal answer, generated draft and reopening a saved case with its own facts/documents/history.');
 } catch (error) {

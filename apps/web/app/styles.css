@@ -2110,8 +2110,7 @@
     line-height: 1.05;
     white-space: nowrap;
   }
-  .appShell[data-view="legalSearch"] .screenHeader p,
-  .appShell[data-view="legalSearch"] .analysisBox {
+  .appShell[data-view="legalSearch"] .screenHeader p {
     display: none;
   }
   .appShell[data-view="legalSearch"] .legalSearch {
@@ -4753,10 +4752,6 @@ progress {
     left: 14px;
   }
 
-  .appShell[data-view="settings"] .contentPanel > .wide {
-    display: none;
-  }
-
   .appShell[data-view="settings"] .bottomNav {
     background: #020912;
     border-top: 1px solid rgba(230, 189, 98, 0.24);
@@ -5165,14 +5160,6 @@ progress {
   .appShell[data-view="help"] .profileCards em {
     color: var(--gold-strong);
     font-size: 15px;
-  }
-
-  .appShell[data-view="help"] .analysisBox,
-  .appShell[data-view="help"] textarea,
-  .appShell[data-view="help"] > .contentPanel > .primary,
-  .appShell[data-view="help"] .contentPanel > textarea,
-  .appShell[data-view="help"] .contentPanel > .primary.wide {
-    display: none;
   }
 
   .appShell[data-view="help"] .bottomNav {
@@ -5982,8 +5969,7 @@ button:disabled {
     padding: 18px 20px 18px;
     overflow: hidden;
   }
-  .appShell[data-view="legal"] .bottomNav,
-  .appShell[data-view="legal"] .analysisBox {
+  .appShell[data-view="legal"] .bottomNav {
     display: none;
   }
   .appShell[data-view="legal"] .screenHeader {
@@ -6107,9 +6093,6 @@ button:disabled {
     min-height: 31px;
     border-radius: 7px;
     font-size: 11px;
-  }
-  .appShell[data-view="legal"] .actionBar button:nth-child(2) {
-    display: none;
   }
   .appShell[data-view="analysis"] .deviceFrame {
     min-height: calc(100vh - 8px);
@@ -7328,9 +7311,6 @@ button:disabled {
     border-radius: 7px;
     font-size: 11px;
   }
-  .appShell[data-view="case"] .actionBar button:last-child {
-    display: none;
-  }
   .appShell[data-view="documentCheck"] .contentPanel {
     min-height: 693px;
     padding: 32px 24px 24px;
@@ -8276,3 +8256,9 @@ button:disabled {
     display: none;
   }
 }
+/* Profile editing uses real fields instead of status-only menu actions. */
+.profileEditor {display:grid;gap:12px;margin:24px 0;padding:20px;border:1px solid var(--gold-strong,#bd872c);border-radius:20px;min-width:0;}
+.profileEditor input {width:100%;min-width:0;font-size:16px;box-sizing:border-box;}
+.profileEditor p {overflow-wrap:anywhere;line-height:1.5;}
+.profileEditor label {font-weight:600;}
+.profileTools {display:grid;gap:10px;margin:20px 0;}

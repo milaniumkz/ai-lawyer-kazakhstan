@@ -14,43 +14,51 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              const _OnboardingEmblem(),
-              const SizedBox(height: 28),
-              Text(
-                'Айзан',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: AppColors.goldDark,
-                      fontFamily: 'Georgia',
-                      letterSpacing: 0,
-                    ),
-              ),
-              const SizedBox(height: 18),
-              const _GoldDivider(),
-              const SizedBox(height: 18),
-              const Text(
-                'Ваш умный юридический помощник',
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: () => context.go('/login'),
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text('Начать работу'),
-              ),
-              TextButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Войти в аккаунт'),
-              ),
-            ],
-          ),
-        ),
+        child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight - 48),
+                      child: IntrinsicHeight(
+                          child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Spacer(),
+                          const _OnboardingEmblem(),
+                          const SizedBox(height: 28),
+                          Text(
+                            'Айзан',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .displayMedium
+                                ?.copyWith(
+                                  color: AppColors.goldDark,
+                                  fontFamily: 'AizanSerif',
+                                  letterSpacing: 0,
+                                ),
+                          ),
+                          const SizedBox(height: 18),
+                          const _GoldDivider(),
+                          const SizedBox(height: 18),
+                          const Text(
+                            'Ваш умный юридический помощник',
+                            textAlign: TextAlign.center,
+                          ),
+                          const Spacer(),
+                          FilledButton.icon(
+                            onPressed: () => context.go('/login'),
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const Text('Начать работу'),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go('/login'),
+                            child: const Text('Войти в аккаунт'),
+                          ),
+                        ],
+                      ))),
+                )),
       ),
     );
   }

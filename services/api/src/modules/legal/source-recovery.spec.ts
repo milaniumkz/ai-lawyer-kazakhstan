@@ -59,6 +59,23 @@ describe('independent official source recovery',()=>{
     mock({...citation,effectiveDate:''});
     expect((await recoverOfficialSources(options))[0]).toMatchObject({effectiveDate:'',editionVerified:false,verificationMethod:'official_text'});
   });
+  it('keeps checked substantive grounds when a later reading pass adds only procedural sources',async()=>{
+    const substantive={...citation,title:'Гражданский кодекс Республики Казахстан',effectiveDate:''};
+    const procedural={...citation,url:'https://gov.kz/law/procedure',title:'Гражданский процессуальный кодекс',article:'2',effectiveDate:''};
+    let requests=0;
+    jest.spyOn(global,'fetch').mockImplementation(async url=>{
+      if(String(url).endsWith('/responses')) {
+        requests++;
+        return new Response(JSON.stringify({output_text:JSON.stringify({citations:[requests===1 ? substantive : procedural],actSearchQueries:['Гражданский процессуальный кодекс']}),output:[{action:{sources:[{url:requests===1 ? substantive.url : procedural.url}]}}]}));
+      }
+      if(String(url).endsWith('/search'))return new Response(JSON.stringify({list:[{code:'95109',status:'new',summary:{rus:'Гражданский процессуальный кодекс'}}]}));
+      return new Response(`<p>${citation.quote}</p>`);
+    });
+    const result=await recoverOfficialSources(options);
+    expect(requests).toBe(2);
+    expect(result.map(source=>source.title)).toEqual([substantive.title,procedural.title]);
+    expect(result.every(source=>source.checkedAt && source.editionVerified===false)).toBe(true);
+  });
   it('requires an actual completed official open_page for a public PDF fallback',async()=>{
     const source={...citation,url:'https://www.gov.kz/uploads/legal-code.pdf'};
     const fetch=jest.spyOn(global,'fetch').mockImplementation(async url=>String(url).endsWith('/responses')

@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { Body, Controller, Delete, Get, Headers, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Post, Patch, Param, Req, Res } from '@nestjs/common';
 import { assertAdminRole } from '../../common/admin-rbac';
 import { assertSameUser, assertUserId } from '../../common/user-context';
 import { IdentityService } from './identity.service';
@@ -62,6 +62,11 @@ export class IdentityController {
   @Get('profiles')
   profiles(@Headers('x-user-id') userId?: string | string[]) {
     return this.identity.listProfiles(assertUserId(userId));
+  }
+
+  @Patch('profiles/:profileId')
+  updateProfile(@Param('profileId') profileId: string, @Body() body: {displayName: string; address?: string; iinBin?: string}, @Headers('x-user-id') userId?: string | string[], @Headers('x-correlation-id') correlationId = 'local') {
+    return this.identity.updateProfile(profileId,assertUserId(userId),body,correlationId);
   }
 
   @Get('account/export')

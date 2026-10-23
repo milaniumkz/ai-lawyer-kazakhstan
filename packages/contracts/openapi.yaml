@@ -221,6 +221,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Profile"
+  /profiles/{profileId}:
+    patch:
+      operationId: updateProfile
+      summary: Update an owned profile without creating a duplicate
+      parameters:
+        - in: path
+          name: profileId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: x-user-id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [displayName]
+              properties:
+                displayName:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                address:
+                  type: string
+                  maxLength: 1000
+                iinBin:
+                  type: string
+                  pattern: '^\d{12}$'
+      responses:
+        "200":
+          description: Updated profile with masked identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Profile not owned by the current user or not found
   /admin/audit-events:
     get:
       operationId: listAuditEvents

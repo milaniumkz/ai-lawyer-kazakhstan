@@ -1,4 +1,4 @@
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 const baseUrl = process.env.WEB_BASE_URL;
 const captureDir=process.env.WEB_LAYOUT_CAPTURE_DIR;
@@ -132,6 +132,7 @@ async function main() {
   }
 
   const browser = await chromium.launch(process.env.CHROMIUM_EXECUTABLE_PATH ? {executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: ["--no-sandbox"]} : {});
+  const controls=[];
   try {
     for (const viewport of viewports) {
       for (const view of screens) {
@@ -181,6 +182,7 @@ async function main() {
           };
         });
         if(captureDir && [390,1920].includes(viewport.width)) await page.screenshot({path:join(captureDir,`${viewport.width}-${view}.png`),fullPage:true});
+        if(captureDir && viewport.width===390)controls.push({view,controls:await page.locator('.appShell button, .appShell input, .appShell textarea, .appShell select').evaluateAll(elements=>elements.map(element=>({tag:element.tagName,type:element.getAttribute('type'),label:element.getAttribute('aria-label') || element.getAttribute('placeholder') || element.textContent?.trim(),disabled:element.disabled===true,visible:element.getClientRects().length>0 && getComputedStyle(element).visibility!=='hidden'})))});
         if(result.narrowText.length)fail(`${viewport.name}/${view}: compressed text columns: ${result.narrowText.join(', ')}`);
         const maxScroll = Math.max(result.bodyScrollWidth, result.docScrollWidth);
         if (result.view !== view) fail(`${viewport.name}/${view}: rendered ${result.view} instead of the requested screen`);
@@ -198,6 +200,7 @@ async function main() {
     }
   } finally {
     await browser.close();
+    if(captureDir)writeFileSync(join(captureDir,'controls.json'),JSON.stringify(controls,null,2));
   }
 
   if (process.exitCode) process.exit(process.exitCode);

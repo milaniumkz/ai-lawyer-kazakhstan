@@ -19,6 +19,8 @@ void main() {
     DraftStore.values = {};
     AuthRuntime.otpId = '';
     AuthRuntime.otpCodeHint = null;
+    AuthRuntime.otpChannel = 'phone';
+    AuthRuntime.otpContact = '';
     AuthRuntime.userId = '';
     AuthRuntime.displayName = 'Тестовый пользователь';
     AuthRuntime.profileComplete = false;
@@ -122,6 +124,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+      'long messages and large text cannot push send under the iPhone keyboard',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetViewInsets();
+    });
+    await tester.pumpWidget(MaterialApp(
+        builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!),
+        home: const NewCaseScreen(homeMode: true)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('chat-message-input')),
+        List.filled(20, 'Длинное сообщение пользователя').join('\n'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(const ValueKey('chat-send'))).bottom,
+        lessThanOrEqualTo(268));
+    expect(tester.getRect(find.byKey(const ValueKey('chat-message-input'))).top,
+        greaterThanOrEqualTo(48));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('profile navigation opens profile', (tester) async {
     await tester.pumpWidget(const AiLawyerApp(initialLocation: '/'));
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
@@ -171,7 +201,7 @@ void main() {
     await tester.tap(find.text('Получить SMS-код'));
     await tester.pumpAndSettle();
     expect(api.registerCalled, isTrue);
-    expect(find.text('RC local SMS: 111111'), findsOneWidget);
+    expect(find.text('Тестовый код: 111111'), findsOneWidget);
 
     await tester.tap(find.text('Подтвердить'));
     await tester.pumpAndSettle();
@@ -394,6 +424,7 @@ void main() {
     final api = _FakeProfileApi();
     await setLargeViewport(tester);
     await tester.pumpWidget(MaterialApp(home: ProfileScreen(profileApi: api)));
+    await tester.pumpAndSettle();
 
     final saveProfileButton =
         find.widgetWithText(FilledButton, 'Сохранить профиль').first;
@@ -407,6 +438,52 @@ void main() {
 
     expect(api.savedUserId, 'user-1');
     expect(find.textContaining('Профиль сохранен'), findsWidgets);
+  });
+
+  testWidgets('profile restores saved fields and edits the same record',
+      (tester) async {
+    AuthRuntime.userId = 'user-1';
+    final api = _FakeProfileApi()
+      ..profiles = [
+        {
+          'id': 'profile-existing',
+          'type': 'person',
+          'displayName': 'Сохранённое имя',
+          'address': 'Сохранённый адрес'
+        }
+      ];
+    await setLargeViewport(tester);
+    await tester.pumpWidget(MaterialApp(home: ProfileScreen(profileApi: api)));
+    await tester.pumpAndSettle();
+    expect(find.text('Сохранённое имя'), findsWidgets);
+    final name = find.byWidgetPredicate((widget) =>
+        widget is TextField &&
+        widget.decoration?.labelText == 'Ф.И.О. / название');
+    await tester.enterText(name, 'Изменённое имя');
+    final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(api.updatedId, 'profile-existing');
+    expect(api.createdCount, 0);
+  });
+
+  testWidgets('OTP resend requests the API and clears the old input',
+      (tester) async {
+    AuthRuntime.otpId = 'old-otp';
+    AuthRuntime.otpCodeHint = '123456';
+    AuthRuntime.otpContact = '+77011234567';
+    final api = _FakeAuthApi();
+    await setLargeViewport(tester);
+    await tester.pumpWidget(MaterialApp(home: OtpScreen(authApi: api)));
+    final resend = find.text('Отправить код повторно');
+    await tester.ensureVisible(resend);
+    await tester.tap(resend);
+    await tester.pumpAndSettle();
+    expect(api.registerCalled, true);
+    expect(AuthRuntime.otpId, 'otp-1');
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty);
   });
 
   testWidgets('claim generation requires a selected case', (tester) async {
@@ -1121,6 +1198,24 @@ class _FakeAuthApi implements AuthApiPort {
 
 class _FakeProfileApi implements ProfileApiPort {
   String? savedUserId;
+  String? updatedId;
+  int createdCount = 0;
+  List<Map<String, dynamic>> profiles = [];
+
+  @override
+  Future<List<Map<String, dynamic>>> listProfiles(String userId) async =>
+      profiles;
+  @override
+  Future<String> updateProfile(
+      {required String id,
+      required String userId,
+      required String displayName,
+      String? iinBin,
+      String? address}) async {
+    savedUserId = userId;
+    updatedId = id;
+    return id;
+  }
 
   @override
   Future<String> createProfile({
@@ -1131,6 +1226,7 @@ class _FakeProfileApi implements ProfileApiPort {
     String? address,
   }) async {
     savedUserId = userId;
+    createdCount++;
     return 'profile-12345678';
   }
 }

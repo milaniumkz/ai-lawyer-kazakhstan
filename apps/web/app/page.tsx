@@ -189,6 +189,8 @@ type SavedState = {
   otp: string;
   otpId: string;
   otpHint: string;
+  authChannel?: "phone" | "email";
+  authEmail?: string;
   draftCaseId: string;
   remoteCaseId: string;
   remoteCaseDraftId: string;
@@ -541,6 +543,10 @@ export default function WebHome() {
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
   const biometricEnabled = false;
   const [authModal, setAuthModal] = useState<"phone" | "email" | null>(null);
+  const [authChannel,setAuthChannel]=useState<"phone" | "email">("phone");
+  const [authEmail,setAuthEmail]=useState("");
+  const [authBusy,setAuthBusy]=useState(false);
+  const authBusyRef=useRef(false);
   const [caseSearch, setCaseSearch] = useState("");
   const [legalQuery, setLegalQuery] = useState("");
   const [legalAnswer, setLegalAnswer] = useState(
@@ -586,6 +592,26 @@ export default function WebHome() {
   const [middleName, setMiddleName] = useState("");
   const [city, setCity] = useState("");
   const [profileComplete, setProfileComplete] = useState(false);
+  const [serverProfileId,setServerProfileId]=useState("");
+  const [profileLoading,setProfileLoading]=useState(false);
+  const [profileLoadError,setProfileLoadError]=useState(false);
+  const [profileReload,setProfileReload]=useState(0);
+  const [profileSaving,setProfileSaving]=useState(false);
+  const profileSaveBusy=useRef(false);
+  useEffect(()=>{
+    if(view!=="profile" || !authUserId)return;
+    let cancelled=false;
+    setProfileLoading(true);setProfileLoadError(false);setServerProfileId("");
+    const type={Физлицо:"person",ИП:"individual_entrepreneur",Юрлицо:"legal_entity",Представитель:"representative"}[profileType];
+    void apiJson("/profiles",{headers:{"x-user-id":authUserId}}).then(data=>{
+      if(cancelled)return;
+      const profile=(data as Array<{id:string;type:string;displayName:string;address?:string}>).find(item=>item.type===type);
+      setServerProfileId(profile?.id || "");
+      if(profile){setProfileName(profile.displayName);setCity(profile.address || "");}
+      setProfileId(""); // Stored identifiers are masked/hashes, never editable raw values.
+    }).catch(()=>{if(!cancelled){setProfileLoadError(true);setSyncState("Не удалось загрузить профиль. Повторите загрузку перед сохранением.");}}).finally(()=>{if(!cancelled)setProfileLoading(false);});
+    return ()=>{cancelled=true;};
+  },[view,authUserId,profileType,profileReload]);
   const [syncState, setSyncState] = useState("Не синхронизировано");
   const [maskPii, setMaskPii] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
@@ -601,6 +627,7 @@ export default function WebHome() {
   const [supportBusy,setSupportBusy]=useState(false);
   const [supportTickets,setSupportTickets]=useState<Array<{id:string;topic:string;text:string;status:string;reply?:string}>>([]);
   const [helpStatus, setHelpStatus] = useState("Нет активных обращений");
+  const [helpQuery,setHelpQuery]=useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [taskTitle,setTaskTitle]=useState("");
@@ -762,6 +789,8 @@ export default function WebHome() {
       if (saved.classification) setClassification(saved.classification);
       if (saved.authUserId) setAuthUserId(saved.authUserId);
       if (saved.phone) setPhone(saved.phone);
+      if(saved.authChannel==="email")setAuthChannel("email");
+      if(saved.authEmail)setAuthEmail(saved.authEmail);
       if (saved.otp) setOtp(saved.otp);
       if (saved.otpId) setOtpId(saved.otpId);
       if (saved.otpHint) setOtpHint(saved.otpHint);
@@ -843,6 +872,7 @@ export default function WebHome() {
       otp,
       otpId,
       otpHint,
+      authChannel,authEmail,
       draftCaseId,
       remoteCaseId,
       remoteCaseDraftId,
@@ -866,6 +896,7 @@ export default function WebHome() {
     window.localStorage.setItem("ai-lawyer-web-state", JSON.stringify(saved));
   }, [
     hydrated,
+    authChannel,authEmail,
     view,
     theme,
     language,
@@ -2252,17 +2283,21 @@ export default function WebHome() {
   }
 
   const startAuth = useCallback(async () => {
-    if (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11) {
+    if(authBusyRef.current)return;
+    if(authChannel==="email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail.trim())){setSyncState("Введите корректный e-mail");return;}
+    if (authChannel==="phone" && (!phone.startsWith("+7") || phone.replace(/\D/g, "").length !== 11)) {
       setSyncState("Введите корректный номер +7");
       return;
     }
     setSyncState("Отправляю OTP через API...");
+    authBusyRef.current=true;setAuthBusy(true);
     try {
       const registered = (await apiJson("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ channel: "phone", phone, consentVersion: "v1" }),
+        body: JSON.stringify({ channel: authChannel, ...(authChannel==="email" ? {email:authEmail.trim()} : {phone}), consentVersion: "v1" }),
       })) as ApiOtpResponse;
       setOtpId(registered.otpId);
+      setOtp("");
       setOtpHint(
         registered.deliveryMode === "stub" && registered.testCode
           ? `${authText.otpTestCode}: ${registered.testCode}`
@@ -2277,8 +2312,8 @@ export default function WebHome() {
           ? `Auth API ошибка: ${error.message}`
           : "Auth API ошибка",
       );
-    }
-  }, [authText.otpTestCode, go, phone]);
+    } finally {authBusyRef.current=false;setAuthBusy(false);}
+  }, [authText.otpTestCode, go, phone,authChannel,authEmail]);
 
   useEffect(() => {
     function handleAuthClick(event: MouseEvent) {
@@ -2289,10 +2324,11 @@ export default function WebHome() {
       const action = actionTarget.dataset.authAction;
       event.preventDefault();
       if (action === "phone") {
+        setAuthChannel("phone");
         if (!phone) setPhone("+7");
         setAuthModal("phone");
       }
-      if (action === "email") setAuthModal("email");
+      if (action === "email") {setAuthChannel("email");setAuthModal("email");}
       if (action === "register") setView("register");
       if (action === "biometric") setView("biometric");
       if (action === "close") setAuthModal(null);
@@ -2303,7 +2339,8 @@ export default function WebHome() {
   }, [phone, startAuth]);
 
   async function verifyOtp() {
-    if (!otp.trim()) {
+    if(authBusyRef.current)return;
+    if (otp.trim().length!==6) {
       setSyncState("Введите код из SMS");
       return;
     }
@@ -2311,6 +2348,7 @@ export default function WebHome() {
       setSyncState("Сначала запросите OTP");
       return;
     }
+    authBusyRef.current=true;setAuthBusy(true);
     try {
       const verified = (await apiJson("/auth/otp/verify", {
         method: "POST",
@@ -2329,15 +2367,16 @@ export default function WebHome() {
           ? `OTP API ошибка: ${error.message}`
           : "OTP API ошибка",
       );
-    }
+    } finally {authBusyRef.current=false;setAuthBusy(false);}
   }
 
   async function saveProfile() {
+    if(profileSaveBusy.current || (view==="profile" && (profileLoading || profileLoadError)))return;
     const fullName =
-      [lastName, firstName, middleName]
+      (view === "profile" ? profileName.trim() : [lastName, firstName, middleName]
         .map((part) => part.trim())
         .filter(Boolean)
-        .join(" ") || profileName.trim();
+        .join(" ")) || profileName.trim();
     if (
       view === "register" &&
       (!lastName.trim() || !firstName.trim() || !city.trim())
@@ -2354,15 +2393,17 @@ export default function WebHome() {
       return;
     }
     setProfileName(fullName);
+    profileSaveBusy.current=true;setProfileSaving(true);
     try {
       const userId = await ensureUser();
       const profileTypeMap: Record<string, string> = {
         Физлицо: "person",
         ИП: "individual_entrepreneur",
         Юрлицо: "legal_entity",
+        Представитель: "representative",
       };
-      await apiJson("/profiles", {
-        method: "POST",
+      const updated=await apiJson(view==="profile" && serverProfileId ? `/profiles/${serverProfileId}` : "/profiles", {
+        method: view==="profile" && serverProfileId ? "PATCH" : "POST",
         headers: { "x-user-id": userId },
         body: JSON.stringify({
           userId,
@@ -2372,16 +2413,17 @@ export default function WebHome() {
           address: city.trim(),
         }),
       });
+      if(view==="profile")setServerProfileId((updated as {id:string}).id);
       setProfileComplete(true);
-      setSyncState(`Профиль сохранен в API: ${profileType}`);
-      setView("home");
+      setSyncState(`Профиль сохранён: ${profileType}`);
+      if(view!=="profile")setView("home");
     } catch (error) {
       setSyncState(
         error instanceof Error
           ? `Профиль API ошибка: ${error.message}`
           : `Профиль API ошибка`,
       );
-    }
+    } finally {profileSaveBusy.current=false;setProfileSaving(false);}
   }
 
   async function exportAccount() {
@@ -2709,15 +2751,14 @@ export default function WebHome() {
                       ×
                     </button>
                     <h2>Вход по e-mail</h2>
-                    <p>E-mail вход подключается через auth adapter. В RC доступен основной вход по телефону.</p>
+                    <p>Введите e-mail для запроса кода. В тестовом режиме код будет показан на следующем экране.</p>
+                    <label htmlFor="auth-email">E-mail</label><input id="auth-email" type="email" autoComplete="email" value={authEmail} onChange={event=>setAuthEmail(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void startAuth();}}} />
                     <button
                       className="authExactPrimary"
-                      onClick={() => {
-                        setSyncState("E-mail вход подключается через auth adapter");
-                        setAuthModal(null);
-                      }}
+                      disabled={authBusy || !authEmail.trim()}
+                      onClick={() => void startAuth()}
                     >
-                      Понятно
+                      Получить код
                     </button>
                   </div>
                 </div>
@@ -2840,8 +2881,8 @@ export default function WebHome() {
                 aria-label="Назад"
               />
               <div className="authExactPanel">
-                <h2>{authText.otpTitle}</h2>
-                <p>{phone ? `${authText.otpSent} ${phone}` : authText.otpFallback}</p>
+                <h2>{authChannel==="email" ? "Введите код из e-mail" : authText.otpTitle}</h2>
+                <p>{authChannel==="email" ? `Код для ${authEmail}` : phone ? `${authText.otpSent} ${phone}` : authText.otpFallback}</p>
               {otpHint && <small className="recordMeta otpHint">{otpHint}</small>}
               <input
                 ref={otpInputRef}
@@ -2865,11 +2906,10 @@ export default function WebHome() {
                   <span key={index}>{otp[index] ?? ""}</span>
                 ))}
               </button>
-              <p className="hint">
-                {authText.resend} <strong>00:42</strong>
-              </p>
+              <button type="button" className="linkAction" disabled={authBusy} onClick={()=>void startAuth()}>Запросить код повторно</button>
               <button
                 className="primary wide heroCta"
+                disabled={authBusy || otp.length!==6 || !otpId}
                 onClick={() => {
                   void verifyOtp();
                 }}
@@ -2885,7 +2925,7 @@ export default function WebHome() {
                   go("login");
                 }}
               >
-                {authText.changePhone}
+                {authChannel==="email" ? "Изменить e-mail" : authText.changePhone}
               </button>
               </div>
             </div>
@@ -3291,18 +3331,10 @@ export default function WebHome() {
               <div key={`${message.role}-${index}`} className={`messageRow ${message.role}`}>
                 {message.role === "assistant" && <span className="messageAvatar">⚖</span>}
                 <div className="messageBubble">
-                  <span className="messageTime">
-                    {message.role === "user" ? "10:31" : index === 0 ? "10:28" : "10:34"}
-                  </span>
                   {message.text}
-                  {message.role === "assistant" && index === 0 && (
-                    <div className="citationCard">
-                      <b>❝ Статья 272 ГК РК</b>
-                      <p>Обязательства должны исполняться надлежащим образом в соответствии с условиями обязательства.</p>
-                      <button onClick={() => go("legalSearch")}>Источник ↗</button>
-                    </div>
-                  )}
-                  {message.role === "assistant" && index === 2 && generatedClaimBody && (
+                  {message.ai?.citations?.map(source=><div className="citationCard" key={`${source.url}-${source.article}`}><b>{source.title} · {source.article}</b><a href={source.url} target="_blank" rel="noopener noreferrer">Официальный источник ↗</a></div>)}
+                  {message.attachments?.map(file=><ChatAttachment key={file.id} file={file} ownerUserId={authUserId} />)}
+                  {message.ai?.readyForDraft && message.ai.draftBody === generatedClaimBody && generatedClaimId && (
                     <button className="attachmentCard" onClick={() => go("claimDraft")}>
                       <span>▤</span>
                       <b>Претензия.pdf</b>
@@ -3313,20 +3345,22 @@ export default function WebHome() {
               </div>
             ))}
           </div>
+          {classificationBusy && <p className="aizanTyping" role="status">Помощник печатает…</p>}
           <button className="primary wide heroCta" onClick={() => go("claim")}>
             ✧ Сформировать документ
           </button>
           <div className="composer" data-chat-composer>
             <input
               value={chatInput}
+              disabled={classificationBusy}
               onChange={(event) => setChatInput(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") sendMessage();
+                if (event.key === "Enter" && !event.nativeEvent.isComposing) {event.preventDefault();void sendMessage();}
               }}
               enterKeyHint="send"
               placeholder="Сообщение юристу AI"
             />
-            <button className="primary" onClick={sendMessage}>
+            <button className="primary" disabled={classificationBusy || !chatInput.trim()} onMouseDown={event=>event.preventDefault()} onClick={sendMessage}>
               Отправить
             </button>
           </div>
@@ -3493,10 +3527,7 @@ export default function WebHome() {
                   <button
                     className="docRow uploadDocRow"
                     key={doc.name}
-                    onClick={() => {
-                      setSelectedDocument(doc.name);
-                      setSyncState(`Открыт документ: ${doc.name}`);
-                    }}
+                    onClick={() => {setSelectedDocument(doc.name);go("documents");}}
                   >
                     <span
                       className={`fileBadge ${doc.name.endsWith(".jpg") ? "imageBadge" : ""}`}
@@ -3889,9 +3920,7 @@ export default function WebHome() {
                   ].map((step, index) => (
                     <button
                       key={step}
-                      onClick={
-                        index === 3 ? generateClaim : () => setSyncState(step)
-                      }
+                      onClick={index === 3 ? generateClaim : () => go(index === 0 ? "category" : index === 1 ? "legalSearch" : "documentCheck")}
                     >
                       <span>{(index === 0 ? Boolean(classification) : index === 1 ? Boolean(selectedNorm) : index === 2 ? ocrConfirmed : claimReady) ? "✓" : "○"}</span>
                       <strong>{step}</strong>
@@ -4045,7 +4074,7 @@ export default function WebHome() {
                   <br />
                   <b>{claimSendContact || "Контакт еще не указан"}</b>
                   <br />
-                  Assisted/manual отправка через adapter
+                  Отправьте документ самостоятельно и сохраните статус ниже
                 </p>
               </div>
               <p className="fieldLabel">Вложенные файлы</p>
@@ -4054,12 +4083,12 @@ export default function WebHome() {
                 <p>
                   <b>Претензия.pdf</b>
                   <br />
-                  Будет сформирован через documents adapter
+                  {generatedClaimBody.trim() ? "Скачать подготовленный документ" : "Сначала подготовьте документ"}
                 </p>
                 <button
-                  onClick={() =>
-                    setSyncState("Файл доступен после генерации PDF adapter")
-                  }
+                  aria-label="Скачать вложенный PDF"
+                  disabled={!generatedClaimId || !generatedClaimBody.trim()}
+                  onClick={() => void downloadClaimPdf()}
                 >
                   ⇩
                 </button>
@@ -4092,7 +4121,7 @@ export default function WebHome() {
               </div>
               <button
                 className="primary wide heroCta"
-                onClick={confirmClaimSent}
+                onClick={confirmClaimSent} disabled={sendBusy || !generatedClaimId || !claimSendContact.trim()}
               >
                 {sendBusy?"Сохраняю…":sent ? "Ручная отправка записана" : "✧ Зафиксировать ручную отправку"}
               </button>
@@ -4152,13 +4181,15 @@ export default function WebHome() {
           <div className="profileCards">
             {[
               `Физическое лицо|${profileType === "Физлицо" ? "Текущий профиль" : "Выбрать профиль"}|Основной`,
-              "Индивидуальный предприниматель|Выбрать ИП|›",
-              "Юридическое лицо|Добавить организацию|›",
+              `Индивидуальный предприниматель|${profileType === "ИП" ? "Выбранный профиль" : "Выбрать ИП"}|›`,
+              `Юридическое лицо|${profileType === "Юрлицо" ? "Выбранный профиль" : "Добавить организацию"}|›`,
             ].map((row) => {
               const [title, sub, tail] = row.split("|");
               return (
                 <button
                   key={title}
+                  disabled={profileSaving}
+                  aria-pressed={profileType === (title.includes("предприниматель") ? "ИП" : title.includes("Юридическое") ? "Юрлицо" : "Физлицо")}
                   onClick={() =>
                     setProfileType(
                       title.includes("предприниматель")
@@ -4186,9 +4217,9 @@ export default function WebHome() {
           <h3 className="goldSection">Данные и безопасность</h3>
           <div className="profileCards profileDataCards">
             {[
-              "Личные данные|Ф.И.О., ИИН, дата рождения|save",
-              "Контактные данные|Телефон, e-mail, адреса|save",
-              "Банковские реквизиты|Счета и платежные данные|bank",
+              "Личные данные|Ф.И.О. / название, ИИН / БИН|name",
+              "Контактные данные|Контакт входа и адрес|contact",
+              "Банковские реквизиты|Указываются при подготовке документа в чате|bank",
               "Доверенные лица|Представители и контакты|trusted",
               "Безопасность|PIN-код, биометрия, устройства|settings",
             ].map((row) => {
@@ -4196,16 +4227,16 @@ export default function WebHome() {
               return (
                 <button
                   key={title}
+                  disabled={action === "bank" || profileSaving}
                   onClick={() => {
                     if (action === "settings") {
                       go("settings");
                       return;
                     }
-                    if (action === "save") {
-                      void saveProfile();
-                      return;
-                    }
-                    setSyncState(`${title}: раздел открыт`);
+                    if(action === "trusted")setProfileType("Представитель");
+                    const id=action === "contact" ? "profile-address" : "profile-name";
+                    document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"center"});
+                    document.getElementById(id)?.focus({preventScroll:true});
                   }}
                 >
                   <p>
@@ -4217,14 +4248,27 @@ export default function WebHome() {
               );
             })}
           </div>
-          <button
-            className="profileSaveContract"
-            onClick={() => {
-              void saveProfile();
-            }}
-          >
-            Сохранить профиль
-          </button>
+          <form className="profileEditor" onSubmit={event=>{event.preventDefault();void saveProfile();}} aria-label="Редактирование профиля">
+            <h3 className="goldSection">Редактирование: {profileType}</h3>
+            {profileLoading && <p role="status">Загружаю сохранённые данные…</p>}
+            {profileLoadError && <><p role="alert">Данные не загрузились. Изменения в полях сохранены на экране.</p><button type="button" onClick={()=>setProfileReload(value=>value+1)}>Повторить загрузку профиля</button></>}
+            <label htmlFor="profile-name">Ф.И.О. / название</label>
+            <input id="profile-name" value={profileName} maxLength={200} required disabled={profileLoading || profileSaving} onChange={event=>setProfileName(event.target.value)} autoComplete="name" />
+            <label htmlFor="profile-iin">ИИН / БИН (при необходимости)</label>
+            <input id="profile-iin" value={profileId} maxLength={12} inputMode="numeric" disabled={profileLoading || profileSaving} onChange={event=>setProfileId(event.target.value.replace(/\D/g,""))} placeholder="Оставьте пустым, чтобы не менять" aria-invalid={profileIdInvalid} />
+            {profileIdInvalid && <p role="alert">{authText.iinBinInvalid}</p>}
+            <label htmlFor="profile-address">Адрес</label>
+            <input id="profile-address" value={city} maxLength={1000} disabled={profileLoading || profileSaving} onChange={event=>setCity(event.target.value)} autoComplete="street-address" />
+            <p>Контакт входа: {authChannel==="email" ? authEmail || "не указан" : phone || "не указан"}. Смена контакта входа требует отдельного подтверждения.</p>
+            <p role="status" className="profileSaveStatus">{profileSaving ? "Сохраняю изменения…" : /^Профиль сохран/i.test(syncState) ? syncState : "Изменения сохранятся после нажатия кнопки"}</p>
+            <button className="primary wide" type="submit" disabled={profileLoading || profileLoadError || profileSaving || !profileName.trim() || profileIdInvalid}>{profileSaving ? "Сохраняю…" : "Сохранить профиль"}</button>
+          </form>
+          <div className="profileTools" aria-label="Другие разделы">
+            <button onClick={()=>go("deadlines")}>Календарь и сроки</button>
+            <button onClick={()=>go("legal")}>Нормы права</button>
+            <button onClick={()=>go("subscription")}>Подписка</button>
+            <button onClick={()=>go("help")}>Помощь и поддержка</button>
+          </div>
           <button
             className="profileLogoutButton"
             onClick={() => {
@@ -4253,7 +4297,7 @@ export default function WebHome() {
                 setSyncState("Язык переключен и будет сохранен в настройках");
               }}
             >
-              Язык приложения <em>{language} ›</em>
+              Язык входа и регистрации <em>{language} ›</em>
             </button>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -4261,14 +4305,14 @@ export default function WebHome() {
               Тема приложения{" "}
               <em>{theme === "dark" ? "Тёмная" : "Светлая"} ›</em>
             </button>
-            <button
+            <button disabled
               onClick={() => {
                 const next = textSize === "Средний" ? "Крупный" : textSize === "Крупный" ? "Мелкий" : "Средний";
                 setTextSize(next);
                 setSyncState(`Размер текста выбран: ${next}`);
               }}
             >
-              Размер текста <em>{textSize} ›</em>
+              Размер текста <em>Масштаб браузера</em>
             </button>
           </div>
           <h3 className="goldSection">Голосовой помощник</h3>
@@ -4276,27 +4320,27 @@ export default function WebHome() {
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={budgetAlerts}
+                disabled checked={false}
                 onChange={(event) => setBudgetAlerts(event.target.checked)}
               />{" "}
-              Голосовые ответы
+              Голосовые ответы — пока недоступны
             </label>
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={autoPlayback}
+                disabled checked={false}
                 onChange={(event) => setAutoPlayback(event.target.checked)}
               />{" "}
-              Автовоспроизведение
+              Автовоспроизведение — пока недоступно
             </label>
-            <button
+            <button disabled
               onClick={() => {
                 const next = voiceSpeed === "1.0x" ? "1.25x" : voiceSpeed === "1.25x" ? "0.75x" : "1.0x";
                 setVoiceSpeed(next);
                 setSyncState(`Скорость речи выбрана: ${next}`);
               }}
             >
-              Скорость речи <em>{voiceSpeed} ›</em>
+              Скорость голосовых ответов <em>Пока недоступно</em>
             </button>
           </div>
           <h3 className="goldSection">Конфиденциальность</h3>
@@ -4304,26 +4348,26 @@ export default function WebHome() {
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={maskPii}
+                disabled checked={false}
                 onChange={(event) => setMaskPii(event.target.checked)}
               />{" "}
-              Обезличивать данные перед AI
+              Автоматическое обезличивание — не подключено
             </label>
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={saveVoiceRecords}
+                disabled checked={false}
                 onChange={(event) => setSaveVoiceRecords(event.target.checked)}
               />{" "}
-              Сохранять голосовые записи
+              Управление хранением аудио — не подключено
             </label>
             <label className="toggle">
               <input
                 type="checkbox"
-                checked={usageAnalytics}
+                disabled checked={false}
                 onChange={(event) => setUsageAnalytics(event.target.checked)}
               />{" "}
-              Аналитика использования
+              Пользовательская аналитика — не подключена
             </label>
           </div>
           <button className="primary wide" onClick={saveSettings}>
@@ -4442,12 +4486,19 @@ export default function WebHome() {
           <div className="legalSearch">
             <span>⌕</span>
             <input
-              value={caseText}
-              onChange={(event) => setCaseText(event.target.value)}
+              value={helpQuery}
+              onChange={(event) => setHelpQuery(event.target.value)}
               placeholder="Найдите ответ на вопрос"
             />
-            <button onClick={() => setCaseText("")}>×</button>
+            <button aria-label="Очистить поиск по помощи" onClick={() => setHelpQuery("")}>×</button>
           </div>
+          {helpQuery.trim() && <div className="analysisBox" role="status">{[
+            "Аккаунт и профиль: откройте Профиль, измените данные и нажмите Сохранить профиль.",
+            "Дела и чат: опишите ситуацию на главной и ответьте на уточняющие вопросы.",
+            "Документы и фото: прикрепите файл по запросу помощника. Подготовленный проект можно скачать в PDF.",
+            "Подписка и оплата: доступность платежей указана в разделе Подписка. Неподключённый сервис не списывает средства.",
+            "Безопасность и удаление: экспорт данных и удаление аккаунта доступны в Настройках.",
+          ].filter(answer=>helpQuery.trim().toLocaleLowerCase().split(/\s+/).some(word=>answer.toLocaleLowerCase().includes(word))).map(answer=><p key={answer}>{answer}</p>)}<p>Если ответа недостаточно, опишите вопрос в форме поддержки ниже.</p></div>}
           <h3 className="goldSection">Быстрые действия</h3>
           <div className="helpGrid">
             {[
@@ -4478,7 +4529,7 @@ export default function WebHome() {
             <button
               className="primary"
               onClick={() => {
-                void createSupportRequest();
+                void loadSupportTickets();
               }}
             >
               Обновить обращения
@@ -4523,7 +4574,7 @@ export default function WebHome() {
           />
           <button
             className="primary wide"
-            disabled={supportBusy}
+            disabled={supportBusy || supportText.trim().length<8}
             onClick={() => {
               void createSupportRequest();
             }}

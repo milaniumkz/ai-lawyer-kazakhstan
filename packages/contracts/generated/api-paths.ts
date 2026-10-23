@@ -58,6 +58,7 @@ export const apiPaths = [
   "/legal-search",
   "/legal-sources/manual-import",
   "/profiles",
+  "/profiles/{profileId}",
   "/rag/answer",
   "/sessions",
   "/subscriptions/current",

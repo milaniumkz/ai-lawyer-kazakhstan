@@ -1,6 +1,7 @@
 import 'src/api/draft_store.dart';
 import 'src/preview_config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -130,6 +131,9 @@ class AiLawyerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Айзан',
+      locale: const Locale('ru'),
+      supportedLocales: const [Locale('ru'), Locale('kk'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

@@ -23,9 +23,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     with MountedState<SubscriptionScreen> {
   late final BillingApiPort billingApi;
   var status = 'Лимиты не загружены';
-  var plan = 'Free';
+  var plan = 'Не загружен';
   var percent = 0;
-  var ttsDisabled = false;
+  var ttsDisabled = true;
   List<SubscriptionPlanItem> plans = const [];
   List<PaymentHistoryItem> payments = const [];
 

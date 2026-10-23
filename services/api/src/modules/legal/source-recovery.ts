@@ -86,7 +86,10 @@ export async function recoverOfficialSources(input: {
           if(page?.text && !page.unavailable)excerpts.set(key,{url:page.url,text:selectRelevantOfficialText(page.text,input.query+(input.documentKind==='court_claim' ? ' исковое заявление подсудность государственная пошлина суды приложения досудебный порядок' : ' претензия досудебный порядок срок исполнение')),...(page.editionDate ? {editionDate:page.editionDate} : {}),...(page.title ? {title:page.title} : {})});
         }));
         const recovered=await recoverOfficialSources({...input,readUrls:unread.slice(0,3),officialExcerpts:[...excerpts.values()].slice(-3)});
-        return recovered.length ? recovered : verified;
+        // A later reading pass may find procedural rules only. It must not
+        // discard already checked substantive grounds from the first search.
+        const combined=[...verified,...recovered].sort((a,b)=>Number(b.editionVerified)-Number(a.editionVerified));
+        return combined.filter((source,index)=>combined.findIndex(other=>officialSourceIdentity(other.url)===officialSourceIdentity(source.url) && other.article===source.article && other.quote===source.quote)===index).slice(0,4);
       }
       catch { return verified; }
     }

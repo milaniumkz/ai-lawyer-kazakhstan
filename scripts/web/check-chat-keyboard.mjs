@@ -31,6 +31,9 @@ for(const name of engines){
       });
       await page.goto(`${base}/#home`);
       const input=page.locator('#home-problem');await input.waitFor();await input.focus();
+      // A real iPhone focuses before its keyboard animation/viewport event.
+      await page.waitForFunction(()=>document.querySelector('.appShell')?.getAttribute('data-keyboard-open')==='true');
+      await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
       await page.getByRole('button',{name:'Пошаговое заполнение',exact:true}).waitFor();
       assert.equal(await input.getAttribute('enterkeyhint'),'send');
       for(const [height,top] of [[250,0],[300,0],[Math.min(410,size.height-190),30]]){
@@ -45,13 +48,17 @@ for(const name of engines){
         assert(arrow.x>=0 && arrow.x+arrow.width<=size.width,`${name}: arrow outside screen`);
         assert.equal(await page.locator('.bottomNav').isVisible(),false);
       }
-      await input.fill('Сообщение через Enter');await input.press('Enter');
-      await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='');
+      await input.fill('Сообщение через Enter');
+      const enterResponse=page.waitForResponse(response=>response.url().endsWith('/messages') && response.request().method()==='POST');
+      await input.press('Enter');await enterResponse;
+      await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='' && !document.querySelector('.aizanTyping'));
       assert.deepEqual(sent,['Сообщение через Enter']);
       await input.fill('Первая строка');await input.press('Shift+Enter');
       assert((await input.inputValue()).includes('\n'));assert.equal(sent.length,1);
-      await input.fill('Сообщение стрелкой');await page.locator('.aizanComposerSend').click();
-      await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='');
+      await input.fill('Сообщение стрелкой');
+      const arrowResponse=page.waitForResponse(response=>response.url().endsWith('/messages') && response.request().method()==='POST');
+      await page.locator('.aizanComposerSend').click();await arrowResponse;
+      await page.waitForFunction(()=>document.querySelector('#home-problem')?.value==='' && !document.querySelector('.aizanTyping'));
       assert.deepEqual(sent,['Сообщение через Enter','Сообщение стрелкой']);
       await page.evaluate(()=>window.setTestKeyboard(0));
       await page.waitForFunction(()=>document.querySelector('.appShell')?.getAttribute('data-keyboard-open')==='false');

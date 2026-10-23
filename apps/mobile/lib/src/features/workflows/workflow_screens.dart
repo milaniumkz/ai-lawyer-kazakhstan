@@ -906,7 +906,19 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
             const SizedBox(height: 12),
             const _RecipientCard(),
             const SizedBox(height: 12),
-            const _AttachmentCard(),
+            _AttachmentCard(
+                onDownload: WorkflowRuntime.generatedBody.trim().isEmpty
+                    ? null
+                    : () async {
+                        try {
+                          await exportClaimPdf(WorkflowRuntime.generatedBody);
+                        } catch (error) {
+                          if (mounted) {
+                            updateState(() =>
+                                status = 'Не удалось открыть PDF: $error');
+                          }
+                        }
+                      }),
             const SizedBox(height: 12),
             TextField(
               enabled: !busy,
@@ -939,7 +951,9 @@ class _ClaimSendScreenState extends State<ClaimSendScreen>
             FilledButton.icon(
               onPressed: busy ? null : recordAssistedSend,
               icon: const Icon(Icons.mark_email_read_outlined),
-              label: Text(sent ? 'Ручной статус зафиксирован' : 'Отправить'),
+              label: Text(sent
+                  ? 'Ручной статус зафиксирован'
+                  : 'Зафиксировать ручную отправку'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -1064,7 +1078,7 @@ class _ClaimProgressCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Прогресс подготовки'),
+                const Expanded(child: Text('Прогресс подготовки')),
                 Text('${(progress * 100).round()}%'),
               ],
             ),
@@ -1223,16 +1237,23 @@ class _RecipientCard extends StatelessWidget {
 }
 
 class _AttachmentCard extends StatelessWidget {
-  const _AttachmentCard();
+  const _AttachmentCard({this.onDownload});
+  final VoidCallback? onDownload;
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: ListTile(
-        leading: Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
-        title: Text('Претензия.pdf'),
-        subtitle: Text('Формируется из API-проекта претензии'),
-        trailing: Icon(Icons.download_outlined),
+        leading:
+            const Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
+        title: const Text('Претензия.pdf'),
+        subtitle: Text(onDownload == null
+            ? 'Сначала подготовьте документ'
+            : 'Скачать подготовленный документ'),
+        trailing: IconButton(
+            tooltip: 'Скачать вложенный PDF',
+            onPressed: onDownload,
+            icon: const Icon(Icons.download_outlined)),
       ),
     );
   }

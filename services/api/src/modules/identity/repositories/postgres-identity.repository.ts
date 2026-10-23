@@ -99,6 +99,14 @@ export class PostgresIdentityRepository implements IdentityRepository {
     return result.rows.map(mapProfile);
   }
 
+  async updateProfile(id: string, userId: string, input: {displayName: string; address?: string; iinBin?: string}) {
+    const result = await this.db.query<ProfileRow>(
+      'UPDATE profiles SET display_name=$3, address=COALESCE($4,address), iin_bin_hash=COALESCE($5,iin_bin_hash) WHERE id=$1 AND user_id=$2 RETURNING *',
+      [id,userId,input.displayName,input.address ?? null,input.iinBin ? hashSensitiveValue(input.iinBin) : null],
+    );
+    return result.rows[0] ? mapProfile(result.rows[0]) : undefined;
+  }
+
   async deleteAccount(userId: string) {
     const cases = await this.db.query<{ id: string }>('SELECT id FROM legal_cases WHERE owner_user_id = $1', [userId]);
     await this.db.query('DELETE FROM users WHERE id = $1', [userId]);

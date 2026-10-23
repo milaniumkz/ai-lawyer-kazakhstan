@@ -31,18 +31,18 @@ class _LegalSourcesScreenState extends State<LegalSourcesScreen>
   LegalAnswerFragment? fragment;
 
   int progressValue() {
-    if (busy) return 45;
-    if (fragment != null) return answer.contains('Цитата проверена') ? 100 : 82;
-    if (searched) return 64;
-    return 18;
+    return ragStages().where((stage) => stage.done).length * 20;
   }
 
   List<({String title, bool done})> ragStages() => [
         (title: '1. Вопрос', done: queryController.text.trim().isNotEmpty),
-        (title: '2. Источники', done: searched),
+        (title: '2. Источники', done: fragment != null),
         (title: '3. Проверка', done: fragment != null),
         (title: '4. Цитата', done: answer.contains('Цитата проверена')),
-        (title: '5. Ответ', done: searched && !busy),
+        (
+          title: '5. Ответ',
+          done: fragment != null && answer.contains('Цитата проверена') && !busy
+        ),
       ];
 
   String nextAiStep() {
@@ -499,7 +499,7 @@ class _RagProgressCard extends StatelessWidget {
                 Expanded(
                     child: Text(
                         'RAG · этап ${(progress / 20).ceil().clamp(1, 5)} из 5')),
-                Text('$progress%',
+                Text('${progress ~/ 20}/5',
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge

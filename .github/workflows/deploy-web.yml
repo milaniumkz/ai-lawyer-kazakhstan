@@ -199,6 +199,10 @@ jobs:
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
         run: node scripts/web/check-chat-keyboard.mjs
+      - name: Verify account and support actions through the deployed UI
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: npm run test:web-actions
       - name: Verify deployed responsive pages
         if: inputs.visual_only
         env:
@@ -337,6 +341,10 @@ jobs:
         env:
           WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
         run: node scripts/web/check-chat-keyboard.mjs
+      - name: Verify account and support actions through the deployed UI
+        env:
+          WEB_BASE_URL: ${{ secrets.PUBLIC_SERVER_URL }}
+        run: npm run test:web-actions
       - name: Verify deployed responsive pages
         if: inputs.visual_only
         env:

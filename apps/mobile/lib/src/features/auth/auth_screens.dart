@@ -63,6 +63,9 @@ class _LoginScreenState extends State<LoginScreen>
       );
       AuthRuntime.otpId = result.otpId;
       AuthRuntime.otpCodeHint = result.testCode;
+      AuthRuntime.otpChannel = email ? 'email' : 'phone';
+      AuthRuntime.otpContact =
+          email ? emailController.text.trim() : loginController.text.trim();
       if (mounted) context.go('/otp');
     } catch (error) {
       updateState(() => status = 'Auth API ошибка: $error');
@@ -430,16 +433,60 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 }
 
-class OtpScreen extends StatelessWidget {
+class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key, this.authApi});
 
   final AuthApiPort? authApi;
 
   @override
+  State<OtpScreen> createState() => _OtpScreenState();
+}
+
+class _OtpScreenState extends State<OtpScreen> {
+  late final controller =
+      TextEditingController(text: AuthRuntime.otpCodeHint ?? '');
+  late final api = widget.authApi ?? HttpAuthApi();
+  bool busy = false;
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> resend() async {
+    if (busy) return;
+    if (AuthRuntime.otpContact.isEmpty) {
+      context.go('/login');
+      return;
+    }
+    setState(() => busy = true);
+    try {
+      final result = await api.register(
+          channel: AuthRuntime.otpChannel,
+          phone:
+              AuthRuntime.otpChannel == 'phone' ? AuthRuntime.otpContact : null,
+          email: AuthRuntime.otpChannel == 'email'
+              ? AuthRuntime.otpContact
+              : null);
+      AuthRuntime.otpId = result.otpId;
+      AuthRuntime.otpCodeHint = result.testCode;
+      controller.clear();
+      if (mounted) {
+        _showAction(
+            context,
+            result.testCode == null
+                ? 'Новый код запрошен'
+                : 'Тестовый код обновлён');
+      }
+    } catch (error) {
+      if (mounted) _showAction(context, 'Не удалось запросить код: $error');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller =
-        TextEditingController(text: AuthRuntime.otpCodeHint ?? '');
-    final api = authApi ?? HttpAuthApi();
     return AuthScaffold(
       title: 'Подтверждение SMS',
       child: Column(
@@ -448,65 +495,71 @@ class OtpScreen extends StatelessWidget {
           const _AuthEmblem(icon: Icons.balance_outlined),
           const SizedBox(height: 16),
           Text(
-            'Введите код из SMS',
+            AuthRuntime.otpChannel == 'email'
+                ? 'Введите код из e-mail'
+                : 'Введите код из SMS',
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
                 .headlineMedium
-                ?.copyWith(color: AppColors.goldDark, fontFamily: 'Georgia'),
+                ?.copyWith(color: AppColors.goldDark, fontFamily: 'AizanSerif'),
           ),
           const SizedBox(height: 12),
           if (AuthRuntime.otpCodeHint != null)
-            Text('RC local SMS: ${AuthRuntime.otpCodeHint}'),
+            Text('Тестовый код: ${AuthRuntime.otpCodeHint}'),
           TextField(
             controller: controller,
             keyboardType: TextInputType.number,
+            enabled: !busy,
+            onChanged: (_) => setState(() {}),
             maxLength: 6,
             decoration: InputDecoration(
-              labelText: 'Код из SMS',
+              labelText: 'Код подтверждения',
               prefixIcon: Icon(Icons.password_outlined),
             ),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: () async {
-              try {
-                final session = await api.verifyOtp(
-                  otpId: AuthRuntime.otpId,
-                  code: controller.text.trim(),
-                );
-                await SessionCredentials.save(
-                    userId: session.userId,
-                    accessToken: session.accessToken,
-                    profileComplete: !session.profileRequired,
-                    displayName: AuthRuntime.displayName);
-                AuthRuntime.userId = session.userId;
-                await DraftStore.restore(session.userId);
-                MobileCaseRuntime.restore();
-                WorkflowRuntime.restore();
-                AuthRuntime.profileComplete = !session.profileRequired;
-                if (context.mounted) {
-                  context.go(session.isNewUser || session.profileRequired
-                      ? '/register'
-                      : '/');
-                }
-              } catch (error) {
-                if (context.mounted) {
-                  _showAction(context, 'OTP API ошибка: $error');
-                }
-              }
-            },
+            onPressed: busy || controller.text.trim().length != 6
+                ? null
+                : () async {
+                    if (busy) return;
+                    setState(() => busy = true);
+                    try {
+                      final session = await api.verifyOtp(
+                        otpId: AuthRuntime.otpId,
+                        code: controller.text.trim(),
+                      );
+                      await SessionCredentials.save(
+                          userId: session.userId,
+                          accessToken: session.accessToken,
+                          profileComplete: !session.profileRequired,
+                          displayName: AuthRuntime.displayName);
+                      AuthRuntime.userId = session.userId;
+                      await DraftStore.restore(session.userId);
+                      MobileCaseRuntime.restore();
+                      WorkflowRuntime.restore();
+                      AuthRuntime.profileComplete = !session.profileRequired;
+                      if (context.mounted) {
+                        context.go(session.isNewUser || session.profileRequired
+                            ? '/register'
+                            : '/');
+                      }
+                    } catch (error) {
+                      if (context.mounted) {
+                        _showAction(context, 'OTP API ошибка: $error');
+                      }
+                    } finally {
+                      if (mounted) setState(() => busy = false);
+                    }
+                  },
             icon: const Icon(Icons.auto_awesome),
             label: const Text('Подтвердить'),
           ),
           const SizedBox(height: 12),
           const _AuthDivider(),
           TextButton(
-            onPressed: () => _showAction(
-                context,
-                AuthRuntime.otpCodeHint == null
-                    ? 'Сначала запросите OTP'
-                    : 'Код повторно отправлен через API'),
+            onPressed: busy ? null : resend,
             child: const Text('Отправить код повторно'),
           ),
         ],
@@ -659,6 +712,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   var profileType = 'Физлицо';
   var isBusy = false;
   var status = 'Профиль еще не сохранен';
+  String savedProfileId = '';
+  bool loadingProfile = false;
+  bool profileLoadFailed = false;
 
   @override
   void initState() {
@@ -667,6 +723,43 @@ class _ProfileScreenState extends State<ProfileScreen>
     nameController = TextEditingController(text: AuthRuntime.displayName);
     iinController = TextEditingController();
     addressController = TextEditingController();
+    loadProfile();
+  }
+
+  Future<void> loadProfile() async {
+    if (AuthRuntime.userId.isEmpty) return;
+    updateState(() {
+      loadingProfile = true;
+      profileLoadFailed = false;
+    });
+    final requestedType = profileType;
+    try {
+      final profiles = await profileApi.listProfiles(AuthRuntime.userId);
+      if (!mounted || requestedType != profileType) return;
+      final matches = profiles
+          .where((item) => item['type'] == _profileTypeFor(requestedType));
+      final profile = matches.isEmpty ? null : matches.first;
+      savedProfileId = profile?['id'] as String? ?? '';
+      if (profile != null) {
+        nameController.text = profile['displayName'] as String? ?? '';
+        addressController.text = profile['address'] as String? ?? '';
+      }
+      iinController.clear();
+      updateState(() => status = profile == null
+          ? 'Заполните данные нового профиля'
+          : 'Сохранённые данные загружены');
+    } catch (_) {
+      if (mounted) {
+        updateState(() {
+          profileLoadFailed = true;
+          status = 'Не удалось загрузить профиль. Повторите загрузку.';
+        });
+      }
+    } finally {
+      if (mounted && requestedType == profileType) {
+        updateState(() => loadingProfile = false);
+      }
+    }
   }
 
   double completionValue() {
@@ -688,19 +781,36 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> saveProfile() async {
-    if (isBusy) return;
+    if (isBusy || loadingProfile || profileLoadFailed) return;
+    if (nameController.text.trim().isEmpty) {
+      updateState(() => status = 'Введите Ф.И.О. или название');
+      return;
+    }
+    if (iinController.text.isNotEmpty &&
+        !RegExp(r'^\d{12}$').hasMatch(iinController.text)) {
+      updateState(() => status = 'Проверьте ИИН / БИН: нужно 12 цифр');
+      return;
+    }
     updateState(() {
       isBusy = true;
       status = 'Сохраняю профиль через API...';
     });
     try {
-      final id = await profileApi.createProfile(
-        userId: AuthRuntime.userId,
-        type: profileType,
-        displayName: nameController.text.trim(),
-        iinBin: iinController.text.trim(),
-        address: addressController.text.trim(),
-      );
+      final id = savedProfileId.isNotEmpty
+          ? await profileApi.updateProfile(
+              id: savedProfileId,
+              userId: AuthRuntime.userId,
+              displayName: nameController.text.trim(),
+              iinBin: iinController.text.isEmpty ? null : iinController.text,
+              address: addressController.text.trim())
+          : await profileApi.createProfile(
+              userId: AuthRuntime.userId,
+              type: profileType,
+              displayName: nameController.text.trim(),
+              iinBin: iinController.text.trim(),
+              address: addressController.text.trim(),
+            );
+      savedProfileId = id;
       AuthRuntime.displayName = nameController.text.trim();
       AuthRuntime.profileComplete = true;
       await SessionCredentials.save(
@@ -736,7 +846,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 10),
           _ProfileTypeSelector(
             selected: profileType,
-            onSelected: (value) => updateState(() => profileType = value),
+            onSelected: (value) {
+              if (isBusy || loadingProfile || profileType == value) return;
+              updateState(() {
+                profileType = value;
+                savedProfileId = '';
+              });
+              loadProfile();
+            },
           ),
           const SizedBox(height: 16),
           Text('Данные и безопасность',
@@ -747,6 +864,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 16),
           TextField(
             controller: nameController,
+            enabled: !isBusy && !loadingProfile,
+            maxLength: 200,
             onChanged: (_) => updateState(() {}),
             decoration: const InputDecoration(
               labelText: 'Ф.И.О. / название',
@@ -756,16 +875,21 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 12),
           TextField(
             controller: iinController,
+            enabled: !isBusy && !loadingProfile,
+            maxLength: 12,
             onChanged: (_) => updateState(() {}),
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'ИИН/БИН',
+              helperText: 'Оставьте пустым, чтобы не менять',
               prefixIcon: Icon(Icons.pin_outlined),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: addressController,
+            enabled: !isBusy && !loadingProfile,
+            maxLength: 1000,
             onChanged: (_) => updateState(() {}),
             decoration: const InputDecoration(
               labelText: 'Адрес в РК',
@@ -774,9 +898,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 16),
           Text(status),
+          if (profileLoadFailed)
+            TextButton(
+                onPressed: loadProfile,
+                child: const Text('Повторить загрузку')),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: isBusy ? null : saveProfile,
+            onPressed: isBusy || loadingProfile || profileLoadFailed
+                ? null
+                : saveProfile,
             icon: const Icon(Icons.save_outlined),
             label: Text(isBusy ? 'Сохраняю' : 'Сохранить профиль'),
           ),
@@ -829,7 +959,7 @@ class _ProfileTypeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     const types = [
       ('Физлицо', 'Активный профиль', 'Основной'),
-      ('ИП', 'ИП MILANIUM', '›'),
+      ('ИП', 'Данные предпринимателя', '›'),
       ('Юрлицо', 'Добавить организацию', '›'),
       ('Представитель', 'Представители и контакты', '›'),
     ];
@@ -857,8 +987,11 @@ class _ProfileTypeSelector extends StatelessWidget {
                       : type.$1 == 'Юрлицо'
                           ? 'Юридическое лицо'
                           : 'Доверенные лица'),
-              subtitle: Text(type.$2),
-              trailing: Text(type.$3),
+              subtitle: Text(
+                  selected == type.$1 ? 'Выбран для редактирования' : type.$2),
+              trailing: Icon(selected == type.$1
+                  ? Icons.check_circle_outline
+                  : Icons.chevron_right),
               onTap: () => onSelected(type.$1),
             ),
           ),
@@ -921,7 +1054,7 @@ class _ProfileCompletionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Заполненность профиля'),
+                const Expanded(child: Text('Заполненность профиля')),
                 Text('${(progress * 100).round()}%'),
               ],
             ),
@@ -1083,25 +1216,27 @@ class _SettingsScreenState extends State<SettingsScreen>
                 onChanged: null,
                 title: const Text('Тёмная тема AIZAN')),
             const ListTile(
-                title: Text('Размер текста'), trailing: Text('Средний ›')),
+                title: Text('Размер текста'), trailing: Text('Системный')),
           ]),
           _SettingsGroup(title: 'Голосовой помощник', children: [
             SwitchListTile(
-                value: notifications,
+                value: false,
                 onChanged: null,
-                title: const Text('Голосовые ответы')),
+                title: const Text('Голосовые ответы — пока недоступны')),
             const SwitchListTile(
                 value: false,
                 onChanged: null,
-                title: Text('Автовоспроизведение')),
+                title: Text('Автовоспроизведение — пока недоступно')),
             const ListTile(
-                title: Text('Скорость речи'), trailing: Text('1.0x ›')),
+                title: Text('Скорость голосовых ответов'),
+                trailing: Text('Недоступно')),
           ]),
           _SettingsGroup(title: 'Конфиденциальность', children: [
             SwitchListTile(
-                value: piiMasking,
+                value: false,
                 onChanged: null,
-                title: const Text('Обезличивать данные перед AI')),
+                title:
+                    const Text('Автоматическое обезличивание — не подключено')),
             const SwitchListTile(
                 value: false,
                 onChanged: null,
@@ -1261,7 +1396,7 @@ class _HelpScreenState extends State<HelpScreen> with MountedState<HelpScreen> {
             child: ListTile(
               leading: const Icon(Icons.support_agent_outlined,
                   color: AppColors.gold),
-              title: const Text('Служба поддержки онлайн'),
+              title: const Text('Обратиться в поддержку'),
               subtitle: Text('Тема: $selectedTopic'),
               trailing: const Text('Обращение',
                   style: TextStyle(color: AppColors.gold)),
@@ -1272,7 +1407,7 @@ class _HelpScreenState extends State<HelpScreen> with MountedState<HelpScreen> {
             leading: Icon(Icons.privacy_tip_outlined),
             title: Text('Безопасность данных'),
             subtitle:
-                Text('Персональные данные защищены; чужие дела недоступны'),
+                Text('Не отправляйте пароли, коды подтверждения и ключи электронной подписи'),
           ),
           TextButton(
               onPressed: loadTickets, child: const Text('Обновить обращения')),
@@ -1321,11 +1456,12 @@ class _HelpQuickGrid extends StatelessWidget {
       ('3', 'Внешние каналы', 'Отправка выполняется самостоятельно'),
       ('4', 'Сообщить о проблеме', 'Ошибка или предложение'),
     ];
+    final scale = MediaQuery.textScalerOf(context).scale(16) / 16;
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: scale > 1.3 ? 1 : 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisExtent: 148,
+      mainAxisExtent: 148 * scale,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       children: [
@@ -1408,6 +1544,13 @@ abstract class AuthApiPort {
 }
 
 abstract class ProfileApiPort {
+  Future<List<Map<String, dynamic>>> listProfiles(String userId);
+  Future<String> updateProfile(
+      {required String id,
+      required String userId,
+      required String displayName,
+      String? iinBin,
+      String? address});
   Future<String> createProfile({
     required String userId,
     required String type,
@@ -1459,6 +1602,8 @@ class AccountExportResult {
 abstract final class AuthRuntime {
   static String otpId = '';
   static String? otpCodeHint;
+  static String otpChannel = 'phone';
+  static String otpContact = '';
   static String userId = '';
   static String displayName = '';
   static bool profileComplete = false;
@@ -1539,6 +1684,38 @@ class HttpProfileApi implements ProfileApiPort {
   });
 
   final String baseUrl;
+
+  @override
+  Future<List<Map<String, dynamic>>> listProfiles(String userId) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/profiles'),
+        headers: {'x-user-id': userId});
+    if (response.statusCode != 200) {
+      throw const HttpException('Не удалось загрузить профиль');
+    }
+    return (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<String> updateProfile(
+      {required String id,
+      required String userId,
+      required String displayName,
+      String? iinBin,
+      String? address}) async {
+    final response = await http.patch(Uri.parse('$baseUrl/api/v1/profiles/$id'),
+        headers: {'x-user-id': userId, 'content-type': 'application/json'},
+        body: jsonEncode({
+          'displayName': displayName,
+          if (iinBin != null && iinBin.isNotEmpty) 'iinBin': iinBin,
+          if (address != null) 'address': address
+        }));
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw HttpException(
+          '${data['message'] ?? 'Не удалось сохранить профиль'}');
+    }
+    return data['id'] as String;
+  }
 
   @override
   Future<String> createProfile({

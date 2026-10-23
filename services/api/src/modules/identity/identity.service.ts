@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   Optional,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -241,6 +242,22 @@ export class IdentityService {
       correlationId,
     );
     return { ...profile, iinBin: maskIinBin(profile.iinBin) };
+  }
+
+  async updateProfile(id: string, userId: string, input: {displayName: string; address?: string; iinBin?: string}, correlationId: string) {
+    if (typeof input.displayName !== 'string' || !input.displayName.trim() || input.displayName.length > 200) throw new BadRequestException('DISPLAY_NAME_REQUIRED');
+    if (input.address !== undefined && (typeof input.address !== 'string' || input.address.length > 1000)) throw new BadRequestException('ADDRESS_INVALID');
+    if (input.iinBin !== undefined && (typeof input.iinBin !== 'string' || !isValidIinBin(input.iinBin))) throw new BadRequestException('IIN_BIN_INVALID');
+    const fields = {displayName: input.displayName.trim(), ...(input.address !== undefined ? {address: input.address.trim()} : {}), ...(input.iinBin ? {iinBin: input.iinBin} : {})};
+    let profile: ProfileRecord | undefined;
+    if (this.repository) profile = await this.repository.updateProfile(id,userId,fields);
+    else {
+      const existing = this.profiles.get(id);
+      if (existing?.userId === userId) {profile = {...existing,...fields};this.profiles.set(id,profile);}
+    }
+    if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND');
+    await this.audit('profile_updated',userId,id,{type:profile.type},correlationId);
+    return {...profile,iinBin:maskIinBin(profile.iinBin)};
   }
 
   async listProfiles(userId: string) {

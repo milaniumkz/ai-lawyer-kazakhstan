@@ -79,6 +79,7 @@ abstract final class ApiContract {
   static const legalSearch = '/legal-search';
   static const legalSourcesManualImport = '/legal-sources/manual-import';
   static const profiles = '/profiles';
+  static const profilesProfileId = '/profiles/{profileId}';
   static const ragAnswer = '/rag/answer';
   static const sessions = '/sessions';
   static const subscriptionsCurrent = '/subscriptions/current';

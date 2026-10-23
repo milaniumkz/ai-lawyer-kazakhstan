@@ -10,6 +10,7 @@ export interface IdentityRepository {
   revokeAllSessions(userId: string): Promise<void>;
   listSessions(userId: string): Promise<Array<Omit<SessionRecord, 'refreshToken'>>>;
   createProfile(input: Omit<ProfileRecord, 'id' | 'createdAt'>): Promise<ProfileRecord>;
+  updateProfile(id: string, userId: string, input: {displayName: string; address?: string; iinBin?: string}): Promise<ProfileRecord | undefined>;
   listProfiles(userId: string): Promise<ProfileRecord[]>;
   exportOwnedData?(userId: string): Promise<Record<string, unknown>>;
   deleteAccount(userId: string): Promise<void>;

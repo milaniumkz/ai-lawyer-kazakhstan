@@ -32,6 +32,14 @@ describe('PostgresIdentityRepository mapping', () => {
 });
 
 describe('PostgresIdentityRepository persistence contract', () => {
+  it('scopes an edit to its owner and leaves stored identifiers unchanged when omitted', async () => {
+    const {db,query}=createDbMock({id:'profile-1',user_id:'user-1',type:'person',display_name:'Updated',created_at:new Date()});
+    const repository=new PostgresIdentityRepository(db);
+    await repository.updateProfile('profile-1','user-1',{displayName:'Updated',address:''});
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('WHERE id=$1 AND user_id=$2'),['profile-1','user-1','Updated','',null]);
+    query.mockResolvedValueOnce({rows:[]});
+    expect(await repository.updateProfile('profile-1','another-owner',{displayName:'Intruder'})).toBeUndefined();
+  });
   it('stores refresh tokens as hashes only', async () => {
     const opaqueRefresh = ['raw', 'refresh', 'fixture'].join('-');
     const { db, query } = createDbMock({

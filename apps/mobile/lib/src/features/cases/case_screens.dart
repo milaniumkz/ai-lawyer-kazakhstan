@@ -2164,9 +2164,8 @@ class _ProgressStrip extends StatelessWidget {
             Text('Статус обработки',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            const LinearProgressIndicator(value: 1),
-            const SizedBox(height: 8),
-            const Text('transcribing → classifying → validating → ready'),
+            const Text(
+                'Данные дела обновляются после подтверждения фактов, проверки документов и подготовки проекта.'),
           ],
         ),
       ),
@@ -2308,34 +2307,49 @@ class _CaseMessageComposer extends StatelessWidget {
   final bool autofocus;
   final String label;
   @override
-  Widget build(BuildContext context) => TextField(
-        key: const ValueKey('chat-message-input'),
-        controller: controller,
-        autofocus: autofocus,
-        enabled: !busy,
-        minLines: 1,
-        maxLines: 4,
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.send,
-        onEditingComplete: () {},
-        onSubmitted: (_) => onSend?.call(),
-        scrollPadding: EdgeInsets.zero,
-        decoration: InputDecoration(
-            labelText: label,
-            hintText: 'Напишите сообщение…',
-            suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
-              if (onVoice != null)
-                IconButton(
-                    tooltip: recording ? 'Завершить запись' : 'Говорить',
-                    onPressed: onVoice,
-                    icon: Icon(recording
-                        ? Icons.stop_circle_outlined
-                        : Icons.mic_none)),
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    // Scaffold consumes MediaQuery.viewInsets inside its resized body. Read
+    // the platform view so a long message cannot grow behind the keyboard.
+    final view = View.of(context);
+    final inset = view.viewInsets.bottom / view.devicePixelRatio;
+    final keyboard = inset > 0;
+    final available = view.physicalSize.height / view.devicePixelRatio -
+        inset -
+        media.padding.vertical -
+        48 -
+        24;
+    final lineHeight = media.textScaler.scale(18) * 1.5;
+    final lines =
+        keyboard ? ((available - 110) / lineHeight).floor().clamp(1, 4) : 4;
+    return TextField(
+      key: const ValueKey('chat-message-input'),
+      controller: controller,
+      autofocus: autofocus,
+      enabled: !busy,
+      minLines: 1,
+      maxLines: lines,
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.send,
+      onEditingComplete: () {},
+      onSubmitted: (_) => onSend?.call(),
+      scrollPadding: EdgeInsets.zero,
+      decoration: InputDecoration(
+          labelText: label,
+          hintText: 'Напишите сообщение…',
+          suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (onVoice != null)
               IconButton(
-                  key: const ValueKey('chat-send'),
-                  tooltip: 'Отправить',
-                  onPressed: onSend,
-                  icon: const Icon(Icons.arrow_upward)),
-            ])),
-      );
+                  tooltip: recording ? 'Завершить запись' : 'Говорить',
+                  onPressed: onVoice,
+                  icon: Icon(
+                      recording ? Icons.stop_circle_outlined : Icons.mic_none)),
+            IconButton(
+                key: const ValueKey('chat-send'),
+                tooltip: 'Отправить',
+                onPressed: onSend,
+                icon: const Icon(Icons.arrow_upward)),
+          ])),
+    );
+  }
 }
